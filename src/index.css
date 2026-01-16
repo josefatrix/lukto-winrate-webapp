@@ -403,6 +403,40 @@ body {
   color: white;
 }
 
+/* Delete Player Button */
+.player-card {
+  position: relative;
+}
+
+.delete-player-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-card:hover .delete-player-btn {
+  opacity: 1;
+}
+
+.delete-player-btn:hover {
+  background: var(--accent-red);
+  color: white;
+  transform: scale(1.1);
+}
+
 /* Navigation Tabs */
 .nav-tabs {
   display: flex;

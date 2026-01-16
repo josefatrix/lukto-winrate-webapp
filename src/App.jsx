@@ -5,11 +5,13 @@ import {
   collection, 
   doc, 
   setDoc, 
+  deleteDoc,
   getDocs, 
   onSnapshot,
   query,
   where,
-  writeBatch
+  writeBatch,
+  updateDoc
 } from 'firebase/firestore'
 
 // ⚠️ CAMBIA ESTA CONTRASEÑA por una que solo tú conozcas
@@ -357,6 +359,29 @@ function App() {
     setNewPlayerName('')
     setNewPlayerAliases('')
     setShowPlayerModal(false)
+  }
+
+  const handleDeletePlayer = async (playerId, playerName) => {
+    if (!confirm(`¿Estás seguro de eliminar a "${playerName}"? Esta acción no se puede deshacer.`)) return
+    
+    try {
+      await deleteDoc(doc(db, 'players', playerId))
+    } catch (error) {
+      console.error('Error deleting player:', error)
+      alert('Error al eliminar jugador')
+    }
+  }
+
+  const handleEditPlayer = async (playerId, newName, newAliases) => {
+    try {
+      await updateDoc(doc(db, 'players', playerId), {
+        name: newName,
+        aliases: newAliases
+      })
+    } catch (error) {
+      console.error('Error updating player:', error)
+      alert('Error al actualizar jugador')
+    }
   }
 
   // Rating functions
@@ -842,6 +867,16 @@ function App() {
                     </div>
                   )}
                 </div>
+                <button 
+                  className="delete-player-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDeletePlayer(player.id, player.name)
+                  }}
+                  title="Eliminar jugador"
+                >
+                  🗑️
+                </button>
               </div>
             ))}
             <div className="add-player-card" onClick={() => setShowPlayerModal(true)}>
