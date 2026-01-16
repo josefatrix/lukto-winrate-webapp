@@ -373,8 +373,19 @@ function App() {
       return
     }
     
+    // Load existing ratings for this match by this user
+    const existingRatings = {}
+    Object.entries(ratings).forEach(([playerId, playerRatings]) => {
+      const myRating = playerRatings.find(
+        r => (r.ratedBy === userPlayer || r.odedBy === userPlayer) && r.matchId === match.id
+      )
+      if (myRating) {
+        existingRatings[playerId] = myRating.score
+      }
+    })
+    
     setSelectedMatch(match)
-    setCurrentRatings({})
+    setCurrentRatings(existingRatings)
     setShowRatingModal(true)
   }
 
@@ -394,7 +405,7 @@ function App() {
       const ratingId = `${userPlayer}_${playerId}_${selectedMatch.id}`
       const ratingRef = doc(db, 'ratings', ratingId)
       batch.set(ratingRef, {
-        odedBy: userPlayer,
+        ratedBy: userPlayer,
         ratedPlayerId: playerId,
         matchId: selectedMatch.id,
         score: parseInt(score),
@@ -406,6 +417,37 @@ function App() {
     setShowRatingModal(false)
     setSelectedMatch(null)
     setCurrentRatings({})
+  }
+
+  const deleteMyRatings = async (matchId) => {
+    if (!userPlayer) return
+    if (!confirm('¿Estás seguro de borrar tus calificaciones de este partido?')) return
+    
+    const batch = writeBatch(db)
+    
+    // Find all ratings by this user for this match
+    Object.entries(ratings).forEach(([playerId, playerRatings]) => {
+      const myRating = playerRatings.find(
+        r => (r.ratedBy === userPlayer || r.odedBy === userPlayer) && r.matchId === matchId
+      )
+      if (myRating) {
+        const ratingId = `${userPlayer}_${playerId}_${matchId}`
+        const ratingRef = doc(db, 'ratings', ratingId)
+        batch.delete(ratingRef)
+      }
+    })
+    
+    await batch.commit()
+    setShowRatingModal(false)
+    setSelectedMatch(null)
+    setCurrentRatings({})
+  }
+
+  const hasMyRatings = (matchId) => {
+    if (!userPlayer) return false
+    return Object.values(ratings).some(playerRatings => 
+      playerRatings.some(r => (r.ratedBy === userPlayer || r.odedBy === userPlayer) && r.matchId === matchId)
+    )
   }
 
   const formatDate = (dateStr) => {
@@ -874,7 +916,7 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowRatingModal(false)}>
           <div className="modal rating-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>⭐ Calificar Jugadores</h2>
+              <h2>⭐ {hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'} Jugadores</h2>
               <button className="modal-close" onClick={() => setShowRatingModal(false)}>×</button>
             </div>
             <p className="modal-subtitle">
@@ -905,13 +947,23 @@ function App() {
               ))}
             </div>
             
-            <button 
-              className="submit-btn"
-              onClick={submitRatings}
-              disabled={Object.keys(currentRatings).length === 0}
-            >
-              GUARDAR CALIFICACIONES
-            </button>
+            <div className="modal-actions">
+              {hasMyRatings(selectedMatch.id) && (
+                <button 
+                  className="delete-btn"
+                  onClick={() => deleteMyRatings(selectedMatch.id)}
+                >
+                  🗑️ BORRAR MIS CALIFICACIONES
+                </button>
+              )}
+              <button 
+                className="submit-btn"
+                onClick={submitRatings}
+                disabled={Object.keys(currentRatings).length === 0}
+              >
+                {hasMyRatings(selectedMatch.id) ? 'ACTUALIZAR' : 'GUARDAR'} CALIFICACIONES
+              </button>
+            </div>
           </div>
         </div>
       )}
