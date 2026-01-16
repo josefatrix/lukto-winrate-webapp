@@ -7120,3 +7120,1205 @@ En la pestaña de **Jugadores**, deberías ver un icono de **🗑️** cuando pa
 
 ---
 
+_**User (2026-01-16 17:53Z)**_
+
+como admin dejame editar los jugadores que participan en un partido
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+El usuario quiere poder editar los jugadores que participaron en un partido ya creado. Esto significa agregar una funcionalidad para modificar los equipos de un partido existente.
+
+Necesito:
+1. Agregar un botón de "Editar" en cada tarjeta de partido (solo visible para admin)
+2. Crear un modal para editar el partido donde se puedan cambiar:
+   - Fecha
+   - Lugar
+   - Jugadores del equipo blanco
+   - Jugadores del equipo negro
+   - Ganador
+3. Guardar los cambios en Firestore
+
+Voy a implementar esto.</details></think>
+
+---
+
+Voy a agregar la funcionalidad para editar partidos:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const handleAddMatch" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const handleAddMatch = async () => \{` | L323 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Voy a agregar estado para editar partidos y las funciones necesarias.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const \[selectedMatch" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const [selectedMatch, setSelectedMatch] = useState(null)` | L85 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Necesito agregar un estado para el modo de edición de partido y la función para editar. Voy a agregar:
+1. Estado `editingMatch` para saber si estamos editando un partido existente
+2. Función `handleEditMatch` para guardar cambios
+3. Función `openEditMatchModal` para abrir el formulario con los datos del partido
+4. Modificar la UI para agregar botón de editar en la lista de partidos</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -92,4 +92,5 @@
+    const [teamBlack, setTeamBlack] = useState([])
+    const [winner, setWinner] = useState('')
++   const [editingMatchId, setEditingMatchId] = useState(null)
+  
+    // Listen to auth state
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora modifico la función handleAddMatch para que también maneje la edición, y agrego la función para abrir el formulario en modo edición.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 2
+
+```diff
+@@ -328,6 +328,5 @@
+      }
+  
+-     const newMatchId = Date.now().toString()
+-     const newMatch = {
++     const matchData = {
+        date: matchDate,
+        venue: matchVenue,
+```
+
+**Chunk 2**
+Lines added: 36, lines removed: 3
+
+```diff
+@@ -337,12 +336,45 @@
+      }
+  
+-     await setDoc(doc(db, 'matches', newMatchId), newMatch)
+-     
++     if (editingMatchId) {
++       // Update existing match
++       await updateDoc(doc(db, 'matches', editingMatchId), matchData)
++     } else {
++       // Create new match
++       const newMatchId = Date.now().toString()
++       await setDoc(doc(db, 'matches', newMatchId), matchData)
++     }
++     
++     resetMatchForm()
++     setActiveTab('matches')
++   }
++ 
++   const resetMatchForm = () =&gt; {
+      setMatchDate('')
+      setMatchVenue('LUKTO')
+      setTeamWhite([])
+      setTeamBlack([])
+      setWinner('')
+-     setActiveTab('stats')
++     setEditingMatchId(null)
++   }
++ 
++   const openEditMatch = (match) =&gt; {
++     setMatchDate(match.date)
++     setMatchVenue(match.venue)
++     setTeamWhite([...match.teamWhite])
++     setTeamBlack([...match.teamBlack])
++     setWinner(match.winner)
++     setEditingMatchId(match.id)
++     setActiveTab('new')
++   }
++ 
++   const handleDeleteMatch = async (matchId) =&gt; {
++     if (!confirm('¿Estás seguro de eliminar este partido? Esta acción no se puede deshacer.')) return
++     
++     try {
++       await deleteDoc(doc(db, 'matches', matchId))
++     } catch (error) {
++       console.error('Error deleting match:', error)
++       alert('Error al eliminar partido')
++     }
+    }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito agregar los botones de editar y eliminar en la lista de partidos, solo visible para admin. Busco la sección de partidos.</details></think>
+
+---
+
+Ahora agrego los botones de editar/eliminar en la lista de partidos:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "activeTab === 'matches'" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `className=\{`nav-tab $\{activeTab === 'matches' ? 'active' : ''\}`\}` | L587 |
+| `src/App.jsx` | `\{activeTab === 'matches' && (` | L726 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito modificar el match-header para agregar los botones de editar y eliminar cuando el usuario es admin.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 26, lines removed: 8
+
+```diff
+@@ -735,12 +735,30 @@
+                      &lt;div className="match-venue"&gt;{match.venue}&lt;/div&gt;
+                    &lt;/div&gt;
+-                   {user &amp;&amp; userPlayer &amp;&amp; (
+-                     &lt;button 
+-                       className="rate-match-btn"
+-                       onClick={() =&gt; openRatingModal(match)}
+-                     &gt;
+-                       ⭐ Calificar
+-                     &lt;/button&gt;
+-                   )}
++                   &lt;div className="match-actions"&gt;
++                     {user &amp;&amp; userPlayer &amp;&amp; (
++                       &lt;button 
++                         className="rate-match-btn"
++                         onClick={() =&gt; openRatingModal(match)}
++                       &gt;
++                         ⭐ Calificar
++                       &lt;/button&gt;
++                     )}
++                     {isAdmin &amp;&amp; (
++                       &lt;&gt;
++                         &lt;button 
++                           className="edit-match-btn"
++                           onClick={() =&gt; openEditMatch(match)}
++                         &gt;
++                           ✏️ Editar
++                         &lt;/button&gt;
++                         &lt;button 
++                           className="delete-match-btn"
++                           onClick={() =&gt; handleDeleteMatch(match.id)}
++                         &gt;
++                           🗑️
++                         &lt;/button&gt;
++                       &lt;/&gt;
++                     )}
++                   &lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;div className="match-teams"&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora modifico el título del formulario de partidos para que diga "Editar" cuando estamos editando, y también cambio el botón de guardar. También necesito agregar un botón de "Cancelar" para salir del modo edición.</details></think>
+
+---
+
+Ahora actualizo el formulario para mostrar "Editar" cuando corresponda:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "activeTab === 'new' && isAdmin" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `\{activeTab === 'new' && isAdmin && (` | L807 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Necesito modificar el título para que sea dinámico basado en si estamos editando o creando.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: 1
+
+```diff
+@@ -807,5 +807,7 @@
+        {activeTab === 'new' &amp;&amp; isAdmin &amp;&amp; (
+          &lt;section className="stats-section"&gt;
+-           &lt;h2 className="section-title"&gt;Registrar Nuevo Partido&lt;/h2&gt;
++           &lt;h2 className="section-title"&gt;
++             {editingMatchId ? 'Editar Partido' : 'Registrar Nuevo Partido'}
++           &lt;/h2&gt;
+            &lt;div className="match-form"&gt;
+              &lt;div className="form-row"&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito cambiar el botón de guardar para que diga "Actualizar" cuando estamos editando, y agregar un botón de cancelar.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "GUARDAR PARTIDO" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `GUARDAR PARTIDO` | L900 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora modifico el botón para que sea dinámico y agrego un botón de cancelar.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 17, lines removed: 7
+
+```diff
+@@ -893,11 +893,21 @@
+              &lt;/div&gt;
+  
+-             &lt;button 
+-               className="submit-btn"
+-               onClick={handleAddMatch}
+-               disabled={!matchDate || teamWhite.length === 0 || teamBlack.length === 0 || !winner}
+-             &gt;
+-               GUARDAR PARTIDO
+-             &lt;/button&gt;
++             &lt;div className="form-buttons"&gt;
++               {editingMatchId &amp;&amp; (
++                 &lt;button 
++                   className="cancel-btn"
++                   onClick={resetMatchForm}
++                 &gt;
++                   CANCELAR
++                 &lt;/button&gt;
++               )}
++               &lt;button 
++                 className="submit-btn"
++                 onClick={handleAddMatch}
++                 disabled={!matchDate || teamWhite.length === 0 || teamBlack.length === 0 || !winner}
++               &gt;
++                 {editingMatchId ? 'ACTUALIZAR PARTIDO' : 'GUARDAR PARTIDO'}
++               &lt;/button&gt;
++             &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/section&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora agrego los estilos CSS para los nuevos botones.</details></think>
+
+---
+
+Ahora agrego los estilos:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 72, lines removed: undefined
+
+```diff
+@@ -437,4 +437,76 @@
+    transform: scale(1.1);
+  }
++ 
++ /* Match Actions */
++ .match-actions {
++   display: flex;
++   gap: 0.5rem;
++   align-items: center;
++   flex-wrap: wrap;
++ }
++ 
++ .edit-match-btn {
++   padding: 0.5rem 1rem;
++   background: var(--bg-card);
++   border: 1px solid var(--border-color);
++   border-radius: 0.5rem;
++   color: var(--text-secondary);
++   font-family: 'Outfit', sans-serif;
++   font-weight: 500;
++   font-size: 0.85rem;
++   cursor: pointer;
++   transition: all 0.2s ease;
++ }
++ 
++ .edit-match-btn:hover {
++   border-color: var(--accent-gold);
++   color: var(--accent-gold);
++ }
++ 
++ .delete-match-btn {
++   padding: 0.5rem 0.75rem;
++   background: transparent;
++   border: 1px solid var(--border-color);
++   border-radius: 0.5rem;
++   color: var(--text-muted);
++   font-size: 0.9rem;
++   cursor: pointer;
++   transition: all 0.2s ease;
++ }
++ 
++ .delete-match-btn:hover {
++   border-color: var(--accent-red);
++   background: var(--accent-red);
++   color: white;
++ }
++ 
++ /* Form Buttons */
++ .form-buttons {
++   display: flex;
++   gap: 1rem;
++   margin-top: 1rem;
++ }
++ 
++ .form-buttons .submit-btn {
++   flex: 1;
++ }
++ 
++ .cancel-btn {
++   padding: 1.25rem 2rem;
++   background: transparent;
++   border: 2px solid var(--border-color);
++   border-radius: 1rem;
++   color: var(--text-secondary);
++   font-family: 'Bebas Neue', sans-serif;
++   font-size: 1.25rem;
++   letter-spacing: 0.1em;
++   cursor: pointer;
++   transition: all 0.2s ease;
++ }
++ 
++ .cancel-btn:hover {
++   border-color: var(--text-primary);
++   color: var(--text-primary);
++ }
+  
+  /* Navigation Tabs */
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora despliego los cambios.</details></think>
+
+---
+
+Despliego los cambios:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && git add . && git commit -m "Add edit/delete match functionality for admin" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && git add . && git commit -m "Add edit/delete match functionality for admin" && npx vercel --prod --yes --force
+```
+
+```
+[main 9aee83d] Add edit/delete match functionality for admin
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 7 files changed, 813 insertions(+), 225 deletions(-)
+ delete mode 100644 dist/assets/index-8qFJ7qll.css
+ rename dist/assets/{index-CjgMtkui.js =&gt; index-Br7Gm3bA.js} (62%)
+ create mode 100644 dist/assets/index-D9aNUdCw.css
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-stats-app
+Uploading [--------------------] (0.0B/276.1KB)
+Uploading [=====---------------] (74.1KB/276.1KB)
+Uploading [==========----------] (138.1KB/276.1KB)
+Uploading [===============-----] (218.1KB/276.1KB)
+Uploading [====================] (276.1KB/276.1KB)
+https://lukto-stats-rml3r9fft-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-stats-app/GYM2VgYHcDvGuTzp84YtNtXTgQ3K [3s]
+Production: https://lukto-stats-rml3r9fft-josefatrixs-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 48 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                   0.75 kB │ gzip:   0.43 kB
+Building: dist/assets/index-Cu1JR5FT.css   17.55 kB │ gzip:   3.45 kB
+Building: dist/assets/index-DQ4Z-jJP.js   621.02 kB │ gzip: 160.57 kB
+Building: ✓ built in 2.54s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [10s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-stats-rml3r9fft-josefatrixs-projects.vercel.app [19s]
+Completing...
+Aliased: https://lukto-stats-app.vercel.app [19s]
+
+Common next commands:
+- &#96;vercel inspect lukto-stats-rml3r9fft-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-stats-rml3r9fft-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+La funcionalidad está desplegada. Ahora el admin puede editar y eliminar partidos.</details></think>
+
+---
+
+## ✅ ¡Listo! Ya puedes editar y eliminar partidos
+
+Abre **https://lukto-stats-app.vercel.app** (o la URL directa: **https://lukto-stats-rml3r9fft-josefatrixs-projects.vercel.app**)
+
+### Como Admin:
+
+1. **Entra como Admin** (contraseña: `lukto2026`)
+2. Ve a **⚽ Partidos**
+3. En cada partido verás:
+   - **✏️ Editar** - Abre el formulario con los datos del partido para modificarlos
+   - **🗑️** - Elimina el partido
+
+### Para editar un partido:
+1. Clic en **✏️ Editar**
+2. Se abrirá el formulario con los jugadores ya seleccionados
+3. Agrega o quita jugadores de cada equipo
+4. Cambia el ganador si es necesario
+5. Clic en **ACTUALIZAR PARTIDO**
+6. O **CANCELAR** para descartar cambios
+
+---
+
+Ahora puedes corregir los equipos de los partidos anteriores 🎯
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+y a que pagina entro
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+El usuario pregunta a qué página debe entrar. La URL principal es:- https://lukto-stats-app.vercel.appPero si hay problemas de caché, puede usar la URL directa del último deployment:
+- https://lukto-stats-rml3r9fft-josefatrixs-projects.vercel.app</details></think>
+
+---
+
+Entra a:
+
+## **https://lukto-stats-app.vercel.app**
+
+---
+
+Si ves la versión vieja (sin los botones de editar), prueba la URL directa:
+
+## **https://lukto-stats-rml3r9fft-josefatrixs-projects.vercel.app**
+
+---
+
+Recuerda:
+1. Entra como **Admin** → Clic en "🔒 Admin" → Contraseña: `lukto2026`
+2. Ve a **⚽ Partidos**
+3. Verás los botones **✏️ Editar** y **🗑️** en cada partido
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+estoy teniendo problemas porquecomparti con mis amigos y estan entrando con su gmail pero con el nombre de otro jugador que no es el de ellos y se califican mal a proposito 
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+El usuario tiene un problema serio: sus amigos están entrando con Google pero seleccionando el nombre de otro jugador (no el suyo) para calificarse mal a propósito. Esto es un problema de "impersonación" o suplantación de identidad.
+
+Necesito implementar una solución. Hay varias opciones:
+
+1. **Vincular permanentemente** cada cuenta de Google con un jugador, y que solo el Admin pueda hacer esa vinculación (no el usuario mismo)
+
+2. **Mostrar quién calificó** en la interfaz para que se sepa quién dio cada calificación
+
+3. **Moderar las calificaciones** - que el admin pueda ver y borrar calificaciones sospechosas
+
+4. **Bloquear la auto-selección de jugador** - que solo el admin pueda vincular cuentas de Google con jugadores
+
+La mejor solución sería que el Admin (él) sea quien vincule las cuentas de Google con los jugadores, así nadie puede hacerse pasar por otro.
+
+Voy a implementar:
+1. Solo el admin puede vincular una cuenta de Google con un jugador
+2. Guardar las vinculaciones en Firebase (no en localStorage) para que sean persistentes
+3. Mostrar una lista de cuentas vinculadas al admin
+4. Permitir al admin desvincular cuentas
+
+Esto evitará que la gente se haga pasar por otros.</details></think>
+
+---
+
+¡Entiendo el problema! Voy a hacer que **solo tú (Admin)** puedas vincular las cuentas de Google con los jugadores. Así nadie puede hacerse pasar por otro.
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Necesito hacer varios cambios:
+1. Guardar las vinculaciones en Firebase en lugar de localStorage
+2. Cargar las vinculaciones desde Firebase3. Solo permitir al Admin vincular cuentas de Google con jugadores
+4. Mostrar una sección para que el admin gestione las vinculaciones
+5. Mostrar a los usuarios no vinculados un mensaje de que deben esperar a ser vinculados por el admin
+
+Voy a hacer estos cambios:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -74,4 +74,6 @@
+    const [userPlayer, setUserPlayer] = useState(null)
+    const [showLinkPlayerModal, setShowLinkPlayerModal] = useState(false)
++   const [userLinks, setUserLinks] = useState({}) // {odedBy: { odedBy, odedByName, odedByPhoto, playerId }}
++   const [pendingUsers, setPendingUsers] = useState([]) // Users waiting to be linked
+    
+    // Admin mode
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito modificar el useEffect de auth para cargar las vinculaciones desde Firebase y también modificar el sistema para que los usuarios no puedan auto-vincularse.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 53, lines removed: 9
+
+```diff
+@@ -100,18 +100,62 @@
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) =&gt; {
+        setUser(currentUser)
+-       if (currentUser) {
+-         // Check if user has linked player
+-         const linkedPlayer = localStorage.getItem(&#96;linked-player-${currentUser.uid}&#96;)
+-         if (linkedPlayer) {
+-           setUserPlayer(linkedPlayer)
+-         } else {
+-           setShowLinkPlayerModal(true)
+-         }
+-       } else {
++       if (!currentUser) {
+          setUserPlayer(null)
+        }
+      })
+      return () =&gt; unsubscribe()
+    }, [])
++ 
++   // Load user links from Firebase and check current user's link
++   useEffect(() =&gt; {
++     const unsubLinks = onSnapshot(collection(db, 'userLinks'), (snapshot) =&gt; {
++       const links = {}
++       const pending = []
++       
++       snapshot.docs.forEach(doc =&gt; {
++         const data = doc.data()
++         if (data.playerId) {
++           links[doc.id] = data
++         } else {
++           // User is pending (registered but not linked)
++           pending.push({ odedBy: doc.id, ...data })
++         }
++       })
++       
++       setUserLinks(links)
++       setPendingUsers(pending)
++       
++       // Check if current user is linked
++       if (user &amp;&amp; links[user.uid]) {
++         setUserPlayer(links[user.uid].playerId)
++       } else if (user) {
++         setUserPlayer(null)
++         // Register as pending if not already
++         registerPendingUser()
++       }
++     }, (error) =&gt; {
++       console.error('Error loading user links:', error)
++     })
++ 
++     return () =&gt; unsubLinks()
++   }, [user])
++ 
++   // Register user as pending when they log in
++   const registerPendingUser = async () =&gt; {
++     if (!user) return
++     
++     try {
++       const linkRef = doc(db, 'userLinks', user.uid)
++       await setDoc(linkRef, {
++         odedByName: user.displayName,
++         odedByEmail: user.email,
++         odedByPhoto: user.photoURL,
++         playerId: null,
++         registeredAt: new Date().toISOString()
++       }, { merge: true })
++     } catch (error) {
++       console.error('Error registering pending user:', error)
++     }
++   }
+  
+    // Load data from Firestore
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito modificar la función handleLinkPlayer para que solo el admin pueda usarla, y agregar una función para que el admin pueda vincular y desvincular usuarios.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const handleLinkPlayer" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const handleLinkPlayer = (playerId) => \{` | L254 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Voy a reemplazar la función handleLinkPlayer para que funcione con Firebase y solo para admin.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 28, lines removed: 2
+
+```diff
+@@ -253,10 +253,36 @@
+  
+    const handleLinkPlayer = (playerId) =&gt; {
++     // Old function - kept for compatibility but now only admin can link
+      if (user) {
+-       localStorage.setItem(&#96;linked-player-${user.uid}&#96;, playerId)
+-       setUserPlayer(playerId)
+        setShowLinkPlayerModal(false)
+      }
+    }
++ 
++   // Admin function to link a user to a player
++   const adminLinkUserToPlayer = async (odedBy, playerId) =&gt; {
++     if (!isAdmin) return
++     
++     try {
++       const linkRef = doc(db, 'userLinks', odedBy)
++       await updateDoc(linkRef, { playerId })
++     } catch (error) {
++       console.error('Error linking user:', error)
++       alert('Error al vincular usuario')
++     }
++   }
++ 
++   // Admin function to unlink a user
++   const adminUnlinkUser = async (odedBy) =&gt; {
++     if (!isAdmin) return
++     if (!confirm('¿Estás seguro de desvincular este usuario?')) return
++     
++     try {
++       const linkRef = doc(db, 'userLinks', odedBy)
++       await updateDoc(linkRef, { playerId: null })
++     } catch (error) {
++       console.error('Error unlinking user:', error)
++       alert('Error al desvincular usuario')
++     }
++   }
+  
+    // Handle admin login
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito modificar el modal que aparece cuando un usuario no está vinculado para que ya no permita auto-seleccionar, sino que muestre un mensaje de espera. También necesito agregar una sección en la parte de admin para gestionar las vinculaciones.</details></think>
+
+---
+
+Ahora modifico el modal de vinculación para usuarios no vinculados:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Link Player Modal" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `\{/* Link Player Modal */\}` | L1055 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora reemplazo el modal de vinculación para que muestre un mensaje de espera en lugar de permitir la auto-selección. El usuario que no esté vinculado verá un mensaje de que debe esperar a que el admin lo vincule.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 13, lines removed: 20
+
+```diff
+@@ -1053,28 +1053,21 @@
+        )}
+  
+-       {/* Link Player Modal */}
+-       {showLinkPlayerModal &amp;&amp; user &amp;&amp; (
++       {/* Pending User Modal - shown when user is not linked */}
++       {user &amp;&amp; !userPlayer &amp;&amp; !isAdmin &amp;&amp; (
+          &lt;div className="modal-overlay"&gt;
+            &lt;div className="modal"&gt;
+              &lt;div className="modal-header"&gt;
+-               &lt;h2&gt;👤 ¿Quién eres?&lt;/h2&gt;
++               &lt;h2&gt;⏳ Esperando Aprobación&lt;/h2&gt;
+              &lt;/div&gt;
+-             &lt;p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}&gt;
+-               Selecciona tu jugador para poder calificar a los demás
+-             &lt;/p&gt;
+-             &lt;div className="player-select-list"&gt;
+-               {players.map(player =&gt; (
+-                 &lt;button
+-                   key={player.id}
+-                   className="player-select-item"
+-                   onClick={() =&gt; handleLinkPlayer(player.id)}
+-                 &gt;
+-                   &lt;div className="player-avatar small"&gt;
+-                     {getInitials(player.name)}
+-                   &lt;/div&gt;
+-                   {player.name}
+-                 &lt;/button&gt;
+-               ))}
+-             &lt;/div&gt;
++             &lt;div className="pending-message"&gt;
++               &lt;img src={user.photoURL} alt="" className="pending-avatar" /&gt;
++               &lt;p&gt;&lt;strong&gt;{user.displayName}&lt;/strong&gt;&lt;/p&gt;
++               &lt;p&gt;Tu cuenta ha sido registrada.&lt;/p&gt;
++               &lt;p&gt;El administrador debe vincularte con tu jugador para que puedas calificar.&lt;/p&gt;
++               &lt;p className="pending-hint"&gt;Avísale al admin que te vincule 😉&lt;/p&gt;
++             &lt;/div&gt;
++             &lt;button className="submit-btn" onClick={handleLogout}&gt;
++               CERRAR SESIÓN
++             &lt;/button&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito agregar una nueva pestaña/sección para admin para gestionar las vinculaciones de usuarios. Voy a agregar una tab "Usuarios" en la nav.</details></think>
+
+---
+
+Ahora agrego la pestaña de usuarios para el admin:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "👥 Jugadores" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `👥 Jugadores` | L676 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Agrego una nueva pestaña para gestionar usuarios.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 6, lines removed: undefined
+
+```diff
+@@ -676,4 +676,10 @@
+                👥 Jugadores
+              &lt;/button&gt;
++             &lt;button 
++               className={&#96;nav-tab ${activeTab === 'users' ? 'active' : ''}&#96;}
++               onClick={() =&gt; setActiveTab('users')}
++             &gt;
++               🔗 Vincular Usuarios {pendingUsers.length &gt; 0 &amp;&amp; &lt;span className="badge"&gt;{pendingUsers.length}&lt;/span&gt;}
++             &lt;/button&gt;
+            &lt;/&gt;
+          )}
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito agregar la sección de gestión de usuarios. Voy a agregarla después de la sección de jugadores.</details></think>
+
+---
+
+Ahora agrego la sección de gestión de usuarios:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "activeTab === 'players' && isAdmin" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `\{activeTab === 'players' && isAdmin && (` | L994 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora agrego la sección de gestión de usuarios después de la sección de jugadores.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+Status: **loading**
+
+```javascriptreact
+      {activeTab === 'players' && isAdmin && (
+        <section className="stats-section">
+          <h2 className="section-title">Lista de Jugadores</h2>
+          <div className="players-grid">
+            {players.map(player => (
+              <div key={player.id} className="player-card">
+                <div className="player-avatar">
+                  {getInitials(player.name)}
+                </div>
+                <div className="player-card-info">
+                  <h3>{player.name}</h3>
+                  {player.aliases && player.aliases.length > 0 && (
+                    <div className="aliases">
+                      aka: {player.aliases.join(', ')}
+                    </div>
+                  )}
+                </div>
+                <button 
+                  className="delete-player-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDeletePlayer(player.id, player.name)
+                  }}
+                  title="Eliminar jugador"
+                >
+                  🗑️
+                </button>
+              </div>
+            ))}
+            <div className="add-player-card" onClick={() => setShowPlayerModal(true)}>
+              <span style={{ fontSize: '1.5rem' }}>➕</span>
+              Agregar Jugador
+            </div>
+          </div>
+        </section>
+      )}
+
+      {activeTab === 'users' && isAdmin && (
+        <section className="stats-section">
+          <h2 className="section-title">Vincular Usuarios con Jugadores</h2>
+          <p className="section-subtitle">
+            Solo tú puedes decidir qué cuenta de Google corresponde a cada jugador
+          </p>
+          
+          {pendingUsers.length > 0 && (
+            <div className="pending-users-section">
+              <h3 className="subsection-title">⏳ Usuarios Pendientes ({pendingUsers.length})</h3>
+              <div className="user-links-list">
+                {pendingUsers.map(pending => (
+                  <div key={pending.odedBy} className="user-link-card pending">
+                    <div className="user-link-info">
+                      <img src={pending.odedByPhoto} alt="" className="user-link-avatar" />
+                      <div>
+                        <div className="user-link-name">{pending.odedByName}</div>
+                        <div className="user-link-email">{pending.odedByEmail}</div>
+                      </div>
+                    </div>
+                    <div className="user-link-action">
+                      <select 
+                        className="player-select-dropdown"
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            adminLinkUserToPlayer(pending.odedBy, e.target.value)
+                          }
+                        }}
+                        defaultValue=""
+                      >
+                        <option value="">Selecciona jugador...</option>
+                        {players.map(player => (
+                          <option key={player.id} value={player.id}>
+                            {player.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="linked-users-section">
+            <h3 className="subsection-title">✅ Usuarios Vinculados</h3>
+            <div className="user-links-list">
+              {Object.entries(userLinks).filter(([_, data]) => data.playerId).length > 0 ? (
+                Object.entries(userLinks)
+                  .filter(([_, data]) => data.playerId)
+                  .map(([odedBy, data]) => (
+                    <div key={odedBy} className="user-link-card linked">
+                      <div className="user-link-info">
+                        <img src={data.odedByPhoto} alt="" className="user-link-avatar" />
+                        <div>
+                          <div className="user-link-name">{data.odedByName}</div>
+                          <div className="user-link-email">{data.odedByEmail}</div>
+                        </div>
+                      </div>
+                      <div className="user-
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+

@@ -73,6 +73,8 @@ function App() {
   const [user, setUser] = useState(null)
   const [userPlayer, setUserPlayer] = useState(null)
   const [showLinkPlayerModal, setShowLinkPlayerModal] = useState(false)
+  const [userLinks, setUserLinks] = useState({}) // {odedBy: { odedBy, odedByName, odedByPhoto, playerId }}
+  const [pendingUsers, setPendingUsers] = useState([]) // Users waiting to be linked
   
   // Admin mode
   const [isAdmin, setIsAdmin] = useState(false)
@@ -97,20 +99,64 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
-      if (currentUser) {
-        // Check if user has linked player
-        const linkedPlayer = localStorage.getItem(`linked-player-${currentUser.uid}`)
-        if (linkedPlayer) {
-          setUserPlayer(linkedPlayer)
-        } else {
-          setShowLinkPlayerModal(true)
-        }
-      } else {
+      if (!currentUser) {
         setUserPlayer(null)
       }
     })
     return () => unsubscribe()
   }, [])
+
+  // Load user links from Firebase and check current user's link
+  useEffect(() => {
+    const unsubLinks = onSnapshot(collection(db, 'userLinks'), (snapshot) => {
+      const links = {}
+      const pending = []
+      
+      snapshot.docs.forEach(doc => {
+        const data = doc.data()
+        if (data.playerId) {
+          links[doc.id] = data
+        } else {
+          // User is pending (registered but not linked)
+          pending.push({ odedBy: doc.id, ...data })
+        }
+      })
+      
+      setUserLinks(links)
+      setPendingUsers(pending)
+      
+      // Check if current user is linked
+      if (user && links[user.uid]) {
+        setUserPlayer(links[user.uid].playerId)
+      } else if (user) {
+        setUserPlayer(null)
+        // Register as pending if not already
+        registerPendingUser()
+      }
+    }, (error) => {
+      console.error('Error loading user links:', error)
+    })
+
+    return () => unsubLinks()
+  }, [user])
+
+  // Register user as pending when they log in
+  const registerPendingUser = async () => {
+    if (!user) return
+    
+    try {
+      const linkRef = doc(db, 'userLinks', user.uid)
+      await setDoc(linkRef, {
+        odedByName: user.displayName,
+        odedByEmail: user.email,
+        odedByPhoto: user.photoURL,
+        playerId: null,
+        registeredAt: new Date().toISOString()
+      }, { merge: true })
+    } catch (error) {
+      console.error('Error registering pending user:', error)
+    }
+  }
 
   // Load data from Firestore
   useEffect(() => {
@@ -206,10 +252,36 @@ function App() {
   }
 
   const handleLinkPlayer = (playerId) => {
+    // Old function - kept for compatibility but now only admin can link
     if (user) {
-      localStorage.setItem(`linked-player-${user.uid}`, playerId)
-      setUserPlayer(playerId)
       setShowLinkPlayerModal(false)
+    }
+  }
+
+  // Admin function to link a user to a player
+  const adminLinkUserToPlayer = async (odedBy, playerId) => {
+    if (!isAdmin) return
+    
+    try {
+      const linkRef = doc(db, 'userLinks', odedBy)
+      await updateDoc(linkRef, { playerId })
+    } catch (error) {
+      console.error('Error linking user:', error)
+      alert('Error al vincular usuario')
+    }
+  }
+
+  // Admin function to unlink a user
+  const adminUnlinkUser = async (odedBy) => {
+    if (!isAdmin) return
+    if (!confirm('¿Estás seguro de desvincular este usuario?')) return
+    
+    try {
+      const linkRef = doc(db, 'userLinks', odedBy)
+      await updateDoc(linkRef, { playerId: null })
+    } catch (error) {
+      console.error('Error unlinking user:', error)
+      alert('Error al desvincular usuario')
     }
   }
 
@@ -603,6 +675,12 @@ function App() {
             >
               👥 Jugadores
             </button>
+            <button 
+              className={`nav-tab ${activeTab === 'users' ? 'active' : ''}`}
+              onClick={() => setActiveTab('users')}
+            >
+              🔗 Vincular Usuarios {pendingUsers.length > 0 && <span className="badge">{pendingUsers.length}</span>}
+            </button>
           </>
         )}
       </nav>
@@ -950,6 +1028,86 @@ function App() {
         </section>
       )}
 
+      {activeTab === 'users' && isAdmin && (
+        <section className="stats-section">
+          <h2 className="section-title">Vincular Usuarios con Jugadores</h2>
+          <p className="section-subtitle">
+            Solo tú puedes decidir qué cuenta de Google corresponde a cada jugador
+          </p>
+          
+          {pendingUsers.length > 0 && (
+            <div className="pending-users-section">
+              <h3 className="subsection-title">⏳ Usuarios Pendientes ({pendingUsers.length})</h3>
+              <div className="user-links-list">
+                {pendingUsers.map(pending => (
+                  <div key={pending.odedBy} className="user-link-card pending">
+                    <div className="user-link-info">
+                      <img src={pending.odedByPhoto} alt="" className="user-link-avatar" />
+                      <div>
+                        <div className="user-link-name">{pending.odedByName}</div>
+                        <div className="user-link-email">{pending.odedByEmail}</div>
+                      </div>
+                    </div>
+                    <div className="user-link-action">
+                      <select 
+                        className="player-select-dropdown"
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            adminLinkUserToPlayer(pending.odedBy, e.target.value)
+                          }
+                        }}
+                        defaultValue=""
+                      >
+                        <option value="">Selecciona jugador...</option>
+                        {players.map(player => (
+                          <option key={player.id} value={player.id}>
+                            {player.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="linked-users-section">
+            <h3 className="subsection-title">✅ Usuarios Vinculados</h3>
+            <div className="user-links-list">
+              {Object.entries(userLinks).filter(([_, data]) => data.playerId).length > 0 ? (
+                Object.entries(userLinks)
+                  .filter(([_, data]) => data.playerId)
+                  .map(([odedBy, data]) => (
+                    <div key={odedBy} className="user-link-card linked">
+                      <div className="user-link-info">
+                        <img src={data.odedByPhoto} alt="" className="user-link-avatar" />
+                        <div>
+                          <div className="user-link-name">{data.odedByName}</div>
+                          <div className="user-link-email">{data.odedByEmail}</div>
+                        </div>
+                      </div>
+                      <div className="user-link-player">
+                        → <strong>{getPlayerName(data.playerId)}</strong>
+                      </div>
+                      <button 
+                        className="unlink-btn"
+                        onClick={() => adminUnlinkUser(odedBy)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))
+              ) : (
+                <div className="empty-state small">
+                  <p>No hay usuarios vinculados aún</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Admin Login Modal */}
       {showLoginModal && (
         <div className="modal-overlay" onClick={() => setShowLoginModal(false)}>
@@ -980,30 +1138,23 @@ function App() {
         </div>
       )}
 
-      {/* Link Player Modal */}
-      {showLinkPlayerModal && user && (
+      {/* Pending User Modal - shown when user is not linked */}
+      {user && !userPlayer && !isAdmin && (
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h2>👤 ¿Quién eres?</h2>
+              <h2>⏳ Esperando Aprobación</h2>
             </div>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-              Selecciona tu jugador para poder calificar a los demás
-            </p>
-            <div className="player-select-list">
-              {players.map(player => (
-                <button
-                  key={player.id}
-                  className="player-select-item"
-                  onClick={() => handleLinkPlayer(player.id)}
-                >
-                  <div className="player-avatar small">
-                    {getInitials(player.name)}
-                  </div>
-                  {player.name}
-                </button>
-              ))}
+            <div className="pending-message">
+              <img src={user.photoURL} alt="" className="pending-avatar" />
+              <p><strong>{user.displayName}</strong></p>
+              <p>Tu cuenta ha sido registrada.</p>
+              <p>El administrador debe vincularte con tu jugador para que puedas calificar.</p>
+              <p className="pending-hint">Avísale al admin que te vincule 😉</p>
             </div>
+            <button className="submit-btn" onClick={handleLogout}>
+              CERRAR SESIÓN
+            </button>
           </div>
         </div>
       )}

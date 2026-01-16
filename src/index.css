@@ -509,6 +509,165 @@ body {
   color: var(--text-primary);
 }
 
+/* User Links Section */
+.pending-users-section {
+  margin-bottom: 2rem;
+}
+
+.subsection-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.user-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.user-link-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.user-link-card.pending {
+  border-color: var(--accent-gold);
+  background: rgba(251, 191, 36, 0.05);
+}
+
+.user-link-card.linked {
+  border-color: var(--accent-emerald);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.user-link-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 200px;
+}
+
+.user-link-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+}
+
+.user-link-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.user-link-email {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.user-link-player {
+  color: var(--accent-emerald);
+  font-size: 0.95rem;
+}
+
+.user-link-action {
+  min-width: 200px;
+}
+
+.player-select-dropdown {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  color: var(--text-primary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.player-select-dropdown:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.unlink-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unlink-btn:hover {
+  border-color: var(--accent-red);
+  background: var(--accent-red);
+  color: white;
+}
+
+/* Pending Message */
+.pending-message {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.pending-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-gold);
+  margin-bottom: 1rem;
+}
+
+.pending-message p {
+  color: var(--text-secondary);
+  margin: 0.5rem 0;
+}
+
+.pending-hint {
+  margin-top: 1rem !important;
+  color: var(--accent-gold) !important;
+  font-size: 0.9rem;
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--accent-red);
+  color: white;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.empty-state.small {
+  padding: 2rem;
+}
+
+.empty-state.small p {
+  margin: 0;
+}
+
 /* Navigation Tabs */
 .nav-tabs {
   display: flex;
