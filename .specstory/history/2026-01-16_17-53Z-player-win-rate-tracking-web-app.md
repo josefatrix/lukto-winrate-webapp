@@ -5737,63 +5737,85 @@ También voy a agregar una sección "Mis Calificaciones" donde el usuario pueda 
 
 <details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
 
-Status: **loading**
+**Chunk 1**
+Lines added: 12, lines removed: 1
 
-```javascriptreact
-  // Rating functions
-  const openRatingModal = (match) => {
-    if (!userPlayer) {
-      alert('Primero debes vincular tu cuenta con un jugador')
-      return
-    }
-    
-    const allPlayers = [...match.teamWhite, ...match.teamBlack]
-    if (!allPlayers.includes(userPlayer)) {
-      alert('Solo puedes calificar partidos en los que jugaste')
-      return
-    }
-    
-    // Load existing ratings for this match by this user
-    const existingRatings = {}
-    Object.entries(ratings).forEach(([playerId, playerRatings]) => {
-      const myRating = playerRatings.find(
-        r => r.ratedBy === userPlayer && r.matchId === match.id
-      )
-      if (myRating) {
-        existingRatings[playerId] = myRating.score
+```diff
+@@ -373,7 +373,18 @@
+        return
       }
-    })
-    
-    setSelectedMatch(match)
-    setCurrentRatings(existingRatings)
-    setShowRatingModal(true)
-  }
++     
++     // Load existing ratings for this match by this user
++     const existingRatings = {}
++     Object.entries(ratings).forEach(([playerId, playerRatings]) =&gt; {
++       const myRating = playerRatings.find(
++         r =&gt; r.ratedBy === userPlayer &amp;&amp; r.matchId === match.id
++       )
++       if (myRating) {
++         existingRatings[playerId] = myRating.score
++       }
++     })
+      
+      setSelectedMatch(match)
+-     setCurrentRatings({})
++     setCurrentRatings(existingRatings)
+      setShowRatingModal(true)
+    }
+```
 
-  const handleRatingChange = (playerId, score) => {
-    setCurrentRatings({
-      ...currentRatings,
-      [playerId]: score
-    })
-  }
+**Chunk 2**
+Lines added: 1, lines removed: 1
 
-  const submitRatings = async () => {
-    if (!selectedMatch || !userPlayer) return
-    
-    const batch = writeBatch(db)
-    
-    Object.entries(currentRatings).forEach(([playerId, score]) => {
-      const ratingId = `${userPlayer}_${playerId}_${selectedMatch.id}`
-      const ratingRef = doc(db, 'ratings', ratingId)
-      batch.set(ratingRef, {
-        ratedBy: userPlayer,
-        ratedPlayerId: playerId,
-        matchId: selectedMatch.id,
-        score: parseInt(score),
-        timestamp: new Date().toISOString()
-      })
-    })
-    
-    
+```diff
+@@ -395,5 +406,5 @@
+        const ratingRef = doc(db, 'ratings', ratingId)
+        batch.set(ratingRef, {
+-         odedBy: userPlayer,
++         ratedBy: userPlayer,
+          ratedPlayerId: playerId,
+          matchId: selectedMatch.id,
+```
+
+**Chunk 3**
+Lines added: 31, lines removed: undefined
+
+```diff
+@@ -408,4 +419,35 @@
+      setCurrentRatings({})
+    }
++ 
++   const deleteMyRatings = async (matchId) =&gt; {
++     if (!userPlayer) return
++     if (!confirm('¿Estás seguro de borrar tus calificaciones de este partido?')) return
++     
++     const batch = writeBatch(db)
++     
++     // Find all ratings by this user for this match
++     Object.entries(ratings).forEach(([playerId, playerRatings]) =&gt; {
++       const myRating = playerRatings.find(
++         r =&gt; r.ratedBy === userPlayer &amp;&amp; r.matchId === matchId
++       )
++       if (myRating) {
++         const ratingId = &#96;${userPlayer}_${playerId}_${matchId}&#96;
++         const ratingRef = doc(db, 'ratings', ratingId)
++         batch.delete(ratingRef)
++       }
++     })
++     
++     await batch.commit()
++     setShowRatingModal(false)
++     setSelectedMatch(null)
++     setCurrentRatings({})
++   }
++ 
++   const hasMyRatings = (matchId) =&gt; {
++     if (!userPlayer) return false
++     return Object.values(ratings).some(playerRatings =&gt; 
++       playerRatings.some(r =&gt; r.ratedBy === userPlayer &amp;&amp; r.matchId === matchId)
++     )
++   }
+  
+    const formatDate = (dateStr) =&gt; {
 ```
 
 </details>
@@ -5802,7 +5824,526 @@ Status: **loading**
 
 ---
 
+<think><details><summary>Thought Process</summary>
+Ahora necesito actualizar el modal de calificaciones para mostrar un botón de borrar si ya hay calificaciones, y cambiar el texto del botón de guardar. También necesito arreglar el campo "ratedBy" que antes estaba como "odedBy" (typo).</details></think>
 
+---
+
+Ahora actualizo el modal para mostrar el botón de borrar:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Rating Modal" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `\{/* Rating Modal */\}` | L914 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito modificar el modal para agregar el botón de borrar y cambiar el texto según si está editando o creando.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -917,5 +917,5 @@
+            &lt;div className="modal rating-modal" onClick={e =&gt; e.stopPropagation()}&gt;
+              &lt;div className="modal-header"&gt;
+-               &lt;h2&gt;⭐ Calificar Jugadores&lt;/h2&gt;
++               &lt;h2&gt;⭐ {hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'} Jugadores&lt;/h2&gt;
+                &lt;button className="modal-close" onClick={() =&gt; setShowRatingModal(false)}&gt;×&lt;/button&gt;
+              &lt;/div&gt;
+```
+
+**Chunk 2**
+Lines added: 14, lines removed: 5
+
+```diff
+@@ -948,9 +948,18 @@
+              &lt;/div&gt;
+              
+-             &lt;button 
+-               className="submit-btn"
+-               onClick={submitRatings}
+-               disabled={Object.keys(currentRatings).length === 0}
+-             &gt;
++             &lt;div className="modal-actions"&gt;
++               {hasMyRatings(selectedMatch.id) &amp;&amp; (
++                 &lt;button 
++                   className="delete-btn"
++                   onClick={() =&gt; deleteMyRatings(selectedMatch.id)}
++                 &gt;
++                   🗑️ BORRAR MIS CALIFICACIONES
++                 &lt;/button&gt;
++               )}
++               &lt;button 
++                 className="submit-btn"
++                 onClick={submitRatings}
++                 disabled={Object.keys(currentRatings).length === 0}
++               &gt;
+                GUARDAR CALIFICACIONES
+              &lt;/button&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito cerrar el div de modal-actions y agregar los estilos CSS para el botón de borrar y el contenedor de acciones.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "GUARDAR CALIFICACIONES" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `GUARDAR CALIFICACIONES` | L964 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Necesito agregar el cierre del div modal-actions después del botón de guardar.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: 2
+
+```diff
+@@ -962,6 +962,7 @@
+                  disabled={Object.keys(currentRatings).length === 0}
+                &gt;
+-               GUARDAR CALIFICACIONES
+-             &lt;/button&gt;
++                 {hasMyRatings(selectedMatch.id) ? 'ACTUALIZAR' : 'GUARDAR'} CALIFICACIONES
++               &lt;/button&gt;
++             &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito agregar los estilos CSS para el botón de borrar y el contenedor de acciones.</details></think>
+
+---
+
+Ahora agrego los estilos para el botón de borrar:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 27, lines removed: undefined
+
+```diff
+@@ -376,4 +376,31 @@
+    margin-top: -0.5rem;
+  }
++ 
++ /* Modal Actions */
++ .modal-actions {
++   display: flex;
++   flex-direction: column;
++   gap: 0.75rem;
++   margin-top: 1rem;
++ }
++ 
++ .delete-btn {
++   width: 100%;
++   padding: 0.875rem;
++   background: transparent;
++   border: 2px solid var(--accent-red);
++   border-radius: 1rem;
++   color: var(--accent-red);
++   font-family: 'Bebas Neue', sans-serif;
++   font-size: 1.1rem;
++   letter-spacing: 0.1em;
++   cursor: pointer;
++   transition: all 0.2s ease;
++ }
++ 
++ .delete-btn:hover {
++   background: var(--accent-red);
++   color: white;
++ }
+  
+  /* Navigation Tabs */
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+También necesito arreglar el campo "ratedBy" en el código de carga de ratings porque antes usé "odedBy" que era un typo. Déjame verificar si necesito actualizar la lógica de carga.</details></think>
+
+---
+
+Ahora necesito arreglar la carga de ratings (había un typo). Déjame verificar:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "ratedBy|odedBy" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 4 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `r => r.ratedBy === userPlayer && r.matchId === match.id` | L380 |
+| `src/App.jsx` | `ratedBy: userPlayer,` | L408 |
+| `src/App.jsx` | `r => r.ratedBy === userPlayer && r.matchId === matchId` | L431 |
+| `src/App.jsx` | `playerRatings.some(r => r.ratedBy === userPlayer && r.matchId === matchId)` | L449 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Bien, ahora el código usa "ratedBy" consistentemente. Pero las calificaciones antiguas en Firebase pueden tener "odedBy". Necesito actualizar la carga para soportar ambos campos por compatibilidad.</details></think>
+
+---
+
+Necesito hacer compatible con las calificaciones anteriores que tenían otro nombre de campo:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -378,5 +378,5 @@
+      Object.entries(ratings).forEach(([playerId, playerRatings]) =&gt; {
+        const myRating = playerRatings.find(
+-         r =&gt; r.ratedBy === userPlayer &amp;&amp; r.matchId === match.id
++         r =&gt; (r.ratedBy === userPlayer || r.odedBy === userPlayer) &amp;&amp; r.matchId === match.id
+        )
+        if (myRating) {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito hacer lo mismo para las otras funciones.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -429,5 +429,5 @@
+      Object.entries(ratings).forEach(([playerId, playerRatings]) =&gt; {
+        const myRating = playerRatings.find(
+-         r =&gt; r.ratedBy === userPlayer &amp;&amp; r.matchId === matchId
++         r =&gt; (r.ratedBy === userPlayer || r.odedBy === userPlayer) &amp;&amp; r.matchId === matchId
+        )
+        if (myRating) {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora la función hasMyRatings también.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -447,5 +447,5 @@
+      if (!userPlayer) return false
+      return Object.values(ratings).some(playerRatings =&gt; 
+-       playerRatings.some(r =&gt; r.ratedBy === userPlayer &amp;&amp; r.matchId === matchId)
++       playerRatings.some(r =&gt; (r.ratedBy === userPlayer || r.odedBy === userPlayer) &amp;&amp; r.matchId === matchId)
+      )
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora despliego los cambios.</details></think>
+
+---
+
+Ahora despliego los cambios:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && git add . && git commit -m "Add edit/delete ratings functionality" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && git add . && git commit -m "Add edit/delete ratings functionality" && npx vercel --prod --yes --force
+```
+
+```
+[main 393afb4] Add edit/delete ratings functionality
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 18 files changed, 1437 insertions(+), 2052 deletions(-)
+ rename dist/assets/{index-Co3c8FDP.js =&gt; index-CjgMtkui.js} (94%)
+ delete mode 100644 node_modules/.vite/deps/_metadata.json
+ delete mode 100644 node_modules/.vite/deps/package.json
+ delete mode 100644 node_modules/.vite/deps/react-dom.js
+ delete mode 100644 node_modules/.vite/deps/react-dom.js.map
+ delete mode 100644 node_modules/.vite/deps/react-dom_client.js
+ delete mode 100644 node_modules/.vite/deps/react-dom_client.js.map
+ delete mode 100644 node_modules/.vite/deps/react.js
+ delete mode 100644 node_modules/.vite/deps/react.js.map
+ delete mode 100644 node_modules/.vite/deps/react_jsx-dev-runtime.js
+ delete mode 100644 node_modules/.vite/deps/react_jsx-dev-runtime.js.map
+ delete mode 100644 node_modules/.vite/deps/react_jsx-runtime.js
+ delete mode 100644 node_modules/.vite/deps/react_jsx-runtime.js.map
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/229.3KB)
+Uploading [=====---------------] (65.7KB/229.3KB)
+Uploading [==========----------] (117.2KB/229.3KB)
+Uploading [===============-----] (181.2KB/229.3KB)
+Uploading [====================] (229.3KB/229.3KB)
+https://lukto-winrate-webapp-6b6c3rccf-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/BfCMCDQaUwewAPaEYkeYP9kS2vB1 [3s]
+Production: https://lukto-winrate-webapp-6b6c3rccf-josefatrixs-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 48 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                   0.75 kB │ gzip:   0.43 kB
+Building: dist/assets/index-DJK7oFe-.css   15.99 kB │ gzip:   3.26 kB
+Building: dist/assets/index-Ca_ZEJIh.js   619.54 kB │ gzip: 160.12 kB
+Building: ✓ built in 2.54s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [9s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-6b6c3rccf-josefatrixs-projects.vercel.app [17s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [17s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-6b6c3rccf-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-6b6c3rccf-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+El deploy se completó. Ahora también necesito actualizar el proyecto lukto-stats-app que fue el que funcionó.</details></think>
+
+---
+
+También actualizo el proyecto que funcionaba:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && rm -rf .vercel && npx vercel link --yes --project lukto-stats-app && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && rm -rf .vercel && npx vercel link --yes --project lukto-stats-app && npx vercel --prod --yes --force
+```
+
+```
+Vercel CLI 50.4.5
+Loading scopes…
+Searching for existing projects…
+Linked to josefatrixs-projects/lukto-stats-app (created .vercel)
+Retrieving project…
+&gt; Overwriting existing .env.local file
+&gt; Downloading &#96;development&#96; Environment Variables for josefatrixs-projects/lukto-stats-app
+Downloading
+
+Changes:
++ VERCEL_OIDC_TOKEN (Updated)
+
+Updated .env.local file  [199ms]
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-stats-app
+https://lukto-stats-f3uy9col4-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-stats-app/BKEwUd5JfWHDswfRxMiYGPghpJrF [1s]
+Production: https://lukto-stats-f3uy9col4-josefatrixs-projects.vercel.app [1s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 48 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                   0.75 kB │ gzip:   0.43 kB
+Building: dist/assets/index-DJK7oFe-.css   15.99 kB │ gzip:   3.26 kB
+Building: dist/assets/index-Ca_ZEJIh.js   619.54 kB │ gzip: 160.12 kB
+Building: ✓ built in 2.50s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [9s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-stats-f3uy9col4-josefatrixs-projects.vercel.app [15s]
+Completing...
+Aliased: https://lukto-stats-app.vercel.app [15s]
+
+Common next commands:
+- &#96;vercel inspect lukto-stats-f3uy9col4-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-stats-f3uy9col4-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Los dos proyectos están actualizados. Ahora el usuario puede editar y borrar sus calificaciones.</details></think>
+
+---
+
+## ✅ ¡Listo! Ya puedes editar y borrar tus calificaciones
+
+Abre **https://lukto-stats-app.vercel.app** y:
+
+### Cómo editar calificaciones:
+1. Ve a **⚽ Partidos**
+2. Haz clic en **"⭐ Calificar"** en un partido donde ya calificaste
+3. Verás tus calificaciones anteriores **ya seleccionadas**
+4. Cambia las que quieras
+5. Clic en **"ACTUALIZAR CALIFICACIONES"**
+
+### Cómo borrar calificaciones:
+1. Abre el modal de calificar de un partido
+2. Si ya tienes calificaciones, verás el botón rojo **"🗑️ BORRAR MIS CALIFICACIONES"**
+3. Haz clic y confirma
+
+---
+
+El modal ahora muestra:
+- **"Editar Jugadores"** si ya calificaste ese partido
+- **"Calificar Jugadores"** si es la primera vez
+- Botón de borrar (solo si ya tienes calificaciones)
+
+¿Funciona? 🎯
 
 ---
 

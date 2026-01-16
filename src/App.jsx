@@ -22,7 +22,7 @@ const initialPlayers = [
   { id: '3', name: 'Jaime', aliases: ['Jotin'] },
   { id: '4', name: 'Pana Sida', aliases: ['Pana Mopri'] },
   { id: '5', name: 'Javi', aliases: ['Javinho'] },
-  { id: '6', name: 'Werz', aliases: [] },
+  { id: '6', name: 'Werz', aliases: ['Werson'] },
   { id: '7', name: 'Bob', aliases: [] },
   { id: '8', name: 'Luigi', aliases: [] },
   { id: '9', name: 'Miguel', aliases: [] },
@@ -36,7 +36,6 @@ const initialPlayers = [
   { id: '17', name: 'Bohr', aliases: [] },
   { id: '18', name: 'Villa', aliases: [] },
   { id: '19', name: 'Chechinsito', aliases: [] },
-  { id: '20', name: 'Werson', aliases: [] },
 ]
 
 // Partidos iniciales basados en los datos proporcionados
@@ -45,7 +44,7 @@ const initialMatches = [
     id: '1',
     date: '2026-01-08',
     venue: 'LUKTO',
-    teamWhite: ['2', '7', '11', '5', '19', '20'],
+    teamWhite: ['2', '7', '11', '5', '19', '6'],
     teamBlack: ['1', '15', '16', '4', '17', '18'],
     winner: 'white'
   },
