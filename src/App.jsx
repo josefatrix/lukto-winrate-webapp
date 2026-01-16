@@ -112,37 +112,51 @@ function App() {
 
   // Load data from Firestore
   useEffect(() => {
-    // Load players
-    const unsubPlayers = onSnapshot(collection(db, 'players'), (snapshot) => {
-      if (!snapshot.empty) {
-        const playersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-        setPlayers(playersData)
-      } else {
-        // Initialize with default players
-        initializeFirestore()
-      }
-    })
+    let unsubPlayers = () => {}
+    let unsubMatches = () => {}
+    let unsubRatings = () => {}
 
-    // Load matches
-    const unsubMatches = onSnapshot(collection(db, 'matches'), (snapshot) => {
-      if (!snapshot.empty) {
-        const matchesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-        setMatches(matchesData.sort((a, b) => new Date(a.date) - new Date(b.date)))
-      }
-    })
-
-    // Load ratings
-    const unsubRatings = onSnapshot(collection(db, 'ratings'), (snapshot) => {
-      const ratingsData = {}
-      snapshot.docs.forEach(doc => {
-        const data = doc.data()
-        if (!ratingsData[data.ratedPlayerId]) {
-          ratingsData[data.ratedPlayerId] = []
+    try {
+      // Load players
+      unsubPlayers = onSnapshot(collection(db, 'players'), (snapshot) => {
+        if (!snapshot.empty) {
+          const playersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+          setPlayers(playersData)
+        } else {
+          // Initialize with default players
+          initializeFirestore()
         }
-        ratingsData[data.ratedPlayerId].push(data)
+      }, (error) => {
+        console.error('Error loading players:', error)
       })
-      setRatings(ratingsData)
-    })
+
+      // Load matches
+      unsubMatches = onSnapshot(collection(db, 'matches'), (snapshot) => {
+        if (!snapshot.empty) {
+          const matchesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+          setMatches(matchesData.sort((a, b) => new Date(a.date) - new Date(b.date)))
+        }
+      }, (error) => {
+        console.error('Error loading matches:', error)
+      })
+
+      // Load ratings
+      unsubRatings = onSnapshot(collection(db, 'ratings'), (snapshot) => {
+        const ratingsData = {}
+        snapshot.docs.forEach(doc => {
+          const data = doc.data()
+          if (!ratingsData[data.ratedPlayerId]) {
+            ratingsData[data.ratedPlayerId] = []
+          }
+          ratingsData[data.ratedPlayerId].push(data)
+        })
+        setRatings(ratingsData)
+      }, (error) => {
+        console.error('Error loading ratings:', error)
+      })
+    } catch (error) {
+      console.error('Error setting up Firestore listeners:', error)
+    }
 
     return () => {
       unsubPlayers()

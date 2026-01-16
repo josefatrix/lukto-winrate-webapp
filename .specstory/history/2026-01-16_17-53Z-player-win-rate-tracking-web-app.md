@@ -3148,14 +3148,1358 @@ Vamos a implementar esto paso a paso.</details></think>
 ---
 
 <tool-use data-tool-type="task" data-tool-name="todo_write">
-<details><summary>Tool use: **todo_write** • Error parsing todo list data</summary>
+<details><summary>Tool use: **todo_write** • Todo List</summary>
+
+- [-] Instalar Firebase y configurar proyecto
+- [ ] Implementar autenticación con Google
+- [ ] Crear sistema de calificaciones en Firestore
+- [ ] Agregar UI para calificar jugadores
+- [ ] Mostrar promedios de calificaciones
+- [ ] Desplegar nueva versión
 
 </details>
 </tool-use>
 
 ---
 
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm install firebase</summary>
 
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm install firebase
+```
+
+```
+
+added 133 packages, and audited 200 packages in 10s
+
+10 packages are looking for funding
+  run &#96;npm fund&#96; for details
+
+2 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run &#96;npm audit&#96; for details.
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Firebase instalado. Ahora creo el archivo de configuración de Firebase.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="write">
+
+<details><summary>Tool use: **write** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/firebase.js</summary>
+
+**Chunk 1**
+Lines added: 20, lines removed: 1
+
+```diff
+@@ -1,1 +1,20 @@
+- 
++ import { initializeApp } from "firebase/app";
++ import { getAuth, GoogleAuthProvider } from "firebase/auth";
++ import { getFirestore } from "firebase/firestore";
++ 
++ const firebaseConfig = {
++   apiKey: "AIzaSyAa2ZX-7Ajwy6Ln7bb7vmNpDmiOtDpheOY",
++   authDomain: "lukto-tracker.firebaseapp.com",
++   projectId: "lukto-tracker",
++   storageBucket: "lukto-tracker.firebasestorage.app",
++   messagingSenderId: "343988138305",
++   appId: "1:343988138305:web:2f15c59d4ebb915ebab1c0",
++   measurementId: "G-T716P37FVM"
++ };
++ 
++ // Initialize Firebase
++ const app = initializeApp(firebaseConfig);
++ export const auth = getAuth(app);
++ export const googleProvider = new GoogleAuthProvider();
++ export const db = getFirestore(app);
++ 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito reescribir el App.jsx para incluir:
+1. Autenticación con Google
+2. Sistema de calificaciones
+3. Guardar datos en Firestore
+4. Mostrar promedios
+
+Esto será un cambio grande. Voy a reescribir el componente completo con todas las funcionalidades.</details></think>
+
+---
+
+Ahora actualizo la aplicación con el sistema completo de autenticación y calificaciones:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="write">
+
+<details><summary>Tool use: **write** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 12, lines removed: undefined
+
+```diff
+@@ -1,3 +1,15 @@
+  import { useState, useEffect } from 'react'
++ import { auth, googleProvider, db } from './firebase'
++ import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth'
++ import { 
++   collection, 
++   doc, 
++   setDoc, 
++   getDocs, 
++   onSnapshot,
++   query,
++   where,
++   writeBatch
++ } from 'firebase/firestore'
+  
+  // ⚠️ CAMBIA ESTA CONTRASEÑA por una que solo tú conozcas
+```
+
+**Chunk 2**
+Lines added: 26, lines removed: 26
+
+```diff
+@@ -6,42 +18,42 @@
+  // Datos iniciales de jugadores con sus aliases
+  const initialPlayers = [
+-   { id: 1, name: 'Colombia Pana', aliases: ['Costaman'] },
+-   { id: 2, name: 'G-sus', aliases: ['Manuno'] },
+-   { id: 3, name: 'Jaime', aliases: ['Jotin'] },
+-   { id: 4, name: 'Pana Sida', aliases: ['Pana Mopri'] },
+-   { id: 5, name: 'Javi', aliases: ['Javinho'] },
+-   { id: 6, name: 'Werz', aliases: [] },
+-   { id: 7, name: 'Bob', aliases: [] },
+-   { id: 8, name: 'Luigi', aliases: [] },
+-   { id: 9, name: 'Miguel', aliases: [] },
+-   { id: 10, name: 'Urzola', aliases: [] },
+-   { id: 11, name: 'Yoc', aliases: [] },
+-   { id: 12, name: 'Harry Potter', aliases: [] },
+-   { id: 13, name: 'Manuel', aliases: [] },
+-   { id: 14, name: 'Felao', aliases: [] },
+-   { id: 15, name: 'Ivan', aliases: [] },
+-   { id: 16, name: 'Ketrox', aliases: [] },
+-   { id: 17, name: 'Bohr', aliases: [] },
+-   { id: 18, name: 'Villa', aliases: [] },
+-   { id: 19, name: 'Chechinsito', aliases: [] },
+-   { id: 20, name: 'Werson', aliases: [] },
++   { id: '1', name: 'Colombia Pana', aliases: ['Costaman'] },
++   { id: '2', name: 'G-sus', aliases: ['Manuno'] },
++   { id: '3', name: 'Jaime', aliases: ['Jotin'] },
++   { id: '4', name: 'Pana Sida', aliases: ['Pana Mopri'] },
++   { id: '5', name: 'Javi', aliases: ['Javinho'] },
++   { id: '6', name: 'Werz', aliases: [] },
++   { id: '7', name: 'Bob', aliases: [] },
++   { id: '8', name: 'Luigi', aliases: [] },
++   { id: '9', name: 'Miguel', aliases: [] },
++   { id: '10', name: 'Urzola', aliases: [] },
++   { id: '11', name: 'Yoc', aliases: [] },
++   { id: '12', name: 'Harry Potter', aliases: [] },
++   { id: '13', name: 'Manuel', aliases: [] },
++   { id: '14', name: 'Felao', aliases: [] },
++   { id: '15', name: 'Ivan', aliases: [] },
++   { id: '16', name: 'Ketrox', aliases: [] },
++   { id: '17', name: 'Bohr', aliases: [] },
++   { id: '18', name: 'Villa', aliases: [] },
++   { id: '19', name: 'Chechinsito', aliases: [] },
++   { id: '20', name: 'Werson', aliases: [] },
+  ]
+  
+  // Partidos iniciales basados en los datos proporcionados
+  const initialMatches = [
+    {
+-     id: 1,
++     id: '1',
+      date: '2026-01-08',
+      venue: 'LUKTO',
+-     teamWhite: [2, 7, 11, 5, 19, 20], // G-sus, Bob, Yoc, Javi, Chechinsito, Werson
+-     teamBlack: [1, 15, 16, 4, 17, 18], // Colombia Pana, Ivan, Ketrox, Pana Sida, Bohr, Villa
++     teamWhite: ['2', '7', '11', '5', '19', '20'],
++     teamBlack: ['1', '15', '16', '4', '17', '18'],
+      winner: 'white'
+    },
+    {
+-     id: 2,
++     id: '2',
+      date: '2026-01-15',
+      venue: 'LUKTO - FSB',
+-     teamWhite: [6, 7, 5, 8, 9, 3], // Werz, Bob, Javi, Luigi, Miguel, Jaime
+-     teamBlack: [1, 10, 11, 12, 13, 14], // Colombia Pana, Urzola, Yoc, Harry Potter, Manuel, Felao
++     teamWhite: ['6', '7', '5', '8', '9', '3'],
++     teamBlack: ['1', '10', '11', '12', '13', '14'],
+      winner: 'black'
+    }
+```
+
+**Chunk 3**
+Lines added: 8, lines removed: 8
+
+```diff
+@@ -50,15 +62,15 @@
+  function App() {
+    const [activeTab, setActiveTab] = useState('stats')
+-   const [players, setPlayers] = useState(() =&gt; {
+-     const saved = localStorage.getItem('lukto-players')
+-     return saved ? JSON.parse(saved) : initialPlayers
+-   })
+-   const [matches, setMatches] = useState(() =&gt; {
+-     const saved = localStorage.getItem('lukto-matches')
+-     return saved ? JSON.parse(saved) : initialMatches
+-   })
++   const [players, setPlayers] = useState(initialPlayers)
++   const [matches, setMatches] = useState(initialMatches)
++   const [ratings, setRatings] = useState({})
+    const [showPlayerModal, setShowPlayerModal] = useState(false)
+    const [newPlayerName, setNewPlayerName] = useState('')
+    const [newPlayerAliases, setNewPlayerAliases] = useState('')
++   
++   // Auth state
++   const [user, setUser] = useState(null)
++   const [userPlayer, setUserPlayer] = useState(null)
++   const [showLinkPlayerModal, setShowLinkPlayerModal] = useState(false)
+    
+    // Admin mode
+```
+
+**Chunk 4**
+Lines added: 5, lines removed: undefined
+
+```diff
+@@ -67,4 +79,9 @@
+    const [passwordInput, setPasswordInput] = useState('')
+    const [loginError, setLoginError] = useState('')
++   
++   // Rating modal
++   const [showRatingModal, setShowRatingModal] = useState(false)
++   const [selectedMatch, setSelectedMatch] = useState(null)
++   const [currentRatings, setCurrentRatings] = useState({})
+    
+    // Match form state
+```
+
+**Chunk 5**
+Lines added: 104, lines removed: 7
+
+```diff
+@@ -75,15 +92,112 @@
+    const [winner, setWinner] = useState('')
+  
+-   // Persist to localStorage
++   // Listen to auth state
+    useEffect(() =&gt; {
+-     localStorage.setItem('lukto-players', JSON.stringify(players))
+-   }, [players])
+- 
++     const unsubscribe = onAuthStateChanged(auth, (currentUser) =&gt; {
++       setUser(currentUser)
++       if (currentUser) {
++         // Check if user has linked player
++         const linkedPlayer = localStorage.getItem(&#96;linked-player-${currentUser.uid}&#96;)
++         if (linkedPlayer) {
++           setUserPlayer(linkedPlayer)
++         } else {
++           setShowLinkPlayerModal(true)
++         }
++       } else {
++         setUserPlayer(null)
++       }
++     })
++     return () =&gt; unsubscribe()
++   }, [])
++ 
++   // Load data from Firestore
+    useEffect(() =&gt; {
+-     localStorage.setItem('lukto-matches', JSON.stringify(matches))
+-   }, [matches])
++     // Load players
++     const unsubPlayers = onSnapshot(collection(db, 'players'), (snapshot) =&gt; {
++       if (!snapshot.empty) {
++         const playersData = snapshot.docs.map(doc =&gt; ({ id: doc.id, ...doc.data() }))
++         setPlayers(playersData)
++       } else {
++         // Initialize with default players
++         initializeFirestore()
++       }
++     })
++ 
++     // Load matches
++     const unsubMatches = onSnapshot(collection(db, 'matches'), (snapshot) =&gt; {
++       if (!snapshot.empty) {
++         const matchesData = snapshot.docs.map(doc =&gt; ({ id: doc.id, ...doc.data() }))
++         setMatches(matchesData.sort((a, b) =&gt; new Date(a.date) - new Date(b.date)))
++       }
++     })
++ 
++     // Load ratings
++     const unsubRatings = onSnapshot(collection(db, 'ratings'), (snapshot) =&gt; {
++       const ratingsData = {}
++       snapshot.docs.forEach(doc =&gt; {
++         const data = doc.data()
++         if (!ratingsData[data.ratedPlayerId]) {
++           ratingsData[data.ratedPlayerId] = []
++         }
++         ratingsData[data.ratedPlayerId].push(data)
++       })
++       setRatings(ratingsData)
++     })
++ 
++     return () =&gt; {
++       unsubPlayers()
++       unsubMatches()
++       unsubRatings()
++     }
++   }, [])
++ 
++   const initializeFirestore = async () =&gt; {
++     const batch = writeBatch(db)
++     
++     // Add initial players
++     initialPlayers.forEach(player =&gt; {
++       const playerRef = doc(db, 'players', player.id)
++       batch.set(playerRef, { name: player.name, aliases: player.aliases })
++     })
++     
++     // Add initial matches
++     initialMatches.forEach(match =&gt; {
++       const matchRef = doc(db, 'matches', match.id)
++       batch.set(matchRef, {
++         date: match.date,
++         venue: match.venue,
++         teamWhite: match.teamWhite,
++         teamBlack: match.teamBlack,
++         winner: match.winner
++       })
++     })
++     
++     await batch.commit()
++   }
++ 
++   // Auth functions
++   const handleGoogleLogin = async () =&gt; {
++     try {
++       await signInWithPopup(auth, googleProvider)
++     } catch (error) {
++       console.error('Error signing in:', error)
++     }
++   }
++ 
++   const handleLogout = async () =&gt; {
++     await signOut(auth)
++     setUserPlayer(null)
++   }
++ 
++   const handleLinkPlayer = (playerId) =&gt; {
++     if (user) {
++       localStorage.setItem(&#96;linked-player-${user.uid}&#96;, playerId)
++       setUserPlayer(playerId)
++       setShowLinkPlayerModal(false)
++     }
++   }
+  
+    // Handle admin login
+-   const handleLogin = () =&gt; {
++   const handleAdminLogin = () =&gt; {
+      if (passwordInput === ADMIN_PASSWORD) {
+        setIsAdmin(true)
+```
+
+**Chunk 6**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -96,5 +210,5 @@
+    }
+  
+-   const handleLogout = () =&gt; {
++   const handleAdminLogout = () =&gt; {
+      setIsAdmin(false)
+      setActiveTab('stats')
+```
+
+**Chunk 7**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -111,5 +225,5 @@
+          played: 0,
+          name: player.name,
+-         aliases: player.aliases
++         aliases: player.aliases || []
+        }
+      })
+```
+
+**Chunk 8**
+Lines added: 10, lines removed: 2
+
+```diff
+@@ -138,10 +252,18 @@
+        .filter(([_, s]) =&gt; s.played &gt; 0)
+        .map(([id, s]) =&gt; ({
+-         id: parseInt(id),
++         id,
+          ...s,
+-         winRate: s.played &gt; 0 ? (s.wins / s.played) * 100 : 0
++         winRate: s.played &gt; 0 ? (s.wins / s.played) * 100 : 0,
++         avgRating: calculatePlayerAvgRating(id)
+        }))
+        .sort((a, b) =&gt; b.winRate - a.winRate || b.wins - a.wins)
+    }
++ 
++   const calculatePlayerAvgRating = (playerId) =&gt; {
++     const playerRatings = ratings[playerId]
++     if (!playerRatings || playerRatings.length === 0) return null
++     const sum = playerRatings.reduce((acc, r) =&gt; acc + r.score, 0)
++     return (sum / playerRatings.length).toFixed(1)
++   }
+  
+    const stats = calculateStats()
+```
+
+**Chunk 9**
+Lines added: 6, lines removed: undefined
+
+```diff
+@@ -152,4 +274,10 @@
+      return 'low'
+    }
++ 
++   const getRatingClass = (rating) =&gt; {
++     if (rating &gt;= 8) return 'high'
++     if (rating &gt;= 6) return 'medium'
++     return 'low'
++   }
+  
+    const getInitials = (name) =&gt; {
+```
+
+**Chunk 10**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -178,12 +306,12 @@
+    }
+  
+-   const handleAddMatch = () =&gt; {
++   const handleAddMatch = async () =&gt; {
+      if (!matchDate || teamWhite.length === 0 || teamBlack.length === 0 || !winner) {
+        alert('Por favor completa todos los campos')
+        return
+      }
+  
++     const newMatchId = Date.now().toString()
+      const newMatch = {
+-       id: Date.now(),
+        date: matchDate,
+        venue: matchVenue,
+```
+
+**Chunk 11**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -193,5 +321,6 @@
+      }
+  
+-     setMatches([...matches, newMatch])
++     await setDoc(doc(db, 'matches', newMatchId), newMatch)
++     
+      setMatchDate('')
+      setMatchVenue('LUKTO')
+```
+
+**Chunk 12**
+Lines added: 52, lines removed: 3
+
+```diff
+@@ -202,18 +331,67 @@
+    }
+  
+-   const handleAddPlayer = () =&gt; {
++   const handleAddPlayer = async () =&gt; {
+      if (!newPlayerName.trim()) return
+      
++     const newPlayerId = Date.now().toString()
+      const newPlayer = {
+-       id: Date.now(),
+        name: newPlayerName.trim(),
+        aliases: newPlayerAliases.split(',').map(a =&gt; a.trim()).filter(a =&gt; a)
+      }
+      
+-     setPlayers([...players, newPlayer])
++     await setDoc(doc(db, 'players', newPlayerId), newPlayer)
++     
+      setNewPlayerName('')
+      setNewPlayerAliases('')
+      setShowPlayerModal(false)
+    }
++ 
++   // Rating functions
++   const openRatingModal = (match) =&gt; {
++     if (!userPlayer) {
++       alert('Primero debes vincular tu cuenta con un jugador')
++       return
++     }
++     
++     const allPlayers = [...match.teamWhite, ...match.teamBlack]
++     if (!allPlayers.includes(userPlayer)) {
++       alert('Solo puedes calificar partidos en los que jugaste')
++       return
++     }
++     
++     setSelectedMatch(match)
++     setCurrentRatings({})
++     setShowRatingModal(true)
++   }
++ 
++   const handleRatingChange = (playerId, score) =&gt; {
++     setCurrentRatings({
++       ...currentRatings,
++       [playerId]: score
++     })
++   }
++ 
++   const submitRatings = async () =&gt; {
++     if (!selectedMatch || !userPlayer) return
++     
++     const batch = writeBatch(db)
++     
++     Object.entries(currentRatings).forEach(([playerId, score]) =&gt; {
++       const ratingId = &#96;${userPlayer}_${playerId}_${selectedMatch.id}&#96;
++       const ratingRef = doc(db, 'ratings', ratingId)
++       batch.set(ratingRef, {
++         odedBy: userPlayer,
++         ratedPlayerId: playerId,
++         matchId: selectedMatch.id,
++         score: parseInt(score),
++         timestamp: new Date().toISOString()
++       })
++     })
++     
++     await batch.commit()
++     setShowRatingModal(false)
++     setSelectedMatch(null)
++     setCurrentRatings({})
++   }
+  
+    const formatDate = (dateStr) =&gt; {
+```
+
+**Chunk 13**
+Lines added: 36, lines removed: 3
+
+```diff
+@@ -226,20 +404,53 @@
+      })
+    }
++ 
++   const getPlayersToRate = (match) =&gt; {
++     const allPlayers = [...match.teamWhite, ...match.teamBlack]
++     return allPlayers.filter(id =&gt; id !== userPlayer)
++   }
+  
+    return (
+      &lt;div className="app-container"&gt;
+        &lt;header className="header"&gt;
+          &lt;h1&gt;LUKTO STATS&lt;/h1&gt;
+-         &lt;p className="subtitle"&gt;Win Rate Tracker&lt;/p&gt;
++         &lt;p className="subtitle"&gt;Win Rate &amp; Ratings Tracker&lt;/p&gt;
++         
++         {/* User auth section */}
++         &lt;div className="auth-section"&gt;
++           {user ? (
++             &lt;div className="user-info"&gt;
++               &lt;img src={user.photoURL} alt="" className="user-avatar" /&gt;
++               &lt;span className="user-name"&gt;{user.displayName}&lt;/span&gt;
++               {userPlayer &amp;&amp; (
++                 &lt;span className="linked-player"&gt;
++                   ({getPlayerName(userPlayer)})
++                 &lt;/span&gt;
++               )}
++               &lt;button className="auth-btn logout" onClick={handleLogout}&gt;
++                 Salir
++               &lt;/button&gt;
++             &lt;/div&gt;
++           ) : (
++             &lt;button className="auth-btn google" onClick={handleGoogleLogin}&gt;
++               &lt;svg viewBox="0 0 24 24" width="18" height="18"&gt;
++                 &lt;path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/&gt;
++                 &lt;path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/&gt;
++                 &lt;path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/&gt;
++                 &lt;path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/&gt;
++               &lt;/svg&gt;
++               Entrar con Google
++             &lt;/button&gt;
++           )}
++         &lt;/div&gt;
+          
+          {/* Admin button */}
+          &lt;div className="admin-toggle"&gt;
+            {isAdmin ? (
+-             &lt;button className="admin-btn active" onClick={handleLogout}&gt;
++             &lt;button className="admin-btn active" onClick={handleAdminLogout}&gt;
+                🔓 Modo Admin
+              &lt;/button&gt;
+            ) : (
+              &lt;button className="admin-btn" onClick={() =&gt; setShowLoginModal(true)}&gt;
+-               🔒 Entrar como Admin
++               🔒 Admin
+              &lt;/button&gt;
+            )}
+```
+
+**Chunk 14**
+Lines added: 6, lines removed: undefined
+
+```diff
+@@ -254,4 +465,10 @@
+            📊 Estadísticas
+          &lt;/button&gt;
++         &lt;button 
++           className={&#96;nav-tab ${activeTab === 'ratings' ? 'active' : ''}&#96;}
++           onClick={() =&gt; setActiveTab('ratings')}
++         &gt;
++           ⭐ Calificaciones
++         &lt;/button&gt;
+          &lt;button 
+            className={&#96;nav-tab ${activeTab === 'matches' ? 'active' : ''}&#96;}
+```
+
+**Chunk 15**
+Lines added: 4, lines removed: 3
+
+```diff
+@@ -289,7 +506,8 @@
+                    &lt;th&gt;Win Rate&lt;/th&gt;
+                    &lt;th&gt;&lt;/th&gt;
+-                   &lt;th&gt;Victorias&lt;/th&gt;
+-                   &lt;th&gt;Derrotas&lt;/th&gt;
+-                   &lt;th&gt;Jugados&lt;/th&gt;
++                   &lt;th&gt;V&lt;/th&gt;
++                   &lt;th&gt;D&lt;/th&gt;
++                   &lt;th&gt;PJ&lt;/th&gt;
++                   &lt;th&gt;⭐ Rating&lt;/th&gt;
+                  &lt;/tr&gt;
+                &lt;/thead&gt;
+```
+
+**Chunk 16**
+Lines added: 9, lines removed: undefined
+
+```diff
+@@ -326,4 +544,13 @@
+                      &lt;td&gt;&lt;span className="stat-value losses"&gt;{player.losses}&lt;/span&gt;&lt;/td&gt;
+                      &lt;td&gt;&lt;span className="stat-value"&gt;{player.played}&lt;/span&gt;&lt;/td&gt;
++                     &lt;td&gt;
++                       {player.avgRating ? (
++                         &lt;span className={&#96;rating-value ${getRatingClass(parseFloat(player.avgRating))}&#96;}&gt;
++                           ⭐ {player.avgRating}
++                         &lt;/span&gt;
++                       ) : (
++                         &lt;span className="no-rating"&gt;-&lt;/span&gt;
++                       )}
++                     &lt;/td&gt;
+                    &lt;/tr&gt;
+                  ))}
+```
+
+**Chunk 17**
+Lines added: 44, lines removed: undefined
+
+```diff
+@@ -339,4 +566,48 @@
+          &lt;/section&gt;
+        )}
++ 
++       {activeTab === 'ratings' &amp;&amp; (
++         &lt;section className="stats-section"&gt;
++           &lt;h2 className="section-title"&gt;Ranking por Calificaciones&lt;/h2&gt;
++           &lt;p className="section-subtitle"&gt;
++             {user ? (
++               userPlayer ? 
++                 'Califica a tus compañeros después de cada partido' :
++                 'Vincula tu cuenta con un jugador para calificar'
++             ) : (
++               'Inicia sesión con Google para calificar jugadores'
++             )}
++           &lt;/p&gt;
++           
++           {stats.filter(p =&gt; p.avgRating).length &gt; 0 ? (
++             &lt;div className="ratings-grid"&gt;
++               {stats
++                 .filter(p =&gt; p.avgRating)
++                 .sort((a, b) =&gt; parseFloat(b.avgRating) - parseFloat(a.avgRating))
++                 .map((player, index) =&gt; (
++                   &lt;div key={player.id} className="rating-card"&gt;
++                     &lt;div className="rating-rank"&gt;#{index + 1}&lt;/div&gt;
++                     &lt;div className="player-avatar large"&gt;
++                       {getInitials(player.name)}
++                     &lt;/div&gt;
++                     &lt;h3&gt;{player.name}&lt;/h3&gt;
++                     &lt;div className={&#96;big-rating ${getRatingClass(parseFloat(player.avgRating))}&#96;}&gt;
++                       ⭐ {player.avgRating}
++                     &lt;/div&gt;
++                     &lt;div className="rating-votes"&gt;
++                       {ratings[player.id]?.length || 0} calificaciones
++                     &lt;/div&gt;
++                   &lt;/div&gt;
++                 ))}
++             &lt;/div&gt;
++           ) : (
++             &lt;div className="empty-state"&gt;
++               &lt;div className="icon"&gt;⭐&lt;/div&gt;
++               &lt;h3&gt;Sin calificaciones aún&lt;/h3&gt;
++               &lt;p&gt;Ve a la pestaña de Partidos y califica a tus compañeros&lt;/p&gt;
++             &lt;/div&gt;
++           )}
++         &lt;/section&gt;
++       )}
+  
+        {activeTab === 'matches' &amp;&amp; (
+```
+
+**Chunk 18**
+Lines added: 8, lines removed: undefined
+
+```diff
+@@ -351,4 +622,12 @@
+                      &lt;div className="match-venue"&gt;{match.venue}&lt;/div&gt;
+                    &lt;/div&gt;
++                   {user &amp;&amp; userPlayer &amp;&amp; (
++                     &lt;button 
++                       className="rate-match-btn"
++                       onClick={() =&gt; openRatingModal(match)}
++                     &gt;
++                       ⭐ Calificar
++                     &lt;/button&gt;
++                   )}
+                  &lt;/div&gt;
+                  &lt;div className="match-teams"&gt;
+```
+
+**Chunk 19**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -503,5 +782,5 @@
+                  &lt;div className="player-card-info"&gt;
+                    &lt;h3&gt;{player.name}&lt;/h3&gt;
+-                   {player.aliases.length &gt; 0 &amp;&amp; (
++                   {player.aliases &amp;&amp; player.aliases.length &gt; 0 &amp;&amp; (
+                      &lt;div className="aliases"&gt;
+                        aka: {player.aliases.join(', ')}
+```
+
+**Chunk 20**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -519,5 +798,5 @@
+        )}
+  
+-       {/* Login Modal */}
++       {/* Admin Login Modal */}
+        {showLoginModal &amp;&amp; (
+          &lt;div className="modal-overlay" onClick={() =&gt; setShowLoginModal(false)}&gt;
+```
+
+**Chunk 21**
+Lines added: 77, lines removed: 2
+
+```diff
+@@ -536,16 +815,91 @@
+                    setLoginError('')
+                  }}
+-                 onKeyDown={(e) =&gt; e.key === 'Enter' &amp;&amp; handleLogin()}
++                 onKeyDown={(e) =&gt; e.key === 'Enter' &amp;&amp; handleAdminLogin()}
+                  placeholder="Ingresa la contraseña"
+                  autoFocus
+                /&gt;
+                {loginError &amp;&amp; &lt;p className="error-text"&gt;{loginError}&lt;/p&gt;}
+              &lt;/div&gt;
+-             &lt;button className="submit-btn" onClick={handleLogin}&gt;
++             &lt;button className="submit-btn" onClick={handleAdminLogin}&gt;
+                ENTRAR
+              &lt;/button&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        )}
++ 
++       {/* Link Player Modal */}
++       {showLinkPlayerModal &amp;&amp; user &amp;&amp; (
++         &lt;div className="modal-overlay"&gt;
++           &lt;div className="modal"&gt;
++             &lt;div className="modal-header"&gt;
++               &lt;h2&gt;👤 ¿Quién eres?&lt;/h2&gt;
++             &lt;/div&gt;
++             &lt;p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}&gt;
++               Selecciona tu jugador para poder calificar a los demás
++             &lt;/p&gt;
++             &lt;div className="player-select-list"&gt;
++               {players.map(player =&gt; (
++                 &lt;button
++                   key={player.id}
++                   className="player-select-item"
++                   onClick={() =&gt; handleLinkPlayer(player.id)}
++                 &gt;
++                   &lt;div className="player-avatar small"&gt;
++                     {getInitials(player.name)}
++                   &lt;/div&gt;
++                   {player.name}
++                 &lt;/button&gt;
++               ))}
++             &lt;/div&gt;
++           &lt;/div&gt;
++         &lt;/div&gt;
++       )}
++ 
++       {/* Rating Modal */}
++       {showRatingModal &amp;&amp; selectedMatch &amp;&amp; (
++         &lt;div className="modal-overlay" onClick={() =&gt; setShowRatingModal(false)}&gt;
++           &lt;div className="modal rating-modal" onClick={e =&gt; e.stopPropagation()}&gt;
++             &lt;div className="modal-header"&gt;
++               &lt;h2&gt;⭐ Calificar Jugadores&lt;/h2&gt;
++               &lt;button className="modal-close" onClick={() =&gt; setShowRatingModal(false)}&gt;×&lt;/button&gt;
++             &lt;/div&gt;
++             &lt;p className="modal-subtitle"&gt;
++               {formatDate(selectedMatch.date)} - {selectedMatch.venue}
++             &lt;/p&gt;
++             
++             &lt;div className="rating-list"&gt;
++               {getPlayersToRate(selectedMatch).map(playerId =&gt; (
++                 &lt;div key={playerId} className="rating-item"&gt;
++                   &lt;div className="rating-player"&gt;
++                     &lt;div className="player-avatar small"&gt;
++                       {getInitials(getPlayerName(playerId))}
++                     &lt;/div&gt;
++                     &lt;span&gt;{getPlayerName(playerId)}&lt;/span&gt;
++                   &lt;/div&gt;
++                   &lt;div className="rating-stars"&gt;
++                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(score =&gt; (
++                       &lt;button
++                         key={score}
++                         className={&#96;star-btn ${currentRatings[playerId] &gt;= score ? 'active' : ''}&#96;}
++                         onClick={() =&gt; handleRatingChange(playerId, score)}
++                       &gt;
++                         {score}
++                       &lt;/button&gt;
++                     ))}
++                   &lt;/div&gt;
++                 &lt;/div&gt;
++               ))}
++             &lt;/div&gt;
++             
++             &lt;button 
++               className="submit-btn"
++               onClick={submitRatings}
++               disabled={Object.keys(currentRatings).length === 0}
++             &gt;
++               GUARDAR CALIFICACIONES
++             &lt;/button&gt;
++           &lt;/div&gt;
++         &lt;/div&gt;
++       )}
+  
+        {/* Add Player Modal */}
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito actualizar los estilos CSS para incluir los nuevos elementos: auth section, rating cards, rating modal, etc.</details></think>
+
+---
+
+Ahora actualizo los estilos para los nuevos componentes:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 274, lines removed: undefined
+
+```diff
+@@ -102,4 +102,278 @@
+    margin-top: 0.5rem;
+  }
++ 
++ /* Auth Section */
++ .auth-section {
++   margin-top: 1rem;
++   margin-bottom: 0.5rem;
++ }
++ 
++ .auth-btn {
++   padding: 0.75rem 1.5rem;
++   border: none;
++   border-radius: 2rem;
++   font-family: 'Outfit', sans-serif;
++   font-size: 0.95rem;
++   font-weight: 500;
++   cursor: pointer;
++   transition: all 0.2s ease;
++   display: inline-flex;
++   align-items: center;
++   gap: 0.5rem;
++ }
++ 
++ .auth-btn.google {
++   background: white;
++   color: #333;
++   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
++ }
++ 
++ .auth-btn.google:hover {
++   transform: translateY(-2px);
++   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
++ }
++ 
++ .auth-btn.logout {
++   background: var(--bg-secondary);
++   color: var(--text-secondary);
++   border: 1px solid var(--border-color);
++   padding: 0.5rem 1rem;
++   font-size: 0.85rem;
++ }
++ 
++ .auth-btn.logout:hover {
++   border-color: var(--accent-red);
++   color: var(--accent-red);
++ }
++ 
++ .user-info {
++   display: flex;
++   align-items: center;
++   justify-content: center;
++   gap: 0.75rem;
++   flex-wrap: wrap;
++ }
++ 
++ .user-avatar {
++   width: 32px;
++   height: 32px;
++   border-radius: 50%;
++   border: 2px solid var(--accent-gold);
++ }
++ 
++ .user-name {
++   font-weight: 500;
++   color: var(--text-primary);
++ }
++ 
++ .linked-player {
++   color: var(--accent-gold);
++   font-size: 0.9rem;
++ }
++ 
++ /* Rating Cards */
++ .ratings-grid {
++   display: grid;
++   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
++   gap: 1rem;
++ }
++ 
++ .rating-card {
++   background: var(--bg-secondary);
++   border-radius: 1rem;
++   padding: 1.5rem;
++   text-align: center;
++   border: 1px solid var(--border-color);
++   transition: all 0.2s ease;
++   position: relative;
++ }
++ 
++ .rating-card:hover {
++   transform: translateY(-4px);
++   border-color: var(--accent-gold);
++ }
++ 
++ .rating-rank {
++   position: absolute;
++   top: 0.75rem;
++   left: 0.75rem;
++   font-family: 'Bebas Neue', sans-serif;
++   font-size: 1.25rem;
++   color: var(--text-muted);
++ }
++ 
++ .rating-card:nth-child(1) .rating-rank { color: #ffd700; }
++ .rating-card:nth-child(2) .rating-rank { color: #c0c0c0; }
++ .rating-card:nth-child(3) .rating-rank { color: #cd7f32; }
++ 
++ .player-avatar.large {
++   width: 60px;
++   height: 60px;
++   font-size: 1.25rem;
++   margin: 0 auto 0.75rem;
++ }
++ 
++ .rating-card h3 {
++   font-size: 1rem;
++   font-weight: 600;
++   margin-bottom: 0.5rem;
++ }
++ 
++ .big-rating {
++   font-family: 'Bebas Neue', sans-serif;
++   font-size: 2rem;
++   margin: 0.5rem 0;
++ }
++ 
++ .big-rating.high { color: var(--accent-emerald); }
++ .big-rating.medium { color: var(--accent-gold); }
++ .big-rating.low { color: var(--accent-red); }
++ 
++ .rating-votes {
++   font-size: 0.8rem;
++   color: var(--text-muted);
++ }
++ 
++ .rating-value {
++   font-weight: 600;
++ }
++ 
++ .rating-value.high { color: var(--accent-emerald); }
++ .rating-value.medium { color: var(--accent-gold); }
++ .rating-value.low { color: var(--accent-red); }
++ 
++ .no-rating {
++   color: var(--text-muted);
++ }
++ 
++ /* Rate Match Button */
++ .rate-match-btn {
++   padding: 0.5rem 1rem;
++   background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dim) 100%);
++   border: none;
++   border-radius: 0.5rem;
++   color: var(--bg-primary);
++   font-family: 'Outfit', sans-serif;
++   font-weight: 600;
++   font-size: 0.85rem;
++   cursor: pointer;
++   transition: all 0.2s ease;
++ }
++ 
++ .rate-match-btn:hover {
++   transform: scale(1.05);
++ }
++ 
++ /* Rating Modal */
++ .rating-modal {
++   max-width: 600px;
++   max-height: 80vh;
++   overflow-y: auto;
++ }
++ 
++ .modal-subtitle {
++   color: var(--text-secondary);
++   font-size: 0.9rem;
++   margin-bottom: 1.5rem;
++ }
++ 
++ .rating-list {
++   display: flex;
++   flex-direction: column;
++   gap: 1rem;
++   margin-bottom: 1.5rem;
++ }
++ 
++ .rating-item {
++   display: flex;
++   align-items: center;
++   justify-content: space-between;
++   gap: 1rem;
++   padding: 0.75rem;
++   background: var(--bg-secondary);
++   border-radius: 0.75rem;
++   flex-wrap: wrap;
++ }
++ 
++ .rating-player {
++   display: flex;
++   align-items: center;
++   gap: 0.75rem;
++   min-width: 140px;
++ }
++ 
++ .player-avatar.small {
++   width: 32px;
++   height: 32px;
++   font-size: 0.75rem;
++ }
++ 
++ .rating-stars {
++   display: flex;
++   gap: 0.25rem;
++   flex-wrap: wrap;
++ }
++ 
++ .star-btn {
++   width: 32px;
++   height: 32px;
++   border: 1px solid var(--border-color);
++   border-radius: 0.5rem;
++   background: var(--bg-card);
++   color: var(--text-muted);
++   font-family: 'Outfit', sans-serif;
++   font-size: 0.85rem;
++   font-weight: 600;
++   cursor: pointer;
++   transition: all 0.15s ease;
++ }
++ 
++ .star-btn:hover {
++   border-color: var(--accent-gold);
++   color: var(--accent-gold);
++ }
++ 
++ .star-btn.active {
++   background: var(--accent-gold);
++   border-color: var(--accent-gold);
++   color: var(--bg-primary);
++ }
++ 
++ /* Player Select List (Link Modal) */
++ .player-select-list {
++   display: flex;
++   flex-direction: column;
++   gap: 0.5rem;
++   max-height: 400px;
++   overflow-y: auto;
++ }
++ 
++ .player-select-item {
++   display: flex;
++   align-items: center;
++   gap: 0.75rem;
++   padding: 0.75rem 1rem;
++   background: var(--bg-secondary);
++   border: 1px solid var(--border-color);
++   border-radius: 0.75rem;
++   color: var(--text-primary);
++   font-family: 'Outfit', sans-serif;
++   font-size: 1rem;
++   cursor: pointer;
++   transition: all 0.2s ease;
++   text-align: left;
++ }
++ 
++ .player-select-item:hover {
++   border-color: var(--accent-gold);
++   background: var(--bg-card);
++ }
++ 
++ .section-subtitle {
++   color: var(--text-secondary);
++   font-size: 0.95rem;
++   margin-bottom: 1.5rem;
++   margin-top: -0.5rem;
++ }
+  
+  /* Navigation Tabs */
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito desplegar la nueva versión a Vercel. Pero primero debo hacer commit de los cambios.</details></think>
+
+---
+
+Ahora despliego la nueva versión:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && git add . && git commit -m "Add Firebase auth and rating system"</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && git add . && git commit -m "Add Firebase auth and rating system"
+```
+
+```
+[main 978ef52] Add Firebase auth and rating system
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 21 files changed, 4085 insertions(+), 23790 deletions(-)
+ create mode 100644 .gitignore
+ delete mode 100644 node_modules/.vite/deps/chunk-373CG7ZK.js
+ delete mode 100644 node_modules/.vite/deps/chunk-373CG7ZK.js.map
+ delete mode 100644 node_modules/.vite/deps/chunk-REFQX4J5.js
+ delete mode 100644 node_modules/.vite/deps/chunk-REFQX4J5.js.map
+ create mode 100644 src/firebase.js
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Bien, ahora desplegamos a Vercel.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npx vercel --prod --yes</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npx vercel --prod --yes
+```
+
+```
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/239KB)
+Uploading [=====---------------] (67.5KB/239KB)
+Uploading [===========---------] (131.5KB/239KB)
+Uploading [===============-----] (179.5KB/239KB)
+Uploading [====================] (239.0KB/239KB)
+https://lukto-winrate-webapp-alpwq7oiu-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/EWNd4pNCBoi1gcAUN4Am39x1QtGL [3s]
+Production: https://lukto-winrate-webapp-alpwq7oiu-josefatrixs-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Downloading 15 deployment files...
+Building: Restored build cache from previous deployment (HNLYN1fveDWtxkeBh9oZVWtiFuVz)
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 86 packages in 5s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-alpwq7oiu-josefatrixs-projects.vercel.app [15s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [17s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-alpwq7oiu-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-alpwq7oiu-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+La nueva versión está desplegada. Pero hay un paso importante que olvidé: necesito agregar el dominio de Vercel a los dominios autorizados en Firebase para que el login con Google funcione.
+
+Voy a indicarle al usuario que necesita hacer este paso.</details></think>
+
+---
+
+<tool-use data-tool-type="task" data-tool-name="todo_write">
+<details><summary>Tool use: **todo_write** • Todo List</summary>
+
+- [x] Instalar Firebase y configurar proyecto
+- [x] Implementar autenticación con Google
+- [x] Crear sistema de calificaciones en Firestore
+- [x] Agregar UI para calificar jugadores
+- [x] Mostrar promedios de calificaciones
+- [x] Desplegar nueva versión
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+La versión está desplegada pero el usuario necesita hacer un paso más para que el login con Google funcione: agregar el dominio de Vercel a Firebase.</details></think>
+
+---
+
+## 🎉 ¡Listo! Nueva versión desplegada
+
+### **https://luktowinrate.vercel.app**
+
+---
+
+## ⚠️ Un paso más para que funcione el login:
+
+Ve a **Firebase Console** → **Authentication** → **Settings** → **Authorized domains**
+
+Y agrega estos dominios:
+- `luktowinrate.vercel.app`
+- `lukto-winrate-webapp.vercel.app`
+
+(Haz clic en "Add domain" y agrégalos)
+
+---
+
+## Cómo funciona ahora:
+
+### Para los jugadores:
+1. **Entrar con Google** → Clic en "Entrar con Google"
+2. **Seleccionar su jugador** → "¿Quién eres?" (solo la primera vez)
+3. **Ver partidos** → Pestaña "⚽ Partidos"
+4. **Calificar** → Clic en "⭐ Calificar" en cada partido
+5. **Dar puntuación (1-10)** a cada compañero del partido
+
+### Nuevo en la app:
+| Pestaña | Descripción |
+|---------|-------------|
+| 📊 **Estadísticas** | Win rate + rating promedio de cada jugador |
+| ⭐ **Calificaciones** | Ranking por calificación promedio |
+| ⚽ **Partidos** | Historial + botón para calificar |
+
+---
+
+## Flujo:
+```
+Jugador entra → Login Google → Elige su jugador → 
+Ve partidos → Califica (1-10) → Se calcula promedio
+```
+
+¡Avísame cuando agregues los dominios en Firebase y lo probamos! 🚀
 
 ---
 
