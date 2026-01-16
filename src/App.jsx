@@ -91,6 +91,7 @@ function App() {
   const [teamWhite, setTeamWhite] = useState([])
   const [teamBlack, setTeamBlack] = useState([])
   const [winner, setWinner] = useState('')
+  const [editingMatchId, setEditingMatchId] = useState(null)
 
   // Listen to auth state
   useEffect(() => {
@@ -326,8 +327,7 @@ function App() {
       return
     }
 
-    const newMatchId = Date.now().toString()
-    const newMatch = {
+    const matchData = {
       date: matchDate,
       venue: matchVenue,
       teamWhite: [...teamWhite],
@@ -335,14 +335,47 @@ function App() {
       winner
     }
 
-    await setDoc(doc(db, 'matches', newMatchId), newMatch)
+    if (editingMatchId) {
+      // Update existing match
+      await updateDoc(doc(db, 'matches', editingMatchId), matchData)
+    } else {
+      // Create new match
+      const newMatchId = Date.now().toString()
+      await setDoc(doc(db, 'matches', newMatchId), matchData)
+    }
     
+    resetMatchForm()
+    setActiveTab('matches')
+  }
+
+  const resetMatchForm = () => {
     setMatchDate('')
     setMatchVenue('LUKTO')
     setTeamWhite([])
     setTeamBlack([])
     setWinner('')
-    setActiveTab('stats')
+    setEditingMatchId(null)
+  }
+
+  const openEditMatch = (match) => {
+    setMatchDate(match.date)
+    setMatchVenue(match.venue)
+    setTeamWhite([...match.teamWhite])
+    setTeamBlack([...match.teamBlack])
+    setWinner(match.winner)
+    setEditingMatchId(match.id)
+    setActiveTab('new')
+  }
+
+  const handleDeleteMatch = async (matchId) => {
+    if (!confirm('¿Estás seguro de eliminar este partido? Esta acción no se puede deshacer.')) return
+    
+    try {
+      await deleteDoc(doc(db, 'matches', matchId))
+    } catch (error) {
+      console.error('Error deleting match:', error)
+      alert('Error al eliminar partido')
+    }
   }
 
   const handleAddPlayer = async () => {
@@ -701,14 +734,32 @@ function App() {
                     <div className="match-date">{formatDate(match.date)}</div>
                     <div className="match-venue">{match.venue}</div>
                   </div>
-                  {user && userPlayer && (
-                    <button 
-                      className="rate-match-btn"
-                      onClick={() => openRatingModal(match)}
-                    >
-                      ⭐ Calificar
-                    </button>
-                  )}
+                  <div className="match-actions">
+                    {user && userPlayer && (
+                      <button 
+                        className="rate-match-btn"
+                        onClick={() => openRatingModal(match)}
+                      >
+                        ⭐ Calificar
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <>
+                        <button 
+                          className="edit-match-btn"
+                          onClick={() => openEditMatch(match)}
+                        >
+                          ✏️ Editar
+                        </button>
+                        <button 
+                          className="delete-match-btn"
+                          onClick={() => handleDeleteMatch(match.id)}
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div className="match-teams">
                   <div className={`match-team ${match.winner === 'white' ? 'winner' : ''}`}>
@@ -755,7 +806,9 @@ function App() {
 
       {activeTab === 'new' && isAdmin && (
         <section className="stats-section">
-          <h2 className="section-title">Registrar Nuevo Partido</h2>
+          <h2 className="section-title">
+            {editingMatchId ? 'Editar Partido' : 'Registrar Nuevo Partido'}
+          </h2>
           <div className="match-form">
             <div className="form-row">
               <div className="form-group">
@@ -839,13 +892,23 @@ function App() {
               </div>
             </div>
 
-            <button 
-              className="submit-btn"
-              onClick={handleAddMatch}
-              disabled={!matchDate || teamWhite.length === 0 || teamBlack.length === 0 || !winner}
-            >
-              GUARDAR PARTIDO
-            </button>
+            <div className="form-buttons">
+              {editingMatchId && (
+                <button 
+                  className="cancel-btn"
+                  onClick={resetMatchForm}
+                >
+                  CANCELAR
+                </button>
+              )}
+              <button 
+                className="submit-btn"
+                onClick={handleAddMatch}
+                disabled={!matchDate || teamWhite.length === 0 || teamBlack.length === 0 || !winner}
+              >
+                {editingMatchId ? 'ACTUALIZAR PARTIDO' : 'GUARDAR PARTIDO'}
+              </button>
+            </div>
           </div>
         </section>
       )}

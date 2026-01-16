@@ -6655,7 +6655,24 @@ Necesito agregar la función deleteDoc de Firestore y crear una función para el
 
 <details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
 
-Status: **loading**
+**Chunk 1**
+Lines added: 3, lines removed: 1
+
+```diff
+@@ -6,9 +6,11 @@
+    doc, 
+    setDoc, 
++   deleteDoc,
+    getDocs, 
+    onSnapshot,
+    query,
+    where,
+-   writeBatch
++   writeBatch,
++   updateDoc
+  } from 'firebase/firestore'
+  
+```
 
 </details>
 
@@ -6663,7 +6680,443 @@ Status: **loading**
 
 ---
 
+<think><details><summary>Thought Process</summary>
+Ahora necesito agregar la función para eliminar jugadores y también para editar jugadores (agregar aliases). Voy a buscar donde está la función handleAddPlayer para agregar las nuevas funciones cerca de ella.</details></think>
 
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const handleAddPlayer" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const handleAddPlayer = async () => \{` | L348 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora agrego las funciones para eliminar y editar jugadores después de handleAddPlayer.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 23, lines removed: undefined
+
+```diff
+@@ -361,4 +361,27 @@
+      setShowPlayerModal(false)
+    }
++ 
++   const handleDeletePlayer = async (playerId, playerName) =&gt; {
++     if (!confirm(&#96;¿Estás seguro de eliminar a "${playerName}"? Esta acción no se puede deshacer.&#96;)) return
++     
++     try {
++       await deleteDoc(doc(db, 'players', playerId))
++     } catch (error) {
++       console.error('Error deleting player:', error)
++       alert('Error al eliminar jugador')
++     }
++   }
++ 
++   const handleEditPlayer = async (playerId, newName, newAliases) =&gt; {
++     try {
++       await updateDoc(doc(db, 'players', playerId), {
++         name: newName,
++         aliases: newAliases
++       })
++     } catch (error) {
++       console.error('Error updating player:', error)
++       alert('Error al actualizar jugador')
++     }
++   }
+  
+    // Rating functions
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora necesito modificar la UI para mostrar botones de eliminar y editar en cada tarjeta de jugador. Busco la sección de jugadores.</details></think>
+
+---
+
+Ahora agrego los botones en la lista de jugadores:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "activeTab === 'players' && isAdmin" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `\{activeTab === 'players' && isAdmin && (` | L853 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Voy a modificar la tarjeta de jugador para agregar un botón de eliminar.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 10, lines removed: undefined
+
+```diff
+@@ -868,4 +868,14 @@
+                    )}
+                  &lt;/div&gt;
++                 &lt;button 
++                   className="delete-player-btn"
++                   onClick={(e) =&gt; {
++                     e.stopPropagation()
++                     handleDeletePlayer(player.id, player.name)
++                   }}
++                   title="Eliminar jugador"
++                 &gt;
++                   🗑️
++                 &lt;/button&gt;
+                &lt;/div&gt;
+              ))}
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora agrego los estilos CSS para el botón de eliminar jugador.</details></think>
+
+---
+
+Ahora agrego los estilos:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 34, lines removed: undefined
+
+```diff
+@@ -403,4 +403,38 @@
+    color: white;
+  }
++ 
++ /* Delete Player Button */
++ .player-card {
++   position: relative;
++ }
++ 
++ .delete-player-btn {
++   position: absolute;
++   top: 0.5rem;
++   right: 0.5rem;
++   width: 28px;
++   height: 28px;
++   border: none;
++   border-radius: 50%;
++   background: var(--bg-primary);
++   color: var(--text-muted);
++   font-size: 0.9rem;
++   cursor: pointer;
++   opacity: 0;
++   transition: all 0.2s ease;
++   display: flex;
++   align-items: center;
++   justify-content: center;
++ }
++ 
++ .player-card:hover .delete-player-btn {
++   opacity: 1;
++ }
++ 
++ .delete-player-btn:hover {
++   background: var(--accent-red);
++   color: white;
++   transform: scale(1.1);
++ }
+  
+  /* Navigation Tabs */
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora despliego los cambios.</details></think>
+
+---
+
+Ahora despliego:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && git add . && git commit -m "Add delete player functionality" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && git add . && git commit -m "Add delete player functionality" && npx vercel --prod --yes --force
+```
+
+```
+[main 48b4977] Add delete player functionality
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 3 files changed, 390 insertions(+), 1 deletion(-)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-stats-app
+Uploading [--------------------] (0.0B/258.7KB)
+Uploading [=====---------------] (70.7KB/258.7KB)
+Uploading [==========----------] (134.7KB/258.7KB)
+Uploading [===============-----] (198.7KB/258.7KB)
+Uploading [====================] (258.7KB/258.7KB)
+https://lukto-stats-2mkzorgpm-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-stats-app/6MYMWg8Zse7PXxU6nmXPgwuhAwwh [3s]
+Production: https://lukto-stats-2mkzorgpm-josefatrixs-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 48 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                   0.75 kB │ gzip:   0.43 kB
+Building: dist/assets/index-D9aNUdCw.css   16.44 kB │ gzip:   3.34 kB
+Building: dist/assets/index-Br7Gm3bA.js   619.94 kB │ gzip: 160.27 kB
+Building: ✓ built in 2.70s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [9s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-stats-2mkzorgpm-josefatrixs-projects.vercel.app [18s]
+Completing...
+Aliased: https://lukto-stats-app.vercel.app [18s]
+
+Common next commands:
+- &#96;vercel inspect lukto-stats-2mkzorgpm-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-stats-2mkzorgpm-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+La funcionalidad está desplegada. Ahora el usuario puede eliminar jugadores directamente desde la app.</details></think>
+
+---
+
+## ✅ ¡Listo! Ya puedes eliminar jugadores desde la app
+
+Abre **https://lukto-stats-app.vercel.app**:
+
+1. Entra como **Admin** (contraseña: `lukto2026`)
+2. Ve a la pestaña **👥 Jugadores**
+3. Pasa el mouse sobre el jugador que quieres eliminar
+4. Aparecerá un botón **🗑️** en la esquina superior derecha
+5. Haz clic y confirma
+
+---
+
+### Para eliminar a Werson:
+1. Ve a **👥 Jugadores**
+2. Busca la tarjeta de **"Werson"**
+3. Clic en **🗑️** → Confirmar
+
+Ahora podrás gestionar los jugadores duplicados fácilmente 🎯
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+no se esta actualizando la pagina con los cambios
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+El usuario dice que la página no se está actualizando con los cambios. Probablemente es un problema de caché de nuevo. Voy a intentar desplegar directamente a la URL del deployment más reciente para verificar, o probar otra estrategia.
+
+Déjame verificar si puedo forzar una actualización de manera diferente.</details></think>
+
+---
+
+Vamos a forzar la actualización. Prueba la URL directa del último deploy:
+
+**https://lukto-stats-2mkzorgpm-josefatrixs-projects.vercel.app**
+
+---
+
+Si aún no funciona, hagamos un hard reload del proyecto:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && rm -rf dist node_modules/.vite && npm run build && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && rm -rf dist node_modules/.vite && npm run build && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 48 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.75 kB │ gzip:   0.43 kB
+dist/assets/index-D9aNUdCw.css   16.44 kB │ gzip:   3.33 kB
+dist/assets/index-Br7Gm3bA.js   619.94 kB │ gzip: 159.71 kB
+✓ built in 651ms
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-stats-app
+Uploading [--------------------] (0.0B/622.3KB)
+Uploading [=====---------------] (160.8KB/622.3KB)
+Uploading [==========----------] (320.8KB/622.3KB)
+Uploading [===============-----] (480.8KB/622.3KB)
+Uploading [====================] (622.3KB/622.3KB)
+https://lukto-stats-ioy7fb1ip-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-stats-app/DbDukg4qggkrnEhdGoDxcMxaihLm [4s]
+Production: https://lukto-stats-ioy7fb1ip-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 48 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                   0.75 kB │ gzip:   0.43 kB
+Building: dist/assets/index-D9aNUdCw.css   16.44 kB │ gzip:   3.34 kB
+Building: dist/assets/index-Br7Gm3bA.js   619.94 kB │ gzip: 160.27 kB
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: ✓ built in 2.57s
+Building: Build Completed in /vercel/output [10s]
+Building: Deploying outputs...
+Building: Deployment completed
+Building: Creating build cache...
+[2K[1A[2K[GProduction: https://lukto-stats-ioy7fb1ip-josefatrixs-projects.vercel.app [25s]
+Completing...
+Aliased: https://lukto-stats-app.vercel.app [25s]
+
+Common next commands:
+- &#96;vercel inspect lukto-stats-ioy7fb1ip-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-stats-ioy7fb1ip-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Hice un rebuild completo y redeploy forzado. Ahora el usuario debe probar la URL directa del deployment para evitar problemas de caché.</details></think>
+
+---
+
+Prueba esta URL directa (sin caché):
+
+## **https://lukto-stats-ioy7fb1ip-josefatrixs-projects.vercel.app**
+
+---
+
+O en **modo incógnito** abre:
+## **https://lukto-stats-app.vercel.app**
+
+---
+
+En la pestaña de **Jugadores**, deberías ver un icono de **🗑️** cuando pasas el mouse sobre cada jugador.
+
+¿Aparece ahora? Si no, dime qué ves en la página.
 
 ---
 
