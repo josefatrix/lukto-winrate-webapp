@@ -73,8 +73,21 @@ body {
 /* Header */
 .header {
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
   margin-bottom: 1rem;
+}
+
+.app-logo {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 4px 20px rgba(16, 185, 129, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.app-logo:hover {
+  transform: scale(1.05);
 }
 
 .header h1 {

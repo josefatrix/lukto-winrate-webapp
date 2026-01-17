@@ -1169,7 +1169,7 @@ function App() {
             {darkMode ? '☀️' : '🌙'}
           </button>
         </div>
-        <h1>LUKTO STATS</h1>
+        <img src="/lukto-logo.png" alt="LUKTO" className="app-logo" />
         <p className="subtitle">Win Rate & Ratings Tracker</p>
         
         {/* User auth section */}
