@@ -827,7 +827,7 @@ function App() {
         />
       )}
 
-      {/* Analytics Tab - Simplified placeholder */}
+      {/* Analytics Tab */}
       {activeTab === 'analytics' && (
         <section className="stats-section analytics-section">
           <h2 className="section-title">Análisis Avanzado</h2>
@@ -846,6 +846,7 @@ function App() {
               ))}
             </select>
           </div>
+
           {!h2hPlayer1 && (
             <div className="empty-state">
               <div className="icon">📊</div>
@@ -853,6 +854,160 @@ function App() {
               <p>Elige un jugador para ver su análisis detallado</p>
             </div>
           )}
+
+          {h2hPlayer1 && (() => {
+            const playerData = stats.find(s => s.id === h2hPlayer1)
+            const playerRatings = ratings[h2hPlayer1] || []
+            const xp = calculateXP(h2hPlayer1)
+            const rank = getRank(xp)
+            
+            // Calculate performance by match
+            const matchPerformance = matches
+              .filter(m => m.teamWhite?.includes(h2hPlayer1) || m.teamBlack?.includes(h2hPlayer1))
+              .map(m => {
+                const matchRatings = playerRatings.filter(r => r.matchId === m.id)
+                const avgScore = matchRatings.length > 0 
+                  ? matchRatings.reduce((sum, r) => sum + r.score, 0) / matchRatings.length 
+                  : 0
+                const inWhite = m.teamWhite?.includes(h2hPlayer1)
+                const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
+                return {
+                  date: m.date,
+                  avgScore: avgScore.toFixed(1),
+                  won,
+                  venue: m.venue
+                }
+              })
+              .sort((a, b) => new Date(a.date) - new Date(b.date))
+
+            // Best/Worst teammates
+            const teammateStats = {}
+            matches.forEach(m => {
+              const inWhite = m.teamWhite?.includes(h2hPlayer1)
+              const inBlack = m.teamBlack?.includes(h2hPlayer1)
+              if (!inWhite && !inBlack) return
+              
+              const team = inWhite ? m.teamWhite : m.teamBlack
+              const won = (inWhite && m.winner === 'white') || (inBlack && m.winner === 'black')
+              
+              team?.forEach(tid => {
+                if (tid === h2hPlayer1) return
+                if (!teammateStats[tid]) teammateStats[tid] = { wins: 0, games: 0 }
+                teammateStats[tid].games++
+                if (won) teammateStats[tid].wins++
+              })
+            })
+
+            const teammateRankings = Object.entries(teammateStats)
+              .filter(([_, s]) => s.games >= 2)
+              .map(([id, s]) => ({
+                id,
+                name: getPlayerName(id),
+                winRate: ((s.wins / s.games) * 100).toFixed(0),
+                games: s.games
+              }))
+              .sort((a, b) => b.winRate - a.winRate)
+
+            const bestTeammate = teammateRankings[0]
+            const worstTeammate = teammateRankings[teammateRankings.length - 1]
+
+            return (
+              <div className="analytics-content">
+                {/* Player Summary Card */}
+                <div className="analytics-summary-card">
+                  <div className="asc-header">
+                    {getPlayerPhoto(h2hPlayer1) ? (
+                      <img src={getPlayerPhoto(h2hPlayer1)} alt="" className="asc-avatar" />
+                    ) : (
+                      <div className="asc-avatar-placeholder">{getInitials(getPlayerName(h2hPlayer1))}</div>
+                    )}
+                    <div className="asc-info">
+                      <h3>{getPlayerName(h2hPlayer1)}</h3>
+                      <div className="asc-rank" style={{ color: rank?.color || '#CD7F32' }}>
+                        {getRankIcon(rank?.key || 'bronce', 18)} {rank?.name || 'Bronce'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="asc-stats">
+                    <div className="asc-stat">
+                      <span className="asc-stat-value">{playerData?.winRate?.toFixed(0) || 0}%</span>
+                      <span className="asc-stat-label">Win Rate</span>
+                    </div>
+                    <div className="asc-stat">
+                      <span className="asc-stat-value">{playerData?.avgRating?.toFixed(1) || '-'}</span>
+                      <span className="asc-stat-label">Rating</span>
+                    </div>
+                    <div className="asc-stat">
+                      <span className="asc-stat-value">{playerData?.mvps || 0}</span>
+                      <span className="asc-stat-label">MVPs</span>
+                    </div>
+                    <div className="asc-stat">
+                      <span className="asc-stat-value">{xp}</span>
+                      <span className="asc-stat-label">XP</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Teammate Analysis */}
+                {(bestTeammate || worstTeammate) && (
+                  <div className="analytics-teammates">
+                    <h4 className="analytics-subtitle">Compañeros de Equipo</h4>
+                    <div className="teammates-grid">
+                      {bestTeammate && (
+                        <div className="teammate-card best">
+                          <span className="tc-label">Mejor Compañero</span>
+                          <span className="tc-name">{bestTeammate.name}</span>
+                          <span className="tc-stat">{bestTeammate.winRate}% WR ({bestTeammate.games} juegos)</span>
+                        </div>
+                      )}
+                      {worstTeammate && worstTeammate.id !== bestTeammate?.id && (
+                        <div className="teammate-card worst">
+                          <span className="tc-label">Peor Compañero</span>
+                          <span className="tc-name">{worstTeammate.name}</span>
+                          <span className="tc-stat">{worstTeammate.winRate}% WR ({worstTeammate.games} juegos)</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Match History */}
+                <div className="analytics-history">
+                  <h4 className="analytics-subtitle">Historial de Partidos</h4>
+                  <div className="match-history-list">
+                    {matchPerformance.length > 0 ? (
+                      matchPerformance.slice(-10).reverse().map((m, idx) => (
+                        <div key={idx} className={`match-history-item ${m.won ? 'win' : 'loss'}`}>
+                          <div className="mhi-left">
+                            <span className={`mhi-result ${m.won ? 'win' : 'loss'}`}>
+                              {m.won ? 'V' : 'D'}
+                            </span>
+                            <div className="mhi-info">
+                              <span className="mhi-date">
+                                {new Date(m.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                              </span>
+                              <span className="mhi-venue">{m.venue}</span>
+                            </div>
+                          </div>
+                          <div className="mhi-rating">
+                            {m.avgScore > 0 ? (
+                              <span className={`rating-badge ${getRatingClass(parseFloat(m.avgScore))}`}>
+                                {m.avgScore}
+                              </span>
+                            ) : (
+                              <span className="no-rating">-</span>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="no-data-text">Sin partidos registrados</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
         </section>
       )}
 
