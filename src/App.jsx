@@ -1695,6 +1695,13 @@ function App() {
   }
 
   const handleRatingChange = (playerId, score) => {
+    // Warning for very low ratings
+    if (score <= 3) {
+      if (!confirm('¿Enserio tan bajo? Solo coloca esa nota si se lo merece de verdad')) {
+        return // Don't change if user cancels
+      }
+    }
+    
     setCurrentRatings({
       ...currentRatings,
       [playerId]: score
