@@ -227,13 +227,20 @@ function App() {
       setUserLinks(links)
       setPendingUsers(pending)
       
-      // Check if current user is linked
-      if (user && links[user.uid]) {
-        setUserPlayer(links[user.uid].playerId)
-      } else if (user) {
-        setUserPlayer(null)
-        // Register as pending if not already
-        registerPendingUser()
+      // Check if current user is linked - this updates in real-time when admin links them
+      if (user) {
+        const currentUserLink = links[user.uid]
+        if (currentUserLink && currentUserLink.playerId) {
+          // User has been linked by admin - update immediately
+          setUserPlayer(currentUserLink.playerId)
+        } else {
+          setUserPlayer(null)
+          // Register as pending if not already in the pending list
+          const isAlreadyPending = pending.some(p => p.odedBy === user.uid)
+          if (!isAlreadyPending) {
+            registerPendingUser()
+          }
+        }
       }
     }, (error) => {
       console.error('Error loading user links:', error)
