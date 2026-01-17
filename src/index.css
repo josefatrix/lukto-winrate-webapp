@@ -279,44 +279,67 @@ body {
   letter-spacing: 0.05em;
 }
 
+/* Rank badges in header */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rank-badge svg {
+  flex-shrink: 0;
+}
+
 .rank-badge.rank-bronce {
   background: linear-gradient(135deg, #cd7f32, #a0522d);
   color: #fff;
-  border: 1px solid #cd7f32;
-  box-shadow: 0 2px 8px rgba(205, 127, 50, 0.3);
 }
 
 .rank-badge.rank-plata {
   background: linear-gradient(135deg, #e8e8e8, #b0b0b0);
   color: #1a1a1a;
-  border: 1px solid #c0c0c0;
-  box-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
 }
 
 .rank-badge.rank-oro {
   background: linear-gradient(135deg, #ffd700, #daa520);
   color: #1a1a1a;
-  border: 1px solid #ffd700;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+}
+
+.rank-badge.rank-platino {
+  background: linear-gradient(135deg, #22d3ee, #0891b2);
+  color: #fff;
 }
 
 .rank-badge.rank-diamante {
-  background: linear-gradient(135deg, #e0f7ff, #87ceeb);
-  color: #0369a1;
-  border: 1px solid #87ceeb;
-  box-shadow: 0 2px 8px rgba(135, 206, 235, 0.4);
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  color: #fff;
 }
 
-/* Rank icons in header profile card */
-.rank-badge {
-  display: inline-flex;
+.rank-badge.rank-maestro {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  color: #fff;
+}
+
+.rank-badge.rank-leyenda {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+  color: #fff;
+}
+
+/* Rank icon in table cells */
+.rank-icon-cell {
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
 }
 
-.rank-badge svg {
-  width: 12px;
-  height: 12px;
+.rank-icon-cell svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
 .profile-card-right {

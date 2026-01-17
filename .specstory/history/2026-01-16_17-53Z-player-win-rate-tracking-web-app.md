@@ -48144,26 +48144,652 @@ Ahora mejoro los badges de rango con iconos SVG:
 
 <details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
 
+**Chunk 1**
+Lines added: 25, lines removed: 5
+
+```diff
+@@ -281,21 +281,41 @@
+  
+  .rank-badge.rank-bronce {
+-   background: linear-gradient(135deg, #cd7f32, #8b4513);
++   background: linear-gradient(135deg, #cd7f32, #a0522d);
+    color: #fff;
++   border: 1px solid #cd7f32;
++   box-shadow: 0 2px 8px rgba(205, 127, 50, 0.3);
+  }
+  
+  .rank-badge.rank-plata {
+-   background: linear-gradient(135deg, #c0c0c0, #808080);
++   background: linear-gradient(135deg, #e8e8e8, #b0b0b0);
+    color: #1a1a1a;
++   border: 1px solid #c0c0c0;
++   box-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
+  }
+  
+  .rank-badge.rank-oro {
+-   background: linear-gradient(135deg, #ffd700, #f59e0b);
++   background: linear-gradient(135deg, #ffd700, #daa520);
+    color: #1a1a1a;
++   border: 1px solid #ffd700;
++   box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+  }
+  
+  .rank-badge.rank-diamante {
+-   background: linear-gradient(135deg, #b9f2ff, #00d4ff);
+-   color: #1a1a1a;
++   background: linear-gradient(135deg, #e0f7ff, #87ceeb);
++   color: #0369a1;
++   border: 1px solid #87ceeb;
++   box-shadow: 0 2px 8px rgba(135, 206, 235, 0.4);
++ }
++ 
++ /* Rank icons in header profile card */
++ .rank-badge {
++   display: inline-flex;
++   align-items: center;
++   gap: 0.25rem;
++ }
++ 
++ .rank-badge svg {
++   width: 12px;
++   height: 12px;
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the JSX where the rank badge is rendered to include an SVG icon. Let me find that part.</details></think>
+
+---
+
+Ahora agrego iconos SVG a los badges de rango en el código:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "rank-badge rank-" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `<span className=\{`rank-badge rank-$\{playerStats.rank?.toLowerCase()\}`\}>` | L1675 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me also find where the rank badge is used in the stats table so I can add icons there too.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "rank-cell|Rango" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 5 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `if (rank.tier >= 1) achievements.push(\{ iconKey: 'bronze', name: 'Rango Bronce', desc: 'Alcanzaste 50 puntos de experiencia', color: '#cd7f32' \})` | L1135 |
+| `src/App.jsx` | `if (rank.tier >= 2) achievements.push(\{ iconKey: 'silver', name: 'Rango Plata', desc: 'Alcanzaste 150 puntos de experiencia', color: '#c0c0c0' \})` | L1136 |
+| `src/App.jsx` | `if (rank.tier >= 3) achievements.push(\{ iconKey: 'gold', name: 'Rango Oro', desc: 'Alcanzaste 300 puntos de experiencia', color: '#ffd700' \})` | L1137 |
+| `src/App.jsx` | `if (rank.tier >= 4) achievements.push(\{ iconKey: 'diamond', name: 'Rango Diamante', desc: 'Alcanzaste 500 puntos de experiencia', color: '#00d4ff' \})` | L1138 |
+| `src/App.jsx` | `<th>Rango</th>` | L1890 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me find the rank cell in the stats table to add the SVG icon.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see that the rank badge is using `rank.icon` from the `getRank` function. Let me find that function and update it to return SVG icons.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const getRank = " in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const getRank = (xp) => \{` | L814 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to update the getRank function to return SVG icons instead of emojis.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 35, lines removed: 5
+
+```diff
+@@ -812,10 +812,40 @@
+  
+    // Get rank based on XP
++   // Rank icons as SVG
++   const rankIcons = {
++     diamond: (
++       &lt;svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"&gt;
++         &lt;path d="M19 3H5L2 9l10 12L22 9l-3-6zM12 17.3L5 9h14l-7 8.3z"/&gt;
++       &lt;/svg&gt;
++     ),
++     gold: (
++       &lt;svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"&gt;
++         &lt;path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/&gt;
++       &lt;/svg&gt;
++     ),
++     silver: (
++       &lt;svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"&gt;
++         &lt;path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/&gt;
++       &lt;/svg&gt;
++     ),
++     bronze: (
++       &lt;svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"&gt;
++         &lt;circle cx="12" cy="12" r="10"/&gt;
++         &lt;text x="12" y="16" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#fff"&gt;3&lt;/text&gt;
++       &lt;/svg&gt;
++     ),
++     none: (
++       &lt;svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"&gt;
++         &lt;circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2"/&gt;
++       &lt;/svg&gt;
++     )
++   }
++ 
+    const getRank = (xp) =&gt; {
+-     if (xp &gt;= 500) return { name: 'Diamante', icon: '💎', color: '#b9f2ff', tier: 4 }
+-     if (xp &gt;= 300) return { name: 'Oro', icon: '🥇', color: '#ffd700', tier: 3 }
+-     if (xp &gt;= 150) return { name: 'Plata', icon: '🥈', color: '#c0c0c0', tier: 2 }
+-     if (xp &gt;= 50) return { name: 'Bronce', icon: '🥉', color: '#cd7f32', tier: 1 }
+-     return { name: 'Sin rango', icon: '⚪', color: '#666', tier: 0 }
++     if (xp &gt;= 500) return { name: 'Diamante', icon: rankIcons.diamond, color: '#00d4ff', tier: 4 }
++     if (xp &gt;= 300) return { name: 'Oro', icon: rankIcons.gold, color: '#ffd700', tier: 3 }
++     if (xp &gt;= 150) return { name: 'Plata', icon: rankIcons.silver, color: '#c0c0c0', tier: 2 }
++     if (xp &gt;= 50) return { name: 'Bronce', icon: rankIcons.bronze, color: '#cd7f32', tier: 1 }
++     return { name: 'Sin rango', icon: rankIcons.none, color: '#666', tier: 0 }
+    }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the header rank badge to also use the SVG icon.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 6, lines removed: 4
+
+```diff
+@@ -1700,9 +1700,11 @@
+                      &lt;span className="player-badge"&gt;{getPlayerName(userPlayer)}&lt;/span&gt;
+                      {(() =&gt; {
+-                       const playerStats = stats.find(s =&gt; s.id === userPlayer)
+-                       if (playerStats) {
++                       const xp = calculateXP(userPlayer)
++                       const rank = getRank(xp)
++                       if (rank.tier &gt; 0) {
+                          return (
+-                           &lt;span className={&#96;rank-badge rank-${playerStats.rank?.toLowerCase()}&#96;}&gt;
+-                             {playerStats.rank}
++                           &lt;span className={&#96;rank-badge rank-${rank.name?.toLowerCase()}&#96;}&gt;
++                             {rank.icon}
++                             {rank.name}
+                            &lt;/span&gt;
+                          )
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me check for lint errors and build.</details></think>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx`
+
+Lint results
+
+Lint errors for `src/App.jsx`
+
+
+| Message | Range | Severity |
+|-------|-------|----------|
+| 'showH2HModal' is declared but its value is never read. | 139:10-139:22 | DIAGNOSTIC_SEVERITY_HINT |
+| 'setShowH2HModal' is declared but its value is never read. | 139:24-139:39 | DIAGNOSTIC_SEVERITY_HINT |
+| 'showLinkPlayerModal' is declared but its value is never read. | 164:10-164:29 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleLinkPlayer' is declared but its value is never read. | 427:9-427:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'playerId' is declared but its value is never read. | 427:29-427:37 | DIAGNOSTIC_SEVERITY_HINT |
+| 'achievementTooltip' is declared but its value is never read. | 1152:10-1152:28 | DIAGNOSTIC_SEVERITY_HINT |
+| 'setAchievementTooltip' is declared but its value is never read. | 1152:30-1152:51 | DIAGNOSTIC_SEVERITY_HINT |
+| 'getPredictionAccuracy' is declared but its value is never read. | 1277:9-1277:30 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleEditPlayer' is declared but its value is never read. | 1493:9-1493:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'uid' is declared but its value is never read. | 2861:76-2861:79 | DIAGNOSTIC_SEVERITY_HINT |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Good, no lint errors. Let me build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add player of the week, improve rank badges with SVG icons" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add player of the week, improve rank badges with SVG icons" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 735 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-YO5I6e_R.css     48.37 kB │ gzip:   8.48 kB
+dist/assets/index-lyFniEny.js   1,033.79 kB │ gzip: 281.67 kB
+✓ built in 1.34s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 7f92402] Add player of the week, improve rank badges with SVG icons
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 7 files changed, 1790 insertions(+), 316 deletions(-)
+ delete mode 100644 dist/assets/index-D3pbFKgV.css
+ create mode 100644 dist/assets/index-YO5I6e_R.css
+ rename dist/assets/{index-BUUqGgpN.js =&gt; index-lyFniEny.js} (51%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/2.7MB)
+Uploading [=====---------------] (687.0KB/2.7MB)
+Uploading [==========----------] (1.3MB/2.7MB)
+Uploading [===============-----] (2.0MB/2.7MB)
+Uploading [====================] (2.7MB/2.7MB)
+https://lukto-winrate-webapp-wjzg2zdyl-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/DY4WVVY1hXV2GudiUKDpJ45MHRcn [4s]
+Production: https://lukto-winrate-webapp-wjzg2zdyl-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 202 packages in 8s
+Building: 18 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 735 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-YO5I6e_R.css     48.37 kB │ gzip:   8.48 kB
+Building: dist/assets/index-lyFniEny.js   1,033.79 kB │ gzip: 282.84 kB
+Building: ✓ built in 4.86s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [13s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-wjzg2zdyl-josefatrixs-projects.vercel.app [25s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [25s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-wjzg2zdyl-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-wjzg2zdyl-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The deployment was successful. Let me summarize the changes.</details></think>
+
+---
+
+¡Listo! Implementé los cambios:
+
+**Nuevo: Jugador de la Semana**
+- Ahora en la sección de estadísticas se muestran **dos tarjetas**:
+  - **Jugador de la Semana** (fondo amarillo) - basado en los últimos 7 días
+  - **Jugador del Mes** (fondo verde) - basado en el mes actual
+- Cada tarjeta muestra:
+  - Icono SVG distintivo (rayo para semana, trofeo para mes)
+  - Avatar del jugador
+  - Nombre
+  - Victorias/Derrotas y porcentaje
+
+**Rangos mejorados con iconos SVG:**
+| Rango | Icono | Color |
+|-------|-------|-------|
+| **Diamante** | Gema facetada | Azul cielo |
+| **Oro** | Corona | Dorado |
+| **Plata** | Estrella | Plateado |
+| **Bronce** | Círculo con "3" | Bronce |
+| **Sin rango** | Círculo vacío | Gris |
+
+- Los badges de rango ahora incluyen **icono + nombre**
+- Mejor estilo visual con gradientes y sombras
+- Sin emojis, todo vectorial
+
+**Revisa los cambios en:**
+https://lukto-winrate-webapp.vercel.app
+
+En la pestaña de **Ranking** verás las dos tarjetas de jugadores destacados arriba de la tabla.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+que otras herramientas de admin crees que necesite?
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is asking what other admin tools they might need. Let me think about what admin functionalities currently exist and what could be useful additions.
+
+Current admin tools (based on the summary):
+1. Add/Edit/Delete matches
+2. Add/Edit/Delete players
+3. Add/Edit/Delete ratings
+4. Link/Unlink users to players
+5. Manage other admins
+6. Clean orphaned ratings
+
+Potential additional admin tools that could be useful:
+
+1. **Dashboard de estadísticas del sistema** - Ver métricas como:
+   - Total de usuarios registrados
+   - Total de partidos jugados
+   - Total de calificaciones
+   - Usuarios activos esta semana/mes
+
+2. **Exportar datos** - Exportar estadísticas a CSV/Excel
+
+3. **Backup/Restore** - Hacer backup de los datos
+
+4. **Gestión de temporadas** - Crear temporadas para reiniciar stats
+
+5. **Anuncios/Notificaciones** - Enviar mensajes a todos los usuarios
+
+6. **Logs de actividad** - Ver quién hizo qué y cuándo
+
+7. **Merge de jugadores** - Fusionar dos jugadores si hay duplicados
+
+8. **Reset de estadísticas** - Reiniciar stats de un jugador o todo
+
+9. **Edición masiva** - Editar múltiples partidos/jugadores a la vez
+
+10. **Gestión de aliases** - Editar aliases de jugadores más fácilmente
+
+11. **Ver estadísticas de uso** - Quién califica más, quién juega más
+
+12. **Moderación** - Revisar calificaciones sospechosas
+
+13. **Configuración de la app** - Cambiar nombre, logo, colores
+
+Let me present these ideas to the user in a clear way.</details></think>
+
+---
+
+Buena pregunta! Basándome en cómo funciona la app actualmente, estas son herramientas de admin que podrían ser útiles:
+
+## 📊 **Herramientas de Monitoreo**
+
+1. **Dashboard de Admin** - Panel con métricas:
+   - Total de usuarios registrados
+   - Partidos esta semana/mes
+   - Calificaciones pendientes
+   - Usuarios más activos
+
+2. **Logs de Actividad** - Ver historial de:
+   - Quién calificó a quién
+   - Partidos creados/editados
+   - Usuarios vinculados
+
+## 🔧 **Gestión de Datos**
+
+3. **Merge de Jugadores** - Fusionar dos jugadores duplicados (combinar estadísticas)
+
+4. **Exportar Datos** - Descargar estadísticas en CSV/Excel
+
+5. **Gestión de Temporadas** - Crear "Temporada 2025" para reiniciar rankings pero mantener historial
+
+6. **Edición de Aliases** - Interfaz más fácil para gestionar los apodos de cada jugador
+
+## 🛡️ **Moderación**
+
+7. **Revisar Calificaciones** - Detectar calificaciones sospechosas (ej: alguien calificando muy bajo a todos)
+
+8. **Bloquear Usuario** - Impedir que un usuario problemático califique
+
+## 📢 **Comunicación**
+
+9. **Anuncios** - Enviar mensaje/notificación a todos los usuarios
+
+10. **Programar Partido** - Crear evento de partido futuro y notificar
+
+## ⚙️ **Configuración**
+
+11. **Personalización** - Cambiar nombre de la liga, colores, logo
+
+12. **Reglas de MVP** - Ajustar cómo se calcula el MVP
+
+---
+
+**¿Cuáles te interesan implementar?** Puedo agregar las que consideres más útiles para tu caso.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+cuantos rangos hay?
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is asking how many ranks there are. Let me recall from the code I worked with earlier.
+
+From the getRank function I updated:
+- Diamante (500+ XP) - tier 4
+- Oro (300+ XP) - tier 3
+- Plata (150+ XP) - tier 2
+- Bronce (50+ XP) - tier 1
+- Sin rango (0-49 XP) - tier 0
+
+So there are 4 actual ranks plus "Sin rango" for players with less than 50 XP.</details></think>
+
+---
+
+Actualmente hay **4 rangos** + Sin rango:
+
+| Rango | XP Requerido | Icono |
+|-------|--------------|-------|
+| **Sin rango** | 0 - 49 XP | Círculo vacío |
+| **Bronce** | 50+ XP | Círculo con "3" |
+| **Plata** | 150+ XP | Estrella |
+| **Oro** | 300+ XP | Corona |
+| **Diamante** | 500+ XP | Gema |
+
+**¿Cómo se gana XP?**
+- Jugar un partido: +10 XP
+- Ganar un partido: +15 XP
+- Ser MVP del partido: +25 XP
+- Por cada punto de rating promedio: +XP adicional
+
+---
+
+**¿Quieres que agregue más rangos?** Por ejemplo:
+
+| Nuevo Rango | XP Sugerido |
+|-------------|-------------|
+| **Platino** | 400+ XP (entre Oro y Diamante) |
+| **Maestro** | 750+ XP |
+| **Gran Maestro** | 1000+ XP |
+| **Leyenda** | 1500+ XP |
+
+Dime si quieres más rangos o ajustar los XP necesarios para cada uno.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+agrega mas, y coloca un poco mas grande los iconos de rango en las tablas. en el menu de inicio esta muy grande y se ve raro. mira que no se guardan las proporciones
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+Cancelled
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
 Status: **loading**
 
-```css
-.rank-badge.rank-bronce {
-  background: linear-gradient(135deg, #cd7f32, #a0522d);
-  color: #fff;
-  border: 1px solid #cd7f32;
-  box-shadow: 0 2px 8px rgba(205, 127, 50, 0.3);
-}
-
-.rank-badge.rank-plata {
-  background: linear-gradient(135deg, #e8e8e8, #b0b0b0);
-  color: #1a1a1a;
-  border: 1px solid #c0c0c0;
-  box-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
-}
-
-.rank-badge.rank-oro {
-  background: linear-gradient(135deg, #ffd700, #daa520);
-  color: #
+```javascriptreact
+  // Rank icons as SVG - returns a function to control size
+  const getRankIcon = (rank, size = 16) => {
+    const icons = {
+      leyenda: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+          <path d="M12 6l1.5 3 3.5.5-2.5 2.5.5 3.5-3-1.5-3 1.5.5-3.5L7 9.5l3.5-.5z"/>
+        </svg>
+      ),
+      maestro: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l2 4h4l-3 3 1 4-4-2-4 2 1-4-3-3h4l2-4z"/>
+        </svg>
+      ),
+      diamante: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
+          <path d="M19 3H5L2 9l10 12L22 9l-3-6zM12 17.3L5 9h14l-7 8.3z"/>
+        </svg>
+      ),
+      platino: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      ),
+      oro: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
+          <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+        </svg>
+      ),
+      plata: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
+          <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/>
+        </svg>
+      ),
+      bronce: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
+          <circle cx="12" cy="12" r="10"/>
+        </svg>
+      ),
+      none: (
+        <svg view
 ```
 
 </details>
