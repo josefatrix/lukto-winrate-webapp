@@ -3,7 +3,7 @@
  * Refactored version using context and modular components
  */
 import { useState } from 'react'
-import { useApp } from './contexts'
+import { useApp, SUPER_ADMIN_EMAIL } from './contexts'
 import { useStats } from './hooks'
 import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs } from 'firebase/firestore'
 import { db } from './firebase'
@@ -273,6 +273,36 @@ function App() {
       /* Ignore */
     }
     setActiveTab('stats')
+  }
+
+  // Add admin email
+  const handleAddAdmin = async () => {
+    if (!newAdminEmail.trim() || !newAdminEmail.includes('@')) {
+      showToast('error', 'Ingresa un email válido')
+      return
+    }
+    try {
+      const newList = [...adminEmails, newAdminEmail.trim().toLowerCase()]
+      await setDoc(doc(db, 'settings', 'admins'), { emails: newList })
+      setNewAdminEmail('')
+      showToast('success', 'Admin agregado')
+    } catch (error) {
+      console.error('Error adding admin:', error)
+      showToast('error', 'Error al agregar admin')
+    }
+  }
+
+  // Remove admin email
+  const handleRemoveAdmin = async email => {
+    if (!confirm(`¿Quitar permisos de admin a ${email}?`)) return
+    try {
+      const newList = adminEmails.filter(e => e !== email)
+      await setDoc(doc(db, 'settings', 'admins'), { emails: newList })
+      showToast('success', 'Admin removido')
+    } catch (error) {
+      console.error('Error removing admin:', error)
+      showToast('error', 'Error al quitar admin')
+    }
   }
 
   const triggerMVPConfetti = (matchId, mvpPlayerId) => {
@@ -948,7 +978,7 @@ function App() {
         </section>
       )}
 
-      {/* Admin: Dashboard Tab - Placeholder */}
+      {/* Admin: Dashboard Tab */}
       {activeTab === 'dashboard' && isAdmin && (
         <section className="stats-section dashboard-section">
           <h2 className="section-title">Panel de Administración</h2>
@@ -980,22 +1010,178 @@ function App() {
               </div>
             </div>
           </div>
+
+          {/* Activity Logs */}
+          <h3 className="subsection-title">Actividad Reciente</h3>
+          <div className="activity-logs">
+            {activityLogs.length > 0 ? (
+              activityLogs.slice(0, 10).map(log => (
+                <div key={log.id} className="activity-log-item">
+                  <span className="log-type">{log.type}</span>
+                  <span className="log-user">{log.userName || log.userEmail}</span>
+                  <span className="log-time">
+                    {new Date(log.timestamp).toLocaleString('es-ES')}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="no-data-text">Sin actividad registrada</p>
+            )}
+          </div>
         </section>
       )}
 
-      {/* Admin: Tools Tab - Placeholder */}
+      {/* Admin: Tools Tab */}
       {activeTab === 'tools' && isAdmin && (
         <section className="stats-section tools-section">
           <h2 className="section-title">Herramientas de Admin</h2>
-          <p className="section-subtitle">Próximamente más herramientas...</p>
+
+          {/* Gestionar Admins */}
+          <div className="tool-card">
+            <h3 className="tool-title">Gestionar Administradores</h3>
+            <p className="tool-desc">Super Admin: {SUPER_ADMIN_EMAIL}</p>
+            <div className="admin-list">
+              {adminEmails.map(email => (
+                <div key={email} className="admin-item">
+                  <span>{email}</span>
+                  <button 
+                    className="remove-btn"
+                    onClick={() => handleRemoveAdmin(email)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="add-admin-form">
+              <input
+                type="email"
+                placeholder="email@ejemplo.com"
+                value={newAdminEmail}
+                onChange={e => setNewAdminEmail(e.target.value)}
+              />
+              <button onClick={handleAddAdmin} className="add-btn">
+                Agregar Admin
+              </button>
+            </div>
+          </div>
+
+          {/* Bloquear Usuarios */}
+          <div className="tool-card">
+            <h3 className="tool-title">Usuarios Bloqueados</h3>
+            <p className="tool-desc">Estos usuarios no pueden calificar</p>
+            <div className="blocked-list">
+              {blockedUsers.length > 0 ? (
+                blockedUsers.map(userId => {
+                  const userLink = Object.values(userLinks).find(l => l.odedBy === userId)
+                  return (
+                    <div key={userId} className="blocked-item">
+                      <span>{userLink?.userName || userLink?.userEmail || userId}</span>
+                      <button 
+                        className="unblock-btn"
+                        onClick={async () => {
+                          const newList = blockedUsers.filter(id => id !== userId)
+                          await setDoc(doc(db, 'settings', 'blockedUsers'), { list: newList })
+                        }}
+                      >
+                        Desbloquear
+                      </button>
+                    </div>
+                  )
+                })
+              ) : (
+                <p className="no-data-text">Sin usuarios bloqueados</p>
+              )}
+            </div>
+          </div>
+
+          {/* Exportar Datos */}
+          <div className="tool-card">
+            <h3 className="tool-title">Exportar Datos</h3>
+            <button 
+              className="export-btn"
+              onClick={() => {
+                const data = {
+                  players: players,
+                  matches: matches,
+                  ratings: ratings,
+                  exportedAt: new Date().toISOString()
+                }
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `lukto-backup-${new Date().toISOString().split('T')[0]}.json`
+                a.click()
+                showToast('success', 'Datos exportados')
+              }}
+            >
+              Descargar Backup (JSON)
+            </button>
+          </div>
         </section>
       )}
 
-      {/* Admin: All Ratings Tab - Placeholder */}
+      {/* Admin: All Ratings Tab */}
       {activeTab === 'allRatings' && isAdmin && (
         <section className="stats-section">
           <h2 className="section-title">Historial de Calificaciones</h2>
           <p className="section-subtitle">Detalle de quién calificó a quién en cada partido</p>
+          
+          <div className="ratings-history">
+            {[...matches].reverse().map(match => {
+              const matchRatings = []
+              Object.entries(ratings).forEach(([playerId, playerRatings]) => {
+                playerRatings.filter(r => r.matchId === match.id).forEach(r => {
+                  const raterLink = Object.values(userLinks).find(l => l.playerId === r.ratedBy)
+                  matchRatings.push({
+                    ...r,
+                    ratedPlayerName: getPlayerName(playerId),
+                    raterName: getPlayerName(r.ratedBy),
+                    raterEmail: raterLink?.userEmail || 'Desconocido'
+                  })
+                })
+              })
+
+              if (matchRatings.length === 0) return null
+
+              return (
+                <div key={match.id} className="match-ratings-card">
+                  <h4 className="match-ratings-header">
+                    {new Date(match.date + 'T12:00:00').toLocaleDateString('es-ES', {
+                      weekday: 'long', day: 'numeric', month: 'long'
+                    })}
+                  </h4>
+                  <div className="ratings-table-wrapper">
+                    <table className="ratings-detail-table">
+                      <thead>
+                        <tr>
+                          <th>Calificador</th>
+                          <th>Email</th>
+                          <th>Calificado</th>
+                          <th>Nota</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {matchRatings.map((r, idx) => (
+                          <tr key={idx}>
+                            <td>{r.raterName}</td>
+                            <td className="email-cell">{r.raterEmail}</td>
+                            <td>{r.ratedPlayerName}</td>
+                            <td>
+                              <span className={`rating-value ${getRatingClass(r.score)}`}>
+                                {r.score}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </section>
       )}
 
