@@ -3,6 +3,7 @@
  * Shows ranking table and featured players
  */
 
+import { useState, useMemo } from 'react'
 import { useApp } from '../../contexts'
 
 export const StatsTab = ({
@@ -18,9 +19,80 @@ export const StatsTab = ({
   announcements,
 }) => {
   const { players, timeFilter, getPlayerPhoto, getInitials } = useApp()
+  
+  // Search and sort state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState('rankingScore')
+  const [sortDir, setSortDir] = useState('desc')
 
   const potwPlayer = playerOfWeek ? players.find(p => p.id === playerOfWeek.id) : null
   const potmPlayer = playerOfMonth ? players.find(p => p.id === playerOfMonth.id) : null
+
+  // Filter and sort stats
+  const filteredStats = useMemo(() => {
+    let result = [...stats]
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter(p => p.name?.toLowerCase().includes(query))
+    }
+    
+    // Sort
+    result.sort((a, b) => {
+      let aVal, bVal
+      switch (sortBy) {
+        case 'name':
+          aVal = a.name?.toLowerCase() || ''
+          bVal = b.name?.toLowerCase() || ''
+          break
+        case 'winRate':
+          aVal = a.winRate || 0
+          bVal = b.winRate || 0
+          break
+        case 'wins':
+          aVal = a.wins || 0
+          bVal = b.wins || 0
+          break
+        case 'mvps':
+          aVal = a.mvps || 0
+          bVal = b.mvps || 0
+          break
+        case 'avgRating':
+          aVal = parseFloat(a.avgRating) || 0
+          bVal = parseFloat(b.avgRating) || 0
+          break
+        case 'xp':
+          aVal = calculateXP(a.id) || 0
+          bVal = calculateXP(b.id) || 0
+          break
+        default:
+          aVal = parseFloat(a.rankingScore) || 0
+          bVal = parseFloat(b.rankingScore) || 0
+      }
+      
+      if (sortBy === 'name') {
+        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+      }
+      return sortDir === 'asc' ? aVal - bVal : bVal - aVal
+    })
+    
+    return result
+  }, [stats, searchQuery, sortBy, sortDir, calculateXP])
+
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(column)
+      setSortDir('desc')
+    }
+  }
+
+  const SortIcon = ({ column }) => {
+    if (sortBy !== column) return <span className="sort-icon">⇅</span>
+    return <span className="sort-icon active">{sortDir === 'asc' ? '↑' : '↓'}</span>
+  }
 
   return (
     <section className="stats-section">
@@ -107,25 +179,57 @@ export const StatsTab = ({
             : 'Ranking de la Semana'}
       </h2>
 
-      {stats.length > 0 ? (
+      {/* Search Bar */}
+      <div className="stats-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input
+          type="text"
+          placeholder="Buscar jugador..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input"
+        />
+        {searchQuery && (
+          <button className="search-clear" onClick={() => setSearchQuery('')}>×</button>
+        )}
+      </div>
+
+      {filteredStats.length > 0 ? (
         <table className="stats-table">
           <thead>
             <tr>
               <th>#</th>
-              <th>Jugador</th>
+              <th onClick={() => handleSort('name')} className="sortable">
+                Jugador <SortIcon column="name" />
+              </th>
               <th>Rango</th>
-              <th>Score</th>
-              <th>Win Rate</th>
+              <th onClick={() => handleSort('rankingScore')} className="sortable">
+                Score <SortIcon column="rankingScore" />
+              </th>
+              <th onClick={() => handleSort('winRate')} className="sortable">
+                WR <SortIcon column="winRate" />
+              </th>
               <th></th>
-              <th>V</th>
+              <th onClick={() => handleSort('wins')} className="sortable">
+                V <SortIcon column="wins" />
+              </th>
               <th>D</th>
-              <th>MVP</th>
-              <th>Rating</th>
-              <th>XP</th>
+              <th onClick={() => handleSort('mvps')} className="sortable">
+                MVP <SortIcon column="mvps" />
+              </th>
+              <th onClick={() => handleSort('avgRating')} className="sortable">
+                Rat <SortIcon column="avgRating" />
+              </th>
+              <th onClick={() => handleSort('xp')} className="sortable">
+                XP <SortIcon column="xp" />
+              </th>
             </tr>
           </thead>
           <tbody>
-            {stats.map((player, index) => {
+            {filteredStats.map((player, index) => {
               const xp = calculateXP(player.id)
               const rank = getRank(xp)
               return (

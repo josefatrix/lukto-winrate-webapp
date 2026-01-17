@@ -2,7 +2,7 @@
  * LUKTO Stats - Main App Component
  * Premium version with Apple-style interactions
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useApp, SUPER_ADMIN_EMAIL } from './contexts'
 import { useStats, useHaptic } from './hooks'
 import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs } from 'firebase/firestore'
@@ -113,6 +113,149 @@ const getXPProgress = xp => {
   return { current: 0, next: 50, progress: (xp / 50) * 100 }
 }
 
+// ============ PROFILE SVG ICONS ============
+const ProfileIcons = {
+  trophy: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+    </svg>
+  ),
+  star: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+    </svg>
+  ),
+  fire: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>
+    </svg>
+  ),
+  target: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+      <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+    </svg>
+  ),
+  crown: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-1h14v1z"/>
+    </svg>
+  ),
+  bolt: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/>
+    </svg>
+  ),
+  controller: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+    </svg>
+  ),
+  muscle: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/>
+    </svg>
+  ),
+  check100: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </svg>
+  ),
+  arrowUp: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+      <path d="M7 14l5-5 5 5H7z"/>
+    </svg>
+  ),
+  arrowDown: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+      <path d="M7 10l5 5 5-5H7z"/>
+    </svg>
+  ),
+  medal: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+      <path d="M12 7.5c1.93 0 3.5 1.57 3.5 3.5s-1.57 3.5-3.5 3.5-3.5-1.57-3.5-3.5 1.57-3.5 3.5-3.5zM12 2L9 9h6l-3-7zM5 9l7 13 7-13H5zm7 4.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/>
+    </svg>
+  ),
+  heartBroken: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      <path fill="var(--bg-card)" d="M12 5l-1 4h2l-1 4"/>
+    </svg>
+  ),
+  diamond: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M19 3H5L2 9l10 12L22 9l-3-6zm-7 14.5L5.5 9h13L12 17.5z"/>
+    </svg>
+  ),
+  shield: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+    </svg>
+  ),
+  thumbsup: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
+    </svg>
+  ),
+  rocket: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M12 2.5c-3.9 3.9-5.5 9.3-4.3 14.3l2.6-2.6c-.3-1.4-.1-2.9.6-4.2.7-1.3 1.8-2.3 3.1-2.9 1.3-.6 2.7-.7 4.1-.3l2.6-2.6c-5-1.2-10.4.4-14.3 4.3l-2.1-2.1L2 8.5v7l3.5 3.5h7l2.1-2.1-2.1-2.1c-1.2.9-2.8 1.1-4.2.5-1.4-.6-2.4-1.9-2.6-3.4l-2.6 2.6c.5 2.1 1.7 4 3.4 5.4l-3.5 3.5v2h2l3.5-3.5c1.4 1.7 3.3 2.9 5.4 3.4l2.6-2.6c-1.5-.2-2.8-1.2-3.4-2.6-.6-1.4-.4-3 .5-4.2L21.5 2l-9.5 9.5z"/>
+    </svg>
+  ),
+  flame: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M12 23c-3.87 0-7-3.13-7-7 0-2.38 1.19-4.47 3-5.74V10c0-3.87 3.13-7 7-7s7 3.13 7 7v.26c1.81 1.27 3 3.36 3 5.74 0 3.87-3.13 7-7 7zm0-4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0-14c-2.76 0-5 2.24-5 5v2.62c1.23.82 2.15 2.02 2.56 3.38h4.88c.41-1.36 1.33-2.56 2.56-3.38V10c0-2.76-2.24-5-5-5z"/>
+    </svg>
+  ),
+  lightning: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+    </svg>
+  ),
+  ball: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <circle cx="12" cy="12" r="10"/>
+      <path fill="var(--bg-card)" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.94-.49-7-3.85-7-7.93s3.06-7.44 7-7.93v2.02c-2.83.48-5 2.94-5 5.91s2.17 5.43 5 5.91v2.02zm6.9-5.43h-2.02c-.37 1.52-1.36 2.8-2.68 3.52l1.01 1.75c1.84-1.07 3.18-2.9 3.69-5.27zm-3.69-7.77l-1.01 1.75c1.32.72 2.31 2 2.68 3.52h2.02c-.51-2.37-1.85-4.2-3.69-5.27z"/>
+    </svg>
+  ),
+  badge: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 4h4v3h-4V4zm6 11h-3v3h-2v-3H8v-2h3v-3h2v3h3v2z"/>
+    </svg>
+  ),
+  castle: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M21 9V7l-2 1V4h-2v2h-2V4h-2v2h-2V4H9v2H7V4H5v4L3 7v2l2 1v10h6v-4h2v4h6V10l2-1zM12 12c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+    </svg>
+  ),
+  gem: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M12 2L2 7l10 15 10-15-10-5zm0 3.5l6 3-6 9-6-9 6-3z"/>
+    </svg>
+  ),
+  crystal: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M12 2l-5.5 9L12 22l5.5-11L12 2zm0 4l3 5-3 6-3-6 3-5z"/>
+    </svg>
+  ),
+  infinity: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M18.6 6.62c-1.44 0-2.8.56-3.77 1.53L12 10.66 10.48 12h.01L7.8 14.39c-.64.64-1.49.99-2.4.99-1.87 0-3.39-1.51-3.39-3.38S3.53 8.62 5.4 8.62c.91 0 1.76.35 2.44 1.03l1.13 1 1.51-1.34L9.22 8.2C8.2 7.18 6.84 6.62 5.4 6.62 2.42 6.62 0 9.04 0 12s2.42 5.38 5.4 5.38c1.44 0 2.8-.56 3.77-1.53l2.83-2.5.01.01L13.52 12h-.01l2.69-2.39c.64-.64 1.49-.99 2.4-.99 1.87 0 3.39 1.51 3.39 3.38s-1.52 3.38-3.39 3.38c-.9 0-1.76-.35-2.44-1.03l-1.14-1.01-1.51 1.34 1.27 1.12c1.02 1.01 2.37 1.57 3.82 1.57 2.98 0 5.4-2.41 5.4-5.38s-2.42-5.37-5.4-5.37z"/>
+    </svg>
+  ),
+  check: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+    </svg>
+  ),
+  checkDouble: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z"/>
+    </svg>
+  ),
+}
+
 // ============ PLAYER PROFILE MODAL ============
 
 function PlayerProfileModal({ 
@@ -155,17 +298,12 @@ function PlayerProfileModal({
     mvps: stats?.length > 0 ? stats.reduce((s, p) => s + (p.mvps || 0), 0) / stats.length : 0
   }
   
-  // Calculate streaks (current, best win, worst loss)
+  // Calculate streaks
   const playerMatches = matches?.filter(m => 
     m.teamWhite?.includes(playerId) || m.teamBlack?.includes(playerId)
   ).sort((a, b) => new Date(b.date) - new Date(a.date)) || []
   
-  let currentStreak = 0
-  let streakType = null
-  let bestWinStreak = 0
-  let worstLossStreak = 0
-  let tempWinStreak = 0
-  let tempLossStreak = 0
+  let bestWinStreak = 0, worstLossStreak = 0, tempWinStreak = 0, tempLossStreak = 0
   
   for (const m of playerMatches) {
     const inWhite = m.teamWhite?.includes(playerId)
@@ -180,20 +318,7 @@ function PlayerProfileModal({
       tempWinStreak = 0
       if (tempLossStreak > worstLossStreak) worstLossStreak = tempLossStreak
     }
-    
-    if (streakType === null) {
-      streakType = won ? 'win' : 'loss'
-      currentStreak = 1
-    } else if ((streakType === 'win' && won) || (streakType === 'loss' && !won)) {
-      currentStreak++
-    }
   }
-
-  // Recent form (last 5 games)
-  const recentForm = playerMatches.slice(0, 5).map(m => {
-    const inWhite = m.teamWhite?.includes(playerId)
-    return (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black') ? 'W' : 'L'
-  })
 
   // Rating stats
   const bestRating = playerRatings.length > 0 ? Math.max(...playerRatings.map(r => r.score)) : 0
@@ -202,258 +327,498 @@ function PlayerProfileModal({
     ? (playerRatings.reduce((s, r) => s + r.score, 0) / playerRatings.length)
     : 0
   
-  // Best/Worst teammates
-  const teammateStats = {}
-  playerMatches.forEach(m => {
-    const inWhite = m.teamWhite?.includes(playerId)
-    const team = inWhite ? m.teamWhite : m.teamBlack
-    const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
-    
-    team?.forEach(tid => {
-      if (tid === playerId) return
-      if (!teammateStats[tid]) teammateStats[tid] = { wins: 0, games: 0 }
-      teammateStats[tid].games++
-      if (won) teammateStats[tid].wins++
-    })
-  })
-  
-  const teammateRankings = Object.entries(teammateStats)
-    .filter(([_, s]) => s.games >= 2)
-    .map(([id, s]) => ({
-      id,
-      name: getPlayerName ? getPlayerName(id) : id,
-      winRate: s.games > 0 ? Math.round((s.wins / s.games) * 100) : 0,
-      games: s.games
-    }))
-    .sort((a, b) => b.winRate - a.winRate)
-  
-  const bestTeammate = teammateRankings[0]
-  const worstTeammate = teammateRankings[teammateRankings.length - 1]
-  
-  // Achievements/Badges
+  // Achievements/Badges with SVG icons and descriptions
   const badges = []
-  if (currentStreak >= 3 && streakType === 'win') badges.push({ icon: '🔥', name: 'En Racha', desc: '3+ victorias seguidas' })
-  if (playerStats.mvps >= 1) badges.push({ icon: '⭐', name: 'MVP', desc: 'Ser MVP de un partido' })
-  if (bestRating === 10) badges.push({ icon: '💯', name: 'Perfecto', desc: 'Rating 10 en un partido' })
-  if (avgRating >= 8 && playerStats.played >= 3) badges.push({ icon: '🎯', name: 'Consistente', desc: 'Rating >8 promedio' })
-  if (playerStats.mvps >= 5) badges.push({ icon: '👑', name: 'Rey', desc: '5+ MVPs totales' })
-  if (playerStats.mvps >= 10) badges.push({ icon: '🏆', name: 'Leyenda', desc: '10+ MVPs totales' })
-  if (playerStats.winRate >= 70 && playerStats.played >= 3) badges.push({ icon: '💪', name: 'Dominante', desc: '>70% Win Rate' })
-  if (playerStats.played >= 10) badges.push({ icon: '🎮', name: 'Veterano', desc: '10+ partidos jugados' })
-  if (bestWinStreak >= 5) badges.push({ icon: '⚡', name: 'Imparable', desc: 'Racha de 5+ victorias' })
+  
+  // MVP badges (progression)
+  if (playerStats.mvps >= 1) badges.push({ icon: 'star', name: 'MVP', color: '#fbbf24', desc: 'Ser el jugador más valorado en al menos 1 partido' })
+  if (playerStats.mvps >= 3) badges.push({ icon: 'star', name: 'Triple MVP', color: '#f59e0b', desc: 'Acumular 3 títulos de MVP' })
+  if (playerStats.mvps >= 5) badges.push({ icon: 'crown', name: 'Rey', color: '#f97316', desc: 'Acumular 5 o más títulos de MVP' })
+  if (playerStats.mvps >= 10) badges.push({ icon: 'trophy', name: 'Leyenda', color: '#dc2626', desc: 'Alcanzar 10 MVPs totales - el máximo honor' })
+  
+  // Rating badges
+  if (bestRating === 10) badges.push({ icon: 'check100', name: 'Perfecto', color: '#10b981', desc: 'Recibir una calificación perfecta de 10' })
+  if (avgRating >= 8 && playerStats.played >= 3) badges.push({ icon: 'target', name: 'Consistente', color: '#3b82f6', desc: 'Mantener un rating promedio superior a 8.0' })
+  if (avgRating >= 9 && playerStats.played >= 5) badges.push({ icon: 'diamond', name: 'Élite', color: '#06b6d4', desc: 'Rating promedio de 9+ con 5 partidos jugados' })
+  if (worstRating >= 7 && playerStats.played >= 3) badges.push({ icon: 'shield', name: 'Blindado', color: '#64748b', desc: 'Nunca recibir una calificación menor a 7' })
+  
+  // Win rate badges
+  if (playerStats.winRate >= 50 && playerStats.played >= 3) badges.push({ icon: 'thumbsup', name: 'Ganador', color: '#22c55e', desc: 'Win rate del 50% o superior' })
+  if (playerStats.winRate >= 70 && playerStats.played >= 3) badges.push({ icon: 'muscle', name: 'Dominante', color: '#ef4444', desc: 'Mantener un win rate superior al 70%' })
+  if (playerStats.winRate >= 80 && playerStats.played >= 5) badges.push({ icon: 'fire', name: 'Intratable', color: '#f97316', desc: 'Win rate del 80%+ con 5 partidos' })
+  if (playerStats.winRate === 100 && playerStats.played >= 3) badges.push({ icon: 'rocket', name: 'Invicto', color: '#a855f7', desc: '¡100% win rate sin derrotas!' })
+  
+  // Streak badges
+  if (bestWinStreak >= 3) badges.push({ icon: 'flame', name: 'En Racha', color: '#f59e0b', desc: 'Racha de 3+ victorias consecutivas' })
+  if (bestWinStreak >= 5) badges.push({ icon: 'bolt', name: 'Imparable', color: '#eab308', desc: 'Racha de 5+ victorias consecutivas' })
+  if (bestWinStreak >= 7) badges.push({ icon: 'lightning', name: 'Demoledor', color: '#fbbf24', desc: 'Racha épica de 7+ victorias' })
+  
+  // Participation badges
+  if (playerStats.played >= 1) badges.push({ icon: 'ball', name: 'Debutante', color: '#6b7280', desc: 'Jugar tu primer partido' })
+  if (playerStats.played >= 5) badges.push({ icon: 'controller', name: 'Regular', color: '#8b5cf6', desc: 'Jugar 5 o más partidos' })
+  if (playerStats.played >= 10) badges.push({ icon: 'medal', name: 'Veterano', color: '#7c3aed', desc: 'Jugar 10 o más partidos' })
+  if (playerStats.played >= 20) badges.push({ icon: 'badge', name: 'Capitán', color: '#4f46e5', desc: 'Jugar 20 o más partidos' })
+  if (playerStats.played >= 50) badges.push({ icon: 'castle', name: 'Pilar', color: '#2563eb', desc: 'Jugar 50+ partidos - pilar del equipo' })
+  
+  // XP badges
+  if (xp >= 500) badges.push({ icon: 'gem', name: 'Ascendido', color: '#0ea5e9', desc: 'Alcanzar 500 puntos de XP' })
+  if (xp >= 1000) badges.push({ icon: 'crystal', name: 'Maestro', color: '#06b6d4', desc: 'Alcanzar 1000 puntos de XP' })
+  if (xp >= 2000) badges.push({ icon: 'infinity', name: 'Inmortal', color: '#14b8a6', desc: 'Alcanzar 2000 puntos de XP' })
+  
+  // Special badges
+  if (playerStats.wins >= 10) badges.push({ icon: 'check', name: '10 Victorias', color: '#22c55e', desc: 'Acumular 10 victorias totales' })
+  if (playerStats.wins >= 25) badges.push({ icon: 'checkDouble', name: '25 Victorias', color: '#16a34a', desc: 'Acumular 25 victorias - ¡Impresionante!' })
+  
+  // State for badge tooltip
+  const [selectedBadge, setSelectedBadge] = useState(null)
 
-  // FIFA Card Rating (calculated from stats)
-  const fifaRating = Math.min(99, Math.round(
-    (avgRating || 5) * 5 + // Rating contributes up to 50
-    (playerStats.winRate || 0) * 0.3 + // Win rate contributes up to 30
-    Math.min(playerStats.mvps || 0, 10) * 1.5 + // MVPs contribute up to 15
-    Math.min(playerStats.played || 0, 10) * 0.5 // Games contribute up to 5
-  ))
+  // XP Progress calculation
+  const RANK_THRESHOLDS = [0, 100, 250, 500, 850, 1300, 1900, 2600]
+  const currentRankIndex = RANK_THRESHOLDS.findIndex((t, i) => xp < (RANK_THRESHOLDS[i + 1] || Infinity))
+  const currentThreshold = RANK_THRESHOLDS[currentRankIndex] || 0
+  const nextThreshold = RANK_THRESHOLDS[currentRankIndex + 1] || RANK_THRESHOLDS[RANK_THRESHOLDS.length - 1]
+  const xpInCurrentRank = xp - currentThreshold
+  const xpNeededForNext = nextThreshold - currentThreshold
+  const xpProgress = Math.min(100, (xpInCurrentRank / xpNeededForNext) * 100)
 
-  // Recent ratings received (who rated and score)
-  const recentRatingsReceived = playerRatings
-    .sort((a, b) => {
-      const matchA = matches?.find(m => m.id === a.matchId)
-      const matchB = matches?.find(m => m.id === b.matchId)
-      return new Date(matchB?.date || 0) - new Date(matchA?.date || 0)
-    })
-    .slice(0, 5)
+  // State for share card
+  const [showShareCard, setShowShareCard] = useState(false)
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+  const shareCardRef = useRef(null)
+
+  // Share function - now shows a shareable card
+  const shareProfile = () => {
+    setShowShareCard(true)
+  }
+
+  // Generate and share image
+  const generateShareImage = async () => {
+    if (!shareCardRef.current) return
+    setIsGeneratingImage(true)
+    
+    try {
+      const html2canvas = (await import('html2canvas')).default
+      const canvas = await html2canvas(shareCardRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true
+      })
+      
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          setIsGeneratingImage(false)
+          return
+        }
+        
+        const file = new File([blob], `${player.name}-lukto-stats.png`, { type: 'image/png' })
+        
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            // Only share the image file, no text to avoid duplicate preview
+            await navigator.share({
+              files: [file]
+            })
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              downloadImage(canvas)
+            }
+          }
+        } else {
+          downloadImage(canvas)
+        }
+        setIsGeneratingImage(false)
+        setShowShareCard(false)
+      }, 'image/png')
+    } catch (error) {
+      console.error('Error generating image:', error)
+      setIsGeneratingImage(false)
+    }
+  }
+
+  const downloadImage = (canvas) => {
+    const link = document.createElement('a')
+    link.download = `${player.name}-lukto-stats.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+  }
 
   return (
     <div className="profile-overlay" onClick={onClose}>
-      <div className="profile-card" onClick={e => e.stopPropagation()}>
-        <button className="profile-close" onClick={onClose}>×</button>
+      <div className="profile-card profile-card-v2" onClick={e => e.stopPropagation()}>
+        <div className="profile-actions">
+          <button className="profile-share" onClick={shareProfile} title="Compartir">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+            </svg>
+          </button>
+          <button className="profile-close" onClick={onClose}>×</button>
+        </div>
         
-        {/* FIFA Card Style */}
-        <div className="fifa-card" style={{ '--rank-color': rank.color }}>
-          <div className="fifa-card-inner">
-            <div className="fifa-rating">{fifaRating}</div>
-            <div className="fifa-position">{rank.name.toUpperCase()}</div>
-            <div className="fifa-photo">
-              {photo ? (
-                <img src={photo} alt="" />
-              ) : (
-                <div className="fifa-photo-placeholder">{player.name?.charAt(0)}</div>
-              )}
+        {/* Clean Hero Header */}
+        <div className="profile-hero-v2">
+          <div className="ph-avatar">
+            {photo ? <img src={photo} alt="" /> : <span>{player.name?.charAt(0)}</span>}
+          </div>
+          <h2 className="ph-name">{player.name}</h2>
+          
+          {/* Rank & XP Progress */}
+          <div className="ph-rank-section">
+            <div className="ph-rank" style={{ '--rank-color': rank.color }}>
+              <span className="ph-rank-name">{rank.name}</span>
+              <span className="ph-xp">{xp} XP</span>
             </div>
-            <div className="fifa-name">{player.name}</div>
-            <div className="fifa-club">LUKTO FC</div>
-            <div className="fifa-stats">
-              <div className="fifa-stat">
-                <span className="fifa-stat-value">{Math.round((avgRating || 5) * 10)}</span>
-                <span className="fifa-stat-label">RAT</span>
-              </div>
-              <div className="fifa-stat">
-                <span className="fifa-stat-value">{Math.round(playerStats.winRate || 0)}</span>
-                <span className="fifa-stat-label">WIN</span>
-              </div>
-              <div className="fifa-stat">
-                <span className="fifa-stat-value">{playerStats.mvps || 0}</span>
-                <span className="fifa-stat-label">MVP</span>
-              </div>
-              <div className="fifa-stat">
-                <span className="fifa-stat-value">{playerStats.played || 0}</span>
-                <span className="fifa-stat-label">PAR</span>
-              </div>
+            <div className="ph-progress-bar">
+              <div className="ph-progress-fill" style={{ width: `${xpProgress}%`, background: rank.color }}></div>
+            </div>
+            <div className="ph-progress-labels">
+              <span>{currentThreshold} XP</span>
+              <span>{nextThreshold} XP</span>
             </div>
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="profile-stats-grid">
-          <div className="profile-stat">
-            <span className="stat-number">{playerStats.played}</span>
-            <span className="stat-label">Partidos</span>
-          </div>
-          <div className="profile-stat">
-            <span className="stat-number win">{playerStats.wins}</span>
-            <span className="stat-label">Victorias</span>
-          </div>
-          <div className="profile-stat">
-            <span className="stat-number loss">{playerStats.losses}</span>
-            <span className="stat-label">Derrotas</span>
-          </div>
-          <div className="profile-stat">
-            <span className="stat-number">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span>
-            <span className="stat-label">Win Rate</span>
-          </div>
+        {/* Stats Row */}
+        <div className="profile-stats-row">
+          <div className="psr-item"><span className="psr-value">{playerStats.played}</span><span className="psr-label">Partidos</span></div>
+          <div className="psr-item win"><span className="psr-value">{playerStats.wins}</span><span className="psr-label">Victorias</span></div>
+          <div className="psr-item loss"><span className="psr-value">{playerStats.losses}</span><span className="psr-label">Derrotas</span></div>
+          <div className="psr-item"><span className="psr-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span><span className="psr-label">Win Rate</span></div>
         </div>
 
-        {/* Badges Section */}
+        {/* Badges */}
         {badges.length > 0 && (
-          <div className="profile-section">
-            <h3 className="profile-section-title">Logros</h3>
-            <div className="badges-grid">
+          <div className="profile-section-v2">
+            <h4 className="ps-title">Logros</h4>
+            <div className="badges-row">
               {badges.map((badge, i) => (
-                <div key={i} className="badge-item" title={badge.desc}>
-                  <span className="badge-icon">{badge.icon}</span>
-                  <span className="badge-name">{badge.name}</span>
+                <div 
+                  key={i} 
+                  className={`badge-v2 ${selectedBadge === i ? 'selected' : ''}`} 
+                  style={{ '--badge-color': badge.color }}
+                  onClick={() => setSelectedBadge(selectedBadge === i ? null : i)}
+                >
+                  <span className="badge-v2-icon">{ProfileIcons[badge.icon]}</span>
+                  <span className="badge-v2-name">{badge.name}</span>
                 </div>
               ))}
             </div>
+            {/* Badge Tooltip */}
+            {selectedBadge !== null && badges[selectedBadge] && (
+              <div className="badge-tooltip" onClick={() => setSelectedBadge(null)}>
+                <div className="bt-icon" style={{ color: badges[selectedBadge].color }}>
+                  {ProfileIcons[badges[selectedBadge].icon]}
+                </div>
+                <div className="bt-content">
+                  <span className="bt-name">{badges[selectedBadge].name}</span>
+                  <span className="bt-desc">{badges[selectedBadge].desc}</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Comparison with Average */}
-        <div className="profile-section">
-          <h3 className="profile-section-title">vs Promedio Liga</h3>
-          <div className="comparison-grid">
-            <div className="comparison-item">
-              <span className="comp-label">Win Rate</span>
-              <span className="comp-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span>
-              <span className={`comp-diff ${(playerStats.winRate || 0) >= avgStats.winRate ? 'positive' : 'negative'}`}>
+        {/* Comparison */}
+        <div className="profile-section-v2">
+          <h4 className="ps-title">vs Promedio</h4>
+          <div className="comparison-row-v2">
+            <div className="comp-v2">
+              <span className="comp-v2-label">Win Rate</span>
+              <span className="comp-v2-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span>
+              <span className={`comp-v2-diff ${(playerStats.winRate || 0) >= avgStats.winRate ? 'pos' : 'neg'}`}>
                 {(playerStats.winRate || 0) >= avgStats.winRate ? '+' : ''}{((playerStats.winRate || 0) - avgStats.winRate).toFixed(0)}%
               </span>
             </div>
-            <div className="comparison-item">
-              <span className="comp-label">Rating</span>
-              <span className="comp-value">{avgRating ? avgRating.toFixed(1) : '-'}</span>
-              <span className={`comp-diff ${avgRating >= avgStats.rating ? 'positive' : 'negative'}`}>
+            <div className="comp-v2">
+              <span className="comp-v2-label">Rating</span>
+              <span className="comp-v2-value">{avgRating ? avgRating.toFixed(1) : '-'}</span>
+              <span className={`comp-v2-diff ${avgRating >= avgStats.rating ? 'pos' : 'neg'}`}>
                 {avgRating >= avgStats.rating ? '+' : ''}{(avgRating - avgStats.rating).toFixed(1)}
               </span>
             </div>
-            <div className="comparison-item">
-              <span className="comp-label">MVPs</span>
-              <span className="comp-value">{playerStats.mvps || 0}</span>
-              <span className={`comp-diff ${(playerStats.mvps || 0) >= avgStats.mvps ? 'positive' : 'negative'}`}>
+            <div className="comp-v2">
+              <span className="comp-v2-label">MVPs</span>
+              <span className="comp-v2-value">{playerStats.mvps || 0}</span>
+              <span className={`comp-v2-diff ${(playerStats.mvps || 0) >= avgStats.mvps ? 'pos' : 'neg'}`}>
                 {(playerStats.mvps || 0) >= avgStats.mvps ? '+' : ''}{((playerStats.mvps || 0) - avgStats.mvps).toFixed(1)}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Personal Records */}
-        <div className="profile-section">
-          <h3 className="profile-section-title">Récords Personales</h3>
-          <div className="records-grid">
-            <div className="record-item">
-              <span className="record-icon">🏅</span>
-              <div className="record-info">
-                <span className="record-value">{bestWinStreak}</span>
-                <span className="record-label">Mejor racha victorias</span>
-              </div>
+        {/* Records */}
+        <div className="profile-section-v2">
+          <h4 className="ps-title">Récords</h4>
+          <div className="records-row-v2">
+            <div className="record-v2">
+              <span className="record-v2-icon win">{ProfileIcons.medal}</span>
+              <span className="record-v2-value">{bestWinStreak}</span>
+              <span className="record-v2-label">Mejor racha</span>
             </div>
-            <div className="record-item">
-              <span className="record-icon">💔</span>
-              <div className="record-info">
-                <span className="record-value">{worstLossStreak}</span>
-                <span className="record-label">Peor racha derrotas</span>
-              </div>
+            <div className="record-v2">
+              <span className="record-v2-icon loss">{ProfileIcons.heartBroken}</span>
+              <span className="record-v2-value">{worstLossStreak}</span>
+              <span className="record-v2-label">Peor racha</span>
             </div>
-            <div className="record-item">
-              <span className="record-icon">⬆️</span>
-              <div className="record-info">
-                <span className="record-value">{bestRating || '-'}</span>
-                <span className="record-label">Rating más alto</span>
-              </div>
+            <div className="record-v2">
+              <span className="record-v2-icon win">{ProfileIcons.arrowUp}</span>
+              <span className="record-v2-value">{bestRating || '-'}</span>
+              <span className="record-v2-label">Rating max</span>
             </div>
-            <div className="record-item">
-              <span className="record-icon">⬇️</span>
-              <div className="record-info">
-                <span className="record-value">{worstRating || '-'}</span>
-                <span className="record-label">Rating más bajo</span>
-              </div>
+            <div className="record-v2">
+              <span className="record-v2-icon loss">{ProfileIcons.arrowDown}</span>
+              <span className="record-v2-value">{worstRating || '-'}</span>
+              <span className="record-v2-label">Rating min</span>
             </div>
           </div>
         </div>
 
-        {/* Best/Worst Teammates */}
-        {(bestTeammate || worstTeammate) && (
-          <div className="profile-section">
-            <h3 className="profile-section-title">Compañeros</h3>
-            <div className="teammates-grid">
-              {bestTeammate && (
-                <div className="teammate-card best">
-                  <span className="teammate-label">Mejor con</span>
-                  <span className="teammate-name">{bestTeammate.name}</span>
-                  <span className="teammate-stat">{bestTeammate.winRate}% WR ({bestTeammate.games}p)</span>
-                </div>
-              )}
-              {worstTeammate && worstTeammate.id !== bestTeammate?.id && (
-                <div className="teammate-card worst">
-                  <span className="teammate-label">Peor con</span>
-                  <span className="teammate-name">{worstTeammate.name}</span>
-                  <span className="teammate-stat">{worstTeammate.winRate}% WR ({worstTeammate.games}p)</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Performance Graph */}
+        {(() => {
+          const playerMatches = matches
+            .filter(m => m.teamWhite?.includes(playerId) || m.teamBlack?.includes(playerId))
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+          
+          const graphData = playerMatches.map(m => {
+            const matchRatings = (ratings[playerId] || []).filter(r => r.matchId === m.id)
+            const avgScore = matchRatings.length > 0 
+              ? matchRatings.reduce((sum, r) => sum + r.score, 0) / matchRatings.length 
+              : null
+            const inWhite = m.teamWhite?.includes(playerId)
+            const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
+            return { date: m.date, rating: avgScore, won }
+          }).filter(d => d.rating !== null)
 
-        {/* Recent Ratings Received */}
-        {recentRatingsReceived.length > 0 && (
-          <div className="profile-section">
-            <h3 className="profile-section-title">Últimas Calificaciones</h3>
-            <div className="ratings-received">
-              {recentRatingsReceived.map((r, i) => {
-                const match = matches?.find(m => m.id === r.matchId)
-                return (
-                  <div key={i} className="rating-received-item">
-                    <span className="rr-from">{getPlayerName ? getPlayerName(r.ratedBy) : 'Alguien'}</span>
-                    <span className={`rr-score ${r.score >= 8 ? 'high' : r.score >= 6 ? 'medium' : 'low'}`}>
-                      {r.score}
-                    </span>
-                    <span className="rr-date">
-                      {match ? new Date(match.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : ''}
-                    </span>
+          if (graphData.length < 2) return null
+
+          const maxRating = 10
+          const minRating = 1
+          const height = 120
+          const width = 280
+          const padding = 20
+
+          const points = graphData.map((d, i) => {
+            const x = padding + (i / (graphData.length - 1)) * (width - padding * 2)
+            const y = height - padding - ((d.rating - minRating) / (maxRating - minRating)) * (height - padding * 2)
+            return { x, y, ...d }
+          })
+
+          const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+          const areaD = `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${padding} ${height - padding} Z`
+
+          return (
+            <div className="profile-section-v2">
+              <h4 className="ps-title">Rendimiento</h4>
+              <div className="performance-graph">
+                <svg viewBox={`0 0 ${width} ${height}`} className="pg-svg">
+                  {/* Grid lines */}
+                  {[1, 5, 10].map(val => {
+                    const y = height - padding - ((val - minRating) / (maxRating - minRating)) * (height - padding * 2)
+                    return (
+                      <g key={val}>
+                        <line x1={padding} y1={y} x2={width - padding} y2={y} className="pg-grid" />
+                        <text x={padding - 5} y={y + 4} className="pg-label">{val}</text>
+                      </g>
+                    )
+                  })}
+                  {/* Area fill */}
+                  <path d={areaD} className="pg-area" />
+                  {/* Line */}
+                  <path d={pathD} className="pg-line" />
+                  {/* Points */}
+                  {points.map((p, i) => (
+                    <circle 
+                      key={i} 
+                      cx={p.x} 
+                      cy={p.y} 
+                      r="4" 
+                      className={`pg-point ${p.won ? 'win' : 'loss'}`}
+                    />
+                  ))}
+                </svg>
+                <div className="pg-legend">
+                  <span className="pg-legend-item"><span className="dot win"></span> Victoria</span>
+                  <span className="pg-legend-item"><span className="dot loss"></span> Derrota</span>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Rivals & Allies */}
+        {(() => {
+          const rivalStats = {}
+          matches.forEach(m => {
+            const inWhite = m.teamWhite?.includes(playerId)
+            const inBlack = m.teamBlack?.includes(playerId)
+            if (!inWhite && !inBlack) return
+            
+            const myTeam = inWhite ? m.teamWhite : m.teamBlack
+            const enemyTeam = inWhite ? m.teamBlack : m.teamWhite
+            const won = (inWhite && m.winner === 'white') || (inBlack && m.winner === 'black')
+            
+            // Track teammates
+            myTeam?.forEach(tid => {
+              if (tid === playerId) return
+              if (!rivalStats[tid]) rivalStats[tid] = { together: 0, togetherWins: 0, against: 0, againstWins: 0 }
+              rivalStats[tid].together++
+              if (won) rivalStats[tid].togetherWins++
+            })
+            
+            // Track enemies
+            enemyTeam?.forEach(eid => {
+              if (!rivalStats[eid]) rivalStats[eid] = { together: 0, togetherWins: 0, against: 0, againstWins: 0 }
+              rivalStats[eid].against++
+              if (won) rivalStats[eid].againstWins++
+            })
+          })
+
+          const rankings = Object.entries(rivalStats)
+            .filter(([_, s]) => s.together + s.against >= 2)
+            .map(([id, s]) => ({
+              id,
+              name: getPlayerName(id),
+              photo: getPlayerPhoto(id),
+              togetherWR: s.together > 0 ? Math.round((s.togetherWins / s.together) * 100) : null,
+              togetherGames: s.together,
+              againstWR: s.against > 0 ? Math.round((s.againstWins / s.against) * 100) : null,
+              againstGames: s.against
+            }))
+
+          const bestAlly = rankings.filter(r => r.togetherGames >= 2).sort((a, b) => (b.togetherWR || 0) - (a.togetherWR || 0))[0]
+          const worstAlly = rankings.filter(r => r.togetherGames >= 2).sort((a, b) => (a.togetherWR || 0) - (b.togetherWR || 0))[0]
+          const bestRival = rankings.filter(r => r.againstGames >= 2).sort((a, b) => (b.againstWR || 0) - (a.againstWR || 0))[0]
+          const worstRival = rankings.filter(r => r.againstGames >= 2).sort((a, b) => (a.againstWR || 0) - (b.againstWR || 0))[0]
+
+          if (!bestAlly && !worstRival) return null
+
+          return (
+            <div className="profile-section-v2">
+              <h4 className="ps-title">Rivales y Aliados</h4>
+              <div className="rivals-grid">
+                {bestAlly && (
+                  <div className="rival-card ally">
+                    <span className="rc-label">Mejor Aliado</span>
+                    <div className="rc-player">
+                      {bestAlly.photo ? <img src={bestAlly.photo} alt="" /> : <span>{bestAlly.name?.charAt(0)}</span>}
+                    </div>
+                    <span className="rc-name">{bestAlly.name}</span>
+                    <span className="rc-stat good">{bestAlly.togetherWR}% WR juntos</span>
+                    <span className="rc-games">{bestAlly.togetherGames} partidos</span>
                   </div>
-                )
-              })}
+                )}
+                {worstAlly && worstAlly.id !== bestAlly?.id && (
+                  <div className="rival-card ally-bad">
+                    <span className="rc-label">Peor Aliado</span>
+                    <div className="rc-player">
+                      {worstAlly.photo ? <img src={worstAlly.photo} alt="" /> : <span>{worstAlly.name?.charAt(0)}</span>}
+                    </div>
+                    <span className="rc-name">{worstAlly.name}</span>
+                    <span className="rc-stat bad">{worstAlly.togetherWR}% WR juntos</span>
+                    <span className="rc-games">{worstAlly.togetherGames} partidos</span>
+                  </div>
+                )}
+                {bestRival && (
+                  <div className="rival-card rival">
+                    <span className="rc-label">Víctima Favorita</span>
+                    <div className="rc-player">
+                      {bestRival.photo ? <img src={bestRival.photo} alt="" /> : <span>{bestRival.name?.charAt(0)}</span>}
+                    </div>
+                    <span className="rc-name">{bestRival.name}</span>
+                    <span className="rc-stat good">{bestRival.againstWR}% WR vs</span>
+                    <span className="rc-games">{bestRival.againstGames} enfrentamientos</span>
+                  </div>
+                )}
+                {worstRival && worstRival.id !== bestRival?.id && (
+                  <div className="rival-card nemesis">
+                    <span className="rc-label">Tu Némesis</span>
+                    <div className="rc-player">
+                      {worstRival.photo ? <img src={worstRival.photo} alt="" /> : <span>{worstRival.name?.charAt(0)}</span>}
+                    </div>
+                    <span className="rc-name">{worstRival.name}</span>
+                    <span className="rc-stat bad">{worstRival.againstWR}% WR vs</span>
+                    <span className="rc-games">{worstRival.againstGames} enfrentamientos</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
-        {/* Recent Form */}
-        {recentForm.length > 0 && (
-          <div className="profile-section">
-            <h3 className="profile-section-title">Forma Reciente</h3>
-            <div className="form-row">
-              {recentForm.map((r, i) => (
-                <span key={i} className={`form-dot ${r === 'W' ? 'win' : 'loss'}`}>{r}</span>
-              ))}
-              <span className="form-text">
-                ({recentForm.filter(r => r === 'W').length}V - {recentForm.filter(r => r === 'L').length}D últimos 5)
-              </span>
+        {/* Share Card Modal */}
+        {showShareCard && (
+          <div className="share-card-overlay" onClick={() => setShowShareCard(false)}>
+            <div className="share-card-container" onClick={e => e.stopPropagation()}>
+              {/* The actual shareable card */}
+              <div ref={shareCardRef} className="share-card">
+                <div className="sc-header">
+                  <img src="/lukto-logo.png" alt="LUKTO" className="sc-logo" />
+                  <span className="sc-brand">LUKTO</span>
+                </div>
+                
+                <div className="sc-player">
+                  <div className="sc-avatar" style={{ borderColor: rank.color }}>
+                    {photo ? <img src={photo} alt="" /> : <span>{player.name?.charAt(0)}</span>}
+                  </div>
+                  <h2 className="sc-name">{player.name}</h2>
+                  <div className="sc-rank" style={{ color: rank.color }}>
+                    {rank.name} · {xp} XP
+                  </div>
+                </div>
+
+                <div className="sc-stats">
+                  <div className="sc-stat">
+                    <span className="sc-stat-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span>
+                    <span className="sc-stat-label">Win Rate</span>
+                  </div>
+                  <div className="sc-stat">
+                    <span className="sc-stat-value">{avgRating ? avgRating.toFixed(1) : '-'}</span>
+                    <span className="sc-stat-label">Rating</span>
+                  </div>
+                  <div className="sc-stat">
+                    <span className="sc-stat-value">{playerStats.mvps || 0}</span>
+                    <span className="sc-stat-label">MVPs</span>
+                  </div>
+                  <div className="sc-stat">
+                    <span className="sc-stat-value">{playerStats.played || 0}</span>
+                    <span className="sc-stat-label">Partidos</span>
+                  </div>
+                </div>
+
+                <div className="sc-record">
+                  <span className="sc-wins">{playerStats.wins || 0}V</span>
+                  <span className="sc-sep">-</span>
+                  <span className="sc-losses">{playerStats.losses || 0}D</span>
+                </div>
+
+                {badges.length > 0 && (
+                  <div className="sc-badges">
+                    {badges.slice(0, 4).map((badge, i) => (
+                      <span key={i} className="sc-badge" style={{ color: badge.color }}>
+                        {ProfileIcons[badge.icon]}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="sc-footer">
+                  <span>LUKTO STATS</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="share-card-actions">
+                <button 
+                  className="sc-btn primary" 
+                  onClick={generateShareImage}
+                  disabled={isGeneratingImage}
+                >
+                  {isGeneratingImage ? 'Generando...' : 'Compartir Imagen'}
+                </button>
+                <button className="sc-btn secondary" onClick={() => setShowShareCard(false)}>
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -599,6 +964,7 @@ function App() {
   const [showPredictionModal, setShowPredictionModal] = useState(false)
   const [predictionMatch, setPredictionMatch] = useState(null)
   const [selectedPrediction, setSelectedPrediction] = useState(null)
+  const [xpBet, setXpBet] = useState(10) // XP to bet on prediction
 
   // Notifications
   const [notificationPermission, setNotificationPermission] = useState(() => {
@@ -812,15 +1178,31 @@ function App() {
       showToast('error', 'Selecciona un equipo')
       return
     }
+    
+    // Check if user has enough XP
+    const currentXP = userPlayer ? calculateXP(userPlayer) : 0
+    if (xpBet > currentXP) {
+      showToast('error', `No tienes suficiente XP (tienes ${currentXP})`)
+      return
+    }
+    
     try {
       const predictionId = `${user.uid}_${predictionMatch.id}`
+      const probability = calculateTeamProbability(predictionMatch)
+      const winningOdds = selectedPrediction === 'white' ? probability.white : probability.black
+      const potentialWin = Math.round(xpBet * (100 / winningOdds - 1))
+      
       await setDoc(doc(db, 'predictions', predictionId), {
         odedBy: user.uid,
         matchId: predictionMatch.id,
         prediction: selectedPrediction,
-        timestamp: new Date().toISOString()
+        xpBet: xpBet,
+        potentialWin: potentialWin,
+        probability: winningOdds,
+        timestamp: new Date().toISOString(),
+        resolved: false
       })
-      showToast('success', '¡Predicción guardada!')
+      showToast('success', `¡Apostaste ${xpBet} XP al Equipo ${selectedPrediction === 'white' ? 'Blanco' : 'Negro'}!`)
       closePredictionModal()
     } catch (error) {
       console.error('Error saving prediction:', error)
@@ -1280,29 +1662,298 @@ function App() {
       {activeTab === 'analytics' && (
         <section className="stats-section analytics-section">
           <h2 className="section-title">Análisis Avanzado</h2>
-          <div className="analytics-player-select">
-            <label>Selecciona un jugador para ver su análisis:</label>
-            <select
-              value={h2hPlayer1 || ''}
-              onChange={e => setH2hPlayer1(e.target.value)}
-              className="player-select-dropdown"
-            >
-              <option value="">Seleccionar jugador...</option>
-              {stats.map(player => (
-                <option key={player.id} value={player.id}>
-                  {player.name}
-                </option>
-              ))}
-            </select>
+          
+          {/* Best Duos & Trios */}
+          {(() => {
+            // Calculate duo and trio stats
+            const duoStats = {}
+            const trioStats = {}
+            
+            matches.forEach(m => {
+              if (!m.winner) return
+              
+              const processTeam = (team, won) => {
+                if (!team || team.length < 2) return
+                
+                // Duos
+                for (let i = 0; i < team.length; i++) {
+                  for (let j = i + 1; j < team.length; j++) {
+                    const key = [team[i], team[j]].sort().join('_')
+                    if (!duoStats[key]) duoStats[key] = { ids: [team[i], team[j]], wins: 0, games: 0 }
+                    duoStats[key].games++
+                    if (won) duoStats[key].wins++
+                  }
+                }
+                
+                // Trios
+                if (team.length >= 3) {
+                  for (let i = 0; i < team.length; i++) {
+                    for (let j = i + 1; j < team.length; j++) {
+                      for (let k = j + 1; k < team.length; k++) {
+                        const key = [team[i], team[j], team[k]].sort().join('_')
+                        if (!trioStats[key]) trioStats[key] = { ids: [team[i], team[j], team[k]], wins: 0, games: 0 }
+                        trioStats[key].games++
+                        if (won) trioStats[key].wins++
+                      }
+                    }
+                  }
+                }
+              }
+              
+              processTeam(m.teamWhite, m.winner === 'white')
+              processTeam(m.teamBlack, m.winner === 'black')
+            })
+            
+            const topDuos = Object.values(duoStats)
+              .filter(d => d.games >= 2)
+              .map(d => ({ ...d, winRate: Math.round((d.wins / d.games) * 100) }))
+              .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
+              .slice(0, 3)
+            
+            const topTrios = Object.values(trioStats)
+              .filter(t => t.games >= 2)
+              .map(t => ({ ...t, winRate: Math.round((t.wins / t.games) * 100) }))
+              .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
+              .slice(0, 3)
+            
+            if (topDuos.length === 0 && topTrios.length === 0) return null
+            
+            return (
+              <div className="team-stats-section">
+                {topDuos.length > 0 && (
+                  <div className="team-stats-card">
+                    <h4 className="ts-title">Mejores Duplas</h4>
+                    <div className="team-list">
+                      {topDuos.map((duo, idx) => (
+                        <div key={idx} className="team-item">
+                          <span className="team-rank">#{idx + 1}</span>
+                          <div className="team-players">
+                            {duo.ids.map(id => (
+                              <span key={id} className="team-player">
+                                {getPlayerPhoto(id) ? (
+                                  <img src={getPlayerPhoto(id)} alt="" className="team-avatar" />
+                                ) : (
+                                  <span className="team-avatar-ph">{getPlayerName(id)?.charAt(0)}</span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="team-names">
+                            {duo.ids.map(id => getPlayerName(id)?.split(' ')[0]).join(' & ')}
+                          </div>
+                          <div className="team-record">
+                            <span className="wr good">{duo.winRate}%</span>
+                            <span className="games">{duo.wins}V-{duo.games - duo.wins}D</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {topTrios.length > 0 && (
+                  <div className="team-stats-card">
+                    <h4 className="ts-title">Mejores Tríos</h4>
+                    <div className="team-list">
+                      {topTrios.map((trio, idx) => (
+                        <div key={idx} className="team-item">
+                          <span className="team-rank">#{idx + 1}</span>
+                          <div className="team-players">
+                            {trio.ids.map(id => (
+                              <span key={id} className="team-player">
+                                {getPlayerPhoto(id) ? (
+                                  <img src={getPlayerPhoto(id)} alt="" className="team-avatar" />
+                                ) : (
+                                  <span className="team-avatar-ph">{getPlayerName(id)?.charAt(0)}</span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="team-names">
+                            {trio.ids.map(id => getPlayerName(id)?.split(' ')[0]).join(', ')}
+                          </div>
+                          <div className="team-record">
+                            <span className="wr good">{trio.winRate}%</span>
+                            <span className="games">{trio.wins}V-{trio.games - trio.wins}D</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+          
+          {/* Player Selection */}
+          <div className="analytics-selectors">
+            <div className="selector-group">
+              <label>Jugador 1</label>
+              <select
+                value={h2hPlayer1 || ''}
+                onChange={e => setH2hPlayer1(e.target.value)}
+                className="player-select-dropdown"
+              >
+                <option value="">Seleccionar...</option>
+                {stats.map(player => (
+                  <option key={player.id} value={player.id}>{player.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="selector-vs">VS</div>
+            <div className="selector-group">
+              <label>Jugador 2 (opcional)</label>
+              <select
+                value={h2hPlayer2 || ''}
+                onChange={e => setH2hPlayer2(e.target.value)}
+                className="player-select-dropdown"
+              >
+                <option value="">Seleccionar...</option>
+                {stats.filter(p => p.id !== h2hPlayer1).map(player => (
+                  <option key={player.id} value={player.id}>{player.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {!h2hPlayer1 && (
             <div className="empty-state">
-              <div className="icon">📊</div>
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.5 }}>
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+              </svg>
               <h3>Selecciona un jugador</h3>
-              <p>Elige un jugador para ver su análisis detallado</p>
+              <p>Elige un jugador para ver su análisis o compara dos jugadores</p>
             </div>
           )}
+          
+          {/* H2H Comparison when both players selected */}
+          {h2hPlayer1 && h2hPlayer2 && (() => {
+            const p1 = stats.find(s => s.id === h2hPlayer1)
+            const p2 = stats.find(s => s.id === h2hPlayer2)
+            if (!p1 || !p2) return null
+            
+            // Calculate H2H stats (when they played together/against)
+            const h2hMatches = matches.filter(m => {
+              const p1InWhite = m.teamWhite?.includes(h2hPlayer1)
+              const p1InBlack = m.teamBlack?.includes(h2hPlayer1)
+              const p2InWhite = m.teamWhite?.includes(h2hPlayer2)
+              const p2InBlack = m.teamBlack?.includes(h2hPlayer2)
+              return (p1InWhite || p1InBlack) && (p2InWhite || p2InBlack)
+            })
+            
+            let sameTeamWins = 0, sameTeamGames = 0
+            let p1WinsAgainst = 0, p2WinsAgainst = 0, vsGames = 0
+            
+            h2hMatches.forEach(m => {
+              const p1InWhite = m.teamWhite?.includes(h2hPlayer1)
+              const p2InWhite = m.teamWhite?.includes(h2hPlayer2)
+              const sameTeam = p1InWhite === p2InWhite
+              
+              if (sameTeam) {
+                sameTeamGames++
+                const won = (p1InWhite && m.winner === 'white') || (!p1InWhite && m.winner === 'black')
+                if (won) sameTeamWins++
+              } else {
+                vsGames++
+                if (p1InWhite && m.winner === 'white') p1WinsAgainst++
+                else if (!p1InWhite && m.winner === 'black') p1WinsAgainst++
+                else if (m.winner) p2WinsAgainst++
+              }
+            })
+            
+            return (
+              <div className="h2h-comparison">
+                <h3 className="h2h-title">Comparación Directa</h3>
+                
+                {/* Stats Comparison */}
+                <div className="h2h-stats-grid">
+                  <div className="h2h-player">
+                    <div className="h2h-avatar">
+                      {getPlayerPhoto(h2hPlayer1) ? (
+                        <img src={getPlayerPhoto(h2hPlayer1)} alt="" />
+                      ) : (
+                        <span>{p1.name?.charAt(0)}</span>
+                      )}
+                    </div>
+                    <span className="h2h-name">{p1.name}</span>
+                  </div>
+                  
+                  <div className="h2h-stats">
+                    <div className="h2h-stat-row">
+                      <span className={`h2h-val ${(p1.winRate || 0) > (p2.winRate || 0) ? 'winner' : ''}`}>
+                        {typeof p1.winRate === 'number' ? p1.winRate.toFixed(0) : 0}%
+                      </span>
+                      <span className="h2h-label">Win Rate</span>
+                      <span className={`h2h-val ${(p2.winRate || 0) > (p1.winRate || 0) ? 'winner' : ''}`}>
+                        {typeof p2.winRate === 'number' ? p2.winRate.toFixed(0) : 0}%
+                      </span>
+                    </div>
+                    <div className="h2h-stat-row">
+                      <span className={`h2h-val ${parseFloat(p1.avgRating || 0) > parseFloat(p2.avgRating || 0) ? 'winner' : ''}`}>
+                        {p1.avgRating || '-'}
+                      </span>
+                      <span className="h2h-label">Rating</span>
+                      <span className={`h2h-val ${parseFloat(p2.avgRating || 0) > parseFloat(p1.avgRating || 0) ? 'winner' : ''}`}>
+                        {p2.avgRating || '-'}
+                      </span>
+                    </div>
+                    <div className="h2h-stat-row">
+                      <span className={`h2h-val ${(p1.mvps || 0) > (p2.mvps || 0) ? 'winner' : ''}`}>
+                        {p1.mvps || 0}
+                      </span>
+                      <span className="h2h-label">MVPs</span>
+                      <span className={`h2h-val ${(p2.mvps || 0) > (p1.mvps || 0) ? 'winner' : ''}`}>
+                        {p2.mvps || 0}
+                      </span>
+                    </div>
+                    <div className="h2h-stat-row">
+                      <span className={`h2h-val ${(p1.played || 0) > (p2.played || 0) ? 'winner' : ''}`}>
+                        {p1.played || 0}
+                      </span>
+                      <span className="h2h-label">Partidos</span>
+                      <span className={`h2h-val ${(p2.played || 0) > (p1.played || 0) ? 'winner' : ''}`}>
+                        {p2.played || 0}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="h2h-player">
+                    <div className="h2h-avatar">
+                      {getPlayerPhoto(h2hPlayer2) ? (
+                        <img src={getPlayerPhoto(h2hPlayer2)} alt="" />
+                      ) : (
+                        <span>{p2.name?.charAt(0)}</span>
+                      )}
+                    </div>
+                    <span className="h2h-name">{p2.name}</span>
+                  </div>
+                </div>
+                
+                {/* H2H Record */}
+                {h2hMatches.length > 0 && (
+                  <div className="h2h-record">
+                    <h4 className="h2h-subtitle">Historial Directo ({h2hMatches.length} partidos)</h4>
+                    <div className="h2h-record-cards">
+                      {sameTeamGames > 0 && (
+                        <div className="h2h-record-card together">
+                          <span className="hrc-title">Juntos</span>
+                          <span className="hrc-value">{sameTeamWins}V - {sameTeamGames - sameTeamWins}D</span>
+                          <span className="hrc-percent">{Math.round((sameTeamWins / sameTeamGames) * 100)}% WR</span>
+                        </div>
+                      )}
+                      {vsGames > 0 && (
+                        <div className="h2h-record-card versus">
+                          <span className="hrc-title">Enfrentados</span>
+                          <span className="hrc-value">{p1.name?.split(' ')[0]}: {p1WinsAgainst} | {p2.name?.split(' ')[0]}: {p2WinsAgainst}</span>
+                          <span className="hrc-percent">{vsGames} partidos</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {h2hPlayer1 && (() => {
             const playerData = stats.find(s => s.id === h2hPlayer1)
@@ -2435,6 +3086,35 @@ function App() {
                 </button>
               </div>
 
+              {/* XP Betting */}
+              <div className="xp-bet-section">
+                <div className="xp-bet-header">
+                  <span className="xp-bet-title">Apostar XP</span>
+                  <span className="xp-bet-balance">Tu XP: {userPlayer ? calculateXP(userPlayer) : 0}</span>
+                </div>
+                <div className="xp-bet-options">
+                  {[5, 10, 25, 50].map(amount => (
+                    <button
+                      key={amount}
+                      className={`xp-bet-btn ${xpBet === amount ? 'selected' : ''}`}
+                      onClick={() => setXpBet(amount)}
+                      disabled={userPlayer && calculateXP(userPlayer) < amount}
+                    >
+                      {amount} XP
+                    </button>
+                  ))}
+                </div>
+                <div className="xp-bet-potential">
+                  {selectedPrediction && (
+                    <span>
+                      Posible ganancia: <strong className="potential-win">
+                        +{Math.round(xpBet * (100 / (selectedPrediction === 'white' ? probability.white : probability.black) - 1))} XP
+                      </strong>
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <div className="modal-actions">
                 <button 
                   className="submit-btn"
@@ -2442,7 +3122,7 @@ function App() {
                   disabled={!selectedPrediction}
                 >
                   {selectedPrediction 
-                    ? `Confirmar: Equipo ${selectedPrediction === 'white' ? 'Blanco' : 'Negro'}` 
+                    ? `Apostar ${xpBet} XP al Equipo ${selectedPrediction === 'white' ? 'Blanco' : 'Negro'}` 
                     : 'Selecciona un equipo'}
                 </button>
               </div>
