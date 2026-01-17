@@ -811,12 +811,42 @@ function App() {
   }
 
   // Get rank based on XP
+  // Rank icons as SVG
+  const rankIcons = {
+    diamond: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <path d="M19 3H5L2 9l10 12L22 9l-3-6zM12 17.3L5 9h14l-7 8.3z"/>
+      </svg>
+    ),
+    gold: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+      </svg>
+    ),
+    silver: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/>
+      </svg>
+    ),
+    bronze: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <circle cx="12" cy="12" r="10"/>
+        <text x="12" y="16" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#fff">3</text>
+      </svg>
+    ),
+    none: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2"/>
+      </svg>
+    )
+  }
+
   const getRank = (xp) => {
-    if (xp >= 500) return { name: 'Diamante', icon: '💎', color: '#b9f2ff', tier: 4 }
-    if (xp >= 300) return { name: 'Oro', icon: '🥇', color: '#ffd700', tier: 3 }
-    if (xp >= 150) return { name: 'Plata', icon: '🥈', color: '#c0c0c0', tier: 2 }
-    if (xp >= 50) return { name: 'Bronce', icon: '🥉', color: '#cd7f32', tier: 1 }
-    return { name: 'Sin rango', icon: '⚪', color: '#666', tier: 0 }
+    if (xp >= 500) return { name: 'Diamante', icon: rankIcons.diamond, color: '#00d4ff', tier: 4 }
+    if (xp >= 300) return { name: 'Oro', icon: rankIcons.gold, color: '#ffd700', tier: 3 }
+    if (xp >= 150) return { name: 'Plata', icon: rankIcons.silver, color: '#c0c0c0', tier: 2 }
+    if (xp >= 50) return { name: 'Bronce', icon: rankIcons.bronze, color: '#cd7f32', tier: 1 }
+    return { name: 'Sin rango', icon: rankIcons.none, color: '#666', tier: 0 }
   }
 
   // Get XP progress to next rank
@@ -917,30 +947,37 @@ function App() {
       .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
   }
 
-  // Get player of the month
-  const getPlayerOfTheMonth = () => {
+  // Get player of period (week or month)
+  const getPlayerOfPeriod = (period = 'month') => {
     const now = new Date()
-    const monthMatches = matches.filter(m => {
-      const d = new Date(m.date)
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-    })
+    let periodMatches
     
-    if (monthMatches.length === 0) return null
+    if (period === 'week') {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      periodMatches = matches.filter(m => new Date(m.date) >= weekAgo)
+    } else {
+      periodMatches = matches.filter(m => {
+        const d = new Date(m.date)
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+      })
+    }
     
-    const monthStats = {}
-    monthMatches.forEach(match => {
+    if (periodMatches.length === 0) return null
+    
+    const periodStats = {}
+    periodMatches.forEach(match => {
       const whiteWon = match.winner === 'white'
       const allPlayers = [...match.teamWhite, ...match.teamBlack]
       
       allPlayers.forEach(playerId => {
-        if (!monthStats[playerId]) {
-          monthStats[playerId] = { wins: 0, played: 0, mvps: 0, totalRating: 0, ratingCount: 0 }
+        if (!periodStats[playerId]) {
+          periodStats[playerId] = { wins: 0, played: 0, mvps: 0, totalRating: 0, ratingCount: 0 }
         }
-        monthStats[playerId].played++
+        periodStats[playerId].played++
         
         const inWhite = match.teamWhite.includes(playerId)
         if ((inWhite && whiteWon) || (!inWhite && !whiteWon)) {
-          monthStats[playerId].wins++
+          periodStats[playerId].wins++
         }
         
         // Check MVP
@@ -948,8 +985,8 @@ function App() {
         const matchRatings = playerRatings.filter(r => r.matchId === match.id)
         if (matchRatings.length > 0) {
           const avg = matchRatings.reduce((sum, r) => sum + r.score, 0) / matchRatings.length
-          monthStats[playerId].totalRating += avg
-          monthStats[playerId].ratingCount++
+          periodStats[playerId].totalRating += avg
+          periodStats[playerId].ratingCount++
         }
       })
     })
@@ -958,8 +995,11 @@ function App() {
     let bestPlayer = null
     let bestScore = -1
     
-    Object.entries(monthStats).forEach(([playerId, stats]) => {
-      if (stats.played >= 2) { // Minimum 2 games
+    // For week, require at least 1 game; for month, require 2
+    const minGames = period === 'week' ? 1 : 2
+    
+    Object.entries(periodStats).forEach(([playerId, stats]) => {
+      if (stats.played >= minGames) {
         const avgRating = stats.ratingCount > 0 ? stats.totalRating / stats.ratingCount : 5
         const score = (stats.wins * 3) + avgRating + (stats.played * 0.5)
         if (score > bestScore) {
@@ -976,6 +1016,10 @@ function App() {
     
     return bestPlayer
   }
+  
+  // Alias for backward compatibility
+  const getPlayerOfTheMonth = () => getPlayerOfPeriod('month')
+  const getPlayerOfTheWeek = () => getPlayerOfPeriod('week')
 
   // Achievement icons as SVG components - More distinctive and fun designs
   const achievementIcons = {
@@ -1655,11 +1699,13 @@ function App() {
                   <div className="profile-player">
                     <span className="player-badge">{getPlayerName(userPlayer)}</span>
                     {(() => {
-                      const playerStats = stats.find(s => s.id === userPlayer)
-                      if (playerStats) {
+                      const xp = calculateXP(userPlayer)
+                      const rank = getRank(xp)
+                      if (rank.tier > 0) {
                         return (
-                          <span className={`rank-badge rank-${playerStats.rank?.toLowerCase()}`}>
-                            {playerStats.rank}
+                          <span className={`rank-badge rank-${rank.name?.toLowerCase()}`}>
+                            {rank.icon}
+                            {rank.name}
                           </span>
                         )
                       }
@@ -1791,34 +1837,74 @@ function App() {
 
       {activeTab === 'stats' && dataLoaded && (
         <section className="stats-section">
-          {/* Player of the Month Card */}
-          {(() => {
-            const potm = getPlayerOfTheMonth()
-            if (!potm) return null
-            const potmPlayer = players.find(p => p.id === potm.id)
-            return (
-              <div className="potm-card">
-                <div className="potm-badge">🏆 Jugador del Mes</div>
-                <div className="potm-content">
-                  {getPlayerPhoto(potm.id) ? (
-                    <img src={getPlayerPhoto(potm.id)} alt="" className="potm-avatar" />
-                  ) : (
-                    <div className="potm-avatar-placeholder">
-                      {getInitials(potmPlayer?.name || '')}
-                    </div>
-                  )}
-                  <div className="potm-info">
-                    <h3>{potmPlayer?.name}</h3>
-                    <div className="potm-stats">
-                      <span>{potm.wins}V - {potm.played - potm.wins}D</span>
-                      <span>{potm.winRate}%</span>
-                      <span>⭐ {potm.avgRating}</span>
+          {/* Player of Week / Month Cards */}
+          <div className="featured-players">
+            {/* Player of the Week */}
+            {(() => {
+              const potw = getPlayerOfTheWeek()
+              if (!potw) return null
+              const potwPlayer = players.find(p => p.id === potw.id)
+              return (
+                <div className="featured-card week">
+                  <div className="featured-badge">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                      <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+                    </svg>
+                    Jugador de la Semana
+                  </div>
+                  <div className="featured-content">
+                    {getPlayerPhoto(potw.id) ? (
+                      <img src={getPlayerPhoto(potw.id)} alt="" className="featured-avatar" />
+                    ) : (
+                      <div className="featured-avatar-placeholder">
+                        {getInitials(potwPlayer?.name || '')}
+                      </div>
+                    )}
+                    <div className="featured-info">
+                      <h3>{potwPlayer?.name}</h3>
+                      <div className="featured-stats">
+                        <span className="stat-item">{potw.wins}V {potw.played - potw.wins}D</span>
+                        <span className="stat-item highlight">{potw.winRate}%</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )
-          })()}
+              )
+            })()}
+            
+            {/* Player of the Month */}
+            {(() => {
+              const potm = getPlayerOfTheMonth()
+              if (!potm) return null
+              const potmPlayer = players.find(p => p.id === potm.id)
+              return (
+                <div className="featured-card month">
+                  <div className="featured-badge">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                      <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+                    </svg>
+                    Jugador del Mes
+                  </div>
+                  <div className="featured-content">
+                    {getPlayerPhoto(potm.id) ? (
+                      <img src={getPlayerPhoto(potm.id)} alt="" className="featured-avatar" />
+                    ) : (
+                      <div className="featured-avatar-placeholder">
+                        {getInitials(potmPlayer?.name || '')}
+                      </div>
+                    )}
+                    <div className="featured-info">
+                      <h3>{potmPlayer?.name}</h3>
+                      <div className="featured-stats">
+                        <span className="stat-item">{potm.wins}V {potm.played - potm.wins}D</span>
+                        <span className="stat-item highlight">{potm.winRate}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
 
           <h2 className="section-title">
             {timeFilter === 'all' ? 'Ranking General' : 
