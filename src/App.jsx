@@ -6,7 +6,8 @@ import {
   doc, 
   setDoc, 
   deleteDoc,
-  getDocs, 
+  getDocs,
+  getDoc,
   onSnapshot,
   query,
   where,
@@ -1719,6 +1720,14 @@ function App() {
 
   const submitRatings = async () => {
     if (!selectedMatch || !userPlayer) return
+    
+    // Check if ratings are closed - re-fetch match to get latest state
+    const matchDoc = await getDoc(doc(db, 'matches', selectedMatch.id))
+    if (matchDoc.exists() && matchDoc.data().ratingsOpen === false) {
+      showToast('error', 'Las calificaciones han sido cerradas para este partido')
+      setShowRatingModal(false)
+      return
+    }
     
     // Check if user is blocked
     if (blockedUsers.includes(user?.uid)) {

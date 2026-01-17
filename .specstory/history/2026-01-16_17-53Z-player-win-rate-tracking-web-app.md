@@ -61726,6 +61726,428 @@ dame la opcion de admin de borar las calificaciones de otro.
 
 _**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
 
+<think><details><summary>Thought Process</summary>
+The user wants an admin tool to delete ratings from other users. Let me add this functionality to the admin tools section.
+
+I need to:
+1. Add a new admin tool section for managing/deleting ratings
+2. Show all ratings grouped by player who gave the rating
+3. Allow admin to delete specific ratings
+
+Let me find where the admin tools are located and add this feature.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Calificaciones Sospechosas|tool-card.*Bloquear" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `<h3>Calificaciones Sospechosas</h3>` | L3239 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me find the end of the tool cards section to add the new "Delete Ratings" admin tool.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the structure. I'll add a new tool card after "Calificaciones Sospechosas" and before "League Settings" for managing/deleting ratings. Let me add this new feature.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 129, lines removed: 1
+
+```diff
+@@ -3297,5 +3297,133 @@
+              &lt;/div&gt;
+            &lt;/div&gt;
+-           
++ 
++           {/* Delete Ratings Admin Tool */}
++           &lt;div className="tool-card"&gt;
++             &lt;div className="tool-header"&gt;
++               &lt;div className="tool-header-icon" style={{background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05))', borderColor: 'rgba(239, 68, 68, 0.2)'}}&gt;
++                 &lt;svg viewBox="0 0 24 24" fill="currentColor" style={{color: '#ef4444'}}&gt;
++                   &lt;path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/&gt;
++                 &lt;/svg&gt;
++               &lt;/div&gt;
++               &lt;h3&gt;Eliminar Calificaciones&lt;/h3&gt;
++             &lt;/div&gt;
++             &lt;p className="tool-description"&gt;Eliminar calificaciones de un jugador específico&lt;/p&gt;
++             &lt;div className="delete-ratings-section"&gt;
++               &lt;select 
++                 className="setting-select"
++                 onChange={(e) =&gt; {
++                   const playerId = e.target.value
++                   if (playerId) {
++                     setSelectedPlayerToDeleteRatings(playerId)
++                   }
++                 }}
++                 value={selectedPlayerToDeleteRatings || ''}
++               &gt;
++                 &lt;option value=""&gt;Seleccionar jugador que calificó...&lt;/option&gt;
++                 {players.map(p =&gt; {
++                   // Count how many ratings this player has given
++                   let ratingCount = 0
++                   Object.values(ratings).forEach(playerRatings =&gt; {
++                     ratingCount += playerRatings.filter(r =&gt; r.ratedBy === p.id).length
++                   })
++                   return (
++                     &lt;option key={p.id} value={p.id}&gt;
++                       {p.name} ({ratingCount} calificaciones dadas)
++                     &lt;/option&gt;
++                   )
++                 })}
++               &lt;/select&gt;
++               
++               {selectedPlayerToDeleteRatings &amp;&amp; (
++                 &lt;div className="ratings-to-delete"&gt;
++                   {(() =&gt; {
++                     const raterName = players.find(p =&gt; p.id === selectedPlayerToDeleteRatings)?.name
++                     const allRatingsFromPlayer = []
++                     
++                     Object.entries(ratings).forEach(([ratedPlayerId, playerRatings]) =&gt; {
++                       playerRatings.forEach(r =&gt; {
++                         if (r.ratedBy === selectedPlayerToDeleteRatings) {
++                           const ratedPlayerName = players.find(p =&gt; p.id === ratedPlayerId)?.name
++                           const match = matches.find(m =&gt; m.id === r.matchId)
++                           allRatingsFromPlayer.push({
++                             ...r,
++                             ratedPlayerId,
++                             ratedPlayerName,
++                             matchDate: match?.date,
++                             matchVenue: match?.venue
++                           })
++                         }
++                       })
++                     })
++                     
++                     if (allRatingsFromPlayer.length === 0) {
++                       return &lt;p className="no-data"&gt;Este jugador no ha dado calificaciones&lt;/p&gt;
++                     }
++                     
++                     // Group by match
++                     const byMatch = {}
++                     allRatingsFromPlayer.forEach(r =&gt; {
++                       if (!byMatch[r.matchId]) {
++                         byMatch[r.matchId] = {
++                           matchId: r.matchId,
++                           matchDate: r.matchDate,
++                           matchVenue: r.matchVenue,
++                           ratings: []
++                         }
++                       }
++                       byMatch[r.matchId].ratings.push(r)
++                     })
++                     
++                     return Object.values(byMatch).map(matchGroup =&gt; (
++                       &lt;div key={matchGroup.matchId} className="rating-match-group"&gt;
++                         &lt;div className="rating-match-header"&gt;
++                           &lt;span&gt;{matchGroup.matchVenue} - {matchGroup.matchDate}&lt;/span&gt;
++                           &lt;button 
++                             className="btn-danger-small"
++                             onClick={async () =&gt; {
++                               if (!confirm(&#96;¿Eliminar TODAS las calificaciones de ${raterName} en este partido?&#96;)) return
++                               
++                               const batch = writeBatch(db)
++                               matchGroup.ratings.forEach(r =&gt; {
++                                 const ratingId = &#96;${r.ratedPlayerId}_${r.matchId}_${selectedPlayerToDeleteRatings}&#96;
++                                 batch.delete(doc(db, 'ratings', ratingId))
++                               })
++                               await batch.commit()
++                               showToast('success', &#96;Eliminadas ${matchGroup.ratings.length} calificaciones&#96;)
++                             }}
++                           &gt;
++                             Eliminar todas del partido
++                           &lt;/button&gt;
++                         &lt;/div&gt;
++                         &lt;div className="rating-items-list"&gt;
++                           {matchGroup.ratings.map(r =&gt; (
++                             &lt;div key={&#96;${r.ratedPlayerId}_${r.matchId}&#96;} className="rating-delete-item"&gt;
++                               &lt;span className="rated-player"&gt;{r.ratedPlayerName}&lt;/span&gt;
++                               &lt;span className={&#96;rating-score ${r.score &gt;= 7 ? 'high' : r.score &gt;= 5 ? 'medium' : 'low'}&#96;}&gt;
++                                 {r.score}
++                               &lt;/span&gt;
++                               &lt;button 
++                                 className="btn-delete-small"
++                                 onClick={async () =&gt; {
++                                   if (!confirm(&#96;¿Eliminar calificación de ${raterName} a ${r.ratedPlayerName}?&#96;)) return
++                                   
++                                   const ratingId = &#96;${r.ratedPlayerId}_${r.matchId}_${selectedPlayerToDeleteRatings}&#96;
++                                   await deleteDoc(doc(db, 'ratings', ratingId))
++                                   showToast('success', 'Calificación eliminada')
++                                 }}
++                               &gt;
++                                 ✕
++                               &lt;/button&gt;
++                             &lt;/div&gt;
++                           ))}
++                         &lt;/div&gt;
++                       &lt;/div&gt;
++                     ))
++                   })()}
++                 &lt;/div&gt;
++               )}
++             &lt;/div&gt;
++           &lt;/div&gt;
++           
+            {/* League Settings */}
+            &lt;div className="tool-card"&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to add the state variable `selectedPlayerToDeleteRatings` and add CSS for the new elements. Let me add the state first.</details></think>
+
+---
+
+Ahora agrego el estado necesario:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const \[mergePlayer1|const \[blockedUsers" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const [blockedUsers, setBlockedUsers] = useState([])` | L201 |
+| `src/App.jsx` | `const [mergePlayer1, setMergePlayer1] = useState('')` | L202 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me add the new state after mergePlayer2.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -202,4 +202,5 @@
+    const [mergePlayer1, setMergePlayer1] = useState('')
+    const [mergePlayer2, setMergePlayer2] = useState('')
++   const [selectedPlayerToDeleteRatings, setSelectedPlayerToDeleteRatings] = useState(null)
+    const [leagueSettings, setLeagueSettings] = useState({
+      name: 'LUKTO',
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to add the CSS styles for the new elements. Let me add them.</details></think>
+
+---
+
+Ahora agrego los estilos CSS:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\.suspicious-user|\.suspicious-stats" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `.suspicious-user \{` | L4657 |
+| `src/index.css` | `.suspicious-stats \{` | L4669 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me add the CSS for the delete ratings section after the suspicious-stats styles.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+Status: **loading**
+
+```css
+.suspicious-stats {
+  font-size: 0.8rem;
+  color: #FF453A;
+}
+
+/* Delete Ratings Section */
+.delete-ratings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ratings-to-delete {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.rating-match-group {
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+}
+
+.rating-match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.rating-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.rating-delete-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  background: var(--bg-glass);
+  border-radius: 6px;
+}
+
+.rating-delete-item .rated-player {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.rating-delete-item .rating-score {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.rating-delete-item .rating-score.high {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.rating-delete-item .rating-score.medium {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.rating-delete-item .rating-score.low {
+  background: rgba(239, 68, 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+coloque un partiudo para que nadie pudiera votar pero hay gente que si pudo hacerlo
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
 
 
 ---
