@@ -216,6 +216,7 @@ function App() {
     // UI
     activeTab,
     setActiveTab,
+    toast,
     showToast,
     timeFilter,
     setTimeFilter,
@@ -1109,8 +1110,8 @@ function App() {
       />
 
       {/* Toast Notification */}
-      {useApp().toast && (
-        <div className={`toast ${useApp().toast.type}`}>{useApp().toast.message}</div>
+      {toast && (
+        <div className={`toast ${toast.type}`}>{toast.message}</div>
       )}
     </div>
   )

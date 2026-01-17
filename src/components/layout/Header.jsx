@@ -153,7 +153,7 @@ export const Header = ({
 
         {/* Quick Actions */}
         <div className="quick-actions">
-          {'Notification' in window && (
+          {typeof window !== 'undefined' && 'Notification' in window && (
             <button
               className={`action-btn ${notificationPermission === 'granted' ? 'active' : ''}`}
               onClick={requestNotificationPermission}
