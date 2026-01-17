@@ -1716,224 +1716,93 @@ function App() {
       {/* Admin Login Modal */}
       {showLoginModal && <AdminLoginModal onClose={() => setShowLoginModal(false)} />}
 
-      {/* Player Profile Modal - Premium Design */}
-      {showPlayerProfile && selectedPlayerProfile && (
-        <div className="modal-overlay" onClick={() => setShowPlayerProfile(false)}>
-          <div className="premium-profile-modal" onClick={e => e.stopPropagation()}>
-            {(() => {
-              // Check if data is loaded
-              if (!players || players.length === 0) {
-                return (
-                  <div className="premium-loading">
-                    <button className="premium-close" onClick={() => setShowPlayerProfile(false)}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
-                      </svg>
-                    </button>
-                    <div className="loading-spinner"></div>
-                    <p>Cargando...</p>
-                  </div>
-                )
-              }
+      {/* Player Profile Modal - Simple Version */}
+      {showPlayerProfile && selectedPlayerProfile && (() => {
+        const player = players?.find(p => p.id === selectedPlayerProfile)
+        const playerStats = stats?.find(s => s.id === selectedPlayerProfile) || {}
+        const xp = calculateXP?.(selectedPlayerProfile) || 0
+        const rank = getRank?.(xp) || { name: 'Bronce', color: '#CD7F32', key: 'bronce' }
+        const playerRatingsList = ratings?.[selectedPlayerProfile] || []
 
-              const player = players.find(p => p.id === selectedPlayerProfile)
-              if (!player) {
-                return (
-                  <div className="premium-error">
-                    <button className="premium-close" onClick={() => setShowPlayerProfile(false)}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
-                      </svg>
-                    </button>
-                    <p>Jugador no encontrado</p>
-                  </div>
-                )
-              }
+        return (
+          <div className="modal-overlay" onClick={() => setShowPlayerProfile(false)}>
+            <div className="modal profile-modal-simple" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Perfil</h2>
+                <button className="modal-close" onClick={() => setShowPlayerProfile(false)}>×</button>
+              </div>
               
-              const playerStats = (timeFilter === 'all' ? stats : filteredStats).find(s => s.id === selectedPlayerProfile) || {}
-              const xp = calculateXP ? calculateXP(selectedPlayerProfile) : 0
-              const rank = getRank ? getRank(xp) : { name: 'Bronce', color: '#CD7F32', key: 'bronce' }
-              const playerRatingsList = ratings[selectedPlayerProfile] || []
-              
-              // Calculate streaks
-              let currentStreak = 0
-              let streakType = null
-              const sortedMatches = [...(matches || [])].sort((a, b) => new Date(b.date) - new Date(a.date))
-              for (const match of sortedMatches) {
-                if (!match.teamWhite || !match.teamBlack) continue
-                const inWhite = match.teamWhite.includes(selectedPlayerProfile)
-                const inBlack = match.teamBlack.includes(selectedPlayerProfile)
-                if (!inWhite && !inBlack) continue
-                const won = (inWhite && match.winner === 'white') || (inBlack && match.winner === 'black')
-                if (streakType === null) {
-                  streakType = won ? 'win' : 'loss'
-                  currentStreak = 1
-                } else if ((won && streakType === 'win') || (!won && streakType === 'loss')) {
-                  currentStreak++
-                } else {
-                  break
-                }
-              }
-
-              const avgRating = playerStats?.avgRating || 0
-              const rankColor = rank?.color || '#CD7F32'
-
-              return (
-                <>
-                  {/* Close Button */}
-                  <button className="premium-close" onClick={() => setShowPlayerProfile(false)}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
-                  </button>
-
-                  {/* Hero Section with Gradient */}
-                  <div className="premium-hero" style={{ '--rank-color': rankColor }}>
-                    <div className="premium-avatar-container">
-                      {getPlayerPhoto(selectedPlayerProfile) ? (
-                        <img src={getPlayerPhoto(selectedPlayerProfile)} alt="" className="premium-avatar" />
-                      ) : (
-                        <div className="premium-avatar premium-avatar-placeholder">
-                          {getInitials(player.name)}
-                        </div>
-                      )}
-                      <div className="premium-rank-icon">
-                        {getRankIcon(rank.key, 24)}
+              {!player ? (
+                <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                  Jugador no encontrado
+                </p>
+              ) : (
+                <div className="profile-simple-content">
+                  {/* Avatar & Name */}
+                  <div className="profile-simple-header">
+                    {getPlayerPhoto(selectedPlayerProfile) ? (
+                      <img src={getPlayerPhoto(selectedPlayerProfile)} alt="" className="profile-simple-avatar" />
+                    ) : (
+                      <div className="profile-simple-avatar-placeholder">
+                        {getInitials(player.name)}
                       </div>
-                    </div>
-                    <h2 className="premium-name">{player.name}</h2>
-                    {player.aliases?.length > 0 && (
-                      <p className="premium-aliases">{player.aliases.join(' • ')}</p>
                     )}
-                    <div className="premium-rank-badge" style={{ background: `${rankColor}20`, color: rankColor }}>
-                      {rank?.name || 'Bronce'}
-                    </div>
-                  </div>
-
-                  {/* Quick Stats Row */}
-                  <div className="premium-quick-stats">
-                    <div className="pqs-item">
-                      <span className="pqs-value" style={{ color: 'var(--accent-emerald)' }}>{playerStats?.wins || 0}</span>
-                      <span className="pqs-label">Victorias</span>
-                    </div>
-                    <div className="pqs-divider"></div>
-                    <div className="pqs-item">
-                      <span className="pqs-value" style={{ color: 'var(--accent-red)' }}>{playerStats?.losses || 0}</span>
-                      <span className="pqs-label">Derrotas</span>
-                    </div>
-                    <div className="pqs-divider"></div>
-                    <div className="pqs-item">
-                      <span className="pqs-value">{playerStats?.played || 0}</span>
-                      <span className="pqs-label">Partidos</span>
-                    </div>
-                  </div>
-
-                  {/* Stats Cards */}
-                  <div className="premium-stats-grid">
-                    <div className="premium-stat-card winrate">
-                      <div className="psc-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                        </svg>
-                      </div>
-                      <div className="psc-content">
-                        <span className="psc-value">{playerStats?.winRate?.toFixed(0) || 0}%</span>
-                        <span className="psc-label">Win Rate</span>
-                      </div>
-                      <div className="psc-bar">
-                        <div className="psc-bar-fill" style={{ width: `${playerStats?.winRate || 0}%` }}></div>
-                      </div>
-                    </div>
-
-                    <div className="premium-stat-card rating">
-                      <div className="psc-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10"/>
-                          <path d="M12 6v6l4 2"/>
-                        </svg>
-                      </div>
-                      <div className="psc-content">
-                        <span className="psc-value">{avgRating > 0 ? avgRating.toFixed(1) : '-'}</span>
-                        <span className="psc-label">Rating Promedio</span>
-                      </div>
-                      <div className="psc-bar">
-                        <div className="psc-bar-fill" style={{ width: `${avgRating * 10}%`, background: 'var(--accent-gold)' }}></div>
-                      </div>
-                    </div>
-
-                    <div className="premium-stat-card mvp">
-                      <div className="psc-icon mvp-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M6 9H4.5a2.5 2.5 0 010-5H6"/>
-                          <path d="M18 9h1.5a2.5 2.5 0 000-5H18"/>
-                          <path d="M4 22h16"/>
-                          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-                          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-                          <path d="M18 2H6v7a6 6 0 1012 0V2z"/>
-                        </svg>
-                      </div>
-                      <div className="psc-content">
-                        <span className="psc-value">{playerStats?.mvps || 0}</span>
-                        <span className="psc-label">MVP Awards</span>
-                      </div>
-                    </div>
-
-                    <div className="premium-stat-card xp">
-                      <div className="psc-icon xp-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                        </svg>
-                      </div>
-                      <div className="psc-content">
-                        <span className="psc-value">{xp}</span>
-                        <span className="psc-label">Experiencia</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Streak Badge */}
-                  {currentStreak > 0 && (
-                    <div className={`premium-streak ${streakType}`}>
-                      <span className="ps-icon">{streakType === 'win' ? '🔥' : '❄️'}</span>
-                      <span className="ps-text">
-                        Racha de {currentStreak} {streakType === 'win' ? 'victorias' : 'derrotas'}
+                    <div className="profile-simple-info">
+                      <h3>{player.name}</h3>
+                      <span className="profile-simple-rank" style={{ color: rank.color }}>
+                        {rank.name}
                       </span>
                     </div>
-                  )}
+                  </div>
 
-                  {/* Recent Ratings */}
-                  <div className="premium-section">
-                    <h4 className="premium-section-title">Últimas Calificaciones</h4>
-                    <div className="premium-ratings-list">
-                      {playerRatingsList.length > 0 ? (
-                        playerRatingsList.slice(-5).reverse().map((r, idx) => {
-                          const match = matches.find(m => m.id === r.matchId)
-                          const raterName = getPlayerName(r.ratedBy)
-                          return (
-                            <div key={idx} className="premium-rating-item">
-                              <div className="pri-info">
-                                <span className="pri-from">De: {raterName}</span>
-                                <span className="pri-date">
-                                  {match ? new Date(match.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '-'}
-                                </span>
-                              </div>
-                              <div className={`pri-score ${getRatingClass(r.score)}`}>
-                                {r.score}
-                              </div>
-                            </div>
-                          )
-                        })
-                      ) : (
-                        <p className="premium-no-data">Sin calificaciones aún</p>
-                      )}
+                  {/* Stats Grid */}
+                  <div className="profile-simple-stats">
+                    <div className="pss-item">
+                      <span className="pss-value">{playerStats.played || 0}</span>
+                      <span className="pss-label">Partidos</span>
+                    </div>
+                    <div className="pss-item">
+                      <span className="pss-value win">{playerStats.wins || 0}</span>
+                      <span className="pss-label">Victorias</span>
+                    </div>
+                    <div className="pss-item">
+                      <span className="pss-value loss">{playerStats.losses || 0}</span>
+                      <span className="pss-label">Derrotas</span>
+                    </div>
+                    <div className="pss-item">
+                      <span className="pss-value">{playerStats.winRate?.toFixed(0) || 0}%</span>
+                      <span className="pss-label">Win Rate</span>
+                    </div>
+                    <div className="pss-item">
+                      <span className="pss-value">{playerStats.avgRating?.toFixed(1) || '-'}</span>
+                      <span className="pss-label">Rating</span>
+                    </div>
+                    <div className="pss-item">
+                      <span className="pss-value">{playerStats.mvps || 0}</span>
+                      <span className="pss-label">MVPs</span>
                     </div>
                   </div>
-                </>
-              )
-            })()}
+
+                  {/* Recent Ratings */}
+                  {playerRatingsList.length > 0 && (
+                    <div className="profile-simple-ratings">
+                      <h4>Últimas Calificaciones</h4>
+                      <div className="psr-list">
+                        {playerRatingsList.slice(-5).reverse().map((r, idx) => (
+                          <div key={idx} className="psr-item">
+                            <span className="psr-from">{getPlayerName(r.ratedBy)}</span>
+                            <span className={`psr-score ${getRatingClass(r.score)}`}>{r.score}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Player Add/Edit Modal */}
       {showPlayerModal && (
