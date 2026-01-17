@@ -138,9 +138,13 @@ function PlayerProfileModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal profile-modal-simple" onClick={e => e.stopPropagation()}>
+      <div 
+        className="modal profile-modal-simple" 
+        onClick={e => e.stopPropagation()}
+        style={{ background: '#1a1a1a', border: '1px solid #333' }}
+      >
         <div className="modal-header">
-          <h2>Perfil</h2>
+          <h2 style={{ color: '#fff' }}>Perfil</h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
         
