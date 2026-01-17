@@ -148,23 +148,44 @@ function PlayerProfileModal({
   const playerRatings = ratings?.[playerId] || []
   const photo = getPlayerPhoto ? getPlayerPhoto(playerId) : null
   
-  // Calculate streaks
+  // Calculate all stats averages for comparison
+  const avgStats = {
+    winRate: stats?.length > 0 ? stats.reduce((s, p) => s + (p.winRate || 0), 0) / stats.length : 50,
+    rating: stats?.length > 0 ? stats.filter(p => p.avgRating).reduce((s, p) => s + parseFloat(p.avgRating || 5), 0) / stats.filter(p => p.avgRating).length : 5,
+    mvps: stats?.length > 0 ? stats.reduce((s, p) => s + (p.mvps || 0), 0) / stats.length : 0
+  }
+  
+  // Calculate streaks (current, best win, worst loss)
   const playerMatches = matches?.filter(m => 
     m.teamWhite?.includes(playerId) || m.teamBlack?.includes(playerId)
   ).sort((a, b) => new Date(b.date) - new Date(a.date)) || []
   
   let currentStreak = 0
   let streakType = null
+  let bestWinStreak = 0
+  let worstLossStreak = 0
+  let tempWinStreak = 0
+  let tempLossStreak = 0
+  
   for (const m of playerMatches) {
     const inWhite = m.teamWhite?.includes(playerId)
     const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
+    
+    if (won) {
+      tempWinStreak++
+      tempLossStreak = 0
+      if (tempWinStreak > bestWinStreak) bestWinStreak = tempWinStreak
+    } else {
+      tempLossStreak++
+      tempWinStreak = 0
+      if (tempLossStreak > worstLossStreak) worstLossStreak = tempLossStreak
+    }
+    
     if (streakType === null) {
       streakType = won ? 'win' : 'loss'
       currentStreak = 1
     } else if ((streakType === 'win' && won) || (streakType === 'loss' && !won)) {
       currentStreak++
-    } else {
-      break
     }
   }
 
@@ -174,47 +195,111 @@ function PlayerProfileModal({
     return (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black') ? 'W' : 'L'
   })
 
-  // Best rating received
+  // Rating stats
   const bestRating = playerRatings.length > 0 ? Math.max(...playerRatings.map(r => r.score)) : 0
+  const worstRating = playerRatings.length > 0 ? Math.min(...playerRatings.map(r => r.score)) : 0
   const avgRating = playerRatings.length > 0 
-    ? (playerRatings.reduce((s, r) => s + r.score, 0) / playerRatings.length).toFixed(1) 
-    : '-'
+    ? (playerRatings.reduce((s, r) => s + r.score, 0) / playerRatings.length)
+    : 0
+  
+  // Best/Worst teammates
+  const teammateStats = {}
+  playerMatches.forEach(m => {
+    const inWhite = m.teamWhite?.includes(playerId)
+    const team = inWhite ? m.teamWhite : m.teamBlack
+    const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
+    
+    team?.forEach(tid => {
+      if (tid === playerId) return
+      if (!teammateStats[tid]) teammateStats[tid] = { wins: 0, games: 0 }
+      teammateStats[tid].games++
+      if (won) teammateStats[tid].wins++
+    })
+  })
+  
+  const teammateRankings = Object.entries(teammateStats)
+    .filter(([_, s]) => s.games >= 2)
+    .map(([id, s]) => ({
+      id,
+      name: getPlayerName ? getPlayerName(id) : id,
+      winRate: s.games > 0 ? Math.round((s.wins / s.games) * 100) : 0,
+      games: s.games
+    }))
+    .sort((a, b) => b.winRate - a.winRate)
+  
+  const bestTeammate = teammateRankings[0]
+  const worstTeammate = teammateRankings[teammateRankings.length - 1]
+  
+  // Achievements/Badges
+  const badges = []
+  if (currentStreak >= 3 && streakType === 'win') badges.push({ icon: '🔥', name: 'En Racha', desc: '3+ victorias seguidas' })
+  if (playerStats.mvps >= 1) badges.push({ icon: '⭐', name: 'MVP', desc: 'Ser MVP de un partido' })
+  if (bestRating === 10) badges.push({ icon: '💯', name: 'Perfecto', desc: 'Rating 10 en un partido' })
+  if (avgRating >= 8 && playerStats.played >= 3) badges.push({ icon: '🎯', name: 'Consistente', desc: 'Rating >8 promedio' })
+  if (playerStats.mvps >= 5) badges.push({ icon: '👑', name: 'Rey', desc: '5+ MVPs totales' })
+  if (playerStats.mvps >= 10) badges.push({ icon: '🏆', name: 'Leyenda', desc: '10+ MVPs totales' })
+  if (playerStats.winRate >= 70 && playerStats.played >= 3) badges.push({ icon: '💪', name: 'Dominante', desc: '>70% Win Rate' })
+  if (playerStats.played >= 10) badges.push({ icon: '🎮', name: 'Veterano', desc: '10+ partidos jugados' })
+  if (bestWinStreak >= 5) badges.push({ icon: '⚡', name: 'Imparable', desc: 'Racha de 5+ victorias' })
+
+  // FIFA Card Rating (calculated from stats)
+  const fifaRating = Math.min(99, Math.round(
+    (avgRating || 5) * 5 + // Rating contributes up to 50
+    (playerStats.winRate || 0) * 0.3 + // Win rate contributes up to 30
+    Math.min(playerStats.mvps || 0, 10) * 1.5 + // MVPs contribute up to 15
+    Math.min(playerStats.played || 0, 10) * 0.5 // Games contribute up to 5
+  ))
+
+  // Recent ratings received (who rated and score)
+  const recentRatingsReceived = playerRatings
+    .sort((a, b) => {
+      const matchA = matches?.find(m => m.id === a.matchId)
+      const matchB = matches?.find(m => m.id === b.matchId)
+      return new Date(matchB?.date || 0) - new Date(matchA?.date || 0)
+    })
+    .slice(0, 5)
 
   return (
     <div className="profile-overlay" onClick={onClose}>
       <div className="profile-card" onClick={e => e.stopPropagation()}>
-        {/* Hero Section */}
-        <div className="profile-hero" style={{ background: `linear-gradient(135deg, ${rank.color}22, ${rank.color}44)` }}>
-          <button className="profile-close" onClick={onClose}>×</button>
-          
-          <div className="profile-avatar-section">
-            {photo ? (
-              <img src={photo} alt="" className="profile-avatar" />
-            ) : (
-              <div className="profile-avatar-placeholder" style={{ borderColor: rank.color }}>
-                {player.name?.charAt(0)}
+        <button className="profile-close" onClick={onClose}>×</button>
+        
+        {/* FIFA Card Style */}
+        <div className="fifa-card" style={{ '--rank-color': rank.color }}>
+          <div className="fifa-card-inner">
+            <div className="fifa-rating">{fifaRating}</div>
+            <div className="fifa-position">{rank.name.toUpperCase()}</div>
+            <div className="fifa-photo">
+              {photo ? (
+                <img src={photo} alt="" />
+              ) : (
+                <div className="fifa-photo-placeholder">{player.name?.charAt(0)}</div>
+              )}
+            </div>
+            <div className="fifa-name">{player.name}</div>
+            <div className="fifa-club">LUKTO FC</div>
+            <div className="fifa-stats">
+              <div className="fifa-stat">
+                <span className="fifa-stat-value">{Math.round((avgRating || 5) * 10)}</span>
+                <span className="fifa-stat-label">RAT</span>
               </div>
-            )}
-            <div className="profile-rank-badge" style={{ background: rank.color }}>
-              {getRankIcon(rank.key, 14)}
-              <span>{rank.name}</span>
+              <div className="fifa-stat">
+                <span className="fifa-stat-value">{Math.round(playerStats.winRate || 0)}</span>
+                <span className="fifa-stat-label">WIN</span>
+              </div>
+              <div className="fifa-stat">
+                <span className="fifa-stat-value">{playerStats.mvps || 0}</span>
+                <span className="fifa-stat-label">MVP</span>
+              </div>
+              <div className="fifa-stat">
+                <span className="fifa-stat-value">{playerStats.played || 0}</span>
+                <span className="fifa-stat-label">PAR</span>
+              </div>
             </div>
           </div>
-          
-          <h2 className="profile-name">{player.name}</h2>
-          <p className="profile-xp">{xp} XP</p>
-          
-          {/* Recent Form */}
-          {recentForm.length > 0 && (
-            <div className="profile-form">
-              {recentForm.map((r, i) => (
-                <span key={i} className={`form-dot ${r === 'W' ? 'win' : 'loss'}`}>{r}</span>
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* Stats Grid */}
+        {/* Quick Stats */}
         <div className="profile-stats-grid">
           <div className="profile-stat">
             <span className="stat-number">{playerStats.played}</span>
@@ -234,98 +319,141 @@ function PlayerProfileModal({
           </div>
         </div>
 
-        {/* Performance Section */}
-        <div className="profile-section">
-          <h3 className="profile-section-title">Rendimiento</h3>
-          <div className="profile-performance">
-            <div className="perf-item">
-              <div className="perf-icon">⭐</div>
-              <div className="perf-info">
-                <span className="perf-value">{avgRating}</span>
-                <span className="perf-label">Rating Promedio</span>
-              </div>
-            </div>
-            <div className="perf-item">
-              <div className="perf-icon">🏆</div>
-              <div className="perf-info">
-                <span className="perf-value">{playerStats.mvps || 0}</span>
-                <span className="perf-label">MVPs</span>
-              </div>
-            </div>
-            <div className="perf-item">
-              <div className="perf-icon">🔥</div>
-              <div className="perf-info">
-                <span className="perf-value">{bestRating || '-'}</span>
-                <span className="perf-label">Mejor Nota</span>
-              </div>
-            </div>
-            <div className="perf-item">
-              <div className="perf-icon">{streakType === 'win' ? '📈' : '📉'}</div>
-              <div className="perf-info">
-                <span className="perf-value" style={{ color: streakType === 'win' ? '#10b981' : '#ef4444' }}>
-                  {currentStreak} {streakType === 'win' ? 'W' : 'L'}
-                </span>
-                <span className="perf-label">Racha Actual</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Win Rate Progress */}
-        <div className="profile-section">
-          <h3 className="profile-section-title">Progreso</h3>
-          <div className="profile-progress">
-            <div className="progress-header">
-              <span>Win Rate</span>
-              <span>{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span>
-            </div>
-            <div className="progress-bar-bg">
-              <div 
-                className="progress-bar-fill" 
-                style={{ 
-                  width: `${playerStats.winRate || 0}%`,
-                  background: playerStats.winRate >= 50 ? '#10b981' : '#ef4444'
-                }}
-              />
-            </div>
-          </div>
-          <div className="profile-progress">
-            <div className="progress-header">
-              <span>XP al siguiente rango</span>
-              <span>{xp % 100}/100</span>
-            </div>
-            <div className="progress-bar-bg">
-              <div 
-                className="progress-bar-fill" 
-                style={{ width: `${xp % 100}%`, background: rank.color }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Matches */}
-        {playerMatches.length > 0 && (
+        {/* Badges Section */}
+        {badges.length > 0 && (
           <div className="profile-section">
-            <h3 className="profile-section-title">Últimos Partidos</h3>
-            <div className="profile-matches">
-              {playerMatches.slice(0, 3).map((m, i) => {
-                const inWhite = m.teamWhite?.includes(playerId)
-                const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
-                const matchRatings = playerRatings.filter(r => r.matchId === m.id)
-                const matchAvg = matchRatings.length > 0 
-                  ? (matchRatings.reduce((s, r) => s + r.score, 0) / matchRatings.length).toFixed(1)
-                  : '-'
+            <h3 className="profile-section-title">Logros</h3>
+            <div className="badges-grid">
+              {badges.map((badge, i) => (
+                <div key={i} className="badge-item" title={badge.desc}>
+                  <span className="badge-icon">{badge.icon}</span>
+                  <span className="badge-name">{badge.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Comparison with Average */}
+        <div className="profile-section">
+          <h3 className="profile-section-title">vs Promedio Liga</h3>
+          <div className="comparison-grid">
+            <div className="comparison-item">
+              <span className="comp-label">Win Rate</span>
+              <span className="comp-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span>
+              <span className={`comp-diff ${(playerStats.winRate || 0) >= avgStats.winRate ? 'positive' : 'negative'}`}>
+                {(playerStats.winRate || 0) >= avgStats.winRate ? '+' : ''}{((playerStats.winRate || 0) - avgStats.winRate).toFixed(0)}%
+              </span>
+            </div>
+            <div className="comparison-item">
+              <span className="comp-label">Rating</span>
+              <span className="comp-value">{avgRating ? avgRating.toFixed(1) : '-'}</span>
+              <span className={`comp-diff ${avgRating >= avgStats.rating ? 'positive' : 'negative'}`}>
+                {avgRating >= avgStats.rating ? '+' : ''}{(avgRating - avgStats.rating).toFixed(1)}
+              </span>
+            </div>
+            <div className="comparison-item">
+              <span className="comp-label">MVPs</span>
+              <span className="comp-value">{playerStats.mvps || 0}</span>
+              <span className={`comp-diff ${(playerStats.mvps || 0) >= avgStats.mvps ? 'positive' : 'negative'}`}>
+                {(playerStats.mvps || 0) >= avgStats.mvps ? '+' : ''}{((playerStats.mvps || 0) - avgStats.mvps).toFixed(1)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Personal Records */}
+        <div className="profile-section">
+          <h3 className="profile-section-title">Récords Personales</h3>
+          <div className="records-grid">
+            <div className="record-item">
+              <span className="record-icon">🏅</span>
+              <div className="record-info">
+                <span className="record-value">{bestWinStreak}</span>
+                <span className="record-label">Mejor racha victorias</span>
+              </div>
+            </div>
+            <div className="record-item">
+              <span className="record-icon">💔</span>
+              <div className="record-info">
+                <span className="record-value">{worstLossStreak}</span>
+                <span className="record-label">Peor racha derrotas</span>
+              </div>
+            </div>
+            <div className="record-item">
+              <span className="record-icon">⬆️</span>
+              <div className="record-info">
+                <span className="record-value">{bestRating || '-'}</span>
+                <span className="record-label">Rating más alto</span>
+              </div>
+            </div>
+            <div className="record-item">
+              <span className="record-icon">⬇️</span>
+              <div className="record-info">
+                <span className="record-value">{worstRating || '-'}</span>
+                <span className="record-label">Rating más bajo</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Best/Worst Teammates */}
+        {(bestTeammate || worstTeammate) && (
+          <div className="profile-section">
+            <h3 className="profile-section-title">Compañeros</h3>
+            <div className="teammates-grid">
+              {bestTeammate && (
+                <div className="teammate-card best">
+                  <span className="teammate-label">Mejor con</span>
+                  <span className="teammate-name">{bestTeammate.name}</span>
+                  <span className="teammate-stat">{bestTeammate.winRate}% WR ({bestTeammate.games}p)</span>
+                </div>
+              )}
+              {worstTeammate && worstTeammate.id !== bestTeammate?.id && (
+                <div className="teammate-card worst">
+                  <span className="teammate-label">Peor con</span>
+                  <span className="teammate-name">{worstTeammate.name}</span>
+                  <span className="teammate-stat">{worstTeammate.winRate}% WR ({worstTeammate.games}p)</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Ratings Received */}
+        {recentRatingsReceived.length > 0 && (
+          <div className="profile-section">
+            <h3 className="profile-section-title">Últimas Calificaciones</h3>
+            <div className="ratings-received">
+              {recentRatingsReceived.map((r, i) => {
+                const match = matches?.find(m => m.id === r.matchId)
                 return (
-                  <div key={i} className={`profile-match ${won ? 'won' : 'lost'}`}>
-                    <div className="match-result">{won ? 'V' : 'D'}</div>
-                    <div className="match-details">
-                      <span className="match-venue">{m.venue}</span>
-                      <span className="match-date">{new Date(m.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
-                    </div>
-                    <div className="match-rating">{matchAvg}</div>
+                  <div key={i} className="rating-received-item">
+                    <span className="rr-from">{getPlayerName ? getPlayerName(r.ratedBy) : 'Alguien'}</span>
+                    <span className={`rr-score ${r.score >= 8 ? 'high' : r.score >= 6 ? 'medium' : 'low'}`}>
+                      {r.score}
+                    </span>
+                    <span className="rr-date">
+                      {match ? new Date(match.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : ''}
+                    </span>
                   </div>
                 )
               })}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Form */}
+        {recentForm.length > 0 && (
+          <div className="profile-section">
+            <h3 className="profile-section-title">Forma Reciente</h3>
+            <div className="form-row">
+              {recentForm.map((r, i) => (
+                <span key={i} className={`form-dot ${r === 'W' ? 'win' : 'loss'}`}>{r}</span>
+              ))}
+              <span className="form-text">
+                ({recentForm.filter(r => r === 'W').length}V - {recentForm.filter(r => r === 'L').length}D últimos 5)
+              </span>
             </div>
           </div>
         )}
