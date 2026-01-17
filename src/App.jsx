@@ -574,6 +574,12 @@ function App() {
     return player ? player.name : 'Desconocido'
   }
 
+  // Get player photo from userLinks
+  const getPlayerPhoto = (playerId) => {
+    const link = Object.values(userLinks).find(data => data.playerId === playerId)
+    return link?.userPhoto || null
+  }
+
   const handlePlayerToggle = (playerId, team) => {
     if (team === 'white') {
       if (teamWhite.includes(playerId)) {
@@ -949,9 +955,13 @@ function App() {
                     </td>
                     <td>
                       <div className="player-name">
-                        <div className="player-avatar">
-                          {getInitials(player.name)}
-                        </div>
+                        {getPlayerPhoto(player.id) ? (
+                          <img src={getPlayerPhoto(player.id)} alt="" className="player-avatar-img" />
+                        ) : (
+                          <div className="player-avatar">
+                            {getInitials(player.name)}
+                          </div>
+                        )}
                         {player.name}
                       </div>
                     </td>
@@ -1043,9 +1053,13 @@ function App() {
                         <span className={`rank ${index < 3 ? `rank-${index + 1}` : ''}`}>
                           {index + 1}
                         </span>
-                        <div className="player-avatar">
-                          {getInitials(player.name)}
-                        </div>
+                        {getPlayerPhoto(player.id) ? (
+                          <img src={getPlayerPhoto(player.id)} alt="" className="player-avatar-img" />
+                        ) : (
+                          <div className="player-avatar">
+                            {getInitials(player.name)}
+                          </div>
+                        )}
                         <span className="accordion-player-name">{player.name}</span>
                         <span className={`rating-value ${getRatingClass(parseFloat(player.avgRating))}`}>
                           {player.avgRating}
@@ -1351,9 +1365,13 @@ function App() {
           <div className="players-grid">
             {players.map(player => (
               <div key={player.id} className="player-card">
-                <div className="player-avatar">
-                  {getInitials(player.name)}
-                </div>
+                {getPlayerPhoto(player.id) ? (
+                  <img src={getPlayerPhoto(player.id)} alt="" className="player-avatar-img" />
+                ) : (
+                  <div className="player-avatar">
+                    {getInitials(player.name)}
+                  </div>
+                )}
                 <div className="player-card-info">
                   <h3>{player.name}</h3>
                   {player.aliases && player.aliases.length > 0 && (
@@ -1687,9 +1705,13 @@ function App() {
               {getPlayersToRate(selectedMatch).map(playerId => (
                 <div key={playerId} className="rating-item">
                   <div className="rating-player">
-                    <div className="player-avatar small">
-                      {getInitials(getPlayerName(playerId))}
-                    </div>
+                    {getPlayerPhoto(playerId) ? (
+                      <img src={getPlayerPhoto(playerId)} alt="" className="player-avatar-img small" />
+                    ) : (
+                      <div className="player-avatar small">
+                        {getInitials(getPlayerName(playerId))}
+                      </div>
+                    )}
                     <span>{getPlayerName(playerId)}</span>
                   </div>
                   <div className="rating-stars">

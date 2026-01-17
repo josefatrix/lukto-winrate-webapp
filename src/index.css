@@ -312,6 +312,25 @@ body {
   flex-shrink: 0;
 }
 
+.player-avatar-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.player-avatar-img.small {
+  width: 28px;
+  height: 28px;
+}
+
+.player-avatar.small {
+  width: 28px;
+  height: 28px;
+  font-size: 0.7rem;
+}
+
 .win-rate {
   font-weight: 600;
   font-size: 0.95rem;
@@ -1478,7 +1497,8 @@ body {
     font-size: 0.75rem;
   }
   
-  .player-avatar {
+  .player-avatar,
+  .player-avatar-img {
     width: 28px;
     height: 28px;
     font-size: 0.7rem;
@@ -1556,7 +1576,8 @@ body {
     font-size: 0.8rem;
   }
   
-  .player-avatar {
+  .player-avatar,
+  .player-avatar-img {
     width: 30px;
     height: 30px;
     font-size: 0.75rem;
