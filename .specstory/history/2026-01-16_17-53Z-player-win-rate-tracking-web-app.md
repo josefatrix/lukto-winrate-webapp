@@ -59412,39 +59412,586 @@ Ah, there's a filter for `s.played > 0`. Let me use the correct string.</details
 
 <details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
 
-Status: **loading**
+**Chunk 1**
+Lines added: 18, lines removed: 7
 
-```javascriptreact
-    return Object.entries(stats)
-      .filter(([_, s]) => s.played > 0)
-      .map(([id, s]) => {
-        const winRate = s.played > 0 ? (s.wins / s.played) * 100 : 0
-        const avgRating = calculatePlayerAvgRating(id)
-        const ratingValue = avgRating ? parseFloat(avgRating) : 5 // Default 5 si no hay ratings
-        
-        // Fórmula combinada para ranking:
-        // 40% Win Rate + 30% Rating (×10 para escalar) + 20% MVPs (×5) + 10% Partidos jugados
-        const rankingScore = (winRate * 0.4) + (ratingValue * 10 * 0.3) + (s.mvps * 5 * 0.2) + (s.played * 0.1)
-        
-        return {
-          id,
-          ...s,
-          winRate,
-          avgRating,
-          rankingScore: rankingScore.toFixed(1)
-        }
-      })
-      .sort((a, b) => parseFloat(b.rankingScore) - parseFloat(a.rankingScore) || b.wins - a.wins)
+```diff
+@@ -660,11 +660,22 @@
+      return Object.entries(stats)
+        .filter(([_, s]) =&gt; s.played &gt; 0)
+-       .map(([id, s]) =&gt; ({
+-         id,
+-         ...s,
+-         winRate: s.played &gt; 0 ? (s.wins / s.played) * 100 : 0,
+-         avgRating: calculatePlayerAvgRating(id)
+-       }))
+-       .sort((a, b) =&gt; b.winRate - a.winRate || b.wins - a.wins)
++       .map(([id, s]) =&gt; {
++         const winRate = s.played &gt; 0 ? (s.wins / s.played) * 100 : 0
++         const avgRating = calculatePlayerAvgRating(id)
++         const ratingValue = avgRating ? parseFloat(avgRating) : 5 // Default 5 si no hay ratings
++         
++         // Fórmula combinada para ranking:
++         // 40% Win Rate + 30% Rating (×10 para escalar) + 20% MVPs (×5) + 10% Partidos jugados
++         const rankingScore = (winRate * 0.4) + (ratingValue * 10 * 0.3) + (s.mvps * 5 * 0.2) + (s.played * 0.1)
++         
++         return {
++           id,
++           ...s,
++           winRate,
++           avgRating,
++           rankingScore: rankingScore.toFixed(1)
++         }
++       })
++       .sort((a, b) =&gt; parseFloat(b.rankingScore) - parseFloat(a.rankingScore) || b.wins - a.wins)
+    }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I also need to update the `getFilteredStats` function to use the same formula. Let me search for it and update it too.</details></think>
+
+---
+
+Ahora necesito actualizar también la función `getFilteredStats`:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const getFilteredStats" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me search for the other calculateStats reference I saw in the grep output earlier around line 1030.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "filteredMatches\.forEach|getStatsForPeriod" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `filteredMatches.forEach(match => \{` | L997 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me see more context to find where this function returns and updates its sorting.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the getStatsForPeriod function to use the same ranking formula. Let me do that.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 17, lines removed: 7
+
+```diff
+@@ -1038,11 +1038,21 @@
+      return Object.entries(statsMap)
+        .filter(([_, s]) =&gt; s.played &gt; 0)
+-       .map(([id, s]) =&gt; ({
+-         id,
+-         ...s,
+-         winRate: s.played &gt; 0 ? (s.wins / s.played) * 100 : 0,
+-         avgRating: calculatePlayerAvgRating(id)
+-       }))
+-       .sort((a, b) =&gt; b.winRate - a.winRate || b.wins - a.wins)
++       .map(([id, s]) =&gt; {
++         const winRate = s.played &gt; 0 ? (s.wins / s.played) * 100 : 0
++         const avgRating = calculatePlayerAvgRating(id)
++         const ratingValue = avgRating ? parseFloat(avgRating) : 5
++         
++         // Misma fórmula combinada para ranking
++         const rankingScore = (winRate * 0.4) + (ratingValue * 10 * 0.3) + (s.mvps * 5 * 0.2) + (s.played * 0.1)
++         
++         return {
++           id,
++           ...s,
++           winRate,
++           avgRating,
++           rankingScore: rankingScore.toFixed(1)
++         }
++       })
++       .sort((a, b) =&gt; parseFloat(b.rankingScore) - parseFloat(a.rankingScore) || b.wins - a.wins)
+    }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the stats table UI to show the new ranking score column. Let me find the table header and body.</details></think>
+
+---
+
+Ahora necesito agregar una columna en la tabla para mostrar el Score de ranking:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Jugador.*Win.*MVP|th.*MVP|td.*mvps" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `<th>MVP</th>` | L2120 |
+| `src/App.jsx` | `const headers = ['Jugador', 'Partidos', 'Victorias', 'Derrotas', 'Win Rate', 'MVPs', 'Rating Promedio']` | L3013 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me find the full table structure so I can add the Score column.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me add a new "Score" column to the table. I'll add it after "XP" or maybe replace "XP" with "Score". Actually, let me add it as a new column to make it clear.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -2114,4 +2114,5 @@
+                    &lt;th&gt;Jugador&lt;/th&gt;
+                    &lt;th&gt;Rango&lt;/th&gt;
++                   &lt;th&gt;Score&lt;/th&gt;
+                    &lt;th&gt;Win Rate&lt;/th&gt;
+                    &lt;th&gt;&lt;/th&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to add the score cell in the table body after the rank cell.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: undefined
+
+```diff
+@@ -2158,4 +2158,7 @@
+                        &lt;/span&gt;
+                      &lt;/td&gt;
++                     &lt;td&gt;
++                       &lt;span className="ranking-score"&gt;{player.rankingScore}&lt;/span&gt;
++                     &lt;/td&gt;
+                      &lt;td&gt;
+                        &lt;span className={&#96;win-rate ${getWinRateClass(player.winRate)}&#96;}&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to add the CSS style for the ranking-score class. Let me add that to the index.css file.</details></think>
+
+---
+
+Ahora voy a agregar los estilos CSS para el score:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\.xp-value|\.mvp-count" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `.mvp-count \{` | L1120 |
+| `src/index.css` | `.mvp-count.has-mvps \{` | L1126 |
+| `src/index.css` | `.xp-value \{` | L3410 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I'll add the ranking-score style near the xp-value style.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 15, lines removed: undefined
+
+```diff
+@@ -3413,4 +3413,19 @@
+    font-size: 0.85rem;
   }
++ 
++ /* Ranking Score - Puntaje combinado */
++ .ranking-score {
++   display: inline-flex;
++   align-items: center;
++   justify-content: center;
++   padding: 0.25rem 0.5rem;
++   background: linear-gradient(135deg, var(--primary) 0%, #059669 100%);
++   color: white;
++   font-weight: 700;
++   font-size: 0.8rem;
++   border-radius: 6px;
++   min-width: 40px;
++   box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
++ }
+  
+  /* Clickable Row */
+```
 
-  const calculatePlayerAvgRating = (playerId) => {
-    const playerRatings = ratings[playerId]
-    if (!playerRatings || playerRatings.length === 0) return null
-    const sum = playerRatings.reduce((acc, r) => acc + r.score, 0)
-    return (sum / playerRatings.length).toFixed(1)
-  }
+</details>
 
-  const stats = calculateStats()
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also update the CSV export to include the new ranking score.</details></think>
+
+---
+
+Ahora actualizo el export a CSV para incluir el score:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 4, lines removed: 2
+
+```diff
+@@ -3015,13 +3015,15 @@
+                  onClick={() =&gt; {
+                    // Generate CSV for players stats
+-                   const headers = ['Jugador', 'Partidos', 'Victorias', 'Derrotas', 'Win Rate', 'MVPs', 'Rating Promedio']
++                   const headers = ['Jugador', 'Score', 'Partidos', 'Victorias', 'Derrotas', 'Win Rate', 'MVPs', 'Rating Promedio', 'XP']
+                    const rows = stats.map(p =&gt; [
+                      p.name,
++                     p.rankingScore || 0,
+                      p.played,
+                      p.wins,
+                      p.losses,
+                      p.winRate.toFixed(1) + '%',
+                      p.mvps || 0,
+-                     p.avgRating || '-'
++                     p.avgRating || '-',
++                     calculateXP(p.id)
+                    ])
+                    
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me verify there are no lint errors, then build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx`
+- `/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css`
+
+Lint results
+
+Lint errors for `src/App.jsx`
+
+
+| Message | Range | Severity |
+|-------|-------|----------|
+| 'showH2HModal' is declared but its value is never read. | 139:10-139:22 | DIAGNOSTIC_SEVERITY_HINT |
+| 'setShowH2HModal' is declared but its value is never read. | 139:24-139:39 | DIAGNOSTIC_SEVERITY_HINT |
+| 'showLinkPlayerModal' is declared but its value is never read. | 164:10-164:29 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleLinkPlayer' is declared but its value is never read. | 481:9-481:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'playerId' is declared but its value is never read. | 481:29-481:37 | DIAGNOSTIC_SEVERITY_HINT |
+| 'achievementTooltip' is declared but its value is never read. | 1261:10-1261:28 | DIAGNOSTIC_SEVERITY_HINT |
+| 'setAchievementTooltip' is declared but its value is never read. | 1261:30-1261:51 | DIAGNOSTIC_SEVERITY_HINT |
+| 'getPredictionAccuracy' is declared but its value is never read. | 1386:9-1386:30 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleEditPlayer' is declared but its value is never read. | 1612:9-1612:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'uid' is declared but its value is never read. | 3646:76-3646:79 | DIAGNOSTIC_SEVERITY_HINT |
+
+
+Lint errors for `src/index.css`
+
+
+| Message | Range | Severity |
+|-------|-------|----------|
+| Do not use empty rulesets | 259:1-259:20 | DIAGNOSTIC_SEVERITY_WARNING |
+| Do not use empty rulesets | 357:1-357:20 | DIAGNOSTIC_SEVERITY_WARNING |
+| Also define the standard property 'appearance' for compatibility | 4680:3-4680:21 | DIAGNOSTIC_SEVERITY_WARNING |
+| Also define the standard property 'appearance' for compatibility | 4681:3-4681:18 | DIAGNOSTIC_SEVERITY_WARNING |
+| Also define the standard property 'appearance' for compatibility | 4685:3-4685:18 | DIAGNOSTIC_SEVERITY_WARNING |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+These are just warnings about CSS, not critical errors. Let me build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add combined ranking score formula: 40% WinRate + 30% Rating + 20% MVPs + 10% Games" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add combined ranking score formula: 40% WinRate + 30% Rating + 20% MVPs + 10% Games" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 846 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.70 kB
+dist/assets/index-DiVfNv0d.css     66.45 kB │ gzip:  11.29 kB
+dist/assets/index-DnumqQEP.js   1,074.43 kB │ gzip: 283.57 kB
+✓ built in 1.31s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main e77dd6c] Add combined ranking score formula: 40% WinRate + 30% Rating + 20% MVPs + 10% Games
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 6 files changed, 803 insertions(+), 83 deletions(-)
+ rename dist/assets/{index-D_P1NIwb.css =&gt; index-DiVfNv0d.css} (69%)
+ rename dist/assets/{index-BNXiRIgp.js =&gt; index-DnumqQEP.js} (90%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/3.1MB)
+Uploading [=====---------------] (802.4KB/3.1MB)
+Uploading [==========----------] (1.6MB/3.1MB)
+Uploading [===============-----] (2.4MB/3.1MB)
+Uploading [====================] (3.1MB/3.1MB)
+https://lukto-winrate-webapp-5fbnwzfk0-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/DYYKEEjHURBBcL7mAPLjzNBvKpgQ [4s]
+Production: https://lukto-winrate-webapp-5fbnwzfk0-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 406 packages in 8s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 846 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-DiVfNv0d.css     66.45 kB │ gzip:  11.29 kB
+Building: dist/assets/index-DnumqQEP.js   1,074.43 kB │ gzip: 284.61 kB
+Building: ✓ built in 4.22s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [13s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-5fbnwzfk0-josefatrixs-projects.vercel.app [26s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [26s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-5fbnwzfk0-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-5fbnwzfk0-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The deployment was successful. Let me explain to the user what I implemented.</details></think>
+
+---
+
+¡Listo! Ya implementé la fórmula combinada para el ranking. La nueva columna **"Score"** en la tabla de estadísticas calcula la posición usando:
+
+**Score = (Win Rate × 0.4) + (Rating × 3) + (MVPs × 1) + (Partidos × 0.1)**
+
+Esto significa:
+- **40%** del peso es tu porcentaje de victorias
+- **30%** es tu calificación promedio (escalada ×10 para equiparar)
+- **20%** son tus MVPs (×5 cada uno)
+- **10%** es la cantidad de partidos jugados
+
+Así los jugadores ahora se ordenan por este puntaje combinado, no solo por win rate. Un jugador con buen rating y MVPs puede subir en el ranking aunque tenga un win rate menor, y viceversa.
+
+La tabla ahora muestra la nueva columna **Score** con el puntaje total, resaltada en verde. También actualicé el export a CSV para incluir este dato.
+
+🔗 https://lukto-winrate-webapp.vercel.app
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+tambien muestra el rating en la ranking general
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants to also show the Rating in the general ranking table. Let me find where the table is and add a column for Rating.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the table structure. I need to add a "Rating" column. I'll add it after "MVP" and before "XP". Let me update both the header and the body.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -2120,4 +2120,5 @@
+                    &lt;th&gt;D&lt;/th&gt;
+                    &lt;th&gt;MVP&lt;/th&gt;
++                   &lt;th&gt;Rating&lt;/th&gt;
+                    &lt;th&gt;XP&lt;/th&gt;
+                  &lt;/tr&gt;
 ```
 
 </details>

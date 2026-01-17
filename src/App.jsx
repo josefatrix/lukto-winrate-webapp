@@ -2119,6 +2119,7 @@ function App() {
                   <th>V</th>
                   <th>D</th>
                   <th>MVP</th>
+                  <th>Rating</th>
                   <th>XP</th>
                 </tr>
               </thead>
@@ -2178,6 +2179,11 @@ function App() {
                     <td>
                       <span className={`mvp-count ${player.mvps > 0 ? 'has-mvps' : ''}`}>
                         {player.mvps > 0 ? player.mvps : '-'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`rating-value ${getRatingClass(player.avgRating ? parseFloat(player.avgRating) : 0)}`}>
+                        {player.avgRating || '-'}
                       </span>
                     </td>
                     <td>
