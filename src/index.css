@@ -2227,7 +2227,9 @@ body {
 }
 
 .rating-player {
+  display: -webkit-flex;
   display: flex;
+  -webkit-align-items: center;
   align-items: center;
   gap: 0.5rem;
   flex: 1;
@@ -2235,9 +2237,13 @@ body {
 }
 
 .rating-player span {
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 150px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
 }
 
 .rating-stars {
@@ -3021,6 +3027,15 @@ body {
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;
+  }
+  
+  .rating-player {
+    width: 100%;
+  }
+  
+  .rating-player span {
+    max-width: none;
+    flex: 1;
   }
   
   .rating-stars {
