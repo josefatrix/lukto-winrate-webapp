@@ -2347,6 +2347,195 @@ body {
   min-width: 120px;
 }
 
+/* ============================================
+   PREDICTION MODAL
+   ============================================ */
+.modal.prediction-modal {
+  max-width: 400px;
+}
+
+.prediction-match-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.prediction-date {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.prediction-venue {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg-glass);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.prediction-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.prediction-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  background: var(--bg-glass);
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.25s var(--ease-spring);
+  position: relative;
+}
+
+.prediction-team:hover {
+  background: var(--bg-glass-hover);
+  transform: translateY(-2px);
+}
+
+.prediction-team.selected {
+  border-color: var(--accent-green);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.prediction-team.white.selected {
+  border-color: #e0e0e0;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.prediction-team.black.selected {
+  border-color: #333;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.team-indicator {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.team-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.team-players {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.team-player-name {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.selected-check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  background: var(--accent-green);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  animation: springPop 0.3s var(--ease-spring);
+}
+
+.prediction-vs {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+/* Prediction chips in match card */
+.match-predictions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.predictions-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.predictions-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.prediction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--bg-glass);
+  border-radius: 8px;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.prediction-chip.correct {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-green);
+}
+
+.prediction-chip.wrong {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.predict-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--accent-blue), #3b82f6);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.predict-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.predict-btn:active {
+  transform: scale(0.95);
+}
+
 /* Pending User Modal */
 .pending-modal {
   text-align: center;

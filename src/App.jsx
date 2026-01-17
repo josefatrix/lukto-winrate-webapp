@@ -595,6 +595,11 @@ function App() {
   const [h2hPlayer1, setH2hPlayer1] = useState(null)
   const [h2hPlayer2, setH2hPlayer2] = useState(null)
 
+  // Prediction state
+  const [showPredictionModal, setShowPredictionModal] = useState(false)
+  const [predictionMatch, setPredictionMatch] = useState(null)
+  const [selectedPrediction, setSelectedPrediction] = useState(null)
+
   // Notifications
   const [notificationPermission, setNotificationPermission] = useState(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -715,6 +720,53 @@ function App() {
     setEditingPlayerId(null)
     setNewPlayerName('')
     setNewPlayerAliases('')
+  }
+
+  // ============ PREDICTION HANDLERS ============
+  
+  const openPredictionModal = (match) => {
+    if (!user || !userPlayer) {
+      showToast('error', 'Debes iniciar sesión para predecir')
+      return
+    }
+    if (match.winner) {
+      showToast('error', 'Este partido ya terminó')
+      return
+    }
+    if (predictions[match.id]?.[user.uid]) {
+      showToast('error', 'Ya hiciste tu predicción para este partido')
+      return
+    }
+    setPredictionMatch(match)
+    setSelectedPrediction(null)
+    setShowPredictionModal(true)
+  }
+
+  const closePredictionModal = () => {
+    setShowPredictionModal(false)
+    setPredictionMatch(null)
+    setSelectedPrediction(null)
+  }
+
+  const submitPrediction = async () => {
+    if (!selectedPrediction || !predictionMatch || !user) {
+      showToast('error', 'Selecciona un equipo')
+      return
+    }
+    try {
+      const predictionId = `${user.uid}_${predictionMatch.id}`
+      await setDoc(doc(db, 'predictions', predictionId), {
+        odedBy: user.uid,
+        matchId: predictionMatch.id,
+        prediction: selectedPrediction,
+        timestamp: new Date().toISOString()
+      })
+      showToast('success', '¡Predicción guardada!')
+      closePredictionModal()
+    } catch (error) {
+      console.error('Error saving prediction:', error)
+      showToast('error', 'Error al guardar predicción')
+    }
   }
 
   const triggerMVPConfetti = (matchId, mvpPlayerId) => {
@@ -1166,7 +1218,7 @@ function App() {
           onOpenEditMatch={openEditMatch}
           onDeleteMatch={handleDeleteMatch}
           onToggleRatings={toggleMatchRatings}
-          onOpenPrediction={() => {}}
+          onOpenPrediction={openPredictionModal}
           triggerMVPConfetti={triggerMVPConfetti}
         />
       )}
@@ -2186,6 +2238,71 @@ function App() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Prediction Modal */}
+      {showPredictionModal && predictionMatch && (
+        <div className="modal-overlay" onClick={closePredictionModal}>
+          <div className="modal prediction-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>¿Quién ganará?</h3>
+              <button className="modal-close" onClick={closePredictionModal}>×</button>
+            </div>
+            
+            <div className="prediction-match-info">
+              <span className="prediction-date">
+                {new Date(predictionMatch.date + 'T12:00:00').toLocaleDateString('es-ES', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long'
+                })}
+              </span>
+              <span className="prediction-venue">{predictionMatch.venue}</span>
+            </div>
+
+            <div className="prediction-teams">
+              <button 
+                className={`prediction-team white ${selectedPrediction === 'white' ? 'selected' : ''}`}
+                onClick={() => setSelectedPrediction('white')}
+              >
+                <div className="team-indicator">⬜</div>
+                <div className="team-label">Equipo Blanco</div>
+                <div className="team-players">
+                  {predictionMatch.teamWhite?.map(pid => (
+                    <span key={pid} className="team-player-name">{getPlayerName(pid)}</span>
+                  ))}
+                </div>
+                {selectedPrediction === 'white' && <div className="selected-check">✓</div>}
+              </button>
+
+              <div className="prediction-vs">VS</div>
+
+              <button 
+                className={`prediction-team black ${selectedPrediction === 'black' ? 'selected' : ''}`}
+                onClick={() => setSelectedPrediction('black')}
+              >
+                <div className="team-indicator">⬛</div>
+                <div className="team-label">Equipo Negro</div>
+                <div className="team-players">
+                  {predictionMatch.teamBlack?.map(pid => (
+                    <span key={pid} className="team-player-name">{getPlayerName(pid)}</span>
+                  ))}
+                </div>
+                {selectedPrediction === 'black' && <div className="selected-check">✓</div>}
+              </button>
+            </div>
+
+            <div className="modal-actions">
+              <button 
+                className="submit-btn"
+                onClick={submitPrediction}
+                disabled={!selectedPrediction}
+              >
+                {selectedPrediction ? 'Confirmar Predicción' : 'Selecciona un equipo'}
+              </button>
+            </div>
           </div>
         </div>
       )}
