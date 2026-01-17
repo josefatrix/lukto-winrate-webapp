@@ -130,7 +130,7 @@ body {
 }
 
 .linked-player {
-  color: var(--accent-blue);
+  color: var(--accent-green);
   font-size: 0.85rem;
 }
 
@@ -439,8 +439,9 @@ body {
 }
 
 .rate-match-btn:hover {
-  background: var(--accent-blue);
-  color: #fff;
+  background: #fff;
+  border-color: #fff;
+  color: #000;
 }
 
 .edit-match-btn:hover {
@@ -607,7 +608,7 @@ body {
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--accent-blue);
+  border-color: var(--text-secondary);
 }
 
 /* Team Selection */
@@ -699,10 +700,10 @@ body {
 /* Buttons */
 .submit-btn {
   padding: 0.875rem 1.5rem;
-  background: var(--accent-blue);
+  background: #fff;
   border: none;
   border-radius: 12px;
-  color: #fff;
+  color: #000;
   font-family: inherit;
   font-weight: 600;
   font-size: 0.95rem;
@@ -711,11 +712,11 @@ body {
 }
 
 .submit-btn:hover:not(:disabled) {
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 .submit-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
@@ -815,8 +816,8 @@ body {
 }
 
 .edit-player-btn:hover {
-  background: var(--accent-blue);
-  color: #fff;
+  background: #fff;
+  color: #000;
 }
 
 .delete-player-btn:hover {
@@ -839,8 +840,8 @@ body {
 }
 
 .add-player-card:hover {
-  border-color: var(--accent-blue);
-  color: var(--accent-blue);
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 /* Modal - iOS Style */
@@ -1032,8 +1033,8 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  border: none;
-  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  background: transparent;
   color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 600;
@@ -1042,13 +1043,14 @@ body {
 }
 
 .star-btn:hover {
-  background: var(--bg-card-hover);
+  border-color: var(--text-secondary);
   color: var(--text-primary);
 }
 
 .star-btn.active {
-  background: var(--accent-blue);
-  color: #fff;
+  background: #fff;
+  border-color: #fff;
+  color: #000;
 }
 
 /* User Links */
@@ -1145,7 +1147,7 @@ body {
 
 .player-select-dropdown:focus {
   outline: none;
-  border-color: var(--accent-blue);
+  border-color: var(--text-secondary);
 }
 
 .link-btn {
@@ -1189,7 +1191,7 @@ body {
 }
 
 .linking-text {
-  color: var(--accent-blue);
+  color: var(--text-secondary);
   font-size: 0.85rem;
 }
 
@@ -1219,13 +1221,13 @@ body {
 
 .admin-email-input:focus {
   outline: none;
-  border-color: var(--accent-blue);
+  border-color: var(--text-secondary);
 }
 
 .add-admin-btn {
   padding: 0.6rem 1rem;
-  background: var(--accent-blue);
-  color: #fff;
+  background: #fff;
+  color: #000;
   border: none;
   border-radius: 8px;
   font-family: inherit;
@@ -1235,7 +1237,7 @@ body {
 }
 
 .add-admin-btn:hover {
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 .admin-list {
@@ -1437,7 +1439,7 @@ body {
 
 .rater-name {
   font-weight: 600;
-  color: var(--accent-blue);
+  color: var(--text-primary);
 }
 
 .rater-email {

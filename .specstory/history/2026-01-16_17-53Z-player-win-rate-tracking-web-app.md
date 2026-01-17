@@ -33520,7 +33520,1444 @@ Output mode: content
 
 ---
 
+<think><details><summary>Thought Process</summary>
+I'll add a toast state to show notifications. Let me update the code to add a toast notification system:</details></think>
 
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -150,4 +150,6 @@
+    const [expandedPlayer, setExpandedPlayer] = useState(null)
+    const [linkingUser, setLinkingUser] = useState(null) // Track which user is being linked
++   const [ratingSuccess, setRatingSuccess] = useState(false) // Show success state in rating modal
++   const [toast, setToast] = useState(null) // { type: 'success' | 'error', message: string }
+    
+    // Match form state
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to create a helper function to show toasts and update the rating modal to show success state. Let me also update the submitRatings function:</details></think>
+
+---
+
+Ahora agrego una función para mostrar notificaciones y actualizo el submit de calificaciones:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 6, lines removed: undefined
+
+```diff
+@@ -582,4 +582,10 @@
+      return link?.userPhoto || null
+    }
++ 
++   // Show toast notification
++   const showToast = (type, message) =&gt; {
++     setToast({ type, message })
++     setTimeout(() =&gt; setToast(null), 3000)
++   }
+  
+    const handlePlayerToggle = (playerId, team) =&gt; {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the submitRatings function to show success in the modal instead of alert:</details></think>
+
+---
+
+Ahora actualizo la función de submit de calificaciones:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const submitRatings = async" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const submitRatings = async () => \{` | L761 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I'll update the submitRatings function to show success state in the modal instead of alert:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -768,5 +768,5 @@
+      if (missingRatings.length &gt; 0) {
+        const missingNames = missingRatings.map(id =&gt; getPlayerName(id)).join(', ')
+-       alert(&#96;⚠️ Debes calificar a TODOS los jugadores.\n\nFaltan: ${missingNames}&#96;)
++       showToast('error', &#96;Faltan por calificar: ${missingNames}&#96;)
+        return
+      }
+```
+
+**Chunk 2**
+Lines added: 5, lines removed: 1
+
+```diff
+@@ -787,8 +787,12 @@
+      
+      await batch.commit()
+-     alert('Calificaciones guardadas')
++     setRatingSuccess(true)
++   }
++   
++   const closeRatingModal = () =&gt; {
+      setShowRatingModal(false)
+      setSelectedMatch(null)
+      setCurrentRatings({})
++     setRatingSuccess(false)
+    }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the rating modal to show the success state and also update the close button to use the new closeRatingModal function. Let me find and update the rating modal:</details></think>
+
+---
+
+Ahora busco y actualizo el modal de calificaciones para mostrar el estado de éxito:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "showRatingModal && selectedMatch" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `\{showRatingModal && selectedMatch && (` | L1705 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I'll update the rating modal to show success state and use the new closeRatingModal function:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 70, lines removed: 57
+
+```diff
+@@ -1704,62 +1704,75 @@
+        {/* Rating Modal */}
+        {showRatingModal &amp;&amp; selectedMatch &amp;&amp; (
+-         &lt;div className="modal-overlay" onClick={() =&gt; setShowRatingModal(false)}&gt;
++         &lt;div className="modal-overlay" onClick={closeRatingModal}&gt;
+            &lt;div className="modal rating-modal" onClick={e =&gt; e.stopPropagation()}&gt;
+-             &lt;div className="modal-header"&gt;
+-               &lt;h2&gt;{hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'} Jugadores&lt;/h2&gt;
+-               &lt;button className="modal-close" onClick={() =&gt; setShowRatingModal(false)}&gt;×&lt;/button&gt;
+-             &lt;/div&gt;
+-             &lt;p className="modal-subtitle"&gt;
+-               {formatDate(selectedMatch.date)} - {selectedMatch.venue}
+-             &lt;/p&gt;
+-             
+-             &lt;div className="rating-list"&gt;
+-               {getPlayersToRate(selectedMatch).map(playerId =&gt; (
+-                 &lt;div key={playerId} className="rating-item"&gt;
+-                   &lt;div className="rating-player"&gt;
+-                     {getPlayerPhoto(playerId) ? (
+-                       &lt;img src={getPlayerPhoto(playerId)} alt="" className="player-avatar-img small" /&gt;
+-                     ) : (
+-                       &lt;div className="player-avatar small"&gt;
+-                         {getInitials(getPlayerName(playerId))}
+-                       &lt;/div&gt;
+-                     )}
+-                     &lt;span&gt;{getPlayerName(playerId)}&lt;/span&gt;
+-                   &lt;/div&gt;
+-                   &lt;div className="rating-stars"&gt;
+-                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(score =&gt; (
+-                       &lt;button
+-                         key={score}
+-                         className={&#96;star-btn ${currentRatings[playerId] &gt;= score ? 'active' : ''}&#96;}
+-                         onClick={() =&gt; handleRatingChange(playerId, score)}
+-                       &gt;
+-                         {score}
+-                       &lt;/button&gt;
+-                     ))}
+-                   &lt;/div&gt;
+-                 &lt;/div&gt;
+-               ))}
+-             &lt;/div&gt;
+-             
+-             &lt;div className="modal-actions"&gt;
+-               {hasMyRatings(selectedMatch.id) &amp;&amp; (
+-                 &lt;button 
+-                   className="delete-btn"
+-                   onClick={() =&gt; deleteMyRatings(selectedMatch.id)}
+-                 &gt;
+-                   🗑️ BORRAR MIS CALIFICACIONES
+-                 &lt;/button&gt;
+-               )}
+-               &lt;button 
+-                 className="submit-btn"
+-                 onClick={submitRatings}
+-                 disabled={Object.keys(currentRatings).length === 0}
+-               &gt;
+-                 {Object.keys(currentRatings).length &lt; getPlayersToRate(selectedMatch).length 
+-                   ? &#96;FALTAN ${getPlayersToRate(selectedMatch).length - Object.keys(currentRatings).length} JUGADORES&#96;
+-                   : (hasMyRatings(selectedMatch.id) ? 'ACTUALIZAR' : 'GUARDAR') + ' CALIFICACIONES'
+-                 }
+-               &lt;/button&gt;
+-             &lt;/div&gt;
++             {ratingSuccess ? (
++               &lt;div className="success-state"&gt;
++                 &lt;div className="success-icon"&gt;✓&lt;/div&gt;
++                 &lt;h2&gt;Calificaciones guardadas&lt;/h2&gt;
++                 &lt;p&gt;Tus calificaciones se han guardado correctamente&lt;/p&gt;
++                 &lt;button className="submit-btn" onClick={closeRatingModal}&gt;
++                   Aceptar
++                 &lt;/button&gt;
++               &lt;/div&gt;
++             ) : (
++               &lt;&gt;
++                 &lt;div className="modal-header"&gt;
++                   &lt;h2&gt;{hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'} Jugadores&lt;/h2&gt;
++                   &lt;button className="modal-close" onClick={closeRatingModal}&gt;×&lt;/button&gt;
++                 &lt;/div&gt;
++                 &lt;p className="modal-subtitle"&gt;
++                   {formatDate(selectedMatch.date)} - {selectedMatch.venue}
++                 &lt;/p&gt;
++                 
++                 &lt;div className="rating-list"&gt;
++                   {getPlayersToRate(selectedMatch).map(playerId =&gt; (
++                     &lt;div key={playerId} className="rating-item"&gt;
++                       &lt;div className="rating-player"&gt;
++                         {getPlayerPhoto(playerId) ? (
++                           &lt;img src={getPlayerPhoto(playerId)} alt="" className="player-avatar-img small" /&gt;
++                         ) : (
++                           &lt;div className="player-avatar small"&gt;
++                             {getInitials(getPlayerName(playerId))}
++                           &lt;/div&gt;
++                         )}
++                         &lt;span&gt;{getPlayerName(playerId)}&lt;/span&gt;
++                       &lt;/div&gt;
++                       &lt;div className="rating-stars"&gt;
++                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(score =&gt; (
++                           &lt;button
++                             key={score}
++                             className={&#96;star-btn ${currentRatings[playerId] &gt;= score ? 'active' : ''}&#96;}
++                             onClick={() =&gt; handleRatingChange(playerId, score)}
++                           &gt;
++                             {score}
++                           &lt;/button&gt;
++                         ))}
++                       &lt;/div&gt;
++                     &lt;/div&gt;
++                   ))}
++                 &lt;/div&gt;
++                 
++                 &lt;div className="modal-actions"&gt;
++                   {hasMyRatings(selectedMatch.id) &amp;&amp; (
++                     &lt;button 
++                       className="delete-btn"
++                       onClick={() =&gt; deleteMyRatings(selectedMatch.id)}
++                     &gt;
++                       Borrar mis calificaciones
++                     &lt;/button&gt;
++                   )}
++                   &lt;button 
++                     className="submit-btn"
++                     onClick={submitRatings}
++                     disabled={Object.keys(currentRatings).length === 0}
++                   &gt;
++                     {Object.keys(currentRatings).length &lt; getPlayersToRate(selectedMatch).length 
++                       ? &#96;Faltan ${getPlayersToRate(selectedMatch).length - Object.keys(currentRatings).length} jugadores&#96;
++                       : (hasMyRatings(selectedMatch.id) ? 'Actualizar' : 'Guardar')
++                     }
++                   &lt;/button&gt;
++                 &lt;/div&gt;
++               &lt;/&gt;
++             )}
+            &lt;/div&gt;
+          &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to add CSS for the success state and toast, and also replace all other alerts with the toast:</details></think>
+
+---
+
+Ahora agrego los estilos CSS para el estado de éxito y el toast:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 72, lines removed: undefined
+
+```diff
+@@ -874,4 +874,76 @@
+    max-width: 480px;
+  }
++ 
++ /* Success State */
++ .success-state {
++   text-align: center;
++   padding: 2rem 1rem;
++ }
++ 
++ .success-icon {
++   width: 64px;
++   height: 64px;
++   border-radius: 50%;
++   background: var(--accent-green);
++   color: #fff;
++   font-size: 2rem;
++   display: flex;
++   align-items: center;
++   justify-content: center;
++   margin: 0 auto 1.5rem;
++ }
++ 
++ .success-state h2 {
++   font-size: 1.25rem;
++   font-weight: 600;
++   margin-bottom: 0.5rem;
++ }
++ 
++ .success-state p {
++   color: var(--text-secondary);
++   font-size: 0.9rem;
++   margin-bottom: 1.5rem;
++ }
++ 
++ .success-state .submit-btn {
++   min-width: 120px;
++ }
++ 
++ /* Toast Notification */
++ .toast {
++   position: fixed;
++   bottom: 2rem;
++   left: 50%;
++   transform: translateX(-50%);
++   padding: 0.875rem 1.5rem;
++   border-radius: 12px;
++   font-size: 0.9rem;
++   font-weight: 500;
++   z-index: 2000;
++   animation: toastIn 0.3s ease;
++   max-width: 90%;
++   text-align: center;
++ }
++ 
++ .toast.success {
++   background: var(--accent-green);
++   color: #fff;
++ }
++ 
++ .toast.error {
++   background: var(--accent-red);
++   color: #fff;
++ }
++ 
++ @keyframes toastIn {
++   from {
++     opacity: 0;
++     transform: translateX(-50%) translateY(20px);
++   }
++   to {
++     opacity: 1;
++     transform: translateX(-50%) translateY(0);
++   }
++ }
+  
+  .modal-header {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to add the Toast component to the render and also replace the other alerts. Let me first add the toast to the render:</details></think>
+
+---
+
+Ahora agrego el componente Toast al render y reemplazo los otros alerts:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "return \(" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 11 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `return (` | L79 |
+| `src/App.jsx` | `return () => unsubscribe()` | L171 |
+| `src/App.jsx` | `return () => unsubAdmins()` | L207 |
+| `src/App.jsx` | `return () => unsubLinks()` | L244 |
+| `src/App.jsx` | `return () => \{` | L315 |
+| `src/App.jsx` | `return (sum / playerRatings.length).toFixed(1)` | L553 |
+| `src/App.jsx` | `return (` | L845 |
+| `src/App.jsx` | `return (` | L1059 |
+| `src/App.jsx` | `return (` | L1101 |
+| `src/App.jsx` | `return (` | L1170 |
+| `src/App.jsx` | `return (` | L1589 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me find the end of the main return to add the Toast component:</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to add the Toast component just before the closing `</div>` of the main container. Let me update:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 8, lines removed: 1
+
+```diff
+@@ -1806,9 +1806,16 @@
+              &lt;/div&gt;
+              &lt;button className="submit-btn" onClick={handleAddPlayer}&gt;
+-               {editingPlayerId ? 'GUARDAR CAMBIOS' : 'AGREGAR JUGADOR'}
++               {editingPlayerId ? 'Guardar cambios' : 'Agregar jugador'}
+              &lt;/button&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        )}
++ 
++       {/* Toast Notification */}
++       {toast &amp;&amp; (
++         &lt;div className={&#96;toast ${toast.type}&#96;}&gt;
++           {toast.message}
++         &lt;/div&gt;
++       )}
+      &lt;/div&gt;
+    )
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me replace all the other alerts with showToast calls. Let me go through them one by one:</details></think>
+
+---
+
+Ahora reemplazo todos los demás alerts con el toast:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: undefined, lines removed: 2
+
+```diff
+@@ -72,6 +72,4 @@
+      if (selectedPlayer &amp;&amp; selectedPlayer !== '') {
+        onLink(pending.odedBy, selectedPlayer)
+-     } else {
+-       alert('Selecciona un jugador primero')
+      }
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me replace the other alerts:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: undefined, lines removed: 1
+
+```diff
+@@ -259,5 +259,4 @@
+      } catch (error) {
+        console.error('Error registering pending user:', error)
+-       alert('Error al registrar usuario: ' + error.message + '\n\nEl admin debe configurar las reglas de Firestore.')
+      }
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue replacing the remaining alerts:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 8
+
+```diff
+@@ -368,13 +368,7 @@
+      console.log('Vinculando:', { userId, playerId })
+      
+-     if (!isAdmin) {
+-       alert('No tienes permisos de admin')
+-       return
+-     }
++     if (!isAdmin) return
+      
+-     if (!userId || !playerId || playerId === '') {
+-       alert('Error: Datos inválidos')
+-       return
+-     }
++     if (!userId || !playerId || playerId === '') return
+      
+      if (linkingUser === userId) return
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: undefined, lines removed: 1
+
+```diff
+@@ -378,5 +378,4 @@
+      if (!playerToLink) {
+        console.log('Jugadores disponibles:', players.map(p =&gt; ({ id: p.id, name: p.name })))
+-       alert('Error: Jugador "' + playerId + '" no encontrado. Revisa la consola.')
+        return
+      }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue with the remaining alerts:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: undefined, lines removed: 1
+
+```diff
+@@ -400,5 +400,4 @@
+      } catch (error) {
+        console.error('Error:', error)
+-       alert('Error: ' + error.message)
+      } finally {
+        setLinkingUser(null)
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: undefined, lines removed: 1
+
+```diff
+@@ -415,5 +415,4 @@
+      } catch (error) {
+        console.error('Error unlinking user:', error)
+-       alert('Error al desvincular usuario')
+      }
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -440,5 +440,5 @@
+    const handleAddAdmin = async () =&gt; {
+      if (!newAdminEmail.trim() || !newAdminEmail.includes('@')) {
+-       alert('Ingresa un email válido')
++       showToast('error', 'Ingresa un email válido')
+        return
+      }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -450,5 +450,5 @@
+      } catch (error) {
+        console.error('Error adding admin:', error)
+-       alert('Error al agregar admin')
++       showToast('error', 'Error al agregar admin')
+      }
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -463,5 +463,5 @@
+      } catch (error) {
+        console.error('Error removing admin:', error)
+-       alert('Error al quitar admin')
++       showToast('error', 'Error al quitar admin')
+      }
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -595,5 +595,5 @@
+    const handleAddMatch = async () =&gt; {
+      if (!matchDate || teamWhite.length === 0 || teamBlack.length === 0 || !winner) {
+-       alert('Por favor completa todos los campos')
++       showToast('error', 'Completa todos los campos')
+        return
+      }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -646,5 +646,5 @@
+      } catch (error) {
+        console.error('Error deleting match:', error)
+-       alert('Error al eliminar partido')
++       showToast('error', 'Error al eliminar partido')
+      }
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -670,5 +670,5 @@
+      } catch (error) {
+        console.error('Error:', error)
+-       alert('Error al guardar: ' + error.message)
++       showToast('error', 'Error al guardar')
+      }
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -695,5 +695,5 @@
+      } catch (error) {
+        console.error('Error deleting player:', error)
+-       alert('Error al eliminar jugador')
++       showToast('error', 'Error al eliminar jugador')
+      }
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -707,5 +707,5 @@
+      } catch (error) {
+        console.error('Error updating player:', error)
+-       alert('Error al actualizar jugador')
++       showToast('error', 'Error al actualizar jugador')
+      }
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -714,11 +714,11 @@
+    const openRatingModal = (match) =&gt; {
+      if (!userPlayer) {
+-       alert('Primero debes vincular tu cuenta con un jugador')
++       showToast('error', 'Primero debes vincular tu cuenta')
+        return
+      }
+      
+      const allPlayers = [...match.teamWhite, ...match.teamBlack]
+      if (!allPlayers.includes(userPlayer)) {
+-       alert('Solo puedes calificar partidos en los que jugaste')
++       showToast('error', 'Solo puedes calificar partidos en los que jugaste')
+        return
+      }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me deploy the changes:</details></think>
+
+---
+
+Ahora despliego los cambios:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Replace alerts with iOS-style toast and success state" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Replace alerts with iOS-style toast and success state" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 48 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.69 kB │ gzip:   0.39 kB
+dist/assets/index-DRkcbQhK.css   23.75 kB │ gzip:   4.58 kB
+dist/assets/index-CcLIfaCI.js   634.52 kB │ gzip: 163.34 kB
+✓ built in 736ms
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 91a0b43] Replace alerts with iOS-style toast and success state
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 6 files changed, 951 insertions(+), 300 deletions(-)
+ rename dist/assets/{index-C6kh3zdL.js =&gt; index-CcLIfaCI.js} (53%)
+ rename dist/assets/{index-D1oTMBXA.css =&gt; index-DRkcbQhK.css} (51%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/1.7MB)
+Uploading [=====---------------] (438.1KB/1.7MB)
+Uploading [==========----------] (865.8KB/1.7MB)
+Uploading [===============-----] (1.3MB/1.7MB)
+Uploading [====================] (1.7MB/1.7MB)
+https://lukto-winrate-webapp-69s0npdwy-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/2vjECR1t8G6UQsNTdtn1y9LGRAzK [4s]
+Production: https://lukto-winrate-webapp-69s0npdwy-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 48 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                   0.69 kB │ gzip:   0.39 kB
+Building: dist/assets/index-DRkcbQhK.css   23.75 kB │ gzip:   4.59 kB
+Building: dist/assets/index-CcLIfaCI.js   634.52 kB │ gzip: 163.90 kB
+Building: ✓ built in 2.58s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [9s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-69s0npdwy-josefatrixs-projects.vercel.app [20s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [20s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-69s0npdwy-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-69s0npdwy-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The deployment is complete. Let me summarize the changes for the user.</details></think>
+
+---
+
+**Listo!** Ahora todo combina con la UI de iOS:
+
+**Cambios:**
+
+1. **Modal de calificaciones mejorado:**
+   - Cuando guardas, aparece una pantalla de éxito con un check verde
+   - Dice "Calificaciones guardadas" y "Tus calificaciones se han guardado correctamente"
+   - Botón "Aceptar" que cierra el modal
+
+2. **Toast notifications:**
+   - Los errores aparecen como una notificación en la parte inferior
+   - Estilo iOS: bordes redondeados, colores integrados
+   - Desaparecen automáticamente después de 3 segundos
+
+3. **Sin más alerts feos del navegador:**
+   - Todo integrado en la UI
+   - Mismo estilo visual en toda la app
+
+4. **Botones con texto más limpio:**
+   - "Guardar" en vez de "GUARDAR CALIFICACIONES"
+   - "Borrar mis calificaciones" sin emoji
+
+👉 **https://lukto-winrate-webapp.vercel.app**
+
+Refresca con **Cmd+Shift+R** para ver los cambios.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+pero sigue siendo azul la seccion para calificar, no esta como el resto de la UI
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is saying that the rating section buttons are still blue and don't match the rest of the iOS-style UI. Let me check the CSS for the rating stars and buttons to make them match the black/white iOS style.</details></think>
+
+---
+
+Tienes razón, voy a cambiar los colores de la sección de calificaciones para que combine con el estilo iOS blanco/negro:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\.star-btn|\.rating-stars|\.submit-btn" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 11 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `.submit-btn \{` | L700 |
+| `src/index.css` | `.submit-btn:hover:not(:disabled) \{` | L713 |
+| `src/index.css` | `.submit-btn:disabled \{` | L717 |
+| `src/index.css` | `.success-state .submit-btn \{` | L908 |
+| `src/index.css` | `.rating-stars \{` | L1026 |
+| `src/index.css` | `.star-btn \{` | L1031 |
+| `src/index.css` | `.star-btn:hover \{` | L1044 |
+| `src/index.css` | `.star-btn.active \{` | L1049 |
+| `src/index.css` | `.submit-btn,` | L1721 |
+| `src/index.css` | `.rating-stars \{` | L1760 |
+| `src/index.css` | `.star-btn \{` | L1764 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the issue. The submit button uses `--accent-blue` and the star buttons when active also use `--accent-blue`. I need to change these to white/black to match the iOS style. Let me update the CSS:</details></think>
+
+---
+
+Voy a cambiar los botones a blanco/negro estilo iOS:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -700,8 +700,8 @@
+  .submit-btn {
+    padding: 0.875rem 1.5rem;
+-   background: var(--accent-blue);
++   background: #fff;
+    border: none;
+    border-radius: 12px;
+-   color: #fff;
++   color: #000;
+    font-family: inherit;
+    font-weight: 600;
+```
+
+**Chunk 2**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -712,9 +712,9 @@
+  
+  .submit-btn:hover:not(:disabled) {
+-   opacity: 0.9;
++   opacity: 0.85;
+  }
+  
+  .submit-btn:disabled {
+-   opacity: 0.4;
++   opacity: 0.3;
+    cursor: not-allowed;
+  }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the star buttons:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -1033,6 +1033,6 @@
+    height: 28px;
+    border-radius: 6px;
+-   border: none;
+-   background: var(--bg-card);
++   border: 1px solid var(--border-color);
++   background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+```
+
+**Chunk 2**
+Lines added: 4, lines removed: 3
+
+```diff
+@@ -1043,11 +1043,12 @@
+  
+  .star-btn:hover {
+-   background: var(--bg-card-hover);
++   border-color: var(--text-secondary);
+    color: var(--text-primary);
+  }
+  
+  .star-btn.active {
+-   background: var(--accent-blue);
+-   color: #fff;
++   background: #fff;
++   border-color: #fff;
++   color: #000;
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also update the rate-match-btn to use white instead of blue:</details></think>
+
+---
+
+También cambio el botón "Calificar" en los partidos:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: 2
+
+```diff
+@@ -440,6 +440,7 @@
+  
+  .rate-match-btn:hover {
+-   background: var(--accent-blue);
+-   color: #fff;
++   background: #fff;
++   border-color: #fff;
++   color: #000;
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me also update the edit-player-btn and other blue elements:</details></think>
+
+---
+
+Cambio también los otros botones que usan azul:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -817,6 +817,6 @@
+  
+  .edit-player-btn:hover {
+-   background: var(--accent-blue);
+-   color: #fff;
++   background: #fff;
++   color: #000;
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me also update the add-admin-btn:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -1227,6 +1227,6 @@
+  .add-admin-btn {
+    padding: 0.6rem 1rem;
+-   background: var(--accent-blue);
+-   color: #fff;
++   background: #fff;
++   color: #000;
+    border: none;
+    border-radius: 8px;
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1238,5 +1238,5 @@
+  
+  .add-admin-btn:hover {
+-   opacity: 0.9;
++   opacity: 0.85;
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me also update the add-player-card hover, form inputs focus, and other blue elements:</details></think>
+
+---
+
+Cambio los demás elementos que usan azul:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -841,6 +841,6 @@
+  
+  .add-player-card:hover {
+-   border-color: var(--accent-blue);
+-   color: var(--accent-blue);
++   border-color: var(--text-secondary);
++   color: var(--text-primary);
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me update the form input focus:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -609,5 +609,5 @@
+  .form-group select:focus {
+    outline: none;
+-   border-color: var(--accent-blue);
++   border-color: var(--text-secondary);
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me update the admin-email-input focus:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1222,5 +1222,5 @@
+  .admin-email-input:focus {
+    outline: none;
+-   border-color: var(--accent-blue);
++   border-color: var(--text-secondary);
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me update the player-select-dropdown focus:</details></think>
 
 ---
 
