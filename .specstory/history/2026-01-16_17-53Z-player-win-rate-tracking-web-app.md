@@ -13523,6 +13523,1540 @@ necesito tambien un boton para editar los nombres de los jugadores y para borrar
 
 _**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
 
+<think><details><summary>Thought Process</summary>
+The user wants to add buttons to edit player names and delete players. They already have a delete button for players (I implemented it earlier), but they may not have an edit button. Let me check the current implementation and add edit functionality.</details></think>
+
+---
+
+Voy a agregar botones para editar y borrar jugadores en la pestaña de Jugadores:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "activeTab === 'players'" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `className=\{`nav-tab $\{activeTab === 'players' ? 'active' : ''\}`\}` | L757 |
+| `src/App.jsx` | `\{activeTab === 'players' && isAdmin && (` | L1084 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I can see there's already a delete button. I need to add an edit button. Let me add state for editing a player and create an edit modal or inline editing functionality.</details></think>
+
+---
+
+Veo que ya hay botón de borrar. Voy a agregar el botón de editar. Primero agrego el estado para editar:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const \[showPlayerModal" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const [showPlayerModal, setShowPlayerModal] = useState(false)` | L71 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to add state for editing a player. Let me add editingPlayer state and modify the modal to handle both add and edit.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -72,4 +72,5 @@
+    const [newPlayerName, setNewPlayerName] = useState('')
+    const [newPlayerAliases, setNewPlayerAliases] = useState('')
++   const [editingPlayerId, setEditingPlayerId] = useState(null)
+    
+    // Auth state
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to add a function to open the edit modal and modify handleAddPlayer to also handle updates.</details></think>
+
+---
+
+Ahora agrego la función para editar y modifico el modal:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const handleAddPlayer" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const handleAddPlayer = async () => \{` | L527 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me modify the handleAddPlayer function to also handle editing.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 22, lines removed: 4
+
+```diff
+@@ -528,14 +528,32 @@
+      if (!newPlayerName.trim()) return
+      
+-     const newPlayerId = Date.now().toString()
+-     const newPlayer = {
++     const playerData = {
+        name: newPlayerName.trim(),
+        aliases: newPlayerAliases.split(',').map(a =&gt; a.trim()).filter(a =&gt; a)
+      }
+      
+-     await setDoc(doc(db, 'players', newPlayerId), newPlayer)
+-     
++     if (editingPlayerId) {
++       // Editar jugador existente
++       await updateDoc(doc(db, 'players', editingPlayerId), playerData)
++     } else {
++       // Crear nuevo jugador
++       const newPlayerId = Date.now().toString()
++       await setDoc(doc(db, 'players', newPlayerId), playerData)
++     }
++     
++     closePlayerModal()
++   }
++ 
++   const openEditPlayer = (player) =&gt; {
++     setEditingPlayerId(player.id)
++     setNewPlayerName(player.name)
++     setNewPlayerAliases(player.aliases ? player.aliases.join(', ') : '')
++     setShowPlayerModal(true)
++   }
++ 
++   const closePlayerModal = () =&gt; {
+      setNewPlayerName('')
+      setNewPlayerAliases('')
++     setEditingPlayerId(null)
+      setShowPlayerModal(false)
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to:
+1. Add the edit button to each player card
+2. Update the add player card to use closePlayerModal
+3. Update the modal to show "Editar" or "Nuevo" based on editingPlayerId</details></think>
+
+---
+
+Ahora agrego el botón de editar a cada tarjeta de jugador:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 22, lines removed: 10
+
+```diff
+@@ -1118,14 +1118,26 @@
+                    )}
+                  &lt;/div&gt;
+-                 &lt;button 
+-                   className="delete-player-btn"
+-                   onClick={(e) =&gt; {
+-                     e.stopPropagation()
+-                     handleDeletePlayer(player.id, player.name)
+-                   }}
+-                   title="Eliminar jugador"
+-                 &gt;
+-                   🗑️
+-                 &lt;/button&gt;
++                 &lt;div className="player-card-actions"&gt;
++                   &lt;button 
++                     className="edit-player-btn"
++                     onClick={(e) =&gt; {
++                       e.stopPropagation()
++                       openEditPlayer(player)
++                     }}
++                     title="Editar jugador"
++                   &gt;
++                     ✏️
++                   &lt;/button&gt;
++                   &lt;button 
++                     className="delete-player-btn"
++                     onClick={(e) =&gt; {
++                       e.stopPropagation()
++                       handleDeletePlayer(player.id, player.name)
++                     }}
++                     title="Eliminar jugador"
++                   &gt;
++                     🗑️
++                   &lt;/button&gt;
++                 &lt;/div&gt;
+                &lt;/div&gt;
+              ))}
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the "Agregar Jugador" card to use the correct function and update the modal to show the correct title and button text.</details></think>
+
+---
+
+Actualizo el botón de agregar y el modal:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1142,5 +1142,5 @@
+                &lt;/div&gt;
+              ))}
+-             &lt;div className="add-player-card" onClick={() =&gt; setShowPlayerModal(true)}&gt;
++             &lt;div className="add-player-card" onClick={() =&gt; { setEditingPlayerId(null); setShowPlayerModal(true); }}&gt;
+                &lt;span style={{ fontSize: '1.5rem' }}&gt;➕&lt;/span&gt;
+                Agregar Jugador
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the modal to show the correct title based on whether we're editing or adding.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Add Player Modal" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `\{/* Add Player Modal */\}` | L1474 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to update the modal to show different text based on whether we're editing or adding.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 4, lines removed: 4
+
+```diff
+@@ -1472,11 +1472,11 @@
+        )}
+  
+-       {/* Add Player Modal */}
++       {/* Add/Edit Player Modal */}
+        {showPlayerModal &amp;&amp; isAdmin &amp;&amp; (
+-         &lt;div className="modal-overlay" onClick={() =&gt; setShowPlayerModal(false)}&gt;
++         &lt;div className="modal-overlay" onClick={closePlayerModal}&gt;
+            &lt;div className="modal" onClick={e =&gt; e.stopPropagation()}&gt;
+              &lt;div className="modal-header"&gt;
+-               &lt;h2&gt;Nuevo Jugador&lt;/h2&gt;
+-               &lt;button className="modal-close" onClick={() =&gt; setShowPlayerModal(false)}&gt;×&lt;/button&gt;
++               &lt;h2&gt;{editingPlayerId ? '✏️ Editar Jugador' : '➕ Nuevo Jugador'}&lt;/h2&gt;
++               &lt;button className="modal-close" onClick={closePlayerModal}&gt;×&lt;/button&gt;
+              &lt;/div&gt;
+              &lt;div className="form-group"&gt;
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1499,5 +1499,5 @@
+              &lt;/div&gt;
+              &lt;button className="submit-btn" onClick={handleAddPlayer}&gt;
+-               AGREGAR JUGADOR
++               {editingPlayerId ? 'GUARDAR CAMBIOS' : 'AGREGAR JUGADOR'}
+              &lt;/button&gt;
+            &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me add CSS for the edit button and player card actions.</details></think>
+
+---
+
+Agrego los estilos CSS para los botones:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cat >> /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css << 'EOF'
+
+/* Player card actions */
+.player-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.edit-player-btn {
+  background: var(--accent-gold);
+  color: #000;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.edit-player-btn:hover {
+  background: var(--accent-gold-dim);
+  transform: scale(1.1);
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+EOF</summary>
+
+```bash
+cat >> /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css << 'EOF'
+
+/* Player card actions */
+.player-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.edit-player-btn {
+  background: var(--accent-gold);
+  color: #000;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.edit-player-btn:hover {
+  background: var(--accent-gold-dim);
+  transform: scale(1.1);
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+EOF
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me check for lint errors and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx`
+
+Lint results
+
+Lint errors for `src/App.jsx`
+
+
+| Message | Range | Severity |
+|-------|-------|----------|
+| 'getDocs' is declared but its value is never read. | 9:3-9:10 | DIAGNOSTIC_SEVERITY_HINT |
+| 'query' is declared but its value is never read. | 11:3-11:8 | DIAGNOSTIC_SEVERITY_HINT |
+| 'where' is declared but its value is never read. | 12:3-12:8 | DIAGNOSTIC_SEVERITY_HINT |
+| 'showLinkPlayerModal' is declared but its value is never read. | 79:10-79:29 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleLinkPlayer' is declared but its value is never read. | 290:9-290:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'playerId' is declared but its value is never read. | 290:29-290:37 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleEditPlayer' is declared but its value is never read. | 572:9-572:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'uid' is declared but its value is never read. | 1289:72-1289:75 | DIAGNOSTIC_SEVERITY_HINT |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+No lint errors. Let me deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add edit button for players" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add edit button for players" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 48 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.75 kB │ gzip:   0.43 kB
+dist/assets/index-DERpJYdO.css   22.97 kB │ gzip:   4.22 kB
+dist/assets/index-BuoGExZd.js   629.52 kB │ gzip: 162.11 kB
+✓ built in 693ms
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main de4d4d8] Add edit button for players
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 6 files changed, 1276 insertions(+), 280 deletions(-)
+ rename dist/assets/{index-BwwDhmRh.js =&gt; index-BuoGExZd.js} (55%)
+ rename dist/assets/{index-CI6kCNR3.css =&gt; index-DERpJYdO.css} (98%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/1.1MB)
+Uploading [=====---------------] (295.9KB/1.1MB)
+Uploading [==========----------] (583.9KB/1.1MB)
+Uploading [===============-----] (871.9KB/1.1MB)
+Uploading [====================] (1.1MB/1.1MB)
+https://lukto-winrate-webapp-awigr7oal-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/4WDXRhkpQkCbB7wnkk7BxnMUjQtP [4s]
+Production: https://lukto-winrate-webapp-awigr7oal-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-awigr7oal-josefatrixs-projects.vercel.app [19s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [20s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-awigr7oal-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-awigr7oal-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The deployment is complete. Let me summarize what I added.</details></think>
+
+---
+
+✅ **¡Listo!** Ahora en la pestaña **"👥 Jugadores"** cada jugador tiene:
+
+### Nuevos botones:
+- **✏️** - Editar nombre y aliases del jugador
+- **🗑️** - Eliminar jugador
+
+### Cómo editar:
+1. Ve a **"👥 Jugadores"**
+2. Haz clic en **✏️** junto al jugador que quieres editar
+3. Modifica el nombre y/o los aliases
+4. Haz clic en **"GUARDAR CAMBIOS"**
+
+### Cómo eliminar:
+1. Haz clic en **🗑️** junto al jugador
+2. Confirma la eliminación
+
+---
+
+Refresca la página: https://lukto-winrate-webapp.vercel.app
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+la UI es como muy basica. Quiero algo moderno con liquid class y con transiciones bien suaves
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants a more modern UI with liquid glass effects (glassmorphism) and smooth transitions. This is a significant UI overhaul. Let me update the CSS to include:
+
+1. Glassmorphism effects (backdrop-filter, blur, transparency)
+2. Smooth transitions on hover
+3. Better gradients
+4. Modern card designs
+5. Animated elements
+6. Better color scheme
+
+Let me rewrite the CSS to make it look much more modern and polished.</details></think>
+
+---
+
+¡Vamos a darle un diseño moderno con glassmorphism y transiciones suaves! Voy a reescribir los estilos:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="write">
+
+<details><summary>Tool use: **write** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+Status: **loading**
+
+```css
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --bg-card-hover: rgba(255, 255, 255, 0.07);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --accent-gold: #f5a623;
+  --accent-gold-dim: #d4920f;
+  --accent-emerald: #00d9a5;
+  --accent-purple: #a855f7;
+  --accent-blue: #3b82f6;
+  --accent-red: #ff4757;
+  --accent-pink: #ff6b9d;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --team-white: #f8fafc;
+  --team-black: #1e293b;
+  --shadow-glow: 0 0 60px rgba(245, 166, 35, 0.15);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse 80% 50% at 20% -20%, rgba(245, 166, 35, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0, 217, 165, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Glass Card Mixin Style */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+/* Header Styles */
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 3rem 2rem;
+  position: relative;
+}
+
+.header h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 4.5rem;
+  letter-spacing: 0.15em;
+  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-pink) 50%, var(--accent-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+  animation: titleGlow 3s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(245, 166, 35, 0.3)); }
+  50% { filter: drop-shadow(0 0 40px rgba(245, 166, 35, 0.5)); }
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-weight: 300;
+}
+
+/* Auth Section */
+.auth-section {
+  margin-top: 2rem;
+}
+
+.auth-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 2rem;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+}
+
+.auth-btn.google {
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+}
+
+.auth-btn.google:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.3);
+}
+
+.auth-btn.logout {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.auth-btn.logout:hover {
+  background: rgba(255, 71, 87, 0.1);
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  border: 1px solid var(--glass-border);
+  display: inline-flex;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-gold);
+  box-shadow: 0 0 20px rgba(245, 166, 35, 0.3);
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.linked-player {
+  color: var(--accent-emerald);
+  font-size: 0.9rem;
+}
+
+/* Admin Toggle */
+.admin-toggle {
+  margin-top: 1.5rem;
+}
+
+.admin-btn {
+  padding: 0.75rem 1.75rem;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  color: var(--text-secondary);
+}
+
+.admin-btn:hover {
+  background: rgba(245, 166, 35, 0.1);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  transform: translateY(-2px);
+}
+
+.admin-btn.active {
+  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-pink) 100%);
+  border: none;
+  color: #000;
+  box-shadow: 0 4px 20px rgba(245, 166, 35, 0.4);
+}
+
+.admin-btn.active:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(245, 166, 35, 0.5);
+}
+
+/* Navigation Tabs */
+.nav-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  padding: 0.75rem;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+}
+
+.nav-tab {
+  padding: 0.875rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-tab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-emerald) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 12px;
+  z-index: -1;
+}
+
+.nav-tab:hover {
+  color: var(--text-primary);
+  transform: translateY(-2px);
+}
+
+.nav-tab.active {
+  color: #000;
+  font-weight: 600;
+}
+
+.nav-tab.active::before {
+  opacity: 1;
+}
+
+.badge {
+  background: var(--accent-red);
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 50px;
+  margin-left: 0.5rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Stats Section */
+.stats-section {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(90deg, var(--accent-gold), var(--text-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.subsection-title {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+/* Stats Table */
+.stats-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+
+.stats-table thead th {
+  text-align: left;
+  padding: 1rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.stats-table tbody tr {
+  background: var(--bg-card);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 16px;
+}
+
+.stats-table tbody tr:hover {
+  background: var(--bg-card-hover);
+  transform: translateX(8px) scale(1.01);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.stats-table td {
+  padding: 1.25rem 1rem;
+}
+
+.stats-table td:first-child {
+  border-radius: 16px 0 0 16px;
+}
+
+.stats-table td:last-child {
+  border-radius: 0 16px 16px 0;
+}
+
+/* Rank Styles */
+.rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.rank-1 {
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: #000;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+.rank-2 {
+  background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
+  color: #000;
+  box-shadow: 0 0 15px rgba(192, 192, 192, 0.3);
+}
+
+.rank-3 {
+  background: linear-gradient(135deg, #cd7f32, #a86428);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(205, 127, 50, 0.3);
+}
+
+/* Player Name Cell */
+.player-name {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.player-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: white;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+  transition: all 0.3s ease;
+}
+
+.player-avatar.large {
+  width: 70px;
+  height: 70px;
+  font-size: 1.4rem;
+  border-radius: 20px;
+}
+
+.player-avatar.small {
+  width: 32px;
+  height: 32px;
+  font-size: 0.75rem;
+  border-radius: 10px;
+}
+
+/* Win Rate */
+.win-rate {
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.win-rate.high {
+  color: var(--accent-emerald);
+  background: rgba(0, 217, 165, 0.1);
+}
+
+.win-rate.medium {
+  color: var(--accent-gold);
+  background: rgba(245, 166, 35, 0.1);
+}
+
+.win-rate.low {
+  color: var(--accent-red);
+  background: rgba(255, 71, 87, 0.1);
+}
+
+/* Win Rate Bar */
+.winrate-bar-container {
+  width: 120px;
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.winrate-bar {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.winrate-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% { left: 100%; }
+}
+
+.winrate-bar.high {
+  background: linear-gradient(90deg, var(--accent-emerald), #00ff88);
+}
+
+.winrate-bar.medium {
+  background: linear-gradient(90deg, var(--accent-gold), #ffcc00);
+}
+
+.winrate-bar.low {
+  background: linear-gradient(90deg, var(--accent-red), #ff6b6b);
+}
+
+/* Stat Values */
+.stat-value {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.stat-value.wins {
+  color: var(--accent-emerald);
+}
+
+.stat-value.losses {
+  color: var(--accent-red);
+}
+
+/* Rating Value */
+.rating-value {
+  font-weight: 700;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+}
+
+.rating-value.high {
+  color: var(--accent-emerald);
+  background: rgba(0, 217, 165, 0.15);
+}
+
+.rating-value.medium {
+  color: var(--accent-gold);
+  background: rgba(245, 166, 35, 0.15);
+}
+
+.rating-value.low {
+  color: var(--accent-red);
+  background: rgba(255, 71, 87, 0.15);
+}
+
+.no-rating {
+  color: var(--text-muted);
+}
+
+/* Ratings Grid */
+.ratings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.rating-card {
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 1.75rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rating-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-gold), var(--accent-emerald));
+}
+
+.rating-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border-color: var(--accent-gold);
+}
+
+.rating-rank {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.rating-card h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.big-rating {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.rating-votes {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Match Card */
+.match-card {
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.match-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.match-date {
+  font-weight: 600;
+  color: var(--accent-gold);
+  text-transform: capitalize;
+  font-size: 1rem;
+}
+
+.match-venue {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.match-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rate-match-btn,
+.edit-match-btn,
+.delete-match-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-secondary);
+}
+
+.rate-match-btn:hover {
+  background: rgba(245, 166, 35, 0.2);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  transform: translateY(-2px);
+}
+
+.edit-match-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.delete-match-btn:hover {
+  background: rgba(255, 71, 87, 0.2);
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+/* Match Teams */
+.match-teams {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.match-team {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  padding: 1.25rem;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.match-team.winner {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 30px rgba(245, 166, 35, 0.15);
+}
+
+.match-team-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.team-badge {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+}
+
+.team-badge.white {
+  background: var(--team-white);
+}
+
+.team-badge.black {
+  background: var(--team-black);
+}
+
+.match-team-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.match-player-tag {
+  background: var(--glass-bg);
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.match-player-tag:hover {
+  background: var(--bg-card-hover);
+  transform: scale(1.05);
+}
+
+.vs-badge {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+}
+
+/* Form Styles */
+.match-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  padding: 1rem 1.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 20px rgba(245, 166, 35, 0.2);
+}
+
+/* Team Selection */
+.team-section {
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid var(--glass-border);
+}
+
+.team-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.team-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.player-select-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.player-chip {
+  padding: 0.6rem 1rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.player-chip:hover:not(.disabled) {
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+}
+
+.player-chip.selected {
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-emerald));
+  color: #000;
+  border-color: transparent;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(245, 166, 35, 0.3);
+}
+
+.player-chip.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Winner Section */
+.winner-section {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.winner-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: var(--bg-secondary);
+  border: 2px solid var(--glass-border);
+  border-radius: 14px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.winner-btn:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-gold);
+}
+
+.winner-btn.selected {
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-emerald));
+  border-color: transparent;
+  color: #000;
+  box-shadow: 0 8px 30px rgba(245, 166, 35, 0.4);
+}
+
+/* Buttons */
+.submit-btn {
+  padding: 1rem 2.5rem;
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-emerald));
+  border: none;
+  border-radius: 14px;
+  color: #000;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(245, 166, 35, 0.4);
+}
+
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancel-btn {
+  padding: 1rem 2rem
+```
+
+</details>
+
+</tool-use>
+
+---
+
 
 
 ---
