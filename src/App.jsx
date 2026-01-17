@@ -1082,51 +1082,131 @@ function App() {
       {activeTab === 'dashboard' && isAdmin && (
         <section className="stats-section dashboard-section">
           <h2 className="section-title">Panel de Administración</h2>
-          <div className="dashboard-grid">
-            <div className="dashboard-card">
-              <div className="dashboard-card-content">
-                <span className="dashboard-card-value">{Object.keys(userLinks).length}</span>
-                <span className="dashboard-card-label">Usuarios Registrados</span>
+          
+          {/* Stats Grid */}
+          <div className="dashboard-stats-grid">
+            <div className="dash-stat-card">
+              <div className="dash-stat-icon">👥</div>
+              <div className="dash-stat-info">
+                <span className="dash-stat-value">{Object.keys(userLinks).length}</span>
+                <span className="dash-stat-label">Usuarios</span>
               </div>
             </div>
-            <div className="dashboard-card">
-              <div className="dashboard-card-content">
-                <span className="dashboard-card-value">{matches.length}</span>
-                <span className="dashboard-card-label">Partidos Totales</span>
+            <div className="dash-stat-card">
+              <div className="dash-stat-icon">⚽</div>
+              <div className="dash-stat-info">
+                <span className="dash-stat-value">{matches.length}</span>
+                <span className="dash-stat-label">Partidos</span>
               </div>
             </div>
-            <div className="dashboard-card">
-              <div className="dashboard-card-content">
-                <span className="dashboard-card-value">
+            <div className="dash-stat-card accent">
+              <div className="dash-stat-icon">⭐</div>
+              <div className="dash-stat-info">
+                <span className="dash-stat-value">
                   {Object.values(ratings).reduce((sum, r) => sum + r.length, 0)}
                 </span>
-                <span className="dashboard-card-label">Calificaciones Totales</span>
+                <span className="dash-stat-label">Calificaciones</span>
               </div>
             </div>
-            <div className="dashboard-card">
-              <div className="dashboard-card-content">
-                <span className="dashboard-card-value">{pendingUsers.length}</span>
-                <span className="dashboard-card-label">Usuarios Pendientes</span>
+            <div className="dash-stat-card warning">
+              <div className="dash-stat-icon">⏳</div>
+              <div className="dash-stat-info">
+                <span className="dash-stat-value">{pendingUsers.length}</span>
+                <span className="dash-stat-label">Pendientes</span>
               </div>
             </div>
           </div>
 
-          {/* Activity Logs */}
-          <h3 className="subsection-title">Actividad Reciente</h3>
-          <div className="activity-logs">
-            {activityLogs.length > 0 ? (
-              activityLogs.slice(0, 10).map(log => (
-                <div key={log.id} className="activity-log-item">
-                  <span className="log-type">{log.type}</span>
-                  <span className="log-user">{log.userName || log.userEmail}</span>
-                  <span className="log-time">
-                    {new Date(log.timestamp).toLocaleString('es-ES')}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="no-data-text">Sin actividad registrada</p>
-            )}
+          {/* Quick Actions */}
+          <div className="dashboard-quick-actions">
+            <h3 className="dash-section-title">Acciones Rápidas</h3>
+            <div className="quick-actions-grid">
+              <button className="quick-action-btn" onClick={() => setActiveTab('new')}>
+                <span className="qa-icon">+</span>
+                <span>Nuevo Partido</span>
+              </button>
+              <button className="quick-action-btn" onClick={() => setActiveTab('players')}>
+                <span className="qa-icon">👤</span>
+                <span>Jugadores</span>
+              </button>
+              <button className="quick-action-btn" onClick={() => setActiveTab('users')}>
+                <span className="qa-icon">🔗</span>
+                <span>Vincular</span>
+                {pendingUsers.length > 0 && <span className="qa-badge">{pendingUsers.length}</span>}
+              </button>
+              <button className="quick-action-btn" onClick={() => setActiveTab('tools')}>
+                <span className="qa-icon">⚙️</span>
+                <span>Herramientas</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Recent Matches */}
+          <div className="dashboard-recent">
+            <h3 className="dash-section-title">Partidos Recientes</h3>
+            <div className="recent-matches-list">
+              {matches.slice(-5).reverse().map(match => {
+                const matchRatingsCount = Object.values(ratings)
+                  .flat()
+                  .filter(r => r.matchId === match.id).length
+                return (
+                  <div key={match.id} className="recent-match-item">
+                    <div className="recent-match-info">
+                      <span className="recent-match-date">
+                        {new Date(match.date + 'T12:00:00').toLocaleDateString('es-ES', { 
+                          day: 'numeric', month: 'short' 
+                        })}
+                      </span>
+                      <span className="recent-match-teams">
+                        {match.teamWhite.length} vs {match.teamBlack.length}
+                      </span>
+                      <span className={`recent-match-winner ${match.winner}`}>
+                        {match.winner === 'white' ? 'Blanco' : 'Negro'}
+                      </span>
+                    </div>
+                    <div className="recent-match-stats">
+                      <span className="recent-match-ratings">{matchRatingsCount} ⭐</span>
+                      <span className={`recent-match-status ${match.ratingsOpen !== false ? 'open' : 'closed'}`}>
+                        {match.ratingsOpen !== false ? 'Abierto' : 'Cerrado'}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Top Raters */}
+          <div className="dashboard-top-raters">
+            <h3 className="dash-section-title">Usuarios Más Activos</h3>
+            <div className="top-raters-list">
+              {(() => {
+                const raterCounts = {}
+                Object.values(ratings).flat().forEach(r => {
+                  if (r.ratedBy) {
+                    raterCounts[r.ratedBy] = (raterCounts[r.ratedBy] || 0) + 1
+                  }
+                })
+                return Object.entries(raterCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 5)
+                  .map(([playerId, count], idx) => {
+                    const userLink = Object.values(userLinks).find(l => l.playerId === playerId)
+                    return (
+                      <div key={playerId} className="top-rater-item">
+                        <span className="top-rater-pos">{idx + 1}</span>
+                        <img 
+                          src={userLink?.userPhoto || getPlayerPhoto(playerId)} 
+                          alt="" 
+                          className="top-rater-avatar"
+                        />
+                        <span className="top-rater-name">{getPlayerName(playerId)}</span>
+                        <span className="top-rater-count">{count} votos</span>
+                      </div>
+                    )
+                  })
+              })()}
+            </div>
           </div>
         </section>
       )}
@@ -1136,95 +1216,256 @@ function App() {
         <section className="stats-section tools-section">
           <h2 className="section-title">Herramientas de Admin</h2>
 
-          {/* Gestionar Admins */}
-          <div className="tool-card">
-            <h3 className="tool-title">Gestionar Administradores</h3>
-            <p className="tool-desc">Super Admin: {SUPER_ADMIN_EMAIL}</p>
-            <div className="admin-list">
-              {adminEmails.map(email => (
-                <div key={email} className="admin-item">
-                  <span>{email}</span>
-                  <button 
-                    className="remove-btn"
-                    onClick={() => handleRemoveAdmin(email)}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+          <div className="tools-grid">
+            {/* Gestionar Admins */}
+            <div className="tool-card">
+              <div className="tool-header">
+                <span className="tool-icon">👑</span>
+                <h3 className="tool-title">Administradores</h3>
+              </div>
+              <p className="tool-desc">Super Admin: {SUPER_ADMIN_EMAIL}</p>
+              <div className="admin-list">
+                {adminEmails.map(email => (
+                  <div key={email} className="admin-item">
+                    <span>{email}</span>
+                    <button className="remove-btn" onClick={() => handleRemoveAdmin(email)}>×</button>
+                  </div>
+                ))}
+              </div>
+              <div className="add-admin-form">
+                <input
+                  type="email"
+                  placeholder="email@ejemplo.com"
+                  value={newAdminEmail}
+                  onChange={e => setNewAdminEmail(e.target.value)}
+                />
+                <button onClick={handleAddAdmin} className="add-btn">Agregar</button>
+              </div>
             </div>
-            <div className="add-admin-form">
-              <input
-                type="email"
-                placeholder="email@ejemplo.com"
-                value={newAdminEmail}
-                onChange={e => setNewAdminEmail(e.target.value)}
-              />
-              <button onClick={handleAddAdmin} className="add-btn">
-                Agregar Admin
-              </button>
-            </div>
-          </div>
 
-          {/* Bloquear Usuarios */}
-          <div className="tool-card">
-            <h3 className="tool-title">Usuarios Bloqueados</h3>
-            <p className="tool-desc">Estos usuarios no pueden calificar</p>
-            <div className="blocked-list">
+            {/* Bloquear Usuarios */}
+            <div className="tool-card">
+              <div className="tool-header">
+                <span className="tool-icon">🚫</span>
+                <h3 className="tool-title">Usuarios Bloqueados</h3>
+              </div>
+              <p className="tool-desc">No pueden calificar</p>
               {blockedUsers.length > 0 ? (
-                blockedUsers.map(userId => {
-                  const userLink = Object.values(userLinks).find(l => l.odedBy === userId)
-                  return (
-                    <div key={userId} className="blocked-item">
-                      <span>{userLink?.userName || userLink?.userEmail || userId}</span>
-                      <button 
-                        className="unblock-btn"
-                        onClick={async () => {
+                <div className="blocked-list">
+                  {blockedUsers.map(userId => {
+                    const userLink = Object.values(userLinks).find(l => l.odedBy === userId)
+                    return (
+                      <div key={userId} className="blocked-item">
+                        <span>{userLink?.userName || userLink?.userEmail || userId}</span>
+                        <button className="unblock-btn" onClick={async () => {
                           const newList = blockedUsers.filter(id => id !== userId)
                           await setDoc(doc(db, 'settings', 'blockedUsers'), { list: newList })
-                        }}
-                      >
-                        Desbloquear
-                      </button>
-                    </div>
-                  )
-                })
+                        }}>Desbloquear</button>
+                      </div>
+                    )
+                  })}
+                </div>
               ) : (
-                <p className="no-data-text">Sin usuarios bloqueados</p>
+                <p className="no-data-text">Sin bloqueados</p>
+              )}
+              <div className="block-user-form">
+                <select 
+                  className="block-user-select"
+                  onChange={async e => {
+                    if (e.target.value) {
+                      const newList = [...blockedUsers, e.target.value]
+                      await setDoc(doc(db, 'settings', 'blockedUsers'), { list: newList })
+                      e.target.value = ''
+                      showToast('success', 'Usuario bloqueado')
+                    }
+                  }}
+                >
+                  <option value="">Bloquear usuario...</option>
+                  {Object.entries(userLinks)
+                    .filter(([uid]) => !blockedUsers.includes(uid))
+                    .map(([uid, data]) => (
+                      <option key={uid} value={uid}>{data.userName || data.userEmail}</option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Gestionar Partidos */}
+            <div className="tool-card">
+              <div className="tool-header">
+                <span className="tool-icon">⚽</span>
+                <h3 className="tool-title">Partidos</h3>
+              </div>
+              <p className="tool-desc">Abrir/cerrar calificaciones</p>
+              <div className="matches-control-list">
+                {matches.slice(-5).reverse().map(match => (
+                  <div key={match.id} className="match-control-item">
+                    <span className="match-control-date">
+                      {new Date(match.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                    </span>
+                    <button
+                      className={`match-toggle-btn ${match.ratingsOpen !== false ? 'open' : 'closed'}`}
+                      onClick={async () => {
+                        const matchRef = doc(db, 'matches', match.id)
+                        await updateDoc(matchRef, { ratingsOpen: match.ratingsOpen === false })
+                        showToast('success', match.ratingsOpen === false ? 'Calificaciones abiertas' : 'Calificaciones cerradas')
+                      }}
+                    >
+                      {match.ratingsOpen !== false ? '🔓 Abierto' : '🔒 Cerrado'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Eliminar Calificaciones */}
+            <div className="tool-card">
+              <div className="tool-header">
+                <span className="tool-icon">🗑️</span>
+                <h3 className="tool-title">Eliminar Calificaciones</h3>
+              </div>
+              <p className="tool-desc">Borrar todas las calificaciones de un partido</p>
+              <select 
+                className="delete-ratings-select"
+                onChange={async e => {
+                  if (e.target.value && confirm('¿Eliminar TODAS las calificaciones de este partido?')) {
+                    const matchId = e.target.value
+                    const batch = writeBatch(db)
+                    Object.values(ratings).flat()
+                      .filter(r => r.matchId === matchId)
+                      .forEach(r => {
+                        const ratingId = `${r.ratedBy}_${r.ratedPlayerId}_${matchId}`
+                        batch.delete(doc(db, 'ratings', ratingId))
+                      })
+                    await batch.commit()
+                    showToast('success', 'Calificaciones eliminadas')
+                    e.target.value = ''
+                  }
+                }}
+              >
+                <option value="">Seleccionar partido...</option>
+                {matches.slice(-10).reverse().map(match => (
+                  <option key={match.id} value={match.id}>
+                    {new Date(match.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {' - '}
+                    {Object.values(ratings).flat().filter(r => r.matchId === match.id).length} calificaciones
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Configuración Liga */}
+            <div className="tool-card">
+              <div className="tool-header">
+                <span className="tool-icon">⚙️</span>
+                <h3 className="tool-title">Configuración</h3>
+              </div>
+              <div className="config-form">
+                <label>
+                  <span>Votos mínimos para MVP</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={leagueSettings.mvpMinVotes}
+                    onChange={async e => {
+                      const val = parseInt(e.target.value) || 1
+                      await setDoc(doc(db, 'settings', 'league'), { ...leagueSettings, mvpMinVotes: val })
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Exportar Datos */}
+            <div className="tool-card">
+              <div className="tool-header">
+                <span className="tool-icon">📥</span>
+                <h3 className="tool-title">Exportar Datos</h3>
+              </div>
+              <p className="tool-desc">Descargar backup completo</p>
+              <div className="export-buttons">
+                <button className="export-btn" onClick={() => {
+                  const data = { players, matches, ratings, userLinks, exportedAt: new Date().toISOString() }
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `lukto-backup-${new Date().toISOString().split('T')[0]}.json`
+                  a.click()
+                  showToast('success', 'Backup descargado')
+                }}>
+                  JSON
+                </button>
+                <button className="export-btn" onClick={() => {
+                  let csv = 'Jugador,Partidos,Victorias,Derrotas,Win Rate,Rating,MVPs\n'
+                  stats.forEach(s => {
+                    csv += `${s.name},${s.played},${s.wins},${s.losses},${s.winRate.toFixed(1)}%,${s.avgRating?.toFixed(1) || '-'},${s.mvps}\n`
+                  })
+                  const blob = new Blob([csv], { type: 'text/csv' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `lukto-stats-${new Date().toISOString().split('T')[0]}.csv`
+                  a.click()
+                  showToast('success', 'CSV descargado')
+                }}>
+                  CSV
+                </button>
+              </div>
+            </div>
+
+            {/* Anuncios */}
+            <div className="tool-card wide">
+              <div className="tool-header">
+                <span className="tool-icon">📢</span>
+                <h3 className="tool-title">Enviar Anuncio</h3>
+              </div>
+              <p className="tool-desc">Mensaje visible para todos los usuarios</p>
+              <div className="announcement-form">
+                <input
+                  type="text"
+                  placeholder="Escribe tu anuncio..."
+                  id="announcement-input"
+                  maxLength={200}
+                />
+                <button className="send-announcement-btn" onClick={async () => {
+                  const input = document.getElementById('announcement-input')
+                  const message = input.value.trim()
+                  if (!message) return
+                  await addDoc(collection(db, 'announcements'), {
+                    message,
+                    createdAt: new Date().toISOString(),
+                    createdBy: user.email
+                  })
+                  input.value = ''
+                  showToast('success', 'Anuncio enviado')
+                }}>
+                  Enviar
+                </button>
+              </div>
+              {announcements.length > 0 && (
+                <div className="current-announcements">
+                  <span className="announcements-label">Anuncios activos:</span>
+                  {announcements.slice(0, 3).map(a => (
+                    <div key={a.id} className="announcement-item">
+                      <span>{a.message}</span>
+                      <button className="delete-announcement" onClick={async () => {
+                        await deleteDoc(doc(db, 'announcements', a.id))
+                        showToast('success', 'Anuncio eliminado')
+                      }}>×</button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-          </div>
-
-          {/* Exportar Datos */}
-          <div className="tool-card">
-            <h3 className="tool-title">Exportar Datos</h3>
-            <button 
-              className="export-btn"
-              onClick={() => {
-                const data = {
-                  players: players,
-                  matches: matches,
-                  ratings: ratings,
-                  exportedAt: new Date().toISOString()
-                }
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement('a')
-                a.href = url
-                a.download = `lukto-backup-${new Date().toISOString().split('T')[0]}.json`
-                a.click()
-                showToast('success', 'Datos exportados')
-              }}
-            >
-              Descargar Backup (JSON)
-            </button>
           </div>
         </section>
       )}
 
       {/* Admin: All Ratings Tab */}
       {activeTab === 'allRatings' && isAdmin && (
-        <section className="stats-section">
+        <section className="stats-section history-section">
           <h2 className="section-title">Historial de Calificaciones</h2>
           <p className="section-subtitle">Detalle de quién calificó a quién en cada partido</p>
           
@@ -1238,45 +1479,77 @@ function App() {
                     ...r,
                     ratedPlayerName: getPlayerName(playerId),
                     raterName: getPlayerName(r.ratedBy),
-                    raterEmail: raterLink?.userEmail || 'Desconocido'
+                    raterEmail: raterLink?.userEmail || 'Desconocido',
+                    raterPhoto: raterLink?.userPhoto
                   })
                 })
               })
 
               if (matchRatings.length === 0) return null
 
+              // Group by rater
+              const groupedByRater = {}
+              matchRatings.forEach(r => {
+                if (!groupedByRater[r.ratedBy]) {
+                  groupedByRater[r.ratedBy] = {
+                    raterName: r.raterName,
+                    raterEmail: r.raterEmail,
+                    raterPhoto: r.raterPhoto,
+                    ratings: []
+                  }
+                }
+                groupedByRater[r.ratedBy].ratings.push(r)
+              })
+
               return (
-                <div key={match.id} className="match-ratings-card">
-                  <h4 className="match-ratings-header">
-                    {new Date(match.date + 'T12:00:00').toLocaleDateString('es-ES', {
-                      weekday: 'long', day: 'numeric', month: 'long'
-                    })}
-                  </h4>
-                  <div className="ratings-table-wrapper">
-                    <table className="ratings-detail-table">
-                      <thead>
-                        <tr>
-                          <th>Calificador</th>
-                          <th>Email</th>
-                          <th>Calificado</th>
-                          <th>Nota</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {matchRatings.map((r, idx) => (
-                          <tr key={idx}>
-                            <td>{r.raterName}</td>
-                            <td className="email-cell">{r.raterEmail}</td>
-                            <td>{r.ratedPlayerName}</td>
-                            <td>
-                              <span className={`rating-value ${getRatingClass(r.score)}`}>
+                <div key={match.id} className="history-match-card">
+                  <div className="history-match-header">
+                    <div className="history-match-date">
+                      <span className="history-day">
+                        {new Date(match.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric' })}
+                      </span>
+                      <span className="history-month">
+                        {new Date(match.date + 'T12:00:00').toLocaleDateString('es-ES', { month: 'short' })}
+                      </span>
+                    </div>
+                    <div className="history-match-info">
+                      <span className="history-match-title">
+                        {match.teamWhite.length} vs {match.teamBlack.length} • {match.venue}
+                      </span>
+                      <span className="history-match-stats">
+                        {matchRatings.length} calificaciones • {Object.keys(groupedByRater).length} calificadores
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="history-raters-list">
+                    {Object.entries(groupedByRater).map(([raterId, raterData]) => (
+                      <div key={raterId} className="history-rater-card">
+                        <div className="history-rater-header">
+                          {raterData.raterPhoto ? (
+                            <img src={raterData.raterPhoto} alt="" className="history-rater-avatar" />
+                          ) : (
+                            <div className="history-rater-avatar-placeholder">
+                              {raterData.raterName?.charAt(0) || '?'}
+                            </div>
+                          )}
+                          <div className="history-rater-info">
+                            <span className="history-rater-name">{raterData.raterName}</span>
+                            <span className="history-rater-email">{raterData.raterEmail}</span>
+                          </div>
+                        </div>
+                        <div className="history-ratings-grid">
+                          {raterData.ratings.map((r, idx) => (
+                            <div key={idx} className="history-rating-item">
+                              <span className="history-rated-player">{r.ratedPlayerName}</span>
+                              <span className={`history-rating-score ${getRatingClass(r.score)}`}>
                                 {r.score}
                               </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )
