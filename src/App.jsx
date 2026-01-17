@@ -1671,20 +1671,18 @@ function App() {
       {/* Pending User Modal - shown when user is not linked */}
       {user && !userPlayer && !isAdmin && (
         <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h2>⏳ Esperando Aprobación</h2>
-            </div>
-            <div className="pending-message">
+          <div className="modal pending-modal">
+            <div className="pending-content">
               <img src={user.photoURL} alt="" className="pending-avatar" />
-              <p><strong>{user.displayName}</strong></p>
-              <p>Tu cuenta ha sido registrada.</p>
-              <p>El administrador debe vincularte con tu jugador para que puedas calificar.</p>
-              <p className="pending-hint">Avísale al admin que te vincule 😉</p>
+              <h2>{user.displayName}</h2>
+              <p className="pending-status">Cuenta registrada</p>
+              <div className="pending-info">
+                <p>El administrador debe vincularte con tu jugador para que puedas calificar.</p>
+              </div>
+              <button className="submit-btn" onClick={handleLogout}>
+                Cerrar sesión
+              </button>
             </div>
-            <button className="submit-btn" onClick={handleLogout}>
-              CERRAR SESIÓN
-            </button>
           </div>
         </div>
       )}
