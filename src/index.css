@@ -1272,13 +1272,20 @@ body {
 
 /* Ratings Closed Badge */
 .ratings-closed-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  background: rgba(255, 69, 58, 0.15);
-  color: var(--accent-red);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+  color: #ef4444;
   text-transform: uppercase;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  animation: pulse-closed 2s infinite;
+}
+
+@keyframes pulse-closed {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 /* Match Teams */

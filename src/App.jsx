@@ -1660,16 +1660,21 @@ function App() {
   }
 
   // Rating functions
-  const openRatingModal = (match) => {
+  const openRatingModal = async (match) => {
     if (!userPlayer) {
       showToast('error', 'Primero debes vincular tu cuenta')
       return
     }
     
-    // Check if ratings are closed for this match
-    if (match.ratingsOpen === false) {
-      showToast('error', 'Las calificaciones están cerradas para este partido')
-      return
+    // ALWAYS check latest state from Firebase (not local cache)
+    try {
+      const matchDoc = await getDoc(doc(db, 'matches', match.id))
+      if (matchDoc.exists() && matchDoc.data().ratingsOpen === false) {
+        showToast('error', 'Las calificaciones están cerradas para este partido')
+        return
+      }
+    } catch (error) {
+      console.error('Error checking match status:', error)
     }
     
     const allPlayers = [...match.teamWhite, ...match.teamBlack]
@@ -2663,8 +2668,8 @@ function App() {
                           Calificar
                         </button>
                       )}
-                      {user && userPlayer && match.ratingsOpen === false && !isAdmin && (
-                        <span className="ratings-closed-badge">Cerrado</span>
+                      {match.ratingsOpen === false && (
+                        <span className="ratings-closed-badge">🔒 Cerrado</span>
                       )}
                       {isAdmin && (
                         <>
