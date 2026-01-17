@@ -4,8 +4,9 @@
   --bg-card: #111111;
   --bg-card-hover: #1a1a1a;
   --bg-elevated: #1c1c1e;
-  --accent-blue: #0a84ff;
+  --accent-primary: #30d158;
   --accent-green: #30d158;
+  --accent-gold: #ffd700;
   --accent-orange: #ff9f0a;
   --accent-red: #ff453a;
   --accent-gray: #8e8e93;
@@ -158,8 +159,8 @@ body {
 }
 
 .admin-btn.active {
-  background: var(--accent-green);
-  border-color: var(--accent-green);
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
   color: #000;
 }
 
@@ -564,7 +565,7 @@ body {
 .leaderboard-score {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--accent-green);
+  color: var(--accent-gold);
   margin-left: auto;
 }
 
@@ -885,9 +886,10 @@ body {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: var(--accent-green);
-  color: #fff;
+  background: var(--accent-primary);
+  color: #000;
   font-size: 2rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -935,7 +937,7 @@ body {
 }
 
 .pending-status {
-  color: var(--accent-green);
+  color: var(--accent-primary);
   font-size: 0.9rem;
   font-weight: 500;
   margin-bottom: 1.5rem;
@@ -1901,6 +1903,6 @@ body {
 
 /* Selection */
 ::selection {
-  background: var(--accent-blue);
+  background: var(--accent-green);
   color: #fff;
 }
