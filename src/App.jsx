@@ -2946,9 +2946,11 @@ function App() {
           {/* Export Data */}
           <div className="tool-card">
             <div className="tool-header">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-              </svg>
+              <div className="tool-header-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                </svg>
+              </div>
               <h3>Exportar Datos</h3>
             </div>
             <p className="tool-description">Descarga las estadísticas en formato CSV</p>
@@ -3011,9 +3013,11 @@ function App() {
           {/* Merge Players */}
           <div className="tool-card">
             <div className="tool-header">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                <path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/>
-              </svg>
+              <div className="tool-header-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/>
+                </svg>
+              </div>
               <h3>Fusionar Jugadores</h3>
             </div>
             <p className="tool-description">Combina dos jugadores duplicados en uno solo</p>
@@ -3107,9 +3111,11 @@ function App() {
           {/* Block User */}
           <div className="tool-card">
             <div className="tool-header">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/>
-              </svg>
+              <div className="tool-header-icon" style={{background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05))', borderColor: 'rgba(239, 68, 68, 0.2)'}}>
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{color: '#ef4444'}}>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/>
+                </svg>
+              </div>
               <h3>Usuarios Bloqueados</h3>
             </div>
             <p className="tool-description">Impide que usuarios problemáticos califiquen</p>
@@ -3139,9 +3145,11 @@ function App() {
           {/* Suspicious Ratings */}
           <div className="tool-card">
             <div className="tool-header">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-              </svg>
+              <div className="tool-header-icon" style={{background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(251, 191, 36, 0.05))', borderColor: 'rgba(251, 191, 36, 0.2)'}}>
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{color: '#fbbf24'}}>
+                  <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                </svg>
+              </div>
               <h3>Calificaciones Sospechosas</h3>
             </div>
             <p className="tool-description">Usuarios que califican consistentemente bajo a otros</p>
@@ -3190,9 +3198,11 @@ function App() {
           {/* League Settings */}
           <div className="tool-card">
             <div className="tool-header">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
-              </svg>
+              <div className="tool-header-icon" style={{background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.05))', borderColor: 'rgba(99, 102, 241, 0.2)'}}>
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{color: '#6366f1'}}>
+                  <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                </svg>
+              </div>
               <h3>Configuración de Liga</h3>
             </div>
             <div className="settings-form">
