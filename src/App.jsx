@@ -601,6 +601,16 @@ function App() {
   const submitRatings = async () => {
     if (!selectedMatch || !userPlayer) return
     
+    // Verificar que todos los jugadores estén calificados
+    const playersToRate = getPlayersToRate(selectedMatch)
+    const missingRatings = playersToRate.filter(id => !currentRatings[id])
+    
+    if (missingRatings.length > 0) {
+      const missingNames = missingRatings.map(id => getPlayerName(id)).join(', ')
+      alert(`⚠️ Debes calificar a TODOS los jugadores.\n\nFaltan: ${missingNames}`)
+      return
+    }
+    
     const batch = writeBatch(db)
     
     Object.entries(currentRatings).forEach(([playerId, score]) => {
@@ -616,6 +626,7 @@ function App() {
     })
     
     await batch.commit()
+    alert('✅ Calificaciones guardadas')
     setShowRatingModal(false)
     setSelectedMatch(null)
     setCurrentRatings({})
@@ -753,6 +764,12 @@ function App() {
               onClick={() => setActiveTab('users')}
             >
               🔗 Vincular Usuarios {pendingUsers.length > 0 && <span className="badge">{pendingUsers.length}</span>}
+            </button>
+            <button 
+              className={`nav-tab ${activeTab === 'allRatings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('allRatings')}
+            >
+              📋 Ver Calificaciones
             </button>
           </>
         )}
@@ -1222,6 +1239,85 @@ function App() {
         </section>
       )}
 
+      {/* All Ratings Tab - Admin only */}
+      {activeTab === 'allRatings' && isAdmin && (
+        <section className="stats-section">
+          <h2 className="section-title">📋 Todas las Calificaciones</h2>
+          <p className="section-subtitle">
+            Detalle de quién calificó a quién en cada partido
+          </p>
+          
+          {matches.length > 0 ? (
+            [...matches].reverse().map(match => {
+              // Get all ratings for this match
+              const matchRatings = []
+              Object.entries(ratings).forEach(([playerId, playerRatings]) => {
+                playerRatings.forEach(rating => {
+                  if (rating.matchId === match.id) {
+                    matchRatings.push({
+                      ...rating,
+                      ratedPlayerName: getPlayerName(playerId),
+                      raterName: getPlayerName(rating.ratedBy)
+                    })
+                  }
+                })
+              })
+              
+              // Group by rater
+              const ratingsByRater = {}
+              matchRatings.forEach(r => {
+                if (!ratingsByRater[r.ratedBy]) {
+                  ratingsByRater[r.ratedBy] = {
+                    raterName: r.raterName,
+                    ratings: []
+                  }
+                }
+                ratingsByRater[r.ratedBy].ratings.push(r)
+              })
+              
+              return (
+                <div key={match.id} className="match-ratings-card">
+                  <div className="match-ratings-header">
+                    <h3>{formatDate(match.date)}</h3>
+                    <span className="match-venue-tag">{match.venue}</span>
+                  </div>
+                  
+                  {Object.keys(ratingsByRater).length > 0 ? (
+                    <div className="ratings-by-rater">
+                      {Object.entries(ratingsByRater).map(([raterId, data]) => (
+                        <div key={raterId} className="rater-section">
+                          <div className="rater-header">
+                            <span className="rater-name">📝 {data.raterName} calificó:</span>
+                          </div>
+                          <div className="rater-ratings">
+                            {data.ratings.map((r, idx) => (
+                              <div key={idx} className="rating-detail">
+                                <span className="rated-player">{r.ratedPlayerName}</span>
+                                <span className={`rating-score ${getRatingClass(r.score)}`}>
+                                  ⭐ {r.score}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="no-ratings-yet">
+                      <p>Nadie ha calificado este partido aún</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })
+          ) : (
+            <div className="empty-state">
+              <p>No hay partidos registrados</p>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Admin Login Modal */}
       {showLoginModal && (
         <div className="modal-overlay" onClick={() => setShowLoginModal(false)}>
@@ -1323,7 +1419,10 @@ function App() {
                 onClick={submitRatings}
                 disabled={Object.keys(currentRatings).length === 0}
               >
-                {hasMyRatings(selectedMatch.id) ? 'ACTUALIZAR' : 'GUARDAR'} CALIFICACIONES
+                {Object.keys(currentRatings).length < getPlayersToRate(selectedMatch).length 
+                  ? `FALTAN ${getPlayersToRate(selectedMatch).length - Object.keys(currentRatings).length} JUGADORES`
+                  : (hasMyRatings(selectedMatch.id) ? 'ACTUALIZAR' : 'GUARDAR') + ' CALIFICACIONES'
+                }
               </button>
             </div>
           </div>
