@@ -1990,6 +1990,33 @@ body {
   border-color: var(--accent-green);
 }
 
+/* Cleanup Section */
+.cleanup-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  border-radius: 12px;
+}
+
+.cleanup-btn {
+  background: var(--accent-red);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.cleanup-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
 /* ============================================
    Skeleton Loading
    ============================================ */

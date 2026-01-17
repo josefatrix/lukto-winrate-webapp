@@ -1027,10 +1027,30 @@ function App() {
   }
 
   const handleDeleteMatch = async (matchId) => {
-    if (!confirm('¿Estás seguro de eliminar este partido? Esta acción no se puede deshacer.')) return
+    if (!confirm('¿Estás seguro de eliminar este partido y todas sus calificaciones? Esta acción no se puede deshacer.')) return
     
     try {
-      await deleteDoc(doc(db, 'matches', matchId))
+      const batch = writeBatch(db)
+      
+      // Delete the match
+      batch.delete(doc(db, 'matches', matchId))
+      
+      // Delete all ratings for this match
+      const ratingsQuery = query(collection(db, 'ratings'), where('matchId', '==', matchId))
+      const ratingsSnapshot = await getDocs(ratingsQuery)
+      ratingsSnapshot.docs.forEach(docSnap => {
+        batch.delete(doc(db, 'ratings', docSnap.id))
+      })
+      
+      // Delete all predictions for this match
+      const predictionsQuery = query(collection(db, 'predictions'), where('matchId', '==', matchId))
+      const predictionsSnapshot = await getDocs(predictionsQuery)
+      predictionsSnapshot.docs.forEach(docSnap => {
+        batch.delete(doc(db, 'predictions', docSnap.id))
+      })
+      
+      await batch.commit()
+      showToast('success', 'Partido y calificaciones eliminados')
     } catch (error) {
       console.error('Error deleting match:', error)
       showToast('error', 'Error al eliminar partido')
@@ -2196,6 +2216,48 @@ function App() {
           <p className="section-subtitle">
             Detalle de quién calificó a quién en cada partido
           </p>
+          
+          {/* Cleanup button for orphaned ratings */}
+          {(() => {
+            // Find orphaned ratings (ratings for deleted matches)
+            const matchIds = new Set(matches.map(m => m.id))
+            let orphanedCount = 0
+            Object.values(ratings).forEach(playerRatings => {
+              playerRatings.forEach(r => {
+                if (!matchIds.has(r.matchId)) orphanedCount++
+              })
+            })
+            
+            const cleanupOrphanedRatings = async () => {
+              if (!confirm(`¿Eliminar ${orphanedCount} calificaciones huérfanas (de partidos eliminados)?`)) return
+              
+              try {
+                const batch = writeBatch(db)
+                const ratingsSnapshot = await getDocs(collection(db, 'ratings'))
+                
+                ratingsSnapshot.docs.forEach(docSnap => {
+                  const data = docSnap.data()
+                  if (!matchIds.has(data.matchId)) {
+                    batch.delete(doc(db, 'ratings', docSnap.id))
+                  }
+                })
+                
+                await batch.commit()
+                showToast('success', `${orphanedCount} calificaciones eliminadas`)
+              } catch (error) {
+                console.error('Error cleaning up ratings:', error)
+                showToast('error', 'Error al limpiar calificaciones')
+              }
+            }
+            
+            return orphanedCount > 0 && (
+              <div className="cleanup-section">
+                <button className="cleanup-btn" onClick={cleanupOrphanedRatings}>
+                  🗑️ Limpiar {orphanedCount} calificaciones huérfanas
+                </button>
+              </div>
+            )
+          })()}
           
           {(() => {
             // Calculate total average across all ratings

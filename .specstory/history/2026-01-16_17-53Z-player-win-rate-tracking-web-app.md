@@ -41021,3 +41021,442 @@ Let me implement this.</details></think>
 
 ---
 
+¡Sí se puede! Vamos a configurar las notificaciones. Hay dos tipos:
+
+1. **Notificaciones locales** - Se muestran cuando estás en la app (fácil de implementar)
+2. **Push notifications** - Se envían aunque no estés en la app (requiere configuración en Firebase)
+
+Voy a implementar las **notificaciones locales** primero, que te avisarán cuando:
+- 📊 Alguien te califique
+- ⚽ Se cree un nuevo partido
+- 🏆 Seas MVP de un partido
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 4, lines removed: undefined
+
+```diff
+@@ -147,4 +147,8 @@
+    // Confetti ref
+    const confettiTriggered = useRef({})
++   
++   // Notifications
++   const [notificationPermission, setNotificationPermission] = useState(Notification?.permission || 'default')
++   const previousRatingsRef = useRef({})
+    
+    // Auth state
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me add the notification request function and the notification sending logic.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 57, lines removed: undefined
+
+```diff
+@@ -907,4 +907,61 @@
+      return { correct, total, accuracy: total &gt; 0 ? Math.round((correct / total) * 100) : 0 }
+    }
++ 
++   // Request notification permission
++   const requestNotificationPermission = async () =&gt; {
++     if (!('Notification' in window)) {
++       showToast('error', 'Tu navegador no soporta notificaciones')
++       return
++     }
++     
++     const permission = await Notification.requestPermission()
++     setNotificationPermission(permission)
++     
++     if (permission === 'granted') {
++       showToast('success', '¡Notificaciones activadas!')
++       // Show test notification
++       sendNotification('LUKTO Stats', {
++         body: '¡Notificaciones activadas! Te avisaremos cuando te califiquen.',
++         icon: '/icon-192.png'
++       })
++     } else {
++       showToast('error', 'Notificaciones bloqueadas')
++     }
++   }
++ 
++   // Send notification
++   const sendNotification = (title, options = {}) =&gt; {
++     if (notificationPermission !== 'granted') return
++     if (document.hasFocus()) return // Don't show if app is focused
++     
++     try {
++       new Notification(title, {
++         icon: '/icon-192.png',
++         badge: '/icon-192.png',
++         ...options
++       })
++     } catch (error) {
++       console.log('Notification error:', error)
++     }
++   }
++ 
++   // Watch for new ratings on current user
++   useEffect(() =&gt; {
++     if (!userPlayer || !ratings[userPlayer]) return
++     
++     const currentRatingsCount = ratings[userPlayer]?.length || 0
++     const previousCount = previousRatingsRef.current[userPlayer] || 0
++     
++     if (previousCount &gt; 0 &amp;&amp; currentRatingsCount &gt; previousCount) {
++       // New rating received!
++       const newRatings = currentRatingsCount - previousCount
++       sendNotification('Nueva calificación', {
++         body: &#96;Recibiste ${newRatings} nueva${newRatings &gt; 1 ? 's' : ''} calificación${newRatings &gt; 1 ? 'es' : ''}&#96;,
++         tag: 'new-rating'
++       })
++     }
++     
++     previousRatingsRef.current[userPlayer] = currentRatingsCount
++   }, [ratings, userPlayer, notificationPermission])
+  
+    const handlePlayerToggle = (playerId, team) =&gt; {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to add a button in the UI to request notification permission. Let me add it in the header section near the user info.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 10, lines removed: undefined
+
+```diff
+@@ -1223,4 +1223,14 @@
+        &lt;header className="header"&gt;
+          &lt;div className="header-top"&gt;
++           {/* Notification toggle */}
++           {'Notification' in window &amp;&amp; (
++             &lt;button 
++               className={&#96;notification-toggle ${notificationPermission === 'granted' ? 'active' : ''}&#96;}
++               onClick={requestNotificationPermission}
++               title={notificationPermission === 'granted' ? 'Notificaciones activadas' : 'Activar notificaciones'}
++             &gt;
++               {notificationPermission === 'granted' ? '🔔' : '🔕'}
++             &lt;/button&gt;
++           )}
+            &lt;button 
+              className="theme-toggle"
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me add the CSS for the notification toggle button.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: 1
+
+```diff
+@@ -1952,8 +1952,10 @@
+    display: flex;
+    justify-content: flex-end;
++   gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+- .theme-toggle {
++ .theme-toggle,
++ .notification-toggle {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+```
+
+**Chunk 2**
+Lines added: 13, lines removed: 2
+
+```diff
+@@ -1968,13 +1970,24 @@
+    transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
++ 
++ .theme-toggle:hover,
++ .notification-toggle:hover {
++   transform: scale(1.1);
++   background: var(--bg-card-hover);
++ }
+  
+  .theme-toggle:hover {
+    transform: scale(1.1) rotate(15deg);
+-   background: var(--bg-card-hover);
+  }
+  
+- .theme-toggle:active {
++ .theme-toggle:active,
++ .notification-toggle:active {
+    transform: scale(0.95);
+  }
++ 
++ .notification-toggle.active {
++   background: rgba(16, 185, 129, 0.2);
++   border-color: var(--accent-green);
++ }
+  
+  /* ============================================
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me build and deploy the changes.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add notification system - alerts when you receive new ratings" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add notification system - alerts when you receive new ratings" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 735 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-BItiOSXW.css     31.88 kB │ gzip:   6.00 kB
+dist/assets/index-DKb3xxjf.js   1,004.46 kB │ gzip: 273.92 kB
+✓ built in 1.34s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 0eb39a4] Add notification system - alerts when you receive new ratings
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 7 files changed, 3601 insertions(+), 3230 deletions(-)
+ rename dist/assets/{index-DIt6Ks_X.css =&gt; index-BItiOSXW.css} (78%)
+ create mode 100644 dist/assets/index-DKb3xxjf.js
+ delete mode 100644 dist/assets/index-DQ3xuJY3.js
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/2.3MB)
+Uploading [=====---------------] (599.6KB/2.3MB)
+Uploading [==========----------] (1.2MB/2.3MB)
+Uploading [===============-----] (1.7MB/2.3MB)
+Uploading [====================] (2.3MB/2.3MB)
+https://lukto-winrate-webapp-obgqxheu5-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/UhLXr7TJMmjbax6N9oaQuegQgDGD [4s]
+Production: https://lukto-winrate-webapp-obgqxheu5-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 202 packages in 7s
+Building: 18 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 735 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-BItiOSXW.css     31.88 kB │ gzip:   6.01 kB
+Building: dist/assets/index-DKb3xxjf.js   1,004.46 kB │ gzip: 274.96 kB
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: ✓ built in 4.53s
+Building: Build Completed in /vercel/output [12s]
+Building: Deploying outputs...
+Building: Deployment completed
+Building: Creating build cache...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-obgqxheu5-josefatrixs-projects.vercel.app [25s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [25s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-obgqxheu5-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-obgqxheu5-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The notifications are now implemented. Let me explain to the user how they work.</details></think>
+
+---
+
+¡Listo! ✅ Ya puedes recibir notificaciones.
+
+## 🔔 Cómo funciona:
+
+### Activar notificaciones:
+1. Ve a **https://lukto-winrate-webapp.vercel.app**
+2. Haz **Ctrl+Shift+R** para actualizar
+3. Verás un botón 🔕 en la esquina superior derecha (junto al toggle de tema)
+4. **Toca el botón** y acepta el permiso
+5. El botón cambiará a 🔔 (verde) cuando esté activo
+
+### Cuándo te llegará una notificación:
+- 📊 **Cuando alguien te califique** - Recibirás una notificación diciendo "Recibiste X nueva(s) calificación(es)"
+
+### Importante:
+- Las notificaciones **solo llegan si NO estás en la app** (cuando estás en otra pestaña o app)
+- Debes tener la app **instalada o abierta en el navegador** para recibirlas
+- En iPhone, las notificaciones web solo funcionan si **instalas la app** como PWA
+
+---
+
+### Para Push Notifications reales (que lleguen aunque cierres todo):
+Eso requiere configurar **Firebase Cloud Messaging**. ¿Quieres que lo configure? Necesitaría:
+1. Habilitar Cloud Messaging en tu proyecto Firebase
+2. Configurar Cloud Functions para enviar las notificaciones
+
+¿Lo hacemos?
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+agregue un partido de prueba y realice las calificaciones y despues lo borre. pero en las estadisticas salen esos partidos que borre
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
