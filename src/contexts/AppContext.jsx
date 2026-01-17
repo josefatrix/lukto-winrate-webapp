@@ -7,7 +7,6 @@ import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth'
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore'
 
 // Constants
-export const ADMIN_PASSWORD = 'lukto2026'
 export const SUPER_ADMIN_EMAIL = 'joseescorcia01@gmail.com'
 
 const AppContext = createContext(null)
@@ -390,7 +389,6 @@ export const AppProvider = ({ children }) => {
     confettiTriggered,
 
     // Constants
-    ADMIN_PASSWORD,
     SUPER_ADMIN_EMAIL,
   }
 

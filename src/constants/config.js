@@ -4,7 +4,7 @@
  */
 
 // Admin Configuration
-export const ADMIN_PASSWORD = 'lukto2026'
+// Admin access is controlled via Google Auth + authorized email list
 export const SUPER_ADMIN_EMAIL = 'joseescorcia01@gmail.com'
 
 // App Settings
