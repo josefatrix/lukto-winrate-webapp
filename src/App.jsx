@@ -1317,41 +1317,55 @@ function App() {
             <div className="pending-users-section">
               <h3 className="subsection-title">⏳ Usuarios Pendientes ({pendingUsers.length})</h3>
               <div className="user-links-list">
-                {pendingUsers.map(pending => (
-                  <div key={pending.odedBy} className={`user-link-card pending ${linkingUser === pending.odedBy ? 'linking' : ''}`}>
-                    <div className="user-link-info">
-                      <img src={pending.userPhoto || pending.odedByPhoto} alt="" className="user-link-avatar" />
-                      <div>
-                        <div className="user-link-name">{pending.userName || pending.odedByName}</div>
-                        <div className="user-link-email">{pending.userEmail || pending.odedByEmail}</div>
+                {pendingUsers.map(pending => {
+                  const selectId = `select-${pending.odedBy}`
+                  return (
+                    <div key={pending.odedBy} className={`user-link-card pending ${linkingUser === pending.odedBy ? 'linking' : ''}`}>
+                      <div className="user-link-info">
+                        <img src={pending.userPhoto || pending.odedByPhoto} alt="" className="user-link-avatar" />
+                        <div>
+                          <div className="user-link-name">{pending.userName || pending.odedByName}</div>
+                          <div className="user-link-email">{pending.userEmail || pending.odedByEmail}</div>
+                        </div>
+                      </div>
+                      <div className="user-link-action">
+                        {linkingUser === pending.odedBy ? (
+                          <span className="linking-text">Vinculando...</span>
+                        ) : (
+                          <>
+                            <select 
+                              id={selectId}
+                              className="player-select-dropdown"
+                              defaultValue=""
+                            >
+                              <option value="">Selecciona...</option>
+                              {players.map(player => (
+                                <option key={player.id} value={player.id}>
+                                  {player.name}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              className="link-btn"
+                              onClick={() => {
+                                const select = document.getElementById(selectId)
+                                const playerId = select?.value
+                                console.log('Botón click - playerId:', playerId)
+                                if (playerId && playerId !== '') {
+                                  adminLinkUserToPlayer(pending.odedBy, playerId)
+                                } else {
+                                  alert('Selecciona un jugador primero')
+                                }
+                              }}
+                            >
+                              ✓
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <div className="user-link-action">
-                      {linkingUser === pending.odedBy ? (
-                        <span className="linking-text">Vinculando...</span>
-                      ) : (
-                        <select 
-                          className="player-select-dropdown"
-                          onChange={(e) => {
-                            const selectedPlayerId = e.target.value
-                            if (selectedPlayerId && selectedPlayerId !== '') {
-                              console.log('Dropdown seleccionado:', selectedPlayerId)
-                              adminLinkUserToPlayer(pending.odedBy, selectedPlayerId)
-                            }
-                          }}
-                          value=""
-                        >
-                          <option value="">Selecciona jugador...</option>
-                          {players.map(player => (
-                            <option key={player.id} value={player.id}>
-                              {player.name}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
