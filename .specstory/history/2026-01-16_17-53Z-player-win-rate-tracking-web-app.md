@@ -64425,7 +64425,458 @@ Output mode: content
 <think><details><summary>Thought Process</summary>
 I see the issue now. The code looks correct to me. Let me check if there's an issue with how React is handling this.
 
-Actually, wait - I think I see the problem. The `user && userPlayer && !isClosed` condition will show the button if `user` is truthy, `userPlayer` is truthy, AND `isClosed` is false.But the user is saying that people who ARE in the match can still see the "Calificar" button. This means `isClosed` must be evalu</details></think>
+Actually, wait - I think I see the problem. The `user && userPlayer && !isClosed` condition will show the button if `user` is truthy, `userPlayer` is truthy, AND `isClosed` is false.But the user is saying that people who ARE in the match can still see the "Calificar" button. This means `isClosed` must be evaluating to `false` even when it should be `true`.
+
+Let me check if the matches data is being loaded correctly and if the `ratingsOpen` field is present. Maybe the issue is that when the data is first loaded, `ratingsOpen` might be `undefined` for some reason.Actually, I think I should simplify the code and move the `isClosed` check outside of the map function so it's more reliable. Let me refactor the entire match card section.
+
+But wait - I just realized that the user said "only appears to admin and people not annotated in the match". This is strange because the badge `{isClosed && ...}` doesn't have any condition about being in the match or being admin.Unless... there's another component or condition that's hiding things for non-participants.
+
+Let me look at the full match card rendering to see the complete structure.</details></think>
+
+---
+
+Déjame ver el contexto completo del match card:
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the code looks correct. The IIFE is creating a local `isClosed` variable and using it to conditionally render.But wait - the user said people who ARE in the match can still see the Calificar button. The condition is:```jsx
+{user && userPlayer && !isClosed && (  <button>Calificar</button>)}
+```This should work. The button should NOT show when `isClosed` is `true`.But I just realized something - maybe the issue is that `isClosed` is always `false` because the data isn't being received correctly from Firebase. The onSnapshot might not be triggering or the data might be stale.Let me also check if there's a CSS issue where the badge is being hidden by CSS for certain users.
+
+Actually, let me think about this more carefully. The user said:
+- "solo le aparece al admin y la gente que no esta anotada en ese partido"
+- "me sigue dejando calificar a mis amigos"So the badge "🔒 Cerrado" shows for:- Admin ✓- People NOT in the match ✓
+
+But for people IN the match who have logged in and are linked:
+- They can still see "Calificar" button
+- They don't see the badge
+
+Wait... the condition `{isClosed && (...badge...)}` has NO dependency on whether the user is in the match or admin. So if `isClosed` is `true`, everyone should see the badge.But somehow only admin and non-participants see it. This is very strange.
+
+Unless... the React rendering is different. Let me think...
+
+Actually, I wonder if the issue is that the JavaScript evaluation is different. Let me try a completely different approach - instead of using IIFEs, let me define a helper function or use a different rendering pattern.Let me simplify the code drastically:</details></think>
+
+---
+
+Voy a simplificar completamente el código para evitar problemas con las funciones anidadas:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 20, lines removed: 30
+
+```diff
+@@ -2671,36 +2671,26 @@
+                          &lt;/button&gt;
+                        )}
+-                       {(() =&gt; {
+-                         const isClosed = match.ratingsOpen === false || match.ratingsOpen === 'false'
+-                         return (
+-                           &lt;&gt;
+-                             {user &amp;&amp; userPlayer &amp;&amp; !isClosed &amp;&amp; (
+-                               &lt;button 
+-                                 className="rate-match-btn"
+-                                 onClick={() =&gt; openRatingModal(match)}
+-                               &gt;
+-                                 Calificar
+-                               &lt;/button&gt;
+-                             )}
+-                             {isClosed &amp;&amp; (
+-                               &lt;span className="ratings-closed-badge"&gt;🔒 Cerrado&lt;/span&gt;
+-                             )}
+-                           &lt;/&gt;
+-                         )
+-                       })()}
++                       {/* SIEMPRE mostrar badge si está cerrado */}
++                       {match.ratingsOpen === false &amp;&amp; (
++                         &lt;span className="ratings-closed-badge"&gt;🔒 CERRADO&lt;/span&gt;
++                       )}
++                       {/* Solo mostrar botón calificar si NO está cerrado */}
++                       {user &amp;&amp; userPlayer &amp;&amp; match.ratingsOpen !== false &amp;&amp; (
++                         &lt;button 
++                           className="rate-match-btn"
++                           onClick={() =&gt; openRatingModal(match)}
++                         &gt;
++                           Calificar
++                         &lt;/button&gt;
++                       )}
+                        {isAdmin &amp;&amp; (
+                          &lt;&gt;
+-                           {(() =&gt; {
+-                             const isClosed = match.ratingsOpen === false || match.ratingsOpen === 'false'
+-                             return (
+-                               &lt;button 
+-                                 className={&#96;toggle-ratings-btn ${isClosed ? 'closed' : 'open'}&#96;}
+-                                 onClick={() =&gt; toggleMatchRatings(match.id, !isClosed)}
+-                                 title={isClosed ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
+-                               &gt;
+-                                 {isClosed ? '🔒' : '🔓'}
+-                               &lt;/button&gt;
+-                             )
+-                           })()}
++                           &lt;button 
++                             className={&#96;toggle-ratings-btn ${match.ratingsOpen === false ? 'closed' : 'open'}&#96;}
++                             onClick={() =&gt; toggleMatchRatings(match.id, match.ratingsOpen !== false)}
++                             title={match.ratingsOpen === false ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
++                           &gt;
++                             {match.ratingsOpen === false ? '🔒' : '🔓'}
++                           &lt;/button&gt;
+                            &lt;button 
+                              className="edit-match-btn"
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the toggleMatchRatings function to ensure it saves boolean `false` correctly.</details></think>
+
+---
+
+Ahora actualizo la función toggle para asegurar que guarde el valor correcto:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 7, lines removed: 4
+
+```diff
+@@ -1650,10 +1650,13 @@
+    const toggleMatchRatings = async (matchId, isCurrentlyOpen) =&gt; {
+      try {
+-       const newState = !isCurrentlyOpen
+-       console.log('Toggling ratings for match', matchId, 'from', isCurrentlyOpen, 'to', newState)
++       // Si está abierto (true), cerrar (false). Si está cerrado (false), abrir (true)
++       const newState = isCurrentlyOpen ? false : true
++       console.log('Toggle ratings:', matchId, 'isCurrentlyOpen:', isCurrentlyOpen, 'newState:', newState)
++       
+        await updateDoc(doc(db, 'matches', matchId), {
+-         ratingsOpen: newState === true ? true : false // Ensure boolean
++         ratingsOpen: newState
+        })
+-       showToast('success', newState ? 'Calificaciones abiertas' : 'Calificaciones cerradas')
++       
++       showToast('success', newState ? '✅ Calificaciones ABIERTAS' : '🔒 Calificaciones CERRADAS')
+      } catch (error) {
+        console.error('Error toggling ratings:', error)
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me check for lint errors before building.</details></think>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx`
+
+Lint results
+
+Lint errors for `src/App.jsx`
+
+
+| Message | Range | Severity |
+|-------|-------|----------|
+| 'showH2HModal' is declared but its value is never read. | 140:10-140:22 | DIAGNOSTIC_SEVERITY_HINT |
+| 'setShowH2HModal' is declared but its value is never read. | 140:24-140:39 | DIAGNOSTIC_SEVERITY_HINT |
+| 'showLinkPlayerModal' is declared but its value is never read. | 165:10-165:29 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleLinkPlayer' is declared but its value is never read. | 483:9-483:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'playerId' is declared but its value is never read. | 483:29-483:37 | DIAGNOSTIC_SEVERITY_HINT |
+| 'achievementTooltip' is declared but its value is never read. | 1286:10-1286:28 | DIAGNOSTIC_SEVERITY_HINT |
+| 'setAchievementTooltip' is declared but its value is never read. | 1286:30-1286:51 | DIAGNOSTIC_SEVERITY_HINT |
+| 'getPredictionAccuracy' is declared but its value is never read. | 1411:9-1411:30 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleEditPlayer' is declared but its value is never read. | 1637:9-1637:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'uid' is declared but its value is never read. | 3926:76-3926:79 | DIAGNOSTIC_SEVERITY_HINT |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Good, no lint errors. Let me build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Simplify ratingsOpen logic, remove IIFEs, use direct comparison" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Simplify ratingsOpen logic, remove IIFEs, use direct comparison" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 846 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-BOKVpbYm.css     69.05 kB │ gzip:  11.69 kB
+dist/assets/index-CZepS58u.js   1,081.37 kB │ gzip: 285.04 kB
+✓ built in 1.25s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main a3edc6b] Simplify ratingsOpen logic, remove IIFEs, use direct comparison
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 4 files changed, 557 insertions(+), 37 deletions(-)
+ rename dist/assets/{index-BxTPGI3B.js =&gt; index-CZepS58u.js} (96%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/3.2MB)
+Uploading [=====---------------] (821.8KB/3.2MB)
+Uploading [==========----------] (1.6MB/3.2MB)
+Uploading [===============-----] (2.4MB/3.2MB)
+Uploading [====================] (3.2MB/3.2MB)
+https://lukto-winrate-webapp-g7omn8uks-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/7xcCyUFShmVyiTmvHYx2CZ1MwZ8v [5s]
+Production: https://lukto-winrate-webapp-g7omn8uks-josefatrixs-projects.vercel.app [5s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 406 packages in 8s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 846 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-BOKVpbYm.css     69.05 kB │ gzip:  11.67 kB
+Building: dist/assets/index-CZepS58u.js   1,081.37 kB │ gzip: 286.06 kB
+Building: ✓ built in 4.33s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [13s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-g7omn8uks-josefatrixs-projects.vercel.app [26s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [26s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-g7omn8uks-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-g7omn8uks-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Done! Let me explain to the user what I changed and ask them to test again. I also need to ask them to verify that the Firebase data is correct.</details></think>
+
+---
+
+¡Listo! Simplifiqué completamente la lógica:
+
+**Ahora el orden es:**
+1. **Primero** se muestra el badge "🔒 CERRADO" si `ratingsOpen === false`
+2. **Luego** se muestra el botón "Calificar" solo si `ratingsOpen !== false`
+
+**Para probar:**
+
+1. **Como admin**, cierra las calificaciones de un partido (click en 🔓)
+2. Debería aparecer el toast: "🔒 Calificaciones CERRADAS"
+3. **Verifica en Firebase Console** → Firestore → matches → [el partido] → `ratingsOpen` debe ser `false` (booleano)
+4. **Pídele a un amigo** que recargue la página
+5. Debería ver el badge "🔒 CERRADO" y NO el botón "Calificar"
+
+**Si sigue sin funcionar**, verifica en Firebase:
+- Ve a la consola de Firebase
+- Busca el documento del partido
+- Mira si el campo `ratingsOpen` existe y es exactamente `false` (no string, no undefined)
+
+Si el campo no existe o tiene otro valor, ese es el problema.
+
+🔗 https://lukto-winrate-webapp.vercel.app
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+revisa a detalle todos los botones, mejora el diseno para que no tenga ningun bug, tambien revisa como se rellenan las opciones para que no tengan ninung bug. en general que todo se vea estetico
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants me to do a comprehensive review of all buttons, improve the design to be bug-free, and make everything look aesthetic. This is a broad request that involves:
+
+1. Reviewing all button styles and states
+2. Checking form inputs and selects
+3. Making sure everything is visually consistent
+4. Fixing any potential bugs in the UI
+
+Let me start by looking at the CSS for buttons and form elements to understand the current state and improve them.</details></think>
+
+---
+
+Voy a hacer una revisión completa de los botones, formularios y estilos. Primero veré el estado actual:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\.btn-|button\s*\{|\.rate-match-btn|\.toggle-ratings" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 26 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `.rate-match-btn,` | L1221 |
+| `src/index.css` | `.toggle-ratings-btn \{` | L1224 |
+| `src/index.css` | `.rate-match-btn:hover \{` | L1236 |
+| `src/index.css` | `.toggle-ratings-btn \{` | L1253 |
+| `src/index.css` | `.toggle-ratings-btn.open \{` | L1259 |
+| `src/index.css` | `.toggle-ratings-btn.closed \{` | L1264 |
+| `src/index.css` | `.toggle-ratings-btn:hover \{` | L1269 |
+| `src/index.css` | `.rate-match-btn,` | L2588 |
+| `src/index.css` | `.btn-secondary \{` | L4516 |
+| `src/index.css` | `.btn-secondary:hover \{` | L4528 |
+| `src/index.css` | `.btn-danger \{` | L4533 |
+| `src/index.css` | `.btn-danger:hover \{` | L4545 |
+| `src/index.css` | `.btn-danger:disabled \{` | L4549 |
+| `src/index.css` | `.btn-small \{` | L4599 |
+| `src/index.css` | `.btn-small:hover \{` | L4610 |
+| `src/index.css` | `.btn-small.blocked \{` | L4614 |
+| `src/index.css` | `.btn-danger \{` | L4697 |
+| `src/index.css` | `.btn-danger:hover \{` | L4710 |
+| `src/index.css` | `.btn-delete-small \{` | L4797 |
+| `src/index.css` | `.btn-delete-small:hover \{` | L4812 |
+| `src/index.css` | `.btn-danger-small \{` | L4817 |
+| `src/index.css` | `.btn-danger-small:hover \{` | L4829 |
+| `src/index.css` | `.setting-input[type="number"]::-webkit-inner-spin-button \{` | L4870 |
+| `src/index.css` | `.btn-secondary, .btn-danger \{` | L4922 |
+| `src/index.css` | `.btn-delete-small \{` | L5042 |
+| `src/index.css` | `.btn-delete-small:hover \{` | L5058 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I can see there are multiple button styles that are inconsistent and some are duplicated. Let me create a comprehensive CSS update to make everything consistent and aesthetic. I'll also check the form elements and make sure they all look good.
+
+Let me create a clean, unified button system and fix any issues.</details></think>
+
+---
+
+Veo que hay estilos duplicados e inconsistentes. Voy a crear un sistema de diseño unificado para todos los botones y elementos:
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me create a comprehensive design system update. I'll add a unified button system at the beginning of the CSS file (after the variables) and then clean up the inconsistencies throughout.</details></think>
+
+---
+
+Voy a crear un sistema de botones unificado y limpiar los estilos. Primero agregaré los estilos base mejorados:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "@keyframes slideIn|@keyframes pulse" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `@keyframes slideInRight \{` | L101 |
+| `src/index.css` | `@keyframes pulse \{` | L112 |
+| `src/index.css` | `@keyframes pulse-closed \{` | L1286 |
+
+
+</details>
+</tool-use>
+
+---
+
+
 
 ---
 

@@ -159,6 +159,249 @@
 }
 
 /* ============================================
+   UNIFIED BUTTON SYSTEM
+   ============================================ */
+
+/* Base Button Reset */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Primary Button - Green/Emerald */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  background: linear-gradient(135deg, var(--accent-green), #059669);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Secondary Button - Subtle */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-glass-hover);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+/* Danger Button - Red */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+}
+
+/* Small Buttons */
+.btn-small {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.75rem;
+  border-radius: 8px;
+}
+
+.btn-danger-small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  transition: all 0.2s ease;
+}
+
+.btn-danger-small:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* Icon Button - Circular */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+  border-color: var(--accent-green);
+}
+
+.btn-icon.danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Delete Small Button - Circular X */
+.btn-delete-small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 50%;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-delete-small:hover {
+  background: #ef4444;
+  color: white;
+  transform: scale(1.05);
+}
+
+/* ============================================
+   UNIFIED FORM ELEMENTS
+   ============================================ */
+
+/* Input Base */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Select Base */
+select {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+select option {
+  background: var(--bg-card-solid);
+  color: var(--text-primary);
+  padding: 0.5rem;
+}
+
+/* Number Input - Hide spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ============================================
    Base Styles
    ============================================ */
 * {
@@ -1218,74 +1461,117 @@ body {
   flex-wrap: wrap;
 }
 
-.rate-match-btn,
-.edit-match-btn,
-.delete-match-btn,
-.toggle-ratings-btn {
-  padding: 0.4rem 0.75rem;
-  border-radius: 6px;
+/* Match Action Buttons - Unified */
+.rate-match-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, var(--accent-green), #059669);
+  color: white;
   font-size: 0.8rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  font-weight: 600;
+  border-radius: 8px;
   border: none;
-  background: var(--bg-card);
-  color: var(--text-secondary);
+  transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
 }
 
 .rate-match-btn:hover {
-  background: #fff;
-  border-color: #fff;
-  color: #000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.edit-match-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.85rem;
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
 }
 
 .edit-match-btn:hover {
-  background: var(--bg-card-hover);
-  color: var(--text-primary);
+  background: var(--bg-glass-hover);
+  color: var(--accent-green);
+  border-color: var(--accent-green);
+}
+
+.delete-match-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--text-muted);
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
 }
 
 .delete-match-btn:hover {
-  background: rgba(255, 69, 58, 0.2);
-  color: var(--accent-red);
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 /* Toggle Ratings Button */
 .toggle-ratings-btn {
-  padding: 0.35rem 0.5rem;
-  font-size: 0.9rem;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
 }
 
 .toggle-ratings-btn.open {
-  background: rgba(52, 199, 89, 0.15);
+  background: rgba(16, 185, 129, 0.12);
   color: var(--accent-green);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.toggle-ratings-btn.open:hover {
+  background: rgba(16, 185, 129, 0.2);
 }
 
 .toggle-ratings-btn.closed {
-  background: rgba(255, 69, 58, 0.15);
-  color: var(--accent-red);
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
-.toggle-ratings-btn:hover {
-  opacity: 0.8;
+.toggle-ratings-btn.closed:hover {
+  background: rgba(239, 68, 68, 0.2);
 }
 
 /* Ratings Closed Badge */
 .ratings-closed-badge {
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 700;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.08));
   color: #ef4444;
   text-transform: uppercase;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  animation: pulse-closed 2s infinite;
-}
-
-@keyframes pulse-closed {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
 }
 
 /* Match Teams */
@@ -1910,27 +2196,30 @@ body {
 }
 
 .star-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   border: 1px solid var(--border-color);
-  background: transparent;
+  background: var(--bg-glass);
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.1s ease;
+  transition: all 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .star-btn:hover {
-  border-color: var(--text-secondary);
-  color: var(--text-primary);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  background: rgba(16, 185, 129, 0.08);
+  transform: scale(1.05);
 }
 
 .star-btn.active {
-  background: #fff;
-  border-color: #fff;
-  color: #000;
+  background: linear-gradient(135deg, var(--accent-green), #059669);
+  border-color: var(--accent-green);
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 /* User Links */
@@ -4530,27 +4819,6 @@ body {
   border-color: var(--accent-emerald);
 }
 
-.btn-danger {
-  background: linear-gradient(135deg, #FF453A, #FF6961);
-  color: white;
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-danger:hover {
-  opacity: 0.9;
-}
-
-.btn-danger:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* Merge Form */
 .merge-form {
   display: flex;
@@ -4694,24 +4962,6 @@ body {
   flex: 1;
 }
 
-.btn-danger {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: none;
-  background: #ef4444;
-  color: white;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.btn-danger:hover {
-  background: #dc2626;
-  transform: translateY(-1px);
-}
-
 .tool-divider {
   border: none;
   border-top: 1px solid var(--border-color);
@@ -4852,14 +5102,24 @@ body {
 
 .setting-input, .setting-select {
   width: 100%;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--separator);
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--border-color);
   border-radius: 10px;
-  background: var(--bg-secondary);
+  background: var(--bg-glass);
   color: var(--text-primary);
   font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
   -webkit-appearance: none;
   -moz-appearance: textfield;
+}
+
+.setting-select {
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  cursor: pointer;
 }
 
 .setting-input[type="number"] {
@@ -4874,7 +5134,12 @@ body {
 
 .setting-input:focus, .setting-select:focus {
   outline: none;
-  border-color: var(--accent-emerald);
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.setting-input::placeholder {
+  color: var(--text-muted);
 }
 
 /* ============================================
