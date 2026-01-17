@@ -63,6 +63,64 @@ const initialMatches = [
   }
 ]
 
+// Component for pending user with proper ref handling
+function PendingUserCard({ pending, players, linkingUser, onLink }) {
+  const [selectedPlayer, setSelectedPlayer] = useState('')
+  
+  const handleLink = () => {
+    console.log('=== CLICK EN BOTÓN VERDE ===')
+    console.log('selectedPlayer:', selectedPlayer)
+    console.log('pending.odedBy:', pending.odedBy)
+    
+    if (selectedPlayer && selectedPlayer !== '') {
+      onLink(pending.odedBy, selectedPlayer)
+    } else {
+      alert('Selecciona un jugador primero')
+    }
+  }
+  
+  return (
+    <div className={`user-link-card pending ${linkingUser === pending.odedBy ? 'linking' : ''}`}>
+      <div className="user-link-info">
+        <img src={pending.userPhoto || pending.odedByPhoto} alt="" className="user-link-avatar" />
+        <div>
+          <div className="user-link-name">{pending.userName || pending.odedByName}</div>
+          <div className="user-link-email">{pending.userEmail || pending.odedByEmail}</div>
+        </div>
+      </div>
+      <div className="user-link-action">
+        {linkingUser === pending.odedBy ? (
+          <span className="linking-text">Vinculando...</span>
+        ) : (
+          <>
+            <select 
+              className="player-select-dropdown"
+              value={selectedPlayer}
+              onChange={(e) => {
+                console.log('Select cambió a:', e.target.value)
+                setSelectedPlayer(e.target.value)
+              }}
+            >
+              <option value="">Selecciona...</option>
+              {players.map(player => (
+                <option key={player.id} value={player.id}>
+                  {player.name}
+                </option>
+              ))}
+            </select>
+            <button
+              className="link-btn"
+              onClick={handleLink}
+            >
+              ✓
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState('stats')
   const [players, setPlayers] = useState(initialPlayers)
@@ -1317,55 +1375,15 @@ function App() {
             <div className="pending-users-section">
               <h3 className="subsection-title">⏳ Usuarios Pendientes ({pendingUsers.length})</h3>
               <div className="user-links-list">
-                {pendingUsers.map(pending => {
-                  const selectId = `select-${pending.odedBy}`
-                  return (
-                    <div key={pending.odedBy} className={`user-link-card pending ${linkingUser === pending.odedBy ? 'linking' : ''}`}>
-                      <div className="user-link-info">
-                        <img src={pending.userPhoto || pending.odedByPhoto} alt="" className="user-link-avatar" />
-                        <div>
-                          <div className="user-link-name">{pending.userName || pending.odedByName}</div>
-                          <div className="user-link-email">{pending.userEmail || pending.odedByEmail}</div>
-                        </div>
-                      </div>
-                      <div className="user-link-action">
-                        {linkingUser === pending.odedBy ? (
-                          <span className="linking-text">Vinculando...</span>
-                        ) : (
-                          <>
-                            <select 
-                              id={selectId}
-                              className="player-select-dropdown"
-                              defaultValue=""
-                            >
-                              <option value="">Selecciona...</option>
-                              {players.map(player => (
-                                <option key={player.id} value={player.id}>
-                                  {player.name}
-                                </option>
-                              ))}
-                            </select>
-                            <button
-                              className="link-btn"
-                              onClick={() => {
-                                const select = document.getElementById(selectId)
-                                const playerId = select?.value
-                                console.log('Botón click - playerId:', playerId)
-                                if (playerId && playerId !== '') {
-                                  adminLinkUserToPlayer(pending.odedBy, playerId)
-                                } else {
-                                  alert('Selecciona un jugador primero')
-                                }
-                              }}
-                            >
-                              ✓
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
+                {pendingUsers.map(pending => (
+                  <PendingUserCard 
+                    key={pending.odedBy}
+                    pending={pending}
+                    players={players}
+                    linkingUser={linkingUser}
+                    onLink={adminLinkUserToPlayer}
+                  />
+                ))}
               </div>
             </div>
           )}
