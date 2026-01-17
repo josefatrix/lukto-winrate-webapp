@@ -305,6 +305,61 @@ function App() {
     }
   }
 
+  // Player management
+  const handleAddPlayer = async () => {
+    if (!newPlayerName.trim()) {
+      showToast('error', 'Ingresa un nombre')
+      return
+    }
+    const playerData = {
+      name: newPlayerName.trim(),
+      aliases: newPlayerAliases.split(',').map(a => a.trim()).filter(a => a),
+    }
+    try {
+      if (editingPlayerId) {
+        await updateDoc(doc(db, 'players', editingPlayerId), playerData)
+        showToast('success', 'Jugador actualizado')
+      } else {
+        const newPlayerId = Date.now().toString()
+        await setDoc(doc(db, 'players', newPlayerId), playerData)
+        showToast('success', 'Jugador creado')
+      }
+      closePlayerModal()
+    } catch (error) {
+      console.error('Error:', error)
+      showToast('error', 'Error al guardar')
+    }
+  }
+
+  const handleDeletePlayer = async (playerId, playerName) => {
+    if (!confirm(`¿Eliminar a "${playerName}"? Esta acción no se puede deshacer.`)) return
+    try {
+      await setDoc(doc(db, 'players', playerId), { deleted: true }, { merge: true })
+      // Actually delete
+      const batch = writeBatch(db)
+      batch.delete(doc(db, 'players', playerId))
+      await batch.commit()
+      showToast('success', 'Jugador eliminado')
+    } catch (error) {
+      console.error('Error:', error)
+      showToast('error', 'Error al eliminar')
+    }
+  }
+
+  const openEditPlayer = player => {
+    setEditingPlayerId(player.id)
+    setNewPlayerName(player.name)
+    setNewPlayerAliases(player.aliases?.join(', ') || '')
+    setShowPlayerModal(true)
+  }
+
+  const closePlayerModal = () => {
+    setShowPlayerModal(false)
+    setEditingPlayerId(null)
+    setNewPlayerName('')
+    setNewPlayerAliases('')
+  }
+
   const triggerMVPConfetti = (matchId, mvpPlayerId) => {
     if (confettiTriggered.current[matchId]) return
     if (mvpPlayerId !== userPlayer) return
@@ -965,12 +1020,19 @@ function App() {
                   )}
                 </div>
                 <div className="player-card-actions">
-                  <button className="edit-player-btn">Editar</button>
-                  <button className="delete-player-btn">🗑️</button>
+                  <button className="edit-player-btn" onClick={() => openEditPlayer(player)}>
+                    Editar
+                  </button>
+                  <button 
+                    className="delete-player-btn" 
+                    onClick={() => handleDeletePlayer(player.id, player.name)}
+                  >
+                    ×
+                  </button>
                 </div>
               </div>
             ))}
-            <div className="add-player-card" onClick={() => setShowPlayerModal(true)}>
+            <div className="add-player-card" onClick={() => { closePlayerModal(); setShowPlayerModal(true); }}>
               <span style={{ fontSize: '1.2rem', fontWeight: '300' }}>+</span>
               Agregar Jugador
             </div>
@@ -1187,6 +1249,150 @@ function App() {
 
       {/* Admin Login Modal */}
       {showLoginModal && <AdminLoginModal onClose={() => setShowLoginModal(false)} />}
+
+      {/* Player Profile Modal */}
+      {showPlayerProfile && selectedPlayerProfile && (
+        <div className="modal-overlay" onClick={() => setShowPlayerProfile(false)}>
+          <div className="modal profile-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Perfil de Jugador</h2>
+              <button className="modal-close" onClick={() => setShowPlayerProfile(false)}>×</button>
+            </div>
+            {(() => {
+              const player = players.find(p => p.id === selectedPlayerProfile)
+              if (!player) return <p>Jugador no encontrado</p>
+              
+              const playerStats = (timeFilter === 'all' ? stats : filteredStats).find(s => s.id === selectedPlayerProfile)
+              const xp = calculateXP(selectedPlayerProfile)
+              const rank = getRank(xp)
+              const playerRatingsList = ratings[selectedPlayerProfile] || []
+              
+              // Calculate streaks
+              let currentStreak = 0
+              let streakType = null
+              const sortedMatches = [...matches].sort((a, b) => new Date(b.date) - new Date(a.date))
+              for (const match of sortedMatches) {
+                const inWhite = match.teamWhite.includes(selectedPlayerProfile)
+                const inBlack = match.teamBlack.includes(selectedPlayerProfile)
+                if (!inWhite && !inBlack) continue
+                const won = (inWhite && match.winner === 'white') || (inBlack && match.winner === 'black')
+                if (streakType === null) {
+                  streakType = won ? 'win' : 'loss'
+                  currentStreak = 1
+                } else if ((won && streakType === 'win') || (!won && streakType === 'loss')) {
+                  currentStreak++
+                } else {
+                  break
+                }
+              }
+
+              return (
+                <div className="profile-content">
+                  <div className="profile-header-section">
+                    {getPlayerPhoto(selectedPlayerProfile) ? (
+                      <img src={getPlayerPhoto(selectedPlayerProfile)} alt="" className="profile-avatar-large" />
+                    ) : (
+                      <div className="profile-avatar-large">{getInitials(player.name)}</div>
+                    )}
+                    <div className="profile-name-section">
+                      <h3>{player.name}</h3>
+                      {player.aliases?.length > 0 && (
+                        <p className="profile-aliases">aka: {player.aliases.join(', ')}</p>
+                      )}
+                      <div className="profile-rank-badge" style={{ color: rank.color }}>
+                        {getRankIcon(rank.key, 20)} {rank.name}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="profile-stats-grid">
+                    <div className="profile-stat">
+                      <span className="profile-stat-value">{playerStats?.played || 0}</span>
+                      <span className="profile-stat-label">Partidos</span>
+                    </div>
+                    <div className="profile-stat">
+                      <span className="profile-stat-value">{playerStats?.wins || 0}</span>
+                      <span className="profile-stat-label">Victorias</span>
+                    </div>
+                    <div className="profile-stat">
+                      <span className="profile-stat-value">{playerStats?.winRate?.toFixed(0) || 0}%</span>
+                      <span className="profile-stat-label">Win Rate</span>
+                    </div>
+                    <div className="profile-stat">
+                      <span className="profile-stat-value">{playerStats?.avgRating || '-'}</span>
+                      <span className="profile-stat-label">Rating</span>
+                    </div>
+                    <div className="profile-stat">
+                      <span className="profile-stat-value">{playerStats?.mvps || 0}</span>
+                      <span className="profile-stat-label">MVPs</span>
+                    </div>
+                    <div className="profile-stat">
+                      <span className="profile-stat-value">{xp}</span>
+                      <span className="profile-stat-label">XP</span>
+                    </div>
+                  </div>
+
+                  {currentStreak > 0 && (
+                    <div className={`profile-streak ${streakType}`}>
+                      {streakType === 'win' ? '🔥' : '❄️'} Racha actual: {currentStreak} {streakType === 'win' ? 'victorias' : 'derrotas'}
+                    </div>
+                  )}
+
+                  <div className="profile-recent-ratings">
+                    <h4>Últimas Calificaciones Recibidas</h4>
+                    {playerRatingsList.slice(-5).reverse().map((r, idx) => {
+                      const match = matches.find(m => m.id === r.matchId)
+                      return (
+                        <div key={idx} className="profile-rating-item">
+                          <span className="profile-rating-date">
+                            {match ? new Date(match.date).toLocaleDateString('es-ES') : 'N/A'}
+                          </span>
+                          <span className={`rating-value ${getRatingClass(r.score)}`}>{r.score}</span>
+                        </div>
+                      )
+                    })}
+                    {playerRatingsList.length === 0 && <p className="no-data-text">Sin calificaciones</p>}
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Player Add/Edit Modal */}
+      {showPlayerModal && (
+        <div className="modal-overlay" onClick={closePlayerModal}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{editingPlayerId ? 'Editar Jugador' : 'Nuevo Jugador'}</h2>
+              <button className="modal-close" onClick={closePlayerModal}>×</button>
+            </div>
+            <div className="form-group">
+              <label>Nombre</label>
+              <input
+                type="text"
+                value={newPlayerName}
+                onChange={e => setNewPlayerName(e.target.value)}
+                placeholder="Nombre del jugador"
+                autoFocus
+              />
+            </div>
+            <div className="form-group">
+              <label>Aliases (separados por coma)</label>
+              <input
+                type="text"
+                value={newPlayerAliases}
+                onChange={e => setNewPlayerAliases(e.target.value)}
+                placeholder="Apodo1, Apodo2..."
+              />
+            </div>
+            <button className="submit-btn" onClick={handleAddPlayer}>
+              {editingPlayerId ? 'Guardar Cambios' : 'Crear Jugador'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Pending User Modal */}
       {user && !userPlayer && !isAdmin && userLinksLoaded && <PendingUserModal />}
