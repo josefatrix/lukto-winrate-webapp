@@ -2771,40 +2771,46 @@ function App() {
             <h3 className="dashboard-section-title">Usuarios Más Activos</h3>
             <div className="active-users-list">
               {(() => {
-                // Count ratings by user
-                const userRatingCounts = {}
+                // Count ratings by player who rated (ratedBy is the playerId)
+                const playerRatingCounts = {}
                 Object.values(ratings).forEach(playerRatings => {
                   playerRatings.forEach(r => {
-                    if (!userRatingCounts[r.odedBy]) {
-                      userRatingCounts[r.odedBy] = { count: 0, odedBy: r.odedBy }
+                    const raterPlayerId = r.ratedBy
+                    if (raterPlayerId) {
+                      if (!playerRatingCounts[raterPlayerId]) {
+                        playerRatingCounts[raterPlayerId] = { count: 0, playerId: raterPlayerId }
+                      }
+                      playerRatingCounts[raterPlayerId].count++
                     }
-                    userRatingCounts[r.odedBy].count++
                   })
                 })
                 
-                const sortedUsers = Object.values(userRatingCounts)
+                const sortedPlayers = Object.values(playerRatingCounts)
                   .sort((a, b) => b.count - a.count)
                   .slice(0, 5)
                 
-                if (sortedUsers.length === 0) {
+                if (sortedPlayers.length === 0) {
                   return <p className="no-data">Aún no hay calificaciones</p>
                 }
                 
-                return sortedUsers.map((userData, idx) => {
-                  const userLink = userLinks[userData.odedBy]
+                return sortedPlayers.map((data, idx) => {
+                  // Find the user linked to this player
+                  const linkedUser = Object.values(userLinks).find(u => u.playerId === data.playerId)
+                  const playerName = getPlayerName(data.playerId)
+                  
                   return (
-                    <div key={userData.odedBy} className="active-user-item">
+                    <div key={data.playerId} className="active-user-item">
                       <span className="active-user-rank">{idx + 1}</span>
-                      {userLink?.userPhoto ? (
-                        <img src={userLink.userPhoto} alt="" className="active-user-avatar" />
+                      {linkedUser?.userPhoto ? (
+                        <img src={linkedUser.userPhoto} alt="" className="active-user-avatar" />
                       ) : (
-                        <div className="active-user-avatar-placeholder">?</div>
+                        <div className="active-user-avatar-placeholder">{playerName.charAt(0)}</div>
                       )}
                       <div className="active-user-info">
-                        <span className="active-user-name">{userLink?.userName || 'Usuario'}</span>
-                        <span className="active-user-player">{userLink?.playerId ? getPlayerName(userLink.playerId) : 'Sin vincular'}</span>
+                        <span className="active-user-name">{linkedUser?.userName || playerName}</span>
+                        <span className="active-user-player">{playerName}</span>
                       </div>
-                      <span className="active-user-count">{userData.count} votos</span>
+                      <span className="active-user-count">{data.count} votos</span>
                     </div>
                   )
                 })
@@ -3204,8 +3210,12 @@ function App() {
                 <input 
                   type="number" 
                   min="1"
-                  value={leagueSettings.mvpMinVotes}
-                  onChange={(e) => setLeagueSettings({...leagueSettings, mvpMinVotes: parseInt(e.target.value) || 1})}
+                  max="20"
+                  value={leagueSettings.mvpMinVotes || 1}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? 1 : parseInt(e.target.value)
+                    setLeagueSettings(prev => ({...prev, mvpMinVotes: val || 1}))
+                  }}
                   className="setting-input"
                 />
               </div>
