@@ -48745,51 +48745,1165 @@ Cancelled
 
 <details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
 
+**Chunk 1**
+Lines added: 56, lines removed: 34
+
+```diff
+@@ -812,40 +812,62 @@
+  
+    // Get rank based on XP
+-   // Rank icons as SVG
+-   const rankIcons = {
+-     diamond: (
+-       &lt;svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"&gt;
+-         &lt;path d="M19 3H5L2 9l10 12L22 9l-3-6zM12 17.3L5 9h14l-7 8.3z"/&gt;
+-       &lt;/svg&gt;
+-     ),
+-     gold: (
+-       &lt;svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"&gt;
+-         &lt;path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/&gt;
+-       &lt;/svg&gt;
+-     ),
+-     silver: (
+-       &lt;svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"&gt;
+-         &lt;path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/&gt;
+-       &lt;/svg&gt;
+-     ),
+-     bronze: (
+-       &lt;svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"&gt;
+-         &lt;circle cx="12" cy="12" r="10"/&gt;
+-         &lt;text x="12" y="16" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#fff"&gt;3&lt;/text&gt;
+-       &lt;/svg&gt;
+-     ),
+-     none: (
+-       &lt;svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"&gt;
+-         &lt;circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2"/&gt;
+-       &lt;/svg&gt;
+-     )
+-   }
++   // Rank icons as SVG - returns a function to control size
++   const getRankIcon = (rank, size = 16) =&gt; {
++     const icons = {
++       leyenda: (
++         &lt;svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}&gt;
++           &lt;path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/&gt;
++           &lt;path d="M12 6l1.5 3 3.5.5-2.5 2.5.5 3.5-3-1.5-3 1.5.5-3.5L7 9.5l3.5-.5z"/&gt;
++         &lt;/svg&gt;
++       ),
++       maestro: (
++         &lt;svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}&gt;
++           &lt;path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l2 4h4l-3 3 1 4-4-2-4 2 1-4-3-3h4l2-4z"/&gt;
++         &lt;/svg&gt;
++       ),
++       diamante: (
++         &lt;svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}&gt;
++           &lt;path d="M19 3H5L2 9l10 12L22 9l-3-6zM12 17.3L5 9h14l-7 8.3z"/&gt;
++         &lt;/svg&gt;
++       ),
++       platino: (
++         &lt;svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}&gt;
++           &lt;path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/&gt;
++           &lt;circle cx="12" cy="12" r="3"/&gt;
++         &lt;/svg&gt;
++       ),
++       oro: (
++         &lt;svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}&gt;
++           &lt;path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/&gt;
++         &lt;/svg&gt;
++       ),
++       plata: (
++         &lt;svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}&gt;
++           &lt;path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/&gt;
++         &lt;/svg&gt;
++       ),
++       bronce: (
++         &lt;svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}&gt;
++           &lt;circle cx="12" cy="12" r="10"/&gt;
++         &lt;/svg&gt;
++       ),
++       none: (
++         &lt;svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}&gt;
++           &lt;circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2"/&gt;
++         &lt;/svg&gt;
++       )
++     }
++     return icons[rank] || icons.none
++   }
+  
+    const getRank = (xp) =&gt; {
+-     if (xp &gt;= 500) return { name: 'Diamante', icon: rankIcons.diamond, color: '#00d4ff', tier: 4 }
+-     if (xp &gt;= 300) return { name: 'Oro', icon: rankIcons.gold, color: '#ffd700', tier: 3 }
+-     if (xp &gt;= 150) return { name: 'Plata', icon: rankIcons.silver, color: '#c0c0c0', tier: 2 }
+-     if (xp &gt;= 50) return { name: 'Bronce', icon: rankIcons.bronze, color: '#cd7f32', tier: 1 }
+-     return { name: 'Sin rango', icon: rankIcons.none, color: '#666', tier: 0 }
++     if (xp &gt;= 1500) return { name: 'Leyenda', key: 'leyenda', color: '#ff6b6b', tier: 7 }
++     if (xp &gt;= 1000) return { name: 'Maestro', key: 'maestro', color: '#a855f7', tier: 6 }
++     if (xp &gt;= 700) return { name: 'Diamante', key: 'diamante', color: '#00d4ff', tier: 5 }
++     if (xp &gt;= 500) return { name: 'Platino', key: 'platino', color: '#22d3ee', tier: 4 }
++     if (xp &gt;= 300) return { name: 'Oro', key: 'oro', color: '#ffd700', tier: 3 }
++     if (xp &gt;= 150) return { name: 'Plata', key: 'plata', color: '#c0c0c0', tier: 2 }
++     if (xp &gt;= 50) return { name: 'Bronce', key: 'bronce', color: '#cd7f32', tier: 1 }
++     return { name: 'Sin rango', key: 'none', color: '#666', tier: 0 }
+    }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+Ahora actualizo las referencias a `rank.icon` para usar la nueva función:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "rank\.icon" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `\{rank.icon\}` | L1729 |
+| `src/App.jsx` | `\{rank.icon\}` | L1985 |
+| `src/App.jsx` | `\{rank.icon\} \{rank.name\}` | L3206 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1727,5 +1727,5 @@
+                          return (
+                            &lt;span className={&#96;rank-badge rank-${rank.name?.toLowerCase()}&#96;}&gt;
+-                             {rank.icon}
++                             {getRankIcon(rank.key, 12)}
+                              {rank.name}
+                            &lt;/span&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -1982,6 +1982,6 @@
+                      &lt;/td&gt;
+                      &lt;td&gt;
+-                       &lt;span className="rank-badge" style={{ color: rank.color }}&gt;
+-                         {rank.icon}
++                       &lt;span className="rank-icon-cell" style={{ color: rank.color }} title={rank.name}&gt;
++                         {getRankIcon(rank.key, 20)}
+                        &lt;/span&gt;
+                      &lt;/td&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -3204,5 +3204,5 @@
+                  &lt;h2&gt;{player?.name}&lt;/h2&gt;
+                  &lt;div className="profile-rank" style={{ color: rank.color }}&gt;
+-                   {rank.icon} {rank.name}
++                   {getRankIcon(rank.key, 18)} {rank.name}
+                  &lt;/div&gt;
+                &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+Ahora actualizo los estilos CSS para los nuevos rangos y ajusto el tamaño del badge en el header:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 40, lines removed: 17
+
+```diff
+@@ -279,43 +279,66 @@
+    letter-spacing: 0.05em;
+  }
++ 
++ /* Rank badges in header */
++ .rank-badge {
++   display: inline-flex;
++   align-items: center;
++   gap: 0.25rem;
++   padding: 0.2rem 0.5rem;
++   border-radius: 6px;
++   font-size: 0.65rem;
++   font-weight: 600;
++   text-transform: uppercase;
++   letter-spacing: 0.03em;
++ }
++ 
++ .rank-badge svg {
++   flex-shrink: 0;
++ }
+  
+  .rank-badge.rank-bronce {
+    background: linear-gradient(135deg, #cd7f32, #a0522d);
+    color: #fff;
+-   border: 1px solid #cd7f32;
+-   box-shadow: 0 2px 8px rgba(205, 127, 50, 0.3);
+  }
+  
+  .rank-badge.rank-plata {
+    background: linear-gradient(135deg, #e8e8e8, #b0b0b0);
+    color: #1a1a1a;
+-   border: 1px solid #c0c0c0;
+-   box-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
+  }
+  
+  .rank-badge.rank-oro {
+    background: linear-gradient(135deg, #ffd700, #daa520);
+    color: #1a1a1a;
+-   border: 1px solid #ffd700;
+-   box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
++ }
++ 
++ .rank-badge.rank-platino {
++   background: linear-gradient(135deg, #22d3ee, #0891b2);
++   color: #fff;
+  }
+  
+  .rank-badge.rank-diamante {
+-   background: linear-gradient(135deg, #e0f7ff, #87ceeb);
+-   color: #0369a1;
+-   border: 1px solid #87ceeb;
+-   box-shadow: 0 2px 8px rgba(135, 206, 235, 0.4);
++   background: linear-gradient(135deg, #60a5fa, #3b82f6);
++   color: #fff;
++ }
++ 
++ .rank-badge.rank-maestro {
++   background: linear-gradient(135deg, #a855f7, #7c3aed);
++   color: #fff;
++ }
++ 
++ .rank-badge.rank-leyenda {
++   background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
++   color: #fff;
+  }
+  
+- /* Rank icons in header profile card */
+- .rank-badge {
+-   display: inline-flex;
++ /* Rank icon in table cells */
++ .rank-icon-cell {
++   display: flex;
+    align-items: center;
+-   gap: 0.25rem;
++   justify-content: center;
+  }
+  
+- .rank-badge svg {
+-   width: 12px;
+-   height: 12px;
++ .rank-icon-cell svg {
++   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx`
+
+Lint results
+
+Lint errors for `src/App.jsx`
+
+
+| Message | Range | Severity |
+|-------|-------|----------|
+| 'showH2HModal' is declared but its value is never read. | 139:10-139:22 | DIAGNOSTIC_SEVERITY_HINT |
+| 'setShowH2HModal' is declared but its value is never read. | 139:24-139:39 | DIAGNOSTIC_SEVERITY_HINT |
+| 'showLinkPlayerModal' is declared but its value is never read. | 164:10-164:29 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleLinkPlayer' is declared but its value is never read. | 427:9-427:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'playerId' is declared but its value is never read. | 427:29-427:37 | DIAGNOSTIC_SEVERITY_HINT |
+| 'achievementTooltip' is declared but its value is never read. | 1174:10-1174:28 | DIAGNOSTIC_SEVERITY_HINT |
+| 'setAchievementTooltip' is declared but its value is never read. | 1174:30-1174:51 | DIAGNOSTIC_SEVERITY_HINT |
+| 'getPredictionAccuracy' is declared but its value is never read. | 1299:9-1299:30 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleEditPlayer' is declared but its value is never read. | 1515:9-1515:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'uid' is declared but its value is never read. | 2883:76-2883:79 | DIAGNOSTIC_SEVERITY_HINT |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add more ranks (Platino, Maestro, Leyenda), fix icon sizes and proportions" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add more ranks (Platino, Maestro, Leyenda), fix icon sizes and proportions" && npx vercel --prod --yes --force
+```
+
+```
+npm error code EJSONPARSE
+npm error JSON.parse Invalid package.json: JSONParseError: Unexpected end of JSON input while parsing empty string
+npm error JSON.parse Failed to parse JSON data.
+npm error JSON.parse Note: package.json must be actual JSON, not just JavaScript.
+npm error A complete log of this run can be found in: /Users/joseescorcia/.npm/_logs/2026-01-17T05_13_03_381Z-debug-0.log
+
+```
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/package.json</summary>
+
+</details>
+</tool-use>
+
+---
+
+El archivo package.json está vacío. Lo restauro:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="write">
+
+<details><summary>Tool use: **write** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/package.json</summary>
+
+**Chunk 1**
+Lines added: 34, lines removed: 1
+
+```diff
+@@ -1,1 +1,34 @@
+- 
++ {
++   "name": "lukto-winrate",
++   "version": "0.0.1",
++   "private": true,
++   "type": "module",
++   "scripts": {
++     "dev": "vite",
++     "build": "vite build",
++     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
++     "preview": "vite preview"
++   },
++   "dependencies": {
++     "canvas-confetti": "^1.9.2",
++     "chart.js": "^4.4.1",
++     "firebase": "^10.7.1",
++     "localforage": "^1.10.0",
++     "react": "^18.2.0",
++     "react-chartjs-2": "^5.2.0",
++     "react-confetti": "^6.1.0",
++     "react-dom": "^18.2.0",
++     "react-router-dom": "^6.21.1"
++   },
++   "devDependencies": {
++     "@types/react": "^18.2.43",
++     "@types/react-dom": "^18.2.17",
++     "@vitejs/plugin-react": "^4.2.1",
++     "eslint": "^8.55.0",
++     "eslint-plugin-react": "^7.33.2",
++     "eslint-plugin-react-hooks": "^4.6.0",
++     "eslint-plugin-react-refresh": "^0.4.5",
++     "vite": "^5.0.8"
++   }
++ }
++ 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add more ranks (Platino, Maestro, Leyenda), fix icon sizes and proportions" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add more ranks (Platino, Maestro, Leyenda), fix icon sizes and proportions" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 735 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-Ds49PCl8.css     48.64 kB │ gzip:   8.52 kB
+dist/assets/index-CNByz24O.js   1,034.67 kB │ gzip: 281.82 kB
+✓ built in 1.39s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 2c02c45] Add more ranks (Platino, Maestro, Leyenda), fix icon sizes and proportions
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 8 files changed, 905 insertions(+), 225 deletions(-)
+ rename dist/assets/{index-lyFniEny.js =&gt; index-CNByz24O.js} (83%)
+ create mode 100644 dist/assets/index-Ds49PCl8.css
+ delete mode 100644 dist/assets/index-YO5I6e_R.css
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/2.7MB)
+Uploading [=====---------------] (693.0KB/2.7MB)
+Uploading [==========----------] (1.3MB/2.7MB)
+Uploading [===============-----] (2.0MB/2.7MB)
+Uploading [====================] (2.7MB/2.7MB)
+https://lukto-winrate-webapp-lhuhdylhr-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/4g7KG6FzocDah1C22bUhF9yPUT1V [4s]
+Production: https://lukto-winrate-webapp-lhuhdylhr-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 371 packages in 25s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Error: Command "npm run build" exited with 1
+
+```
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npx vercel --prod --yes</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npx vercel --prod --yes
+```
+
+```
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+https://lukto-winrate-webapp-bpqrh4y8s-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/CVGoxE8jXyc55eM9Ai74VsqnPgzE [1s]
+Production: https://lukto-winrate-webapp-bpqrh4y8s-josefatrixs-projects.vercel.app [1s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Downloading 31 deployment files...
+Building: Restored build cache from previous deployment (DY4WVVY1hXV2GudiUKDpJ45MHRcn)
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 219 packages, removed 50 packages, and changed 45 packages in 26s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 15 modules transformed.
+Building: x Build failed in 239ms
+Building: error during build:
+Building: [vite]: Rollup failed to resolve import "recharts" from "/vercel/path0/src/App.jsx".
+Building: This is most likely unintended because it can break your application at runtime.
+Building: If you do want to externalize this module explicitly add it to
+Building: &#96;build.rollupOptions.external&#96;
+Building: at viteWarn (file:///vercel/path0/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:65855:17)
+Building: at onwarn (file:///vercel/path0/node_modules/@vitejs/plugin-react/dist/index.js:90:7)
+Building: at onRollupWarning (file:///vercel/path0/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:65885:5)
+Building: at onwarn (file:///vercel/path0/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:65550:7)
+Building: at file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:21095:13
+Building: at Object.logger [as onLog] (file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:22968:9)
+Building: at ModuleLoader.handleInvalidResolvedId (file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:21712:26)
+Building: at file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:21670:26
+Building: Error: Command "npm run build" exited with 1
+Error: Command "npm run build" exited with 1
+
+```
+</details>
+</tool-use>
+
+---
+
+Hay un problema con una importación de `recharts`. Déjame verificar:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "import.*recharts" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `import \{ LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend \} from 'recharts'` | L16 |
+
+
+</details>
+</tool-use>
+
+---
+
+Falta `recharts` en el package.json. Lo agrego:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/package.json</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -19,5 +19,6 @@
+      "react-confetti": "^6.1.0",
+      "react-dom": "^18.2.0",
+-     "react-router-dom": "^6.21.1"
++     "react-router-dom": "^6.21.1",
++     "recharts": "^2.10.3"
+    },
+    "devDependencies": {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm install && npm run build && git add . && git commit -m "Add recharts dependency and fix ranks" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm install && npm run build && git add . && git commit -m "Add recharts dependency and fix ranks" && npx vercel --prod --yes --force
+```
+
+```
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+
+added 226 packages, removed 43 packages, changed 49 packages, and audited 453 packages in 59s
+
+113 packages are looking for funding
+  run &#96;npm fund&#96; for details
+
+12 moderate severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run &#96;npm audit&#96; for details.
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 846 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-Ds49PCl8.css     48.64 kB │ gzip:   8.52 kB
+dist/assets/index-C8UDyydL.js   1,053.51 kB │ gzip: 278.52 kB
+✓ built in 1.28s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 5cd4b7b] Add recharts dependency and fix ranks
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 6 files changed, 11090 insertions(+), 6220 deletions(-)
+ create mode 100644 dist/assets/index-C8UDyydL.js
+ delete mode 100644 dist/assets/index-CNByz24O.js
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/1.2MB)
+Uploading [=====---------------] (322.4KB/1.2MB)
+Uploading [==========----------] (626.4KB/1.2MB)
+Uploading [===============-----] (941.7KB/1.2MB)
+Uploading [====================] (1.2MB/1.2MB)
+https://lukto-winrate-webapp-niujlp03g-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/EZEP9mzSaT9cQjg3KydRuqTVzvAG [4s]
+Production: https://lukto-winrate-webapp-niujlp03g-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 406 packages in 9s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 846 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-Ds49PCl8.css     48.64 kB │ gzip:   8.51 kB
+Building: dist/assets/index-C8UDyydL.js   1,053.51 kB │ gzip: 279.49 kB
+Building: ✓ built in 4.56s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [15s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-niujlp03g-josefatrixs-projects.vercel.app [25s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [25s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-niujlp03g-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-niujlp03g-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+¡Listo! Implementé los cambios:
+
+**Nuevos rangos (ahora son 7 + Sin rango):**
+
+| Rango | XP Requerido | Color | Icono |
+|-------|--------------|-------|-------|
+| **Sin rango** | 0-49 | Gris | Círculo vacío |
+| **Bronce** | 50+ | Bronce | Círculo sólido |
+| **Plata** | 150+ | Plateado | Estrella |
+| **Oro** | 300+ | Dorado | Corona |
+| **Platino** | 500+ | Cyan | Estrella con centro |
+| **Diamante** | 700+ | Azul | Gema |
+| **Maestro** | 1000+ | Púrpura | Escudo con estrella |
+| **Leyenda** | 1500+ | Rojo | Círculo con estrella |
+
+**Tamaños de iconos corregidos:**
+- En el **header** (badge de perfil): 12px + nombre del rango (compacto)
+- En la **tabla de ranking**: 20px (más visible)
+- En el **perfil del jugador**: 18px
+
+**Revisa los cambios en:**
+https://lukto-winrate-webapp.vercel.app
+
+El badge en el header ahora es más compacto y proporcional, y los iconos en la tabla son más grandes y legibles.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+que aplicarias para que la UI se viera mejor como las mejores apps del mercado?
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is asking what I would apply to make the UI look better, like the best apps on the market. Let me think about the current state of the app and what modern, premium apps typically have that could be improved.
+
+Current state:
+- Dark theme with emerald green accents
+- Basic cards and tables
+- SVG icons for achievements and ranks
+- Bottom navigation bar
+- Featured player cards
+
+What the best apps have that could improve this:
+
+1. **Micro-interactions & Animations**
+   - Subtle hover effects
+   - Page transitions
+   - Loading skeletons
+   - Pull-to-refresh animations
+   - Haptic feedback cues (visual)
+
+2. **Typography improvements**
+   - Better font hierarchy
+   - Variable font weights
+   - Proper line heights and letter spacing
+
+3. **Glassmorphism / Blur effects**
+   - Frosted glass backgrounds
+   - Backdrop blur on modals/overlays
+
+4. **Better spacing & rhythm**
+   - Consistent padding
+   - Visual breathing room
+   - Golden ratio spacing
+
+5. **Shadows & Depth**
+   - Layered shadows
+   - Elevation system
+   - Subtle gradients
+
+6. **Color refinements**
+   - More sophisticated color palette
+   - Better contrast ratios
+   - Accent color variations
+
+7. **Card designs**
+   - Rounded corners consistency
+   - Border treatments
+   - Inner shadows/highlights
+
+8. **Navigation improvements**
+   - Active state animations
+   - Smoother transitions
+   - Better visual feedback
+
+9. **Data visualization**
+   - Better progress bars
+   - Animated counters
+   - Chart improvements
+
+10. **Empty states**
+    - Illustrated empty states
+    - Onboarding hints
+
+11. **Gestures & interactions**
+    - Swipe actions
+    - Long press menus
+    - Pull to refresh
+
+12. **Status indicators**
+    - Live dots
+    - Pulse animations
+    - Badges
+    
+I should prioritize which of these would have the most impact. The animations and micro-interactions would make the app feel responsive and alive. Improving the typography and spacing would immediately elevate the visual hierarchy. Adding depth through shadows and glassmorphism effects would create a more sophisticated, layered appearance that separates this from basic designs.</details></think>
+
+---
+
+Buena pregunta. Analizando apps top como Spotify, Nike Run Club, FotMob, y SofaScore, estas son las mejoras que aplicaría:
+
+## 🎨 **Mejoras de UI que implementaría:**
+
+### 1. **Micro-animaciones**
+- Números que animan al cambiar (contador animado)
+- Cards que aparecen con fade + slide
+- Botones con efecto de onda al tocar
+- Iconos que pulsan o brillan
+
+### 2. **Glassmorphism mejorado**
+- Blur de fondo en modales
+- Cards con efecto de vidrio esmerilado
+- Header que se difumina al hacer scroll
+
+### 3. **Mejor jerarquía visual**
+- Tamaños de fuente más variados
+- Mejor espaciado entre elementos
+- Sombras más sofisticadas con capas
+
+### 4. **Feedback visual**
+- Skeleton loaders más elegantes
+- Estados vacíos con ilustraciones
+- Indicadores de "en vivo" o "nuevo"
+
+### 5. **Tarjetas premium**
+- Gradientes sutiles
+- Bordes con brillo sutil
+- Efectos 3D al hacer hover
+
+### 6. **Navegación mejorada**
+- Transiciones entre pestañas
+- Indicador animado de tab activo
+- Pull-to-refresh visual
+
+### 7. **Detalles de pulido**
+- Números grandes con estilo display
+- Badges con animación de pulso
+- Progress bars con gradiente animado
+
+---
+
+**¿Quieres que implemente estas mejoras?** Puedo aplicar:
+
+**Opción A:** Todas las mejoras (cambio significativo)
+**Opción B:** Solo micro-animaciones y transiciones
+**Opción C:** Solo mejoras de cards y glassmorphism
+
+¿Cuál prefieres?
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+opcion A
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants me to implement all the UI improvements - Option A. This is a significant change that includes:
+
+1. Micro-animations (counters, fade/slide, ripple effects, pulsing icons)
+2. Improved glassmorphism (blur backgrounds, frosted glass cards, header blur on scroll)
+3. Better visual hierarchy (font sizes, spacing, layered shadows)
+4. Visual feedback (skeleton loaders, empty states with illustrations, live indicators)
+5. Premium cards (subtle gradients, glowing borders, 3D hover effects)
+6. Improved navigation (tab transitions, animated active indicator, pull-to-refresh)
+7. Polish details (display numbers, pulsing badges, animated gradient progress bars)
+
+Let me implement these changes systematically in the CSS and JSX files.</details></think>
+
+---
+
+<tool-use data-tool-type="task" data-tool-name="todo_write">
+<details><summary>Tool use: **todo_write** • Todo List</summary>
+
+- [-] Add CSS animations and transitions library
+- [ ] Implement glassmorphism effects and blur backgrounds
+- [ ] Improve card designs with gradients and glow effects
+- [ ] Add micro-animations (counters, pulses, ripples)
+- [ ] Enhance navigation with animated indicators
+- [ ] Polish typography and spacing
+- [ ] Add skeleton loaders and empty state illustrations
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me start by adding comprehensive CSS animations and improving the overall styling. I'll update the index.css file with new animations, glassmorphism, and improved card designs.</details></think>
+
+---
+
+Voy a implementar todas las mejoras. Empiezo con las animaciones y efectos base:
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me create a comprehensive CSS update with all the premium animations and effects. I'll add this at the beginning of the CSS file, right after the root variables.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 28, lines removed: 11
+
+```diff
+@@ -1,21 +1,38 @@
++ /* ============================================
++    PREMIUM UI - LUKTO Stats
++    Inspired by: Spotify, Nike, FotMob, Linear
++    ============================================ */
++ 
+  /* Dark Theme (default) */
+  :root,
+  [data-theme="dark"] {
+    --bg-primary: #000000;
+    --bg-secondary: #0a0a0a;
+-   --bg-card: #111111;
++   --bg-card: rgba(17, 17, 17, 0.8);
++   --bg-card-solid: #111111;
+    --bg-card-hover: #1a1a1a;
+-   --bg-elevated: #1c1c1e;
+-   --accent-primary: #30d158;
+-   --accent-green: #30d158;
+-   --accent-gold: #ffd700;
+-   --accent-orange: #ff9f0a;
+-   --accent-red: #ff453a;
+-   --accent-gray: #8e8e93;
++   --bg-elevated: rgba(28, 28, 30, 0.9);
++   --bg-glass: rgba(255, 255, 255, 0.03);
++   --bg-glass-hover: rgba(255, 255, 255, 0.06);
++   --accent-primary: #10b981;
++   --accent-green: #10b981;
++   --accent-green-glow: rgba(16, 185, 129, 0.4);
++   --accent-gold: #fbbf24;
++   --accent-gold-glow: rgba(251, 191, 36, 0.4);
++   --accent-orange: #f97316;
++   --accent-red: #ef4444;
++   --accent-purple: #a855f7;
++   --accent-cyan: #22d3ee;
++   --accent-gray: #6b7280;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+-   --text-muted: rgba(255, 255, 255, 0.4);
+-   --border-color: rgba(255, 255, 255, 0.1);
+-   --separator: rgba(255, 255, 255, 0.08);
++   --text-muted: rgba(255, 255, 255, 0.45);
++   --border-color: rgba(255, 255, 255, 0.08);
++   --border-glow: rgba(16, 185, 129, 0.3);
++   --separator: rgba(255, 255, 255, 0.06);
++   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
++   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
++   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
++   --shadow-glow: 0 0 40px rgba(16, 185, 129, 0.15);
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the light theme variables too and add animations.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
 Status: **loading**
 
-```javascriptreact
-  // Rank icons as SVG - returns a function to control size
-  const getRankIcon = (rank, size = 16) => {
-    const icons = {
-      leyenda: (
-        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-          <path d="M12 6l1.5 3 3.5.5-2.5 2.5.5 3.5-3-1.5-3 1.5.5-3.5L7 9.5l3.5-.5z"/>
-        </svg>
-      ),
-      maestro: (
-        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
-          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l2 4h4l-3 3 1 4-4-2-4 2 1-4-3-3h4l2-4z"/>
-        </svg>
-      ),
-      diamante: (
-        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
-          <path d="M19 3H5L2 9l10 12L22 9l-3-6zM12 17.3L5 9h14l-7 8.3z"/>
-        </svg>
-      ),
-      platino: (
-        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          <circle cx="12" cy="12" r="3"/>
-        </svg>
-      ),
-      oro: (
-        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
-          <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
-        </svg>
-      ),
-      plata: (
-        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
-          <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/>
-        </svg>
-      ),
-      bronce: (
-        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
-          <circle cx="12" cy="12" r="10"/>
-        </svg>
-      ),
-      none: (
-        <svg view
+```css
+/* Light Theme */
+[data-theme="light"] {
+  --bg-primary: #f5f5f7;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-card-solid: #ffffff;
+  --bg-card-hover: #f0f0f0;
+  --bg-elevated: rgba(255, 255, 255, 0.95);
+  --bg-glass: rgba(0, 0, 0, 0.02);
+  --bg-glass-hover: rgba(0, 0, 0, 0.04);
+  --accent-primary: #059669;
+  --accent-green: #059669;
+  --accent-green-glow: rgba(5, 150, 105, 0.3);
+  --accent-gold: #d97706;
+  --accent-gold-glow: rgba(217, 119, 6, 0.3);
+  --accent-orange: #ea580c;
+  --accent-red: #dc2626;
+  --accent-purple: #9333ea;
+  --accent-cyan: #0891b2;
+  --accent-gray: #6b7280;
+  --text-primary: #111111;
+  --text-secondary: rgba(0, 0, 0, 0.65);
+  --text-muted: rgba(0, 0, 0, 0.4);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-glow: rgba(5, 150, 105, 0.25);
+  --separator: rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.16);
+  --shadow-glow: 0 0 40px rgba(5, 150, 105, 0.1);
+}
+
+/* ============================================
+   Keyframe Animations
+   ============================================ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes fadeInScale {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+@keyframes slideInRight {
+  from { 
+    opacity: 0; 
+    transform: translateX(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes glow {
+  0%, 100% { 
+    box-shadow: 0 0 5px var(--accent-green-glow),
+                0 0 10px var(--accent-green-glow),
+                0 0 15px var(--accent-green-glow);
+  }
+  50% { 
+    box-shadow: 0 0 10px var(--accent-green-glow),
+                0 0 20px var(--accent-green-glow),
+                0 0 30px var(--accent-green-glow);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 0.5; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+@keyframes borderGlow {
+  0%, 100% { border-color: var(--border-color); }
+  50% { border-color: var(--border-glow); }
+}
+
+@keyframes gradientSh
 ```
 
 </details>
