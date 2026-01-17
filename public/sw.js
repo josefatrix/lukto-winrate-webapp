@@ -1,78 +1,57 @@
-// LUKTO Stats Service Worker
-const CACHE_NAME = 'lukto-stats-v1';
+// LUKTO Stats Service Worker v2
+// Force cache refresh on iOS
+const CACHE_NAME = 'lukto-stats-v2';
+
+// Minimal caching - just static assets
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/lukto-logo.png'
 ];
 
-// Install - cache basic assets
+// Install
 self.addEventListener('install', (event) => {
+  console.log('[SW] Installing v2...');
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
-      .catch((err) => {
-        console.log('Cache failed:', err);
-      })
+      .then((cache) => cache.addAll(urlsToCache))
+      .catch((err) => console.log('[SW] Cache failed:', err))
   );
-  // Activate immediately
-  self.skipWaiting();
 });
 
-// Activate - clean old caches
+// Activate - delete ALL old caches
 self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating v2...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+          console.log('[SW] Deleting cache:', cacheName);
+          return caches.delete(cacheName);
         })
       );
+    }).then(() => {
+      console.log('[SW] All caches cleared');
+      return self.clients.claim();
     })
   );
-  // Take control immediately
-  self.clients.claim();
 });
 
-// Fetch - network first, then cache
+// Fetch - ALWAYS network first for HTML/JS/CSS
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
-    return;
-  }
+  const url = new URL(event.request.url);
   
-  // Skip Firebase API requests
-  if (event.request.url.includes('firestore') || 
-      event.request.url.includes('googleapis') ||
-      event.request.url.includes('firebase')) {
-    return;
-  }
-  
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Clone the response
-        const responseToCache = response.clone();
-        
-        caches.open(CACHE_NAME)
-          .then((cache) => {
-            // Only cache successful responses
-            if (response.status === 200) {
-              cache.put(event.request, responseToCache);
-            }
-          });
-        
-        return response;
-      })
-      .catch(() => {
-        // If network fails, try cache
+  // Always go to network for same-origin requests
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        // Only use cache as absolute fallback
         return caches.match(event.request);
       })
-  );
+    );
+    return;
+  }
+  
+  // Let external requests pass through
+  return;
 });
-
