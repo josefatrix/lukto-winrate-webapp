@@ -1951,10 +1951,12 @@ body {
 .header-top {
   display: flex;
   justify-content: flex-end;
+  gap: 0.5rem;
   margin-bottom: 1rem;
 }
 
-.theme-toggle {
+.theme-toggle,
+.notification-toggle {
   background: var(--bg-elevated);
   border: 1px solid var(--border-color);
   border-radius: 50%;
@@ -1968,13 +1970,24 @@ body {
   transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-.theme-toggle:hover {
-  transform: scale(1.1) rotate(15deg);
+.theme-toggle:hover,
+.notification-toggle:hover {
+  transform: scale(1.1);
   background: var(--bg-card-hover);
 }
 
-.theme-toggle:active {
+.theme-toggle:hover {
+  transform: scale(1.1) rotate(15deg);
+}
+
+.theme-toggle:active,
+.notification-toggle:active {
   transform: scale(0.95);
+}
+
+.notification-toggle.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: var(--accent-green);
 }
 
 /* ============================================

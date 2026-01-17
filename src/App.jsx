@@ -147,6 +147,10 @@ function App() {
   // Confetti ref
   const confettiTriggered = useRef({})
   
+  // Notifications
+  const [notificationPermission, setNotificationPermission] = useState(Notification?.permission || 'default')
+  const previousRatingsRef = useRef({})
+  
   // Auth state
   const [user, setUser] = useState(null)
   const [userPlayer, setUserPlayer] = useState(null)
@@ -903,6 +907,63 @@ function App() {
     return { correct, total, accuracy: total > 0 ? Math.round((correct / total) * 100) : 0 }
   }
 
+  // Request notification permission
+  const requestNotificationPermission = async () => {
+    if (!('Notification' in window)) {
+      showToast('error', 'Tu navegador no soporta notificaciones')
+      return
+    }
+    
+    const permission = await Notification.requestPermission()
+    setNotificationPermission(permission)
+    
+    if (permission === 'granted') {
+      showToast('success', '¡Notificaciones activadas!')
+      // Show test notification
+      sendNotification('LUKTO Stats', {
+        body: '¡Notificaciones activadas! Te avisaremos cuando te califiquen.',
+        icon: '/icon-192.png'
+      })
+    } else {
+      showToast('error', 'Notificaciones bloqueadas')
+    }
+  }
+
+  // Send notification
+  const sendNotification = (title, options = {}) => {
+    if (notificationPermission !== 'granted') return
+    if (document.hasFocus()) return // Don't show if app is focused
+    
+    try {
+      new Notification(title, {
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        ...options
+      })
+    } catch (error) {
+      console.log('Notification error:', error)
+    }
+  }
+
+  // Watch for new ratings on current user
+  useEffect(() => {
+    if (!userPlayer || !ratings[userPlayer]) return
+    
+    const currentRatingsCount = ratings[userPlayer]?.length || 0
+    const previousCount = previousRatingsRef.current[userPlayer] || 0
+    
+    if (previousCount > 0 && currentRatingsCount > previousCount) {
+      // New rating received!
+      const newRatings = currentRatingsCount - previousCount
+      sendNotification('Nueva calificación', {
+        body: `Recibiste ${newRatings} nueva${newRatings > 1 ? 's' : ''} calificación${newRatings > 1 ? 'es' : ''}`,
+        tag: 'new-rating'
+      })
+    }
+    
+    previousRatingsRef.current[userPlayer] = currentRatingsCount
+  }, [ratings, userPlayer, notificationPermission])
+
   const handlePlayerToggle = (playerId, team) => {
     if (team === 'white') {
       if (teamWhite.includes(playerId)) {
@@ -1161,6 +1222,16 @@ function App() {
     <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
       <header className="header">
         <div className="header-top">
+          {/* Notification toggle */}
+          {'Notification' in window && (
+            <button 
+              className={`notification-toggle ${notificationPermission === 'granted' ? 'active' : ''}`}
+              onClick={requestNotificationPermission}
+              title={notificationPermission === 'granted' ? 'Notificaciones activadas' : 'Activar notificaciones'}
+            >
+              {notificationPermission === 'granted' ? '🔔' : '🔕'}
+            </button>
+          )}
           <button 
             className="theme-toggle"
             onClick={() => setDarkMode(!darkMode)}
