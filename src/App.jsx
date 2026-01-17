@@ -2952,8 +2952,11 @@ function App() {
       {/* Bottom Navigation */}
       <nav className="bottom-nav">
         <button 
-          className={`bottom-nav-item ${activeTab === 'stats' ? 'active' : ''}`}
-          onClick={() => setActiveTab('stats')}
+          className={`bottom-nav-item ${activeTab === 'stats' && !showPlayerProfile ? 'active' : ''}`}
+          onClick={() => {
+            setShowPlayerProfile(false)
+            setActiveTab('stats')
+          }}
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M3 13h2v8H3v-8zm4-6h2v14H7V7zm4-4h2v18h-2V3zm4 8h2v10h-2V11zm4-4h2v14h-2V7z"/>
@@ -2961,8 +2964,11 @@ function App() {
           <span>Ranking</span>
         </button>
         <button 
-          className={`bottom-nav-item ${activeTab === 'ratings' ? 'active' : ''}`}
-          onClick={() => setActiveTab('ratings')}
+          className={`bottom-nav-item ${activeTab === 'ratings' && !showPlayerProfile ? 'active' : ''}`}
+          onClick={() => {
+            setShowPlayerProfile(false)
+            setActiveTab('ratings')
+          }}
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
@@ -2970,8 +2976,11 @@ function App() {
           <span>Rating</span>
         </button>
         <button 
-          className={`bottom-nav-item ${activeTab === 'matches' ? 'active' : ''}`}
-          onClick={() => setActiveTab('matches')}
+          className={`bottom-nav-item ${activeTab === 'matches' && !showPlayerProfile ? 'active' : ''}`}
+          onClick={() => {
+            setShowPlayerProfile(false)
+            setActiveTab('matches')
+          }}
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
@@ -2979,8 +2988,11 @@ function App() {
           <span>Partidos</span>
         </button>
         <button 
-          className={`bottom-nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analytics')}
+          className={`bottom-nav-item ${activeTab === 'analytics' && !showPlayerProfile ? 'active' : ''}`}
+          onClick={() => {
+            setShowPlayerProfile(false)
+            setActiveTab('analytics')
+          }}
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
