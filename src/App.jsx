@@ -921,8 +921,8 @@ function App() {
   }
 
   const handleAddMatch = async () => {
-    if (!matchDate || teamWhite.length === 0 || teamBlack.length === 0 || !winner) {
-      showToast('error', 'Completa todos los campos')
+    if (!matchDate || teamWhite.length === 0 || teamBlack.length === 0) {
+      showToast('error', 'Completa fecha y equipos')
       return
     }
 
@@ -1551,25 +1551,46 @@ function App() {
             </div>
 
             <div className="form-group">
-              <label style={{ textAlign: 'center', display: 'block', marginBottom: '1rem' }}>
+              <label style={{ textAlign: 'center', display: 'block', marginBottom: '0.5rem' }}>
                 ¿Quién Ganó?
               </label>
+              <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                Opcional - Déjalo vacío para que los usuarios puedan hacer predicciones
+              </p>
               <div className="winner-section">
                 <button
                   className={`winner-btn ${winner === 'white' ? 'selected' : ''}`}
-                  onClick={() => setWinner('white')}
+                  onClick={() => setWinner(winner === 'white' ? '' : 'white')}
                 >
                   <span className="team-badge white"></span>
                   EQUIPO BLANCO
                 </button>
                 <button
                   className={`winner-btn ${winner === 'black' ? 'selected' : ''}`}
-                  onClick={() => setWinner('black')}
+                  onClick={() => setWinner(winner === 'black' ? '' : 'black')}
                 >
                   <span className="team-badge black"></span>
                   EQUIPO NEGRO
                 </button>
               </div>
+              {winner && (
+                <button 
+                  onClick={() => setWinner('')}
+                  style={{ 
+                    marginTop: '0.75rem', 
+                    width: '100%', 
+                    padding: '0.5rem', 
+                    background: 'transparent', 
+                    border: '1px solid var(--border-color)', 
+                    borderRadius: '8px',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Quitar ganador (permitir predicciones)
+                </button>
+              )}
             </div>
 
             <div className="form-buttons">
@@ -1581,7 +1602,7 @@ function App() {
               <button
                 className="submit-btn"
                 onClick={handleAddMatch}
-                disabled={!matchDate || teamWhite.length === 0 || teamBlack.length === 0 || !winner}
+                disabled={!matchDate || teamWhite.length === 0 || teamBlack.length === 0}
               >
                 {editingMatchId ? 'ACTUALIZAR PARTIDO' : 'GUARDAR PARTIDO'}
               </button>
