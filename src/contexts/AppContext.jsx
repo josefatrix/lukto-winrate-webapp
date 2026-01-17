@@ -77,31 +77,36 @@ export const AppProvider = ({ children }) => {
       const linkRef = doc(db, 'userLinks', currentUser.uid)
       const linkDoc = await getDoc(linkRef)
       
+      const userData = {
+        userName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Usuario',
+        userEmail: currentUser.email,
+        userPhoto: currentUser.photoURL || '',
+        updatedAt: new Date().toISOString(),
+      }
+      
       // Only register if user doesn't exist yet
       if (!linkDoc.exists()) {
         await setDoc(linkRef, {
-          userName: currentUser.displayName,
-          userEmail: currentUser.email,
-          userPhoto: currentUser.photoURL,
+          ...userData,
           playerId: null,
           registeredAt: new Date().toISOString(),
         })
-        console.log('Nuevo usuario registrado:', currentUser.email)
+        console.log('✅ Nuevo usuario registrado:', currentUser.email)
       } else {
-        // Update user info but keep playerId intact
-        await setDoc(
-          linkRef,
-          {
-            userName: currentUser.displayName,
-            userEmail: currentUser.email,
-            userPhoto: currentUser.photoURL,
-          },
-          { merge: true }
-        )
-        console.log('Usuario existente actualizado:', currentUser.email)
+        const existingData = linkDoc.data()
+        // Only update if playerId is not set (still pending)
+        if (!existingData.playerId) {
+          await setDoc(linkRef, userData, { merge: true })
+          console.log('✅ Usuario pendiente actualizado:', currentUser.email)
+        } else {
+          // User already linked, just update photo/name if changed
+          await setDoc(linkRef, userData, { merge: true })
+          console.log('✅ Usuario vinculado actualizado:', currentUser.email)
+        }
       }
     } catch (error) {
-      console.error('Error registering user:', error)
+      console.error('❌ Error registering user:', error)
+      // Show error to user if possible
     }
   }
 
@@ -186,22 +191,43 @@ export const AppProvider = ({ children }) => {
           const links = {}
           const pending = []
 
+          console.log('📥 userLinks snapshot:', snapshot.docs.length, 'documentos')
+
           snapshot.docs.forEach(docSnap => {
             const data = docSnap.data()
             const docId = docSnap.id
 
-            if (data.playerId && data.playerId !== '' && data.playerId !== null) {
+            // Check if user is linked (has a valid playerId)
+            const hasValidPlayerId = data.playerId && 
+                                     typeof data.playerId === 'string' && 
+                                     data.playerId.trim() !== ''
+
+            if (hasValidPlayerId) {
               links[docId] = { ...data, odedBy: docId }
             } else {
-              pending.push({ ...data, odedBy: docId })
+              // User is pending (no playerId or invalid)
+              pending.push({ 
+                ...data, 
+                odedBy: docId,
+                // Ensure we have display info
+                userName: data.userName || data.userEmail?.split('@')[0] || 'Usuario',
+                userEmail: data.userEmail || 'Sin email',
+                userPhoto: data.userPhoto || ''
+              })
+              console.log('👤 Usuario pendiente:', data.userEmail || docId)
             }
           })
+
+          console.log('📊 Total vinculados:', Object.keys(links).length, '| Pendientes:', pending.length)
 
           setUserLinks(links)
           setPendingUsers(pending)
           setUserLinksLoaded(true)
         },
-        () => setUserLinksLoaded(true)
+        error => {
+          console.error('❌ Error en userLinks:', error)
+          setUserLinksLoaded(true)
+        }
       )
     )
 
