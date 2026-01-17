@@ -880,26 +880,46 @@ function App() {
           </p>
           
           {stats.filter(p => p.avgRating).length > 0 ? (
-            <div className="ratings-grid">
-              {stats
-                .filter(p => p.avgRating)
-                .sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating))
-                .map((player, index) => (
-                  <div key={player.id} className="rating-card">
-                    <div className="rating-rank">#{index + 1}</div>
-                    <div className="player-avatar large">
-                      {getInitials(player.name)}
-                    </div>
-                    <h3>{player.name}</h3>
-                    <div className={`big-rating ${getRatingClass(parseFloat(player.avgRating))}`}>
-                      ⭐ {player.avgRating}
-                    </div>
-                    <div className="rating-votes">
-                      {ratings[player.id]?.length || 0} calificaciones
-                    </div>
-                  </div>
-                ))}
-            </div>
+            <table className="stats-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Jugador</th>
+                  <th>Calificación</th>
+                  <th>Total Votos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats
+                  .filter(p => p.avgRating)
+                  .sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating))
+                  .map((player, index) => (
+                    <tr key={player.id}>
+                      <td>
+                        <span className={`rank ${index < 3 ? `rank-${index + 1}` : ''}`}>
+                          {index + 1}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="player-name">
+                          <div className="player-avatar">
+                            {getInitials(player.name)}
+                          </div>
+                          <span>{player.name}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`rating-value ${getRatingClass(parseFloat(player.avgRating))}`}>
+                          ⭐ {player.avgRating}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="stat-value">{ratings[player.id]?.length || 0}</span>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           ) : (
             <div className="empty-state">
               <div className="icon">⭐</div>
@@ -1278,85 +1298,133 @@ function App() {
             Detalle de quién calificó a quién en cada partido
           </p>
           
-          {matches.length > 0 ? (
-            [...matches].reverse().map(match => {
-              // Get all ratings for this match
-              const matchRatings = []
-              Object.entries(ratings).forEach(([playerId, playerRatings]) => {
-                playerRatings.forEach(rating => {
-                  if (rating.matchId === match.id) {
-                    // Find the email of the rater from userLinks
-                    const raterLink = Object.entries(userLinks).find(([uid, data]) => data.playerId === rating.ratedBy)
-                    const raterEmail = raterLink ? (raterLink[1].userEmail || raterLink[1].odedByEmail) : 'Email no encontrado'
-                    const raterDisplayName = raterLink ? (raterLink[1].userName || raterLink[1].odedByName) : getPlayerName(rating.ratedBy)
-                    
-                    matchRatings.push({
-                      ...rating,
-                      ratedPlayerName: getPlayerName(playerId),
-                      raterName: getPlayerName(rating.ratedBy),
-                      raterEmail: raterEmail,
-                      raterDisplayName: raterDisplayName
-                    })
-                  }
-                })
-              })
-              
-              // Group by rater
-              const ratingsByRater = {}
-              matchRatings.forEach(r => {
-                if (!ratingsByRater[r.ratedBy]) {
-                  ratingsByRater[r.ratedBy] = {
-                    raterName: r.raterName,
-                    raterEmail: r.raterEmail,
-                    raterDisplayName: r.raterDisplayName,
-                    ratings: []
-                  }
-                }
-                ratingsByRater[r.ratedBy].ratings.push(r)
-              })
-              
-              return (
-                <div key={match.id} className="match-ratings-card">
-                  <div className="match-ratings-header">
-                    <h3>{formatDate(match.date)}</h3>
-                    <span className="match-venue-tag">{match.venue}</span>
-                  </div>
-                  
-                  {Object.keys(ratingsByRater).length > 0 ? (
-                    <div className="ratings-by-rater">
-                      {Object.entries(ratingsByRater).map(([raterId, data]) => (
-                        <div key={raterId} className="rater-section">
-                          <div className="rater-header">
-                            <span className="rater-name">📝 {data.raterDisplayName || data.raterName}</span>
-                            <span className="rater-email">({data.raterEmail})</span>
-                            <span className="rater-action"> calificó:</span>
-                          </div>
-                          <div className="rater-ratings">
-                            {data.ratings.map((r, idx) => (
-                              <div key={idx} className="rating-detail">
-                                <span className="rated-player">{r.ratedPlayerName}</span>
-                                <span className={`rating-score ${getRatingClass(r.score)}`}>
-                                  ⭐ {r.score}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="no-ratings-yet">
-                      <p>Nadie ha calificado este partido aún</p>
-                    </div>
-                  )}
-                </div>
-              )
+          {(() => {
+            // Calculate total average across all ratings
+            let allScores = []
+            Object.values(ratings).forEach(playerRatings => {
+              playerRatings.forEach(r => allScores.push(r.score))
             })
-          ) : (
-            <div className="empty-state">
-              <p>No hay partidos registrados</p>
-            </div>
-          )}
+            const totalAverage = allScores.length > 0 
+              ? (allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(2)
+              : null
+            
+            return matches.length > 0 ? (
+              <>
+                {[...matches].reverse().map(match => {
+                  // Get all ratings for this match
+                  const matchRatings = []
+                  Object.entries(ratings).forEach(([playerId, playerRatings]) => {
+                    playerRatings.forEach(rating => {
+                      if (rating.matchId === match.id) {
+                        // Find the email of the rater from userLinks
+                        const raterLink = Object.entries(userLinks).find(([uid, data]) => data.playerId === rating.ratedBy)
+                        const raterEmail = raterLink ? (raterLink[1].userEmail || raterLink[1].odedByEmail) : 'Email no encontrado'
+                        const raterDisplayName = raterLink ? (raterLink[1].userName || raterLink[1].odedByName) : getPlayerName(rating.ratedBy)
+                        
+                        matchRatings.push({
+                          ...rating,
+                          ratedPlayerName: getPlayerName(playerId),
+                          raterName: getPlayerName(rating.ratedBy),
+                          raterEmail: raterEmail,
+                          raterDisplayName: raterDisplayName
+                        })
+                      }
+                    })
+                  })
+                  
+                  // Calculate match average
+                  const matchAvg = matchRatings.length > 0 
+                    ? (matchRatings.reduce((a, r) => a + r.score, 0) / matchRatings.length).toFixed(2)
+                    : null
+                  
+                  // Group by rater
+                  const ratingsByRater = {}
+                  matchRatings.forEach(r => {
+                    if (!ratingsByRater[r.ratedBy]) {
+                      ratingsByRater[r.ratedBy] = {
+                        raterName: r.raterName,
+                        raterEmail: r.raterEmail,
+                        raterDisplayName: r.raterDisplayName,
+                        ratings: []
+                      }
+                    }
+                    ratingsByRater[r.ratedBy].ratings.push(r)
+                  })
+                  
+                  return (
+                    <div key={match.id} className="match-ratings-card">
+                      <div className="match-ratings-header">
+                        <h3>{formatDate(match.date)}</h3>
+                        <span className="match-venue-tag">{match.venue}</span>
+                      </div>
+                      
+                      {Object.keys(ratingsByRater).length > 0 ? (
+                        <>
+                          <table className="stats-table">
+                            <thead>
+                              <tr>
+                                <th>Calificador</th>
+                                <th>Email</th>
+                                <th>Jugador</th>
+                                <th>Nota</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {Object.entries(ratingsByRater).flatMap(([raterId, data]) => 
+                                data.ratings.map((r, idx) => (
+                                  <tr key={`${raterId}-${idx}`}>
+                                    {idx === 0 && (
+                                      <>
+                                        <td rowSpan={data.ratings.length}>
+                                          <span className="rater-name">{data.raterDisplayName || data.raterName}</span>
+                                        </td>
+                                        <td rowSpan={data.ratings.length}>
+                                          <span className="rater-email">{data.raterEmail}</span>
+                                        </td>
+                                      </>
+                                    )}
+                                    <td>{r.ratedPlayerName}</td>
+                                    <td>
+                                      <span className={`rating-value ${getRatingClass(r.score)}`}>
+                                        ⭐ {r.score}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                          <div className="match-average">
+                            <span className="match-average-label">Promedio del partido:</span>
+                            <span className={`match-average-value ${getRatingClass(parseFloat(matchAvg))}`}>
+                              ⭐ {matchAvg}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="no-ratings-yet">
+                          <p>Nadie ha calificado este partido aún</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+                
+                {totalAverage && (
+                  <div className="total-average-section">
+                    <div className="total-average-label">Promedio Total de Todas las Calificaciones</div>
+                    <div className={`total-average-value ${getRatingClass(parseFloat(totalAverage))}`}>
+                      ⭐ {totalAverage}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="empty-state">
+                <p>No hay partidos registrados</p>
+              </div>
+            )
+          })()}
         </section>
       )}
 
