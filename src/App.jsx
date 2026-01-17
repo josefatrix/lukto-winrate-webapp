@@ -114,103 +114,99 @@ const getXPProgress = xp => {
 
 // ============ PLAYER PROFILE MODAL ============
 
-function PlayerProfileModal({ 
-  show, 
-  playerId, 
-  onClose, 
-  players, 
-  stats, 
-  ratings, 
-  calculateXP, 
-  getRank, 
-  getPlayerPhoto, 
-  getInitials, 
-  getPlayerName, 
-  getRatingClass 
-}) {
-  if (!show || !playerId) return null
+function PlayerProfileModal({ show, playerId, onClose, players }) {
+  if (!show) return null
 
   const player = players?.find(p => p.id === playerId)
-  const playerStats = stats?.find(s => s.id === playerId) || {}
-  const xp = calculateXP ? calculateXP(playerId) : 0
-  const rank = getRank ? getRank(xp) : { name: 'Bronce', color: '#CD7F32' }
-  const playerRatingsList = ratings?.[playerId] || []
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '20px'
+      }}
+      onClick={onClose}
+    >
       <div 
-        className="modal profile-modal-simple" 
+        style={{
+          background: '#222',
+          borderRadius: '16px',
+          padding: '24px',
+          maxWidth: '350px',
+          width: '100%',
+          color: '#fff',
+          border: '1px solid #444'
+        }}
         onClick={e => e.stopPropagation()}
-        style={{ background: '#1a1a1a', border: '1px solid #333' }}
       >
-        <div className="modal-header">
-          <h2 style={{ color: '#fff' }}>Perfil</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ margin: 0, fontSize: '20px' }}>Perfil</h2>
+          <button 
+            onClick={onClose}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              color: '#fff', 
+              fontSize: '24px', 
+              cursor: 'pointer' 
+            }}
+          >
+            ×
+          </button>
         </div>
         
-        {!player ? (
-          <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-            Jugador no encontrado
-          </p>
-        ) : (
-          <div className="profile-simple-content">
-            <div className="profile-simple-header">
-              {getPlayerPhoto && getPlayerPhoto(playerId) ? (
-                <img src={getPlayerPhoto(playerId)} alt="" className="profile-simple-avatar" />
-              ) : (
-                <div className="profile-simple-avatar-placeholder">
-                  {getInitials ? getInitials(player.name) : player.name?.charAt(0)}
-                </div>
-              )}
-              <div className="profile-simple-info">
-                <h3>{player.name}</h3>
-                <span className="profile-simple-rank" style={{ color: rank?.color || '#CD7F32' }}>
-                  {rank?.name || 'Bronce'}
-                </span>
+        {player ? (
+          <div>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{ 
+                width: '80px', 
+                height: '80px', 
+                borderRadius: '50%', 
+                background: '#10b981', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                margin: '0 auto 12px',
+                fontSize: '32px',
+                fontWeight: 'bold'
+              }}>
+                {player.name?.charAt(0)}
+              </div>
+              <h3 style={{ margin: '0 0 4px', fontSize: '18px' }}>{player.name}</h3>
+              <span style={{ color: '#10b981', fontSize: '14px' }}>Jugador</span>
+            </div>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(3, 1fr)', 
+              gap: '12px',
+              textAlign: 'center'
+            }}>
+              <div style={{ background: '#333', borderRadius: '8px', padding: '12px' }}>
+                <div style={{ fontSize: '20px', fontWeight: 'bold' }}>0</div>
+                <div style={{ fontSize: '12px', color: '#888' }}>Partidos</div>
+              </div>
+              <div style={{ background: '#333', borderRadius: '8px', padding: '12px' }}>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#10b981' }}>0</div>
+                <div style={{ fontSize: '12px', color: '#888' }}>Victorias</div>
+              </div>
+              <div style={{ background: '#333', borderRadius: '8px', padding: '12px' }}>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ef4444' }}>0</div>
+                <div style={{ fontSize: '12px', color: '#888' }}>Derrotas</div>
               </div>
             </div>
-
-            <div className="profile-simple-stats">
-              <div className="pss-item">
-                <span className="pss-value">{playerStats.played || 0}</span>
-                <span className="pss-label">Partidos</span>
-              </div>
-              <div className="pss-item">
-                <span className="pss-value win">{playerStats.wins || 0}</span>
-                <span className="pss-label">Victorias</span>
-              </div>
-              <div className="pss-item">
-                <span className="pss-value loss">{playerStats.losses || 0}</span>
-                <span className="pss-label">Derrotas</span>
-              </div>
-              <div className="pss-item">
-                <span className="pss-value">{playerStats.winRate?.toFixed(0) || 0}%</span>
-                <span className="pss-label">Win Rate</span>
-              </div>
-              <div className="pss-item">
-                <span className="pss-value">{playerStats.avgRating?.toFixed(1) || '-'}</span>
-                <span className="pss-label">Rating</span>
-              </div>
-              <div className="pss-item">
-                <span className="pss-value">{playerStats.mvps || 0}</span>
-                <span className="pss-label">MVPs</span>
-              </div>
-            </div>
-
-            {playerRatingsList.length > 0 && (
-              <div className="profile-simple-ratings">
-                <h4>Últimas Calificaciones</h4>
-                <div className="psr-list">
-                  {playerRatingsList.slice(-5).reverse().map((r, idx) => (
-                    <div key={idx} className="psr-item">
-                      <span className="psr-from">{getPlayerName ? getPlayerName(r.ratedBy) : r.ratedBy}</span>
-                      <span className={`psr-score ${getRatingClass ? getRatingClass(r.score) : ''}`}>{r.score}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
+        ) : (
+          <p style={{ textAlign: 'center', color: '#888' }}>Jugador no encontrado</p>
         )}
       </div>
     </div>
@@ -1827,14 +1823,6 @@ function App() {
         playerId={selectedPlayerProfile}
         onClose={() => setShowPlayerProfile(false)}
         players={players}
-        stats={stats}
-        ratings={ratings}
-        calculateXP={calculateXP}
-        getRank={getRank}
-        getPlayerPhoto={getPlayerPhoto}
-        getInitials={getInitials}
-        getPlayerName={getPlayerName}
-        getRatingClass={getRatingClass}
       />
 
       {/* Player Add/Edit Modal */}
