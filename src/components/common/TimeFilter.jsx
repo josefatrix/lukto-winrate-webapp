@@ -2,7 +2,7 @@
  * Time Filter Component
  * Filter pills for All/Month/Week selection
  */
-import React from 'react'
+
 
 export const TimeFilter = ({ value, onChange, options = ['all', 'month', 'week'] }) => {
   const labels = {

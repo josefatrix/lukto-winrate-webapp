@@ -2,32 +2,11 @@
  * LUKTO Stats - Main App Component
  * Refactored version using context and modular components
  */
-import { useState, useEffect, useRef } from 'react'
-import { useApp, ADMIN_PASSWORD, SUPER_ADMIN_EMAIL } from './contexts'
+import { useState } from 'react'
+import { useApp } from './contexts'
 import { useStats } from './hooks'
-import {
-  doc,
-  setDoc,
-  deleteDoc,
-  getDocs,
-  getDoc,
-  collection,
-  query,
-  where,
-  writeBatch,
-  updateDoc,
-} from 'firebase/firestore'
+import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs } from 'firebase/firestore'
 import { db } from './firebase'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts'
 import confetti from 'canvas-confetti'
 
 // Import components

@@ -2,7 +2,7 @@
  * Stats Tab Component
  * Shows ranking table and featured players
  */
-import React from 'react'
+
 import { useApp } from '../../contexts'
 
 export const StatsTab = ({

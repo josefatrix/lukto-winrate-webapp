@@ -4,19 +4,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { auth, googleProvider, db } from '../firebase'
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth'
-import {
-  collection,
-  doc,
-  setDoc,
-  deleteDoc,
-  getDocs,
-  getDoc,
-  onSnapshot,
-  query,
-  where,
-  writeBatch,
-  updateDoc,
-} from 'firebase/firestore'
+import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore'
 
 // Constants
 export const ADMIN_PASSWORD = 'lukto2026'

@@ -2,7 +2,7 @@
  * Header Component
  * Premium header with user profile, quick actions, and login
  */
-import React from 'react'
+
 import { useApp } from '../../contexts'
 
 // Icons

@@ -2,7 +2,7 @@
  * Featured Players Component
  * Shows Player of the Week and Player of the Month cards
  */
-import React from 'react'
+
 
 const FeaturedCard = ({ type, player, stats, photo, getInitials }) => {
   if (!player || !stats) return null

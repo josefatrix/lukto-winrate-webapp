@@ -2,7 +2,7 @@
  * Pending User Modal
  * Shown when user is logged in but not linked to a player
  */
-import React from 'react'
+
 import { useApp } from '../../contexts'
 
 export const PendingUserModal = () => {

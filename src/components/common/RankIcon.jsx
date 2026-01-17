@@ -2,7 +2,7 @@
  * Rank Icon Component
  * SVG icons for different player ranks
  */
-import React from 'react'
+
 
 const rankIcons = {
   leyenda: (size) => (

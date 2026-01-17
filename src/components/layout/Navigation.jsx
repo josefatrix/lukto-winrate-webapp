@@ -2,7 +2,7 @@
  * Bottom Navigation Component
  * SofaScore-style fixed bottom navigation
  */
-import React from 'react'
+
 
 // Navigation icons as SVG
 const NavIcons = {

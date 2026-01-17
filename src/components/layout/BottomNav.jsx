@@ -2,7 +2,7 @@
  * Bottom Navigation Component
  * SofaScore-like navigation bar
  */
-import React from 'react'
+
 import { useApp } from '../../contexts'
 
 const RankingIcon = () => (

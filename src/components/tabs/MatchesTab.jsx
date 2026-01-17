@@ -2,7 +2,7 @@
  * Matches Tab Component
  * Shows match history with leaderboards
  */
-import React from 'react'
+
 import { useApp } from '../../contexts'
 
 export const MatchesTab = ({

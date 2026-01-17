@@ -2,7 +2,7 @@
  * Skeleton Loading Component
  * Shows placeholder content while data loads
  */
-import React from 'react'
+
 
 export const SkeletonRow = () => (
   <div className="skeleton-row">

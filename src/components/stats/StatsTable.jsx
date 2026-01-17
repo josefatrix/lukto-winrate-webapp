@@ -2,7 +2,7 @@
  * Stats Table Component
  * Displays player rankings with all statistics
  */
-import React from 'react'
+
 
 export const StatsTable = ({
   stats,

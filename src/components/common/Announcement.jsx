@@ -2,7 +2,7 @@
  * Announcement Component
  * Displays important messages to users
  */
-import React from 'react'
+
 
 export const Announcement = ({ message, type = 'info' }) => {
   if (!message) return null
