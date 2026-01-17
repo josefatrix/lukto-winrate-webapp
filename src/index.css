@@ -197,8 +197,9 @@ body {
   max-width: 960px;
   margin: 0 auto;
   padding: 1rem;
-  padding-bottom: calc(120px + env(safe-area-inset-bottom));
+  padding-bottom: calc(160px + env(safe-area-inset-bottom));
   animation: fadeIn 0.4s ease-out;
+  min-height: 100vh;
 }
 
 /* Utility classes for animations */
@@ -2532,6 +2533,7 @@ body {
 @media (max-width: 640px) {
   .app-container {
     padding: 0.75rem;
+    padding-bottom: calc(160px + env(safe-area-inset-bottom));
   }
   
   .header {
@@ -2730,6 +2732,7 @@ body {
 @media (min-width: 1025px) {
   .app-container {
     padding: 2rem;
+    padding-bottom: calc(160px + env(safe-area-inset-bottom));
   }
   
   .header {
