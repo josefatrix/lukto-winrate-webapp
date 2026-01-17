@@ -634,11 +634,11 @@ function App() {
         <div className="admin-toggle">
           {isAdmin ? (
             <button className="admin-btn active" onClick={handleAdminLogout}>
-              🔓 Modo Admin
+              😈 Modo Admin
             </button>
           ) : (
             <button className="admin-btn" onClick={() => setShowLoginModal(true)}>
-              🔒 Admin
+              🔒 Modo Admin
             </button>
           )}
         </div>
