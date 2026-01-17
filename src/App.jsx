@@ -1567,18 +1567,30 @@ function App() {
           <div className="premium-profile-modal" onClick={e => e.stopPropagation()}>
             {(() => {
               const player = players.find(p => p.id === selectedPlayerProfile)
-              if (!player) return <p>Jugador no encontrado</p>
+              if (!player) {
+                return (
+                  <div className="premium-error">
+                    <button className="premium-close" onClick={() => setShowPlayerProfile(false)}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                      </svg>
+                    </button>
+                    <p>Jugador no encontrado</p>
+                  </div>
+                )
+              }
               
-              const playerStats = (timeFilter === 'all' ? stats : filteredStats).find(s => s.id === selectedPlayerProfile)
-              const xp = calculateXP(selectedPlayerProfile)
-              const rank = getRank(xp)
+              const playerStats = (timeFilter === 'all' ? stats : filteredStats).find(s => s.id === selectedPlayerProfile) || {}
+              const xp = calculateXP ? calculateXP(selectedPlayerProfile) : 0
+              const rank = getRank ? getRank(xp) : { name: 'Bronce', color: '#CD7F32', key: 'bronce' }
               const playerRatingsList = ratings[selectedPlayerProfile] || []
               
               // Calculate streaks
               let currentStreak = 0
               let streakType = null
-              const sortedMatches = [...matches].sort((a, b) => new Date(b.date) - new Date(a.date))
+              const sortedMatches = [...(matches || [])].sort((a, b) => new Date(b.date) - new Date(a.date))
               for (const match of sortedMatches) {
+                if (!match.teamWhite || !match.teamBlack) continue
                 const inWhite = match.teamWhite.includes(selectedPlayerProfile)
                 const inBlack = match.teamBlack.includes(selectedPlayerProfile)
                 if (!inWhite && !inBlack) continue
@@ -1594,6 +1606,7 @@ function App() {
               }
 
               const avgRating = playerStats?.avgRating || 0
+              const rankColor = rank?.color || '#CD7F32'
 
               return (
                 <>
@@ -1605,7 +1618,7 @@ function App() {
                   </button>
 
                   {/* Hero Section with Gradient */}
-                  <div className="premium-hero" style={{ '--rank-color': rank.color }}>
+                  <div className="premium-hero" style={{ '--rank-color': rankColor }}>
                     <div className="premium-avatar-container">
                       {getPlayerPhoto(selectedPlayerProfile) ? (
                         <img src={getPlayerPhoto(selectedPlayerProfile)} alt="" className="premium-avatar" />
@@ -1622,8 +1635,8 @@ function App() {
                     {player.aliases?.length > 0 && (
                       <p className="premium-aliases">{player.aliases.join(' • ')}</p>
                     )}
-                    <div className="premium-rank-badge" style={{ background: `${rank.color}20`, color: rank.color }}>
-                      {rank.name}
+                    <div className="premium-rank-badge" style={{ background: `${rankColor}20`, color: rankColor }}>
+                      {rank?.name || 'Bronce'}
                     </div>
                   </div>
 

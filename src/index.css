@@ -5812,6 +5812,13 @@ body {
   padding: 1rem;
 }
 
+.premium-error {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  position: relative;
+}
+
 /* Responsive */
 @media (max-width: 400px) {
   .premium-profile-modal {
