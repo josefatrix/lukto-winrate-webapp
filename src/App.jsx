@@ -977,145 +977,135 @@ function App() {
     return bestPlayer
   }
 
-  // Achievement icons as SVG components
+  // Achievement icons as SVG components - More distinctive and fun designs
   const achievementIcons = {
+    // Rank icons - Shields with different designs
     bronze: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="8" r="6"/>
-        <path d="M12 14v6"/>
-        <path d="M9 18h6"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" opacity="0.3"/>
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 3.18l6 2.67v4.15c0 4.18-2.75 8.09-6 9.14V4.18z"/>
+        <text x="12" y="15" textAnchor="middle" fontSize="8" fontWeight="bold" fill="currentColor">III</text>
       </svg>
     ),
     silver: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="8" r="6"/>
-        <path d="M12 14v6"/>
-        <path d="M9 18h6"/>
-        <circle cx="12" cy="8" r="3"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" opacity="0.3"/>
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 3.18l6 2.67v4.15c0 4.18-2.75 8.09-6 9.14V4.18z"/>
+        <text x="12" y="15" textAnchor="middle" fontSize="8" fontWeight="bold" fill="currentColor">II</text>
       </svg>
     ),
     gold: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="8" r="6"/>
-        <path d="M12 14v6"/>
-        <path d="M9 18h6"/>
-        <path d="M12 5l1 2h2l-1.5 1.5.5 2-2-1-2 1 .5-2L9 7h2z"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" opacity="0.3"/>
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 3.18l6 2.67v4.15c0 4.18-2.75 8.09-6 9.14V4.18z"/>
+        <text x="12" y="15" textAnchor="middle" fontSize="8" fontWeight="bold" fill="currentColor">I</text>
       </svg>
     ),
     diamond: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M6 3h12l4 6-10 12L2 9l4-6z"/>
-        <path d="M2 9h20"/>
-        <path d="M12 3v6"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 3H5L2 9l10 12L22 9l-3-6zM12 17.3L5 9h14l-7 8.3z" opacity="0.3"/>
+        <path d="M19 3H5L2 9l10 12L22 9l-3-6zm-7 14.3L5 9h14l-7 8.3zM9.62 8l1.5-3h1.76l1.5 3H9.62z"/>
       </svg>
     ),
+    // Streak icons
     fire: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M12 2c.5 2.5 3 4 3 7a3 3 0 11-6 0c0-3 2.5-4.5 3-7z"/>
-        <path d="M12 22c-4.97 0-7-3.58-7-7 0-4 3-6 4-8 0 2 2 3 3 3 1 0 3-1 3-3 1 2 4 4 4 8 0 3.42-2.03 7-7 7z"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M13.5 0.67s0.74 2.65 0.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l0.03-0.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5 0.67zM12 20c-2.21 0-4-1.79-4-4 0-1.95 1.4-3.39 3.5-4.73l0.01 0.01C13.01 12.64 14 14.08 14 16c0 2.21-0.9 4-2 4z"/>
       </svg>
     ),
     lightning: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
       </svg>
     ),
     crown: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M2 7l4 4 6-6 6 6 4-4v11H2V7z"/>
-        <path d="M2 18h20"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
       </svg>
     ),
+    // MVP/Star icons
     star: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
       </svg>
     ),
     stars: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M12 2l2 4 4.5.5-3.5 3 1 4.5-4-2.5-4 2.5 1-4.5-3.5-3L10 6l2-4z"/>
-        <path d="M5 15l1 2 2 .5-1.5 1.5.5 2-2-1.5-2 1.5.5-2-1.5-1.5 2-.5 1-2z"/>
-        <path d="M19 15l1 2 2 .5-1.5 1.5.5 2-2-1.5-2 1.5.5-2-1.5-1.5 2-.5 1-2z"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z"/>
+      </svg>
+    ),
+    superstar: (
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/>
+        <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.5"/>
+      </svg>
+    ),
+    // Win rate icons
+    chart: (
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
       </svg>
     ),
     trophy: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M6 9H4a2 2 0 01-2-2V5c0-1.1.9-2 2-2h2"/>
-        <path d="M18 9h2a2 2 0 002-2V5a2 2 0 00-2-2h-2"/>
-        <path d="M4 22h16"/>
-        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-        <path d="M18 2H6v7a6 6 0 1012 0V2z"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
       </svg>
     ),
     target: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="10"/>
-        <circle cx="12" cy="12" r="6"/>
-        <circle cx="12" cy="12" r="2"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10 10-4.49 10-10S17.51 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3-8c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/>
       </svg>
     ),
+    // Games played icons
     gamepad: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="2" y="6" width="20" height="12" rx="2"/>
-        <path d="M6 12h4"/>
-        <path d="M8 10v4"/>
-        <circle cx="17" cy="10" r="1"/>
-        <circle cx="17" cy="14" r="1"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
       </svg>
     ),
-    medal: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="15" r="6"/>
-        <path d="M8.21 13.89L7 2h10l-1.21 11.89"/>
-        <path d="M12 9v6"/>
-        <path d="M9 15h6"/>
+    veteran: (
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        <path d="M12 6l1.85 3.76 4.15.6-3 2.92.71 4.13L12 15.27l-3.71 2.14.71-4.13-3-2.92 4.15-.6L12 6z" opacity="0.3"/>
       </svg>
     ),
+    legend: (
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+        <path d="M12 6l1.12 3.44H17l-2.94 2.14 1.12 3.44L12 12.88l-3.18 2.14 1.12-3.44L7 9.44h3.88L12 6z"/>
+      </svg>
+    ),
+    // Rating icons
     thumbsUp: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/>
-        <path d="M7 22V11l2.5-8.5a1.5 1.5 0 013 0L14 7h5a2 2 0 012 2v2a6 6 0 01-6 6H7z"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
       </svg>
     ),
     muscle: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M4 15s1-1 3-1 2 2 4 2 2-2 4-2 3 1 3 1V8s-1 1-3 1-2-2-4-2-2 2-4 2-3-1-3-1v7z"/>
-        <path d="M3 22v-6"/>
-        <path d="M21 22v-6"/>
-      </svg>
-    ),
-    chart: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M3 3v18h18"/>
-        <path d="M7 16l4-8 4 4 5-6"/>
-      </svg>
-    ),
-    rocket: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91-.79-.79-2.07-.8-2.91-.09z"/>
-        <path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/>
-        <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
-        <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
-      </svg>
-    ),
-    hundred: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M4 7v10"/>
-        <circle cx="10" cy="12" r="3"/>
-        <circle cx="18" cy="12" r="3"/>
-        <path d="M10 9v0"/>
-        <path d="M18 9v0"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29l-1.43-1.43z"/>
       </svg>
     ),
     sparkle: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z"/>
-        <path d="M5 3l.5 2L7.5 5l-2 .5L5 7.5l-.5-2L2.5 5l2-.5L5 3z"/>
-        <path d="M19 17l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5.5-2z"/>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M14.5 9.5L12 2l-2.5 7.5L2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
+      </svg>
+    ),
+    // XP icons
+    hundred: (
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+        <text x="12" y="15" textAnchor="middle" fontSize="7" fontWeight="bold" fill="currentColor">100</text>
+      </svg>
+    ),
+    rocket: (
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M9.19 6.35c-2.04 2.29-3.44 5.58-3.57 5.89L2 10.69l4.05-4.05c.47-.47 1.15-.68 1.81-.55l1.33.26zM11.17 17s3.74-1.55 5.89-3.7c5.4-5.4 4.5-9.62 4.21-10.57-.95-.3-5.17-1.19-10.57 4.21C8.55 9.09 7 12.83 7 12.83L11.17 17zm6.48-2.19c-2.29 2.04-5.58 3.44-5.89 3.57L13.31 22l4.05-4.05c.47-.47.68-1.15.55-1.81l-.26-1.33zM9 18c0 .83-.34 1.58-.88 2.12C6.94 21.3 2 22 2 22s.7-4.94 1.88-6.12A2.996 2.996 0 019 18z"/>
       </svg>
     )
   }
+  
+  // State for achievement tooltip
+  const [achievementTooltip, setAchievementTooltip] = useState(null)
 
   // Calculate achievements/badges
   const calculateAchievements = (playerId) => {
@@ -1141,7 +1131,7 @@ function App() {
     // MVP achievements
     if (playerStats.mvps >= 1) achievements.push({ iconKey: 'star', name: 'Primera Estrella', desc: 'Conseguiste tu primer MVP del partido', color: '#10b981' })
     if (playerStats.mvps >= 3) achievements.push({ iconKey: 'stars', name: 'Estrella Constante', desc: 'Fuiste MVP en 3 partidos diferentes', color: '#8b5cf6' })
-    if (playerStats.mvps >= 5) achievements.push({ iconKey: 'sparkle', name: 'Superestrella', desc: 'Acumulaste 5 premios MVP', color: '#ec4899' })
+    if (playerStats.mvps >= 5) achievements.push({ iconKey: 'superstar', name: 'Superestrella', desc: 'Acumulaste 5 premios MVP', color: '#ec4899' })
 
     // Win rate achievements
     if (playerStats.winRate >= 60 && playerStats.played >= 5) achievements.push({ iconKey: 'chart', name: 'Máquina de Ganar', desc: 'Mantienes un 60% o más de victorias', color: '#22c55e' })
@@ -1150,8 +1140,8 @@ function App() {
 
     // Games played achievements
     if (playerStats.played >= 5) achievements.push({ iconKey: 'gamepad', name: 'Jugador Regular', desc: 'Participaste en al menos 5 partidos', color: '#6366f1' })
-    if (playerStats.played >= 10) achievements.push({ iconKey: 'medal', name: 'Veterano', desc: 'Acumulaste experiencia en 10 partidos', color: '#14b8a6' })
-    if (playerStats.played >= 20) achievements.push({ iconKey: 'trophy', name: 'Leyenda LUKTO', desc: 'Eres parte de la historia con 20 partidos', color: '#f59e0b' })
+    if (playerStats.played >= 10) achievements.push({ iconKey: 'veteran', name: 'Veterano', desc: 'Acumulaste experiencia en 10 partidos', color: '#14b8a6' })
+    if (playerStats.played >= 20) achievements.push({ iconKey: 'legend', name: 'Leyenda LUKTO', desc: 'Eres parte de la historia con 20 partidos', color: '#f59e0b' })
 
     // Rating achievements
     if (playerStats.avgRating) {
@@ -3181,23 +3171,25 @@ function App() {
               {/* Achievements */}
               <div className="profile-section">
                 <h4>Logros ({achievements.length})</h4>
-                <div className="profile-achievements">
+                <div className="profile-achievements-list">
                   {achievements.length > 0 ? (
-                    achievements.slice(0, 8).map((a, i) => (
+                    achievements.map((a, i) => (
                       <div 
                         key={i} 
-                        className="mini-achievement" 
-                        title={`${a.name}: ${a.desc}`}
+                        className="profile-achievement-item"
                         style={{'--achievement-color': a.color}}
                       >
-                        {achievementIcons[a.iconKey]}
+                        <div className="profile-achievement-icon">
+                          {achievementIcons[a.iconKey]}
+                        </div>
+                        <div className="profile-achievement-info">
+                          <span className="profile-achievement-name">{a.name}</span>
+                          <span className="profile-achievement-desc">{a.desc}</span>
+                        </div>
                       </div>
                     ))
                   ) : (
                     <p className="no-data">Juega más para desbloquear logros</p>
-                  )}
-                  {achievements.length > 8 && (
-                    <div className="mini-achievement more">+{achievements.length - 8}</div>
                   )}
                 </div>
               </div>

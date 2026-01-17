@@ -3141,23 +3141,24 @@ body {
 }
 
 .achievement-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  border-radius: 14px;
   background: linear-gradient(135deg, 
-    color-mix(in srgb, var(--achievement-color, var(--accent-green)) 20%, transparent),
-    color-mix(in srgb, var(--achievement-color, var(--accent-green)) 5%, transparent)
+    color-mix(in srgb, var(--achievement-color, var(--accent-green)) 25%, var(--bg-card)),
+    color-mix(in srgb, var(--achievement-color, var(--accent-green)) 10%, var(--bg-card))
   );
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--achievement-color, var(--accent-green));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--achievement-color, var(--accent-green)) 20%, transparent);
 }
 
 .achievement-icon-wrapper svg {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 
 .achievement-info {
@@ -3201,7 +3202,72 @@ body {
   font-size: 0.9rem;
 }
 
-/* Mini achievements in profile */
+/* Profile achievements list - Full details */
+.profile-achievements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.profile-achievement-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-elevated);
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.profile-achievement-item:hover {
+  border-color: var(--achievement-color, var(--accent-green));
+  transform: translateX(4px);
+}
+
+.profile-achievement-icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--achievement-color, var(--accent-green)) 25%, var(--bg-card)),
+    color-mix(in srgb, var(--achievement-color, var(--accent-green)) 10%, var(--bg-card))
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--achievement-color, var(--accent-green));
+}
+
+.profile-achievement-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.profile-achievement-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-achievement-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.profile-achievement-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* Mini achievements for compact display */
 .profile-achievements {
   display: flex;
   flex-wrap: wrap;

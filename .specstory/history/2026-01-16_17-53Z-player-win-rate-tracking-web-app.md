@@ -46022,7 +46022,224 @@ Let me create a comprehensive achievement system with SVG icons and better descr
 
 <details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
 
-Status: **loading**
+**Chunk 1**
+Lines added: 140, lines removed: undefined
+
+```diff
+@@ -977,4 +977,144 @@
+      return bestPlayer
+    }
++ 
++   // Achievement icons as SVG components
++   const achievementIcons = {
++     bronze: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;circle cx="12" cy="8" r="6"/&gt;
++         &lt;path d="M12 14v6"/&gt;
++         &lt;path d="M9 18h6"/&gt;
++       &lt;/svg&gt;
++     ),
++     silver: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;circle cx="12" cy="8" r="6"/&gt;
++         &lt;path d="M12 14v6"/&gt;
++         &lt;path d="M9 18h6"/&gt;
++         &lt;circle cx="12" cy="8" r="3"/&gt;
++       &lt;/svg&gt;
++     ),
++     gold: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;circle cx="12" cy="8" r="6"/&gt;
++         &lt;path d="M12 14v6"/&gt;
++         &lt;path d="M9 18h6"/&gt;
++         &lt;path d="M12 5l1 2h2l-1.5 1.5.5 2-2-1-2 1 .5-2L9 7h2z"/&gt;
++       &lt;/svg&gt;
++     ),
++     diamond: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M6 3h12l4 6-10 12L2 9l4-6z"/&gt;
++         &lt;path d="M2 9h20"/&gt;
++         &lt;path d="M12 3v6"/&gt;
++       &lt;/svg&gt;
++     ),
++     fire: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M12 2c.5 2.5 3 4 3 7a3 3 0 11-6 0c0-3 2.5-4.5 3-7z"/&gt;
++         &lt;path d="M12 22c-4.97 0-7-3.58-7-7 0-4 3-6 4-8 0 2 2 3 3 3 1 0 3-1 3-3 1 2 4 4 4 8 0 3.42-2.03 7-7 7z"/&gt;
++       &lt;/svg&gt;
++     ),
++     lightning: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/&gt;
++       &lt;/svg&gt;
++     ),
++     crown: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M2 7l4 4 6-6 6 6 4-4v11H2V7z"/&gt;
++         &lt;path d="M2 18h20"/&gt;
++       &lt;/svg&gt;
++     ),
++     star: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/&gt;
++       &lt;/svg&gt;
++     ),
++     stars: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M12 2l2 4 4.5.5-3.5 3 1 4.5-4-2.5-4 2.5 1-4.5-3.5-3L10 6l2-4z"/&gt;
++         &lt;path d="M5 15l1 2 2 .5-1.5 1.5.5 2-2-1.5-2 1.5.5-2-1.5-1.5 2-.5 1-2z"/&gt;
++         &lt;path d="M19 15l1 2 2 .5-1.5 1.5.5 2-2-1.5-2 1.5.5-2-1.5-1.5 2-.5 1-2z"/&gt;
++       &lt;/svg&gt;
++     ),
++     trophy: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M6 9H4a2 2 0 01-2-2V5c0-1.1.9-2 2-2h2"/&gt;
++         &lt;path d="M18 9h2a2 2 0 002-2V5a2 2 0 00-2-2h-2"/&gt;
++         &lt;path d="M4 22h16"/&gt;
++         &lt;path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/&gt;
++         &lt;path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/&gt;
++         &lt;path d="M18 2H6v7a6 6 0 1012 0V2z"/&gt;
++       &lt;/svg&gt;
++     ),
++     target: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;circle cx="12" cy="12" r="10"/&gt;
++         &lt;circle cx="12" cy="12" r="6"/&gt;
++         &lt;circle cx="12" cy="12" r="2"/&gt;
++       &lt;/svg&gt;
++     ),
++     gamepad: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;rect x="2" y="6" width="20" height="12" rx="2"/&gt;
++         &lt;path d="M6 12h4"/&gt;
++         &lt;path d="M8 10v4"/&gt;
++         &lt;circle cx="17" cy="10" r="1"/&gt;
++         &lt;circle cx="17" cy="14" r="1"/&gt;
++       &lt;/svg&gt;
++     ),
++     medal: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;circle cx="12" cy="15" r="6"/&gt;
++         &lt;path d="M8.21 13.89L7 2h10l-1.21 11.89"/&gt;
++         &lt;path d="M12 9v6"/&gt;
++         &lt;path d="M9 15h6"/&gt;
++       &lt;/svg&gt;
++     ),
++     thumbsUp: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/&gt;
++         &lt;path d="M7 22V11l2.5-8.5a1.5 1.5 0 013 0L14 7h5a2 2 0 012 2v2a6 6 0 01-6 6H7z"/&gt;
++       &lt;/svg&gt;
++     ),
++     muscle: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M4 15s1-1 3-1 2 2 4 2 2-2 4-2 3 1 3 1V8s-1 1-3 1-2-2-4-2-2 2-4 2-3-1-3-1v7z"/&gt;
++         &lt;path d="M3 22v-6"/&gt;
++         &lt;path d="M21 22v-6"/&gt;
++       &lt;/svg&gt;
++     ),
++     chart: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M3 3v18h18"/&gt;
++         &lt;path d="M7 16l4-8 4 4 5-6"/&gt;
++       &lt;/svg&gt;
++     ),
++     rocket: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91-.79-.79-2.07-.8-2.91-.09z"/&gt;
++         &lt;path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/&gt;
++         &lt;path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/&gt;
++         &lt;path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/&gt;
++       &lt;/svg&gt;
++     ),
++     hundred: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M4 7v10"/&gt;
++         &lt;circle cx="10" cy="12" r="3"/&gt;
++         &lt;circle cx="18" cy="12" r="3"/&gt;
++         &lt;path d="M10 9v0"/&gt;
++         &lt;path d="M18 9v0"/&gt;
++       &lt;/svg&gt;
++     ),
++     sparkle: (
++       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"&gt;
++         &lt;path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z"/&gt;
++         &lt;path d="M5 3l.5 2L7.5 5l-2 .5L5 7.5l-.5-2L2.5 5l2-.5L5 3z"/&gt;
++         &lt;path d="M19 17l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5.5-2z"/&gt;
++       &lt;/svg&gt;
++     )
++   }
+  
+    // Calculate achievements/badges
+```
+
+**Chunk 2**
+Lines added: 21, lines removed: 21
+
+```diff
+@@ -989,40 +1129,40 @@
+  
+      // Rank achievements
+-     if (rank.tier &gt;= 1) achievements.push({ icon: '🥉', name: 'Rango Bronce', desc: '50+ XP' })
+-     if (rank.tier &gt;= 2) achievements.push({ icon: '🥈', name: 'Rango Plata', desc: '150+ XP' })
+-     if (rank.tier &gt;= 3) achievements.push({ icon: '🥇', name: 'Rango Oro', desc: '300+ XP' })
+-     if (rank.tier &gt;= 4) achievements.push({ icon: '💎', name: 'Rango Diamante', desc: '500+ XP' })
++     if (rank.tier &gt;= 1) achievements.push({ iconKey: 'bronze', name: 'Rango Bronce', desc: 'Alcanzaste 50 puntos de experiencia', color: '#cd7f32' })
++     if (rank.tier &gt;= 2) achievements.push({ iconKey: 'silver', name: 'Rango Plata', desc: 'Alcanzaste 150 puntos de experiencia', color: '#c0c0c0' })
++     if (rank.tier &gt;= 3) achievements.push({ iconKey: 'gold', name: 'Rango Oro', desc: 'Alcanzaste 300 puntos de experiencia', color: '#ffd700' })
++     if (rank.tier &gt;= 4) achievements.push({ iconKey: 'diamond', name: 'Rango Diamante', desc: 'Alcanzaste 500 puntos de experiencia', color: '#00d4ff' })
+  
+      // Win streak achievements
+-     if (streaks.maxWinStreak &gt;= 3) achievements.push({ icon: '🔥', name: 'Racha de 3', desc: '3 victorias seguidas' })
+-     if (streaks.maxWinStreak &gt;= 5) achievements.push({ icon: '⚡', name: 'Imparable', desc: '5 victorias seguidas' })
+-     if (streaks.maxWinStreak &gt;= 7) achievements.push({ icon: '👑', name: 'Leyenda', desc: '7 victorias seguidas' })
++     if (streaks.maxWinStreak &gt;= 3) achievements.push({ iconKey: 'fire', name: 'En Llamas', desc: 'Ganaste 3 partidos consecutivos', color: '#f97316' })
++     if (streaks.maxWinStreak &gt;= 5) achievements.push({ iconKey: 'lightning', name: 'Imparable', desc: 'Ganaste 5 partidos consecutivos', color: '#facc15' })
++     if (streaks.maxWinStreak &gt;= 7) achievements.push({ iconKey: 'crown', name: 'Rey Absoluto', desc: 'Ganaste 7 partidos consecutivos', color: '#ffd700' })
+  
+      // MVP achievements
+-     if (playerStats.mvps &gt;= 1) achievements.push({ icon: '⭐', name: 'Primer MVP', desc: 'Tu primer MVP' })
+-     if (playerStats.mvps &gt;= 3) achievements.push({ icon: '🌟', name: 'Estrella', desc: '3 MVPs' })
+-     if (playerStats.mvps &gt;= 5) achievements.push({ icon: '💫', name: 'Superestrella', desc: '5 MVPs' })
++     if (playerStats.mvps &gt;= 1) achievements.push({ iconKey: 'star', name: 'Primera Estrella', desc: 'Conseguiste tu primer MVP del partido', color: '#10b981' })
++     if (playerStats.mvps &gt;= 3) achievements.push({ iconKey: 'stars', name: 'Estrella Constante', desc: 'Fuiste MVP en 3 partidos diferentes', color: '#8b5cf6' })
++     if (playerStats.mvps &gt;= 5) achievements.push({ iconKey: 'sparkle', name: 'Superestrella', desc: 'Acumulaste 5 premios MVP', color: '#ec4899' })
+  
+      // Win rate achievements
+-     if (playerStats.winRate &gt;= 60 &amp;&amp; playerStats.played &gt;= 5) achievements.push({ icon: '📈', name: 'Ganador', desc: '60%+ win rate' })
+-     if (playerStats.winRate &gt;= 75 &amp;&amp; playerStats.played &gt;= 5) achievements.push({ icon: '🏆', name: 'Elite', desc: '75%+ win rate' })
+-     if (playerStats.winRate === 100 &amp;&amp; playerStats.played &gt;= 3) achievements.push({ icon: '🎯', name: 'Perfecto', desc: '100% win rate' })
++     if (playerStats.winRate &gt;= 60 &amp;&amp; playerStats.played &gt;= 5) achievements.push({ iconKey: 'chart', name: 'Máquina de Ganar', desc: 'Mantienes un 60% o más de victorias', color: '#22c55e' })
++     if (playerStats.winRate &gt;= 75 &amp;&amp; playerStats.played &gt;= 5) achievements.push({ iconKey: 'trophy', name: 'Élite', desc: 'Mantienes un impresionante 75% de victorias', color: '#ffd700' })
++     if (playerStats.winRate === 100 &amp;&amp; playerStats.played &gt;= 3) achievements.push({ iconKey: 'target', name: 'Invicto', desc: 'No has perdido un solo partido', color: '#ef4444' })
+  
+      // Games played achievements
+-     if (playerStats.played &gt;= 5) achievements.push({ icon: '🎮', name: 'Regular', desc: '5 partidos jugados' })
+-     if (playerStats.played &gt;= 10) achievements.push({ icon: '🎲', name: 'Veterano', desc: '10 partidos jugados' })
+-     if (playerStats.played &gt;= 20) achievements.push({ icon: '🏅', name: 'Leyenda LUKTO', desc: '20 partidos jugados' })
++     if (playerStats.played &gt;= 5) achievements.push({ iconKey: 'gamepad', name: 'Jugador Regular', desc: 'Participaste en al menos 5 partidos', color: '#6366f1' })
++     if (playerStats.played &gt;= 10) achievements.push({ iconKey: 'medal', name: 'Veterano', desc: 'Acumulaste experiencia en 10 partidos', color: '#14b8a6' })
++     if (playerStats.played &gt;= 20) achievements.push({ iconKey: 'trophy', name: 'Leyenda LUKTO', desc: 'Eres parte de la historia con 20 partidos', color: '#f59e0b' })
+  
+      // Rating achievements
+      if (playerStats.avgRating) {
+        const rating = parseFloat(playerStats.avgRating)
+-       if (rating &gt;= 7) achievements.push({ icon: '👍', name: 'Buen jugador', desc: 'Rating 7+' })
+-       if (rating &gt;= 8) achievements.push({ icon: '💪', name: 'Crack', desc: 'Rating 8+' })
+-       if (rating &gt;= 9) achievements.push({ icon: '🌈', name: 'Fenómeno', desc: 'Rating 9+' })
++       if (rating &gt;= 7) achievements.push({ iconKey: 'thumbsUp', name: 'Respetado', desc: 'Tus compañeros te califican con 7 o más', color: '#3b82f6' })
++       if (rating &gt;= 8) achievements.push({ iconKey: 'muscle', name: 'Crack', desc: 'Destacas con un rating promedio de 8+', color: '#f97316' })
++       if (rating &gt;= 9) achievements.push({ iconKey: 'sparkle', name: 'Fenómeno', desc: 'Eres excepcional con rating de 9+', color: '#ec4899' })
+      }
+  
+      // XP milestones
+-     if (xp &gt;= 100) achievements.push({ icon: '💯', name: 'Centenario', desc: '100+ XP' })
+-     if (xp &gt;= 250) achievements.push({ icon: '🚀', name: 'Despegue', desc: '250+ XP' })
++     if (xp &gt;= 100) achievements.push({ iconKey: 'hundred', name: 'Centenario', desc: 'Alcanzaste los 100 puntos de experiencia', color: '#10b981' })
++     if (xp &gt;= 250) achievements.push({ iconKey: 'rocket', name: 'Despegue Total', desc: 'Volaste hasta los 250 XP', color: '#8b5cf6' })
+  
+      return achievements
+```
 
 </details>
 
@@ -46030,7 +46247,632 @@ Status: **loading**
 
 ---
 
+<think><details><summary>Thought Process</summary>
+Now I need to update the JSX where achievements are rendered to use the new iconKey and achievementIcons object instead of the emoji icon. Let me find that part.</details></think>
 
+---
+
+Ahora actualizo la parte donde se renderizan los logros:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 20, lines removed: 8
+
+```diff
+@@ -2068,18 +2068,30 @@
+  
+                  {/* Achievements */}
+-                 &lt;div className="analytics-card"&gt;
+-                   &lt;h4&gt;Logros Desbloqueados&lt;/h4&gt;
++                 &lt;div className="analytics-card achievements-card"&gt;
++                   &lt;h4&gt;Logros Desbloqueados ({achievements.length})&lt;/h4&gt;
+                    {achievements.length &gt; 0 ? (
+                      &lt;div className="achievements-grid"&gt;
+                        {achievements.map((achievement, idx) =&gt; (
+-                         &lt;div key={idx} className="achievement-badge"&gt;
+-                           &lt;span className="achievement-icon"&gt;{achievement.icon}&lt;/span&gt;
+-                           &lt;span className="achievement-name"&gt;{achievement.name}&lt;/span&gt;
+-                           &lt;span className="achievement-desc"&gt;{achievement.desc}&lt;/span&gt;
+-                         &lt;/div&gt;
++                         &lt;div key={idx} className="achievement-badge" style={{'--achievement-color': achievement.color}}&gt;
++                           &lt;div className="achievement-icon-wrapper"&gt;
++                             {achievementIcons[achievement.iconKey]}
++                           &lt;/div&gt;
++                           &lt;div className="achievement-info"&gt;
++                             &lt;span className="achievement-name"&gt;{achievement.name}&lt;/span&gt;
++                             &lt;span className="achievement-desc"&gt;{achievement.desc}&lt;/span&gt;
++                           &lt;/div&gt;
++                         &lt;/div&gt;
+                        ))}
+                      &lt;/div&gt;
+                    ) : (
+-                     &lt;p className="no-achievements"&gt;Juega más partidos para desbloquear logros&lt;/p&gt;
++                     &lt;div className="no-achievements"&gt;
++                       &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="empty-icon"&gt;
++                         &lt;circle cx="12" cy="12" r="10"/&gt;
++                         &lt;path d="M8 15h8"/&gt;
++                         &lt;circle cx="9" cy="9" r="1"/&gt;
++                         &lt;circle cx="15" cy="9" r="1"/&gt;
++                       &lt;/svg&gt;
++                       &lt;p&gt;Juega más partidos para desbloquear logros&lt;/p&gt;
++                     &lt;/div&gt;
+                    )}
+                  &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to also check if there's a player profile modal that shows achievements - I need to update that too. Let me search for it.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Logros.*\(" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `<h4>Logros Desbloqueados (\{achievements.length\})</h4>` | L2071 |
+| `src/App.jsx` | `<h4>Logros (\{achievements.length\})</h4>` | L3183 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to update the player profile modal as well. Let me update that part too.</details></think>
+
+---
+
+También actualizo la sección de logros en el perfil del jugador:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 7, lines removed: 2
+
+```diff
+@@ -3185,6 +3185,11 @@
+                    {achievements.length &gt; 0 ? (
+                      achievements.slice(0, 8).map((a, i) =&gt; (
+-                       &lt;div key={i} className="mini-achievement" title={a.desc}&gt;
+-                         &lt;span&gt;{a.icon}&lt;/span&gt;
++                       &lt;div 
++                         key={i} 
++                         className="mini-achievement" 
++                         title={&#96;${a.name}: ${a.desc}&#96;}
++                         style={{'--achievement-color': a.color}}
++                       &gt;
++                         {achievementIcons[a.iconKey]}
+                        &lt;/div&gt;
+                      ))
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the CSS to style the achievements properly with the SVG icons.</details></think>
+
+---
+
+Ahora actualizo los estilos CSS para los logros:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "achievement-badge|achievement-icon|achievements-grid" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 6 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `.achievements-grid \{` | L3115 |
+| `src/index.css` | `.achievement-badge \{` | L3121 |
+| `src/index.css` | `.achievement-badge:hover \{` | L3132 |
+| `src/index.css` | `.achievement-icon \{` | L3136 |
+| `src/index.css` | `.achievements-grid \{` | L3354 |
+| `src/index.css` | `.achievements-grid \{` | L3369 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the CSS to properly style the new achievement badges with SVG icons.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 110, lines removed: 13
+
+```diff
+@@ -3113,34 +3113,131 @@
+  
+  /* Achievements */
++ .achievements-card h4 {
++   margin-bottom: 1rem;
++ }
++ 
+  .achievements-grid {
+-   display: grid;
+-   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+-   gap: 1rem;
++   display: flex;
++   flex-direction: column;
++   gap: 0.75rem;
+  }
+  
+  .achievement-badge {
+    display: flex;
+-   flex-direction: column;
+    align-items: center;
+-   text-align: center;
+-   padding: 1rem 0.5rem;
++   gap: 1rem;
++   padding: 1rem;
+    background: var(--bg-elevated);
+-   border-radius: 12px;
+-   transition: transform 0.2s ease;
++   border-radius: 16px;
++   border: 1px solid var(--border-color);
++   transition: all 0.25s ease;
++   cursor: default;
+  }
+  
+  .achievement-badge:hover {
+-   transform: scale(1.05);
++   transform: translateX(4px);
++   border-color: var(--achievement-color, var(--accent-green));
++   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+- .achievement-icon {
+-   font-size: 2rem;
+-   margin-bottom: 0.5rem;
++ .achievement-icon-wrapper {
++   width: 48px;
++   height: 48px;
++   min-width: 48px;
++   border-radius: 12px;
++   background: linear-gradient(135deg, 
++     color-mix(in srgb, var(--achievement-color, var(--accent-green)) 20%, transparent),
++     color-mix(in srgb, var(--achievement-color, var(--accent-green)) 5%, transparent)
++   );
++   display: flex;
++   align-items: center;
++   justify-content: center;
++   color: var(--achievement-color, var(--accent-green));
++ }
++ 
++ .achievement-icon-wrapper svg {
++   width: 24px;
++   height: 24px;
++ }
++ 
++ .achievement-info {
++   display: flex;
++   flex-direction: column;
++   gap: 0.25rem;
++   flex: 1;
++   min-width: 0;
+  }
+  
+  .achievement-name {
++   font-size: 0.9rem;
++   font-weight: 600;
++   color: var(--text-primary);
++ }
++ 
++ .achievement-desc {
++   font-size: 0.8rem;
++   color: var(--text-muted);
++   line-height: 1.3;
++ }
++ 
++ .no-achievements {
++   display: flex;
++   flex-direction: column;
++   align-items: center;
++   padding: 2rem;
++   color: var(--text-muted);
++   text-align: center;
++ }
++ 
++ .no-achievements .empty-icon {
++   width: 48px;
++   height: 48px;
++   margin-bottom: 1rem;
++   opacity: 0.5;
++ }
++ 
++ .no-achievements p {
++   margin: 0;
++   font-size: 0.9rem;
++ }
++ 
++ /* Mini achievements in profile */
++ .profile-achievements {
++   display: flex;
++   flex-wrap: wrap;
++   gap: 0.5rem;
++ }
++ 
++ .mini-achievement {
++   width: 44px;
++   height: 44px;
++   border-radius: 12px;
++   background: linear-gradient(135deg, 
++     color-mix(in srgb, var(--achievement-color, var(--accent-green)) 20%, transparent),
++     color-mix(in srgb, var(--achievement-color, var(--accent-green)) 5%, transparent)
++   );
++   display: flex;
++   align-items: center;
++   justify-content: center;
++   color: var(--achievement-color, var(--accent-green));
++   transition: all 0.2s ease;
++   cursor: help;
++ }
++ 
++ .mini-achievement svg {
++   width: 22px;
++   height: 22px;
++ }
++ 
++ .mini-achievement:hover {
++   transform: scale(1.1);
++   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
++ }
++ 
++ .mini-achievement.more {
++   background: var(--bg-elevated);
++   color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+-   margin-bottom: 0.25rem;
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the responsive media query for achievements.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 16, lines removed: 1
+
+```diff
+@@ -3450,5 +3450,20 @@
+    
+    .achievements-grid {
+-     grid-template-columns: repeat(3, 1fr);
++     gap: 0.5rem;
++   }
++   
++   .achievement-badge {
++     padding: 0.75rem;
++   }
++   
++   .achievement-icon-wrapper {
++     width: 40px;
++     height: 40px;
++     min-width: 40px;
++   }
++   
++   .achievement-icon-wrapper svg {
++     width: 20px;
++     height: 20px;
+    }
+    
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me also update the other media query for smaller screens.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 16, lines removed: 2
+
+```diff
+@@ -3479,6 +3479,20 @@
+  
+  @media (max-width: 380px) {
+-   .achievements-grid {
+-     grid-template-columns: repeat(2, 1fr);
++   .achievement-name {
++     font-size: 0.85rem;
++   }
++   
++   .achievement-desc {
++     font-size: 0.75rem;
++   }
++   
++   .mini-achievement {
++     width: 38px;
++     height: 38px;
++   }
++   
++   .mini-achievement svg {
++     width: 18px;
++     height: 18px;
+    }
+  }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me check for lint errors and then build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx`
+
+Lint results
+
+Lint errors for `src/App.jsx`
+
+
+| Message | Range | Severity |
+|-------|-------|----------|
+| 'showH2HModal' is declared but its value is never read. | 139:10-139:22 | DIAGNOSTIC_SEVERITY_HINT |
+| 'setShowH2HModal' is declared but its value is never read. | 139:24-139:39 | DIAGNOSTIC_SEVERITY_HINT |
+| 'showLinkPlayerModal' is declared but its value is never read. | 164:10-164:29 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleLinkPlayer' is declared but its value is never read. | 427:9-427:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'playerId' is declared but its value is never read. | 427:29-427:37 | DIAGNOSTIC_SEVERITY_HINT |
+| 'getPredictionAccuracy' is declared but its value is never read. | 1243:9-1243:30 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleEditPlayer' is declared but its value is never read. | 1459:9-1459:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'uid' is declared but its value is never read. | 2785:76-2785:79 | DIAGNOSTIC_SEVERITY_HINT |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Great, no lints. Let me build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Replace emoji achievements with custom SVG icons and descriptions" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Replace emoji achievements with custom SVG icons and descriptions" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 735 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-D10N5Jrq.css     45.78 kB │ gzip:   8.11 kB
+dist/assets/index-CdKkYdDK.js   1,029.78 kB │ gzip: 280.54 kB
+✓ built in 1.38s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 85ca56b] Replace emoji achievements with custom SVG icons and descriptions
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 6 files changed, 1803 insertions(+), 281 deletions(-)
+ rename dist/assets/{index-D3_AQN11.js =&gt; index-CdKkYdDK.js} (54%)
+ rename dist/assets/{index-B67iXY-B.css =&gt; index-D10N5Jrq.css} (81%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/2.6MB)
+Uploading [=====---------------] (663.2KB/2.6MB)
+Uploading [==========----------] (1.3MB/2.6MB)
+Uploading [===============-----] (1.9MB/2.6MB)
+Uploading [====================] (2.6MB/2.6MB)
+https://lukto-winrate-webapp-pyfnh14oy-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/HHxneSHStcKGms8W1YNibTYqEbNp [4s]
+Production: https://lukto-winrate-webapp-pyfnh14oy-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 202 packages in 8s
+Building: 18 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 735 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-D10N5Jrq.css     45.78 kB │ gzip:   8.10 kB
+Building: dist/assets/index-CdKkYdDK.js   1,029.78 kB │ gzip: 281.66 kB
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: ✓ built in 4.87s
+Building: Build Completed in /vercel/output [13s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-pyfnh14oy-josefatrixs-projects.vercel.app [24s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [24s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-pyfnh14oy-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-pyfnh14oy-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The deployment was successful. Let me summarize the changes.</details></think>
+
+---
+
+¡Listo! Ahora los logros tienen iconos SVG personalizados y descripciones claras:
+
+**Iconos SVG creados (sin emojis):**
+
+| Categoría | Logro | Icono | Descripción |
+|-----------|-------|-------|-------------|
+| **Rangos** | Bronce | Medalla simple | "Alcanzaste 50 puntos de experiencia" |
+| | Plata | Medalla con círculo | "Alcanzaste 150 puntos de experiencia" |
+| | Oro | Medalla con estrella | "Alcanzaste 300 puntos de experiencia" |
+| | Diamante | Diamante geométrico | "Alcanzaste 500 puntos de experiencia" |
+| **Rachas** | En Llamas | Llama | "Ganaste 3 partidos consecutivos" |
+| | Imparable | Rayo | "Ganaste 5 partidos consecutivos" |
+| | Rey Absoluto | Corona | "Ganaste 7 partidos consecutivos" |
+| **MVP** | Primera Estrella | Estrella simple | "Conseguiste tu primer MVP del partido" |
+| | Estrella Constante | Múltiples estrellas | "Fuiste MVP en 3 partidos diferentes" |
+| | Superestrella | Destellos | "Acumulaste 5 premios MVP" |
+| **Win Rate** | Máquina de Ganar | Gráfica | "Mantienes un 60% o más de victorias" |
+| | Élite | Trofeo | "Mantienes un impresionante 75% de victorias" |
+| | Invicto | Diana/Target | "No has perdido un solo partido" |
+| **Rating** | Respetado | Pulgar arriba | "Tus compañeros te califican con 7 o más" |
+| | Crack | Músculo | "Destacas con un rating promedio de 8+" |
+| | Fenómeno | Destellos | "Eres excepcional con rating de 9+" |
+
+**Diseño mejorado:**
+- Cada logro es una tarjeta con icono + nombre + descripción
+- Colores personalizados por logro (gradiente sutil)
+- Hover con animación lateral
+- En el perfil, iconos compactos con tooltip al pasar el cursor
+
+**Revisa los cambios en:**
+https://lukto-winrate-webapp.vercel.app
+
+Ve a la sección de **Análisis** y selecciona un jugador para ver sus logros.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+pero sigue igual, cuando entro a un perfil y se ven los loegros, no se que significa cada logro. ademas no me gustan esos iconos y tampoco el de los rangos
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is saying:
+1. When they open a profile, the achievements still don't show what each one means
+2. They don't like the icons I created
+3. They don't like the rank icons either
+
+Let me look at how the profile achievements are displayed and create better, more distinctive icons. I need to:
+1. Add tooltips or better display for achievements in the profile so users know what each one means
+2. Create more visually appealing and distinctive SVG icons
+3. Redesign the rank badges too
+
+Let me first check how the profile achievements look and then redesign everything with better icons.</details></think>
+
+---
+
+Entiendo, voy a rediseñar completamente los iconos con un estilo más distintivo y agregar tooltips informativos en el perfil:
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the profile section uses a simple `title</details></think>
 
 ---
 
