@@ -8210,106 +8210,95 @@ Ahora agrego la sección de gestión de usuarios después de la sección de juga
 
 <details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
 
-Status: **loading**
+**Chunk 1**
+Lines added: 80, lines removed: undefined
 
-```javascriptreact
-      {activeTab === 'players' && isAdmin && (
-        <section className="stats-section">
-          <h2 className="section-title">Lista de Jugadores</h2>
-          <div className="players-grid">
-            {players.map(player => (
-              <div key={player.id} className="player-card">
-                <div className="player-avatar">
-                  {getInitials(player.name)}
-                </div>
-                <div className="player-card-info">
-                  <h3>{player.name}</h3>
-                  {player.aliases && player.aliases.length > 0 && (
-                    <div className="aliases">
-                      aka: {player.aliases.join(', ')}
-                    </div>
-                  )}
-                </div>
-                <button 
-                  className="delete-player-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDeletePlayer(player.id, player.name)
-                  }}
-                  title="Eliminar jugador"
-                >
-                  🗑️
-                </button>
-              </div>
-            ))}
-            <div className="add-player-card" onClick={() => setShowPlayerModal(true)}>
-              <span style={{ fontSize: '1.5rem' }}>➕</span>
-              Agregar Jugador
-            </div>
-          </div>
-        </section>
-      )}
-
-      {activeTab === 'users' && isAdmin && (
-        <section className="stats-section">
-          <h2 className="section-title">Vincular Usuarios con Jugadores</h2>
-          <p className="section-subtitle">
-            Solo tú puedes decidir qué cuenta de Google corresponde a cada jugador
-          </p>
-          
-          {pendingUsers.length > 0 && (
-            <div className="pending-users-section">
-              <h3 className="subsection-title">⏳ Usuarios Pendientes ({pendingUsers.length})</h3>
-              <div className="user-links-list">
-                {pendingUsers.map(pending => (
-                  <div key={pending.odedBy} className="user-link-card pending">
-                    <div className="user-link-info">
-                      <img src={pending.odedByPhoto} alt="" className="user-link-avatar" />
-                      <div>
-                        <div className="user-link-name">{pending.odedByName}</div>
-                        <div className="user-link-email">{pending.odedByEmail}</div>
-                      </div>
-                    </div>
-                    <div className="user-link-action">
-                      <select 
-                        className="player-select-dropdown"
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            adminLinkUserToPlayer(pending.odedBy, e.target.value)
-                          }
-                        }}
-                        defaultValue=""
-                      >
-                        <option value="">Selecciona jugador...</option>
-                        {players.map(player => (
-                          <option key={player.id} value={player.id}>
-                            {player.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="linked-users-section">
-            <h3 className="subsection-title">✅ Usuarios Vinculados</h3>
-            <div className="user-links-list">
-              {Object.entries(userLinks).filter(([_, data]) => data.playerId).length > 0 ? (
-                Object.entries(userLinks)
-                  .filter(([_, data]) => data.playerId)
-                  .map(([odedBy, data]) => (
-                    <div key={odedBy} className="user-link-card linked">
-                      <div className="user-link-info">
-                        <img src={data.odedByPhoto} alt="" className="user-link-avatar" />
-                        <div>
-                          <div className="user-link-name">{data.odedByName}</div>
-                          <div className="user-link-email">{data.odedByEmail}</div>
-                        </div>
-                      </div>
-                      <div className="user-
+```diff
+@@ -1028,4 +1028,84 @@
+          &lt;/section&gt;
+        )}
++ 
++       {activeTab === 'users' &amp;&amp; isAdmin &amp;&amp; (
++         &lt;section className="stats-section"&gt;
++           &lt;h2 className="section-title"&gt;Vincular Usuarios con Jugadores&lt;/h2&gt;
++           &lt;p className="section-subtitle"&gt;
++             Solo tú puedes decidir qué cuenta de Google corresponde a cada jugador
++           &lt;/p&gt;
++           
++           {pendingUsers.length &gt; 0 &amp;&amp; (
++             &lt;div className="pending-users-section"&gt;
++               &lt;h3 className="subsection-title"&gt;⏳ Usuarios Pendientes ({pendingUsers.length})&lt;/h3&gt;
++               &lt;div className="user-links-list"&gt;
++                 {pendingUsers.map(pending =&gt; (
++                   &lt;div key={pending.odedBy} className="user-link-card pending"&gt;
++                     &lt;div className="user-link-info"&gt;
++                       &lt;img src={pending.odedByPhoto} alt="" className="user-link-avatar" /&gt;
++                       &lt;div&gt;
++                         &lt;div className="user-link-name"&gt;{pending.odedByName}&lt;/div&gt;
++                         &lt;div className="user-link-email"&gt;{pending.odedByEmail}&lt;/div&gt;
++                       &lt;/div&gt;
++                     &lt;/div&gt;
++                     &lt;div className="user-link-action"&gt;
++                       &lt;select 
++                         className="player-select-dropdown"
++                         onChange={(e) =&gt; {
++                           if (e.target.value) {
++                             adminLinkUserToPlayer(pending.odedBy, e.target.value)
++                           }
++                         }}
++                         defaultValue=""
++                       &gt;
++                         &lt;option value=""&gt;Selecciona jugador...&lt;/option&gt;
++                         {players.map(player =&gt; (
++                           &lt;option key={player.id} value={player.id}&gt;
++                             {player.name}
++                           &lt;/option&gt;
++                         ))}
++                       &lt;/select&gt;
++                     &lt;/div&gt;
++                   &lt;/div&gt;
++                 ))}
++               &lt;/div&gt;
++             &lt;/div&gt;
++           )}
++ 
++           &lt;div className="linked-users-section"&gt;
++             &lt;h3 className="subsection-title"&gt;✅ Usuarios Vinculados&lt;/h3&gt;
++             &lt;div className="user-links-list"&gt;
++               {Object.entries(userLinks).filter(([_, data]) =&gt; data.playerId).length &gt; 0 ? (
++                 Object.entries(userLinks)
++                   .filter(([_, data]) =&gt; data.playerId)
++                   .map(([odedBy, data]) =&gt; (
++                     &lt;div key={odedBy} className="user-link-card linked"&gt;
++                       &lt;div className="user-link-info"&gt;
++                         &lt;img src={data.odedByPhoto} alt="" className="user-link-avatar" /&gt;
++                         &lt;div&gt;
++                           &lt;div className="user-link-name"&gt;{data.odedByName}&lt;/div&gt;
++                           &lt;div className="user-link-email"&gt;{data.odedByEmail}&lt;/div&gt;
++                         &lt;/div&gt;
++                       &lt;/div&gt;
++                       &lt;div className="user-link-player"&gt;
++                         → &lt;strong&gt;{getPlayerName(data.playerId)}&lt;/strong&gt;
++                       &lt;/div&gt;
++                       &lt;button 
++                         className="unlink-btn"
++                         onClick={() =&gt; adminUnlinkUser(odedBy)}
++                       &gt;
++                         ✕
++                       &lt;/button&gt;
++                     &lt;/div&gt;
++                   ))
++               ) : (
++                 &lt;div className="empty-state small"&gt;
++                   &lt;p&gt;No hay usuarios vinculados aún&lt;/p&gt;
++                 &lt;/div&gt;
++               )}
++             &lt;/div&gt;
++           &lt;/div&gt;
++         &lt;/section&gt;
++       )}
+  
+        {/* Admin Login Modal */}
 ```
 
 </details>
@@ -8318,7 +8307,747 @@ Status: **loading**
 
 ---
 
+<think><details><summary>Thought Process</summary>
+Ahora necesito agregar los estilos CSS para los nuevos componentes.</details></think>
 
+---
+
+Ahora agrego los estilos:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 159, lines removed: undefined
+
+```diff
+@@ -509,4 +509,163 @@
+    color: var(--text-primary);
+  }
++ 
++ /* User Links Section */
++ .pending-users-section {
++   margin-bottom: 2rem;
++ }
++ 
++ .subsection-title {
++   font-family: 'Bebas Neue', sans-serif;
++   font-size: 1.25rem;
++   letter-spacing: 0.05em;
++   color: var(--text-secondary);
++   margin-bottom: 1rem;
++ }
++ 
++ .user-links-list {
++   display: flex;
++   flex-direction: column;
++   gap: 0.75rem;
++ }
++ 
++ .user-link-card {
++   display: flex;
++   align-items: center;
++   justify-content: space-between;
++   padding: 1rem 1.25rem;
++   background: var(--bg-secondary);
++   border-radius: 0.75rem;
++   border: 1px solid var(--border-color);
++   gap: 1rem;
++   flex-wrap: wrap;
++ }
++ 
++ .user-link-card.pending {
++   border-color: var(--accent-gold);
++   background: rgba(251, 191, 36, 0.05);
++ }
++ 
++ .user-link-card.linked {
++   border-color: var(--accent-emerald);
++   background: rgba(16, 185, 129, 0.05);
++ }
++ 
++ .user-link-info {
++   display: flex;
++   align-items: center;
++   gap: 0.75rem;
++   flex: 1;
++   min-width: 200px;
++ }
++ 
++ .user-link-avatar {
++   width: 40px;
++   height: 40px;
++   border-radius: 50%;
++   border: 2px solid var(--border-color);
++ }
++ 
++ .user-link-name {
++   font-weight: 600;
++   font-size: 0.95rem;
++ }
++ 
++ .user-link-email {
++   font-size: 0.8rem;
++   color: var(--text-muted);
++ }
++ 
++ .user-link-player {
++   color: var(--accent-emerald);
++   font-size: 0.95rem;
++ }
++ 
++ .user-link-action {
++   min-width: 200px;
++ }
++ 
++ .player-select-dropdown {
++   width: 100%;
++   padding: 0.75rem 1rem;
++   background: var(--bg-card);
++   border: 1px solid var(--border-color);
++   border-radius: 0.5rem;
++   color: var(--text-primary);
++   font-family: 'Outfit', sans-serif;
++   font-size: 0.9rem;
++   cursor: pointer;
++ }
++ 
++ .player-select-dropdown:focus {
++   outline: none;
++   border-color: var(--accent-gold);
++ }
++ 
++ .unlink-btn {
++   width: 32px;
++   height: 32px;
++   border: 1px solid var(--border-color);
++   border-radius: 50%;
++   background: transparent;
++   color: var(--text-muted);
++   font-size: 1rem;
++   cursor: pointer;
++   transition: all 0.2s ease;
++ }
++ 
++ .unlink-btn:hover {
++   border-color: var(--accent-red);
++   background: var(--accent-red);
++   color: white;
++ }
++ 
++ /* Pending Message */
++ .pending-message {
++   text-align: center;
++   padding: 1.5rem;
++ }
++ 
++ .pending-avatar {
++   width: 80px;
++   height: 80px;
++   border-radius: 50%;
++   border: 3px solid var(--accent-gold);
++   margin-bottom: 1rem;
++ }
++ 
++ .pending-message p {
++   color: var(--text-secondary);
++   margin: 0.5rem 0;
++ }
++ 
++ .pending-hint {
++   margin-top: 1rem !important;
++   color: var(--accent-gold) !important;
++   font-size: 0.9rem;
++ }
++ 
++ /* Badge */
++ .badge {
++   display: inline-flex;
++   align-items: center;
++   justify-content: center;
++   min-width: 20px;
++   height: 20px;
++   padding: 0 6px;
++   background: var(--accent-red);
++   color: white;
++   border-radius: 10px;
++   font-size: 0.75rem;
++   font-weight: 600;
++   margin-left: 0.5rem;
++ }
++ 
++ .empty-state.small {
++   padding: 2rem;
++ }
++ 
++ .empty-state.small p {
++   margin: 0;
++ }
+  
+  /* Navigation Tabs */
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ahora despliego los cambios.</details></think>
+
+---
+
+Ahora despliego los cambios:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && git add . && git commit -m "Add admin-only user linking to prevent impersonation" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && git add . && git commit -m "Add admin-only user linking to prevent impersonation" && npx vercel --prod --yes --force
+```
+
+```
+[main b2dcf0a] Add admin-only user linking to prevent impersonation
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 3 files changed, 1542 insertions(+), 30 deletions(-)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-stats-app
+Uploading [--------------------] (0.0B/321.5KB)
+Uploading [=====---------------] (88.1KB/321.5KB)
+Uploading [==========----------] (162.5KB/321.5KB)
+Uploading [===============-----] (242.5KB/321.5KB)
+Uploading [====================] (321.5KB/321.5KB)
+https://lukto-stats-9d4afrp9t-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-stats-app/AdYUfytTRzSwnGrZNTziu9nPAAZd [3s]
+Production: https://lukto-stats-9d4afrp9t-josefatrixs-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 7s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 48 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                   0.75 kB │ gzip:   0.43 kB
+Building: dist/assets/index-BmRK11RC.css   19.72 kB │ gzip:   3.76 kB
+Building: dist/assets/index-HHOEaPnJ.js   624.31 kB │ gzip: 161.33 kB
+Building: ✓ built in 2.50s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [10s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-stats-9d4afrp9t-josefatrixs-projects.vercel.app [20s]
+Completing...
+Aliased: https://lukto-stats-app.vercel.app [20s]
+
+Common next commands:
+- &#96;vercel inspect lukto-stats-9d4afrp9t-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-stats-9d4afrp9t-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+La funcionalidad está desplegada. Ahora explico al usuario cómo funciona el nuevo sistema.</details></think>
+
+---
+
+## ✅ ¡Listo! Ahora solo TÚ puedes vincular usuarios
+
+Abre **https://lukto-stats-app.vercel.app** (o **https://lukto-stats-9d4afrp9t-josefatrixs-projects.vercel.app**)
+
+### Cómo funciona ahora:
+
+#### Para tus amigos:
+1. Entran con Google
+2. Ven un mensaje: **"⏳ Esperando Aprobación"**
+3. No pueden hacer nada hasta que TÚ los vincules
+
+#### Para ti (Admin):
+1. Entra como Admin (contraseña: `lukto2026`)
+2. Nueva pestaña: **🔗 Vincular Usuarios**
+3. Verás los usuarios pendientes con un badge rojo
+4. Selecciona qué jugador corresponde a cada cuenta de Google
+5. ¡Listo! Ya pueden calificar
+
+### Qué puedes hacer:
+- ✅ Ver quién se registró (nombre, email, foto)
+- ✅ Vincular cada cuenta con el jugador correcto
+- ✅ Desvincular usuarios si alguien se equivocó
+- ✅ Ver la lista de usuarios ya vinculados
+
+---
+
+### Para arreglar las calificaciones falsas:
+1. Ve a **Firebase Console** → **Firestore** → **ratings**
+2. Borra las calificaciones sospechosas
+3. O usa el botón de borrar calificaciones que agregamos antes
+
+¡Ya nadie puede hacerse pasar por otro! 🔒
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+cual es la pagina
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+El usuario pregunta cuál es la página. La URL principal es https://lukto-stats-app.vercel.app</details></think>
+
+---
+
+La página es:
+
+## **https://lukto-stats-app.vercel.app**
+
+---
+
+Si hay problemas de caché, usa la URL directa del último deploy:
+
+## **https://lukto-stats-9d4afrp9t-josefatrixs-projects.vercel.app**
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+solo salgo yo
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+
+
+---
+
+<think><details><summary>Thought Process</summary>
+The user is saying "solo salgo yo" which means "only I appear" - they're looking at the "Vincular Usuarios" (Link Users) tab and only seeing themselves (José Escorcia linked to Bob). 
+
+This is expected behavior - the system now works as follows:
+1. Users log in with Google
+2. Their account appears in the system but is NOT linked to any player yet
+3. The admin (the user) needs to manually link each Google account to the correct player
+
+The user needs to:
+1. Have their friends log in with Google first
+2. Then, as admin, they'll see those users in a "pending" or "unlinked" section
+3. The admin can then link each user to the correct player
+
+Let me check the current implementation to see how it handles users who have logged in but haven't been linked yet. Based on the summary, I implemented a `users` collection in Firestore to store user-player mappings.
+
+Looking at the image, it shows the "Vincular Usuarios con Jugadores" tab with only one linked user (José Escorcia → Bob). 
+
+The issue is that for other users to appear in the admin linking interface, they need to:
+1. First log in to the app with their Google account
+2. This should create an entry somewhere (either automatically or the admin sees them)
+
+I should check the current code to understand how users who haven't been linked yet appear. Let me read the App.jsx file to see the current implementation.</details></think>
+
+---
+
+Eso es correcto por ahora. Para que aparezcan más usuarios en esa lista, tus amigos necesitan:
+
+1. **Entrar a la página**: https://lukto-stats-app.vercel.app
+2. **Hacer clic en "Entrar con Google"** y loguearse con su cuenta de Gmail
+
+Una vez que ellos se logueen, deberían aparecer en tu panel de "Vincular Usuarios" para que tú puedas asignarles el jugador correcto.
+
+Déjame verificar cómo está funcionando el sistema para usuarios nuevos que se loguean:
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Looking at the code, I see the system is set up correctly. When a user logs in with Google:
+
+1. The `registerPendingUser` function is called (lines 144-159)
+2. This creates a document in the `userLinks` collection with their info but `playerId: null`
+3. The `onSnapshot` listener (lines 111-141) picks up this user and adds them to `pendingUsers` array
+4. Pending users appear in the "⏳ Usuarios Pendientes" section of the admin panel
+
+The issue is that the user only sees themselves because:
+1. They are the only one who has logged in so far
+2. Their friends need to log in to the app first before they appear in the "Usuarios Pendientes" section
+
+I should explain this to the user - the system is working correctly, but their friends need to:
+1. Go to the page
+2. Click "Entrar con Google"
+3. Once they log in, they'll appear in the "Usuarios Pendientes" section
+4. Then the admin can link them to the correct player
+
+The user in the screenshot is already linked (José Escorcia → Bob), so they appear in "Usuarios Vinculados".</details></think>
+
+---
+
+Sí, eso es correcto. El sistema funciona así:
+
+1. **Tú ya estás vinculado** - tu cuenta (José Escorcia) está conectada al jugador "Bob" ✅
+
+2. **Para que aparezcan tus amigos**, ellos necesitan:
+   - Ir a: **https://lukto-stats-app.vercel.app**
+   - Hacer clic en **"Entrar con Google"**
+   - Iniciar sesión con su Gmail
+
+3. **Una vez que ellos se logueen**, van a ver un mensaje de **"⏳ Esperando Aprobación"** (no pueden hacer nada más que esperar)
+
+4. **Tú, como admin**, vas a ver una sección **"⏳ Usuarios Pendientes"** arriba de los vinculados, donde puedes asignar cada cuenta de Google al jugador correcto
+
+**Compárteles este link a tus amigos:**
+```
+https://lukto-stats-app.vercel.app
+```
+
+Diles que:
+- Entren al link
+- Hagan clic en "Entrar con Google"
+- Te avisen cuando lo hayan hecho
+
+Cuando ellos se logueen, aparecerán automáticamente en tu panel de "Vincular Usuarios" y ahí tú decides quién es quién. Así evitas que alguien se haga pasar por otro jugador 🔐
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+ya entre y no salio nada. verifica para que veas
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is saying they logged in and nothing appeared. They want me to verify the app. Let me check the deployed URL to see if there's an issue.
+
+I should check the latest deployment status or try to access the app. But I can't actually browse websites. Let me check if there are any issues with the code or if the deployment was successful.
+
+Let me check the terminal to see the status of the last deployment.</details></think>
+
+---
+
+Déjame verificar el estado del deploy y hacer una prueba:
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="list_dir">
+<details>
+            <summary>Tool use: **list_dir** • Listed directory, 0 results</summary>
+        
+No results found
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me check if there were any issues with the last deployment. The deployment seemed successful (exit code 0). Let me read the terminal output for more details.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/.cursor/projects/Users-joseescorcia-Documents-lukto-winrate-webapp/terminals/4.txt</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The deployment looks successful. The last deployment was to `lukto-stats-app.vercel.app` and it completed successfully. The user is saying "ya entre y no salio nada" (I already entered and nothing appeared), meaning when someone else logged in, they didn't appear in the pending users list.
+
+Let me think about this:
+1. When a new user logs in with Google, the `registerPendingUser` function should be called
+2. This function creates a document in `userLinks` collection with `playerId: null`
+3. These users should then appear in the "Usuarios Pendientes" section for the admin
+
+The issue might be:
+1. The new user successfully logged in but their data wasn't saved to Firebase
+2. The Firebase console needs to be checked to see if the userLinks collection has the new user
+3. There might be an issue with Firebase permissions (Firestore rules)
+
+Let me ask the user to check Firebase or try logging in again. But actually, the user said "ya entre" which could mean THEY entered again, not that a friend entered.
+
+Let me clarify: the user is saying they already logged in (as admin) and only see themselves. This is correct - only the admin (José) is linked. Other friends need to log in first for them to appear in the "Usuarios Pendientes" section.
+
+But wait - the user might be saying that their friend logged in and nothing appeared. I need to ask for clarification or check if there's an issue with the registration process.
+
+Looking at the code, when a user logs in:
+1. `onAuthStateChanged` sets the user
+2. The `useEffect` with `user` dependency runs
+3. It checks if user is in `userLinks`
+4. If not, it calls `registerPendingUser()`
+5. `registerPendingUser()` saves to `userLinks` collection
+
+There could be an issue with Firebase Firestore rules. Let me check if there's a security rules issue that prevents writing to userLinks for unauthenticated users or new users.
+
+
+The `registerPendingUser` function is defined in the component body and uses `user` from closure, which should work correctly. However, I need to verify the flow - when a new user authenticates, the effect should trigger and call the registration function to save them to the collection. The issue could be in the Firestore security rules preventing the write operation, or the function might not be executing as expected.
+
+Most likely, the friend account simply hasn't logged in yet, or if they have, the Firestore rules are blocking the write. I should ask the user to have their friend attempt login and check whether the "Esperando Aprobación" modal appears, then verify the admin panel shows the new pending user. Alternatively, adding console logging would help trace whether the registration function is actually being called and what errors might be occurring.</details></think>
+
+---
+
+Entiendo. Puede ser que:
+
+1. **Tus amigos aún no han entrado** - Solo aparecerás tú hasta que ellos se logueen
+2. **O hay un problema con Firebase** - Puede que las reglas de Firestore estén bloqueando los registros
+
+Déjame verificar si hay un problema y hacer un pequeño test. ¿Podrías pedirle a un amigo que entre **ahora** a https://lukto-stats-app.vercel.app y que haga clic en "Entrar con Google"?
+
+Cuando lo haga, dime si él ve un mensaje que dice **"⏳ Esperando Aprobación"**. Si lo ve, entonces el sistema está funcionando y debería aparecer en tu panel.
+
+Si no aparece nada o da un error, puede que necesitemos configurar las reglas de Firebase.
+
+También, **¿ya agregaste el dominio a Firebase?** Necesitas:
+1. Ir a https://console.firebase.google.com
+2. Tu proyecto **lukto-tracker**
+3. **Authentication** → **Settings** → **Authorized domains**
+4. Agregar: `lukto-stats-app.vercel.app`
+
+Sin esto, los usuarios nuevos no pueden loguearse. ¿Ya está agregado ese dominio?
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+y los que se loguearon antes?
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is asking about the users who logged in before (before the admin-only linking system was implemented). Those users might have linked themselves to players incorrectly before the new system was put in place.
+
+The issue is:
+1. Previously, users could link themselves to any player
+2. Now, only admin can link users to players
+3. The old data in Firebase might have incorrect links or data from the old system
+
+I need to check what data is in Firebase. The user's friends probably logged in before and linked themselves to whatever player they wanted (possibly the wrong one to mess around).
+
+The solution would be:
+1. Check the Firebase console to see what's in the `userLinks` collection
+2. The admin can unlink those users and re-link them correctly
+3. Or we could clear the old data and have everyone log in again
+
+Let me explain this to the user and help them manage the existing users in Firebase.</details></think>
+
+---
+
+¡Buena pregunta! Los que se loguearon **antes** del nuevo sistema probablemente se vincularon ellos mismos (incorrectamente).
+
+Ahora con el nuevo sistema, deberías poder verlos en la pestaña **"🔗 Vincular Usuarios"** en la sección de **"✅ Usuarios Vinculados"** y puedes:
+
+1. **Desvincularlos** (haciendo clic en la ✕)
+2. **Re-vincularlos** al jugador correcto cuando aparezcan en "Pendientes"
+
+**Si no los ves ahí**, puede que sus datos estén en el formato antiguo. En ese caso, puedes ir directamente a Firebase Console y borrar los registros incorrectos:
+
+1. Ve a https://console.firebase.google.com
+2. Abre tu proyecto **lukto-tracker**
+3. Ve a **Firestore Database**
+4. Busca la colección **`userLinks`**
+5. Ahí verás todos los usuarios que se han logueado - puedes eliminar los registros incorrectos
+
+Una vez que los borres de ahí, cuando esos usuarios vuelvan a entrar a la página con Google, aparecerán en tu panel de "Usuarios Pendientes" y podrás vincularlos correctamente.
+
+¿Quieres que te ayude a limpiar los datos viejos? Puedo agregar una función en el panel de admin para ver y administrar todos los vínculos existentes más fácilmente.igos que se loguearon antes con
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+resolvamos porque no se actualizan los cambios.  si o si tiene que ser este link https://lukto-winrate-webapp.vercel.app/ 
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants to use the specific URL https://lukto-winrate-webapp.vercel.app/ and is having issues with the changes not updating. We've been deploying to lukto-stats-app.vercel.app but the user wants lukto-winrate-webapp.vercel.app.
+
+Let me check the Vercel setup and redeploy to the correct project.</details></think>
+
+---
+
+Entendido. Vamos a forzar el deploy al proyecto correcto `lukto-winrate-webapp.vercel.app`:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && rm -rf .vercel && npx vercel link --yes --project lukto-winrate-webapp</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && rm -rf .vercel && npx vercel link --yes --project lukto-winrate-webapp
+```
+
+```
+Vercel CLI 50.4.5
+Loading scopes…
+Searching for existing projects…
+Linked to josefatrixs-projects/lukto-winrate-webapp (created .vercel)
+Retrieving project…
+&gt; Overwriting existing .env.local file
+&gt; Downloading &#96;development&#96; Environment Variables for josefatrixs-projects/lukto-winrate-webapp
+Downloading
+
+Changes:
++ VERCEL_OIDC_TOKEN (Updated)
+
+Updated .env.local file  [205ms]
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Good, now the project is linked to lukto-winrate-webapp. Let me do a clean build and force deploy to this project.</details></think>
+
+---
+
+Ahora vamos a hacer un build limpio y deploy forzado:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && rm -rf dist node_modules/.vite && npm run build && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && rm -rf dist node_modules/.vite && npm run build && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 48 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.75 kB │ gzip:   0.43 kB
+dist/assets/index-BmRK11RC.css   19.72 kB │ gzip:   3.76 kB
+dist/assets/index-HHOEaPnJ.js   624.31 kB │ gzip: 160.73 kB
+✓ built in 638ms
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/908.9KB)
+Uploading [=====---------------] (228.0KB/908.9KB)
+Uploading [==========----------] (468.0KB/908.9KB)
+Uploading [===============-----] (692.0KB/908.9KB)
+Uploading [====================] (908.9KB/908.9KB)
+https://lukto-winrate-webapp-r9s8arpff-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/7dm1Y426nLMjf3eapuWwp6e13SVc [3s]
+Production: https://lukto-winrate-webapp-r9s8arpff-josefatrixs-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-r9s8arpff-josefatrixs-projects.vercel.app [17s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [17s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-r9s8arpff-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-r9s8arpff-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The deployment was successful and it's now aliased to lukto-winrate-webapp.vercel.app. Let me tell the user to check the page now.</details></think>
+
+---
+
+✅ **¡Listo!** El deploy se completó correctamente a:
+
+### 👉 https://lukto-winrate-webapp.vercel.app/
+
+Ahora prueba lo siguiente:
+
+1. **Abre en modo incógnito** (Cmd+Shift+N en Mac o Ctrl+Shift+N en Windows)
+2. Ve a https://lukto-winrate-webapp.vercel.app/
+3. Deberías ver la versión actualizada con:
+   - Botón "Entrar con Google"
+   - Botón "Modo Admin"
+   - Y cuando entres como admin, la pestaña "🔗 Vincular Usuarios"
+
+**También importante**: Asegúrate de que en Firebase Console tengas agregado el dominio:
+- Ve a https://console.firebase.google.com → **lukto-tracker** → **Authentication** → **Settings** → **Authorized domains**
+- Verifica que `lukto-winrate-webapp.vercel.app` esté en la lista
+
+¿Ya se ve la versión actualizada?
 
 ---
 

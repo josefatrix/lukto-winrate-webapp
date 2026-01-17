@@ -73,7 +73,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [userPlayer, setUserPlayer] = useState(null)
   const [showLinkPlayerModal, setShowLinkPlayerModal] = useState(false)
-  const [userLinks, setUserLinks] = useState({}) // {odedBy: { odedBy, odedByName, odedByPhoto, playerId }}
+  const [userLinks, setUserLinks] = useState({}) // {odedBy: { odedBy, userName, userPhoto, playerId }}
   const [pendingUsers, setPendingUsers] = useState([]) // Users waiting to be linked
   
   // Admin mode
@@ -147,14 +147,16 @@ function App() {
     try {
       const linkRef = doc(db, 'userLinks', user.uid)
       await setDoc(linkRef, {
-        odedByName: user.displayName,
-        odedByEmail: user.email,
-        odedByPhoto: user.photoURL,
+        userName: user.displayName,
+        userEmail: user.email,
+        userPhoto: user.photoURL,
         playerId: null,
         registeredAt: new Date().toISOString()
       }, { merge: true })
+      console.log('Usuario registrado exitosamente:', user.email)
     } catch (error) {
       console.error('Error registering pending user:', error)
+      alert('Error al registrar usuario: ' + error.message + '\n\nEl admin debe configurar las reglas de Firestore.')
     }
   }
 
@@ -1042,10 +1044,10 @@ function App() {
                 {pendingUsers.map(pending => (
                   <div key={pending.odedBy} className="user-link-card pending">
                     <div className="user-link-info">
-                      <img src={pending.odedByPhoto} alt="" className="user-link-avatar" />
+                      <img src={pending.userPhoto || pending.odedByPhoto} alt="" className="user-link-avatar" />
                       <div>
-                        <div className="user-link-name">{pending.odedByName}</div>
-                        <div className="user-link-email">{pending.odedByEmail}</div>
+                        <div className="user-link-name">{pending.userName || pending.odedByName}</div>
+                        <div className="user-link-email">{pending.userEmail || pending.odedByEmail}</div>
                       </div>
                     </div>
                     <div className="user-link-action">
@@ -1081,10 +1083,10 @@ function App() {
                   .map(([odedBy, data]) => (
                     <div key={odedBy} className="user-link-card linked">
                       <div className="user-link-info">
-                        <img src={data.odedByPhoto} alt="" className="user-link-avatar" />
+                        <img src={data.userPhoto || data.odedByPhoto} alt="" className="user-link-avatar" />
                         <div>
-                          <div className="user-link-name">{data.odedByName}</div>
-                          <div className="user-link-email">{data.odedByEmail}</div>
+                          <div className="user-link-name">{data.userName || data.odedByName}</div>
+                          <div className="user-link-email">{data.userEmail || data.odedByEmail}</div>
                         </div>
                       </div>
                       <div className="user-link-player">
