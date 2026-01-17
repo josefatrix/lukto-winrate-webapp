@@ -127,10 +127,14 @@ function App() {
   const [newPlayerAliases, setNewPlayerAliases] = useState('')
   const [editingPlayerId, setEditingPlayerId] = useState(null)
   
-  // Dark mode - persiste en localStorage
+  // Dark mode - persiste en localStorage (con fallback para iOS private mode)
   const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('lukto_darkMode')
-    return saved !== 'false' // Default to dark mode
+    try {
+      const saved = localStorage.getItem('lukto_darkMode')
+      return saved !== 'false' // Default to dark mode
+    } catch {
+      return true // Default to dark mode if localStorage fails
+    }
   })
   
   // Loading states for skeleton
@@ -148,8 +152,13 @@ function App() {
   // Confetti ref
   const confettiTriggered = useRef({})
   
-  // Notifications
-  const [notificationPermission, setNotificationPermission] = useState(Notification?.permission || 'default')
+  // Notifications - check if API exists (not available on iOS Safari)
+  const [notificationPermission, setNotificationPermission] = useState(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission
+    }
+    return 'denied' // iOS doesn't support web notifications
+  })
   const previousRatingsRef = useRef({})
   
   // Player profile
@@ -167,10 +176,14 @@ function App() {
   const [pendingUsers, setPendingUsers] = useState([]) // Users waiting to be linked
   const [userLinksLoaded, setUserLinksLoaded] = useState(false) // Track if initial load is complete
   
-  // Admin mode - carga desde localStorage
+  // Admin mode - carga desde localStorage (con fallback para iOS private mode)
   const [isAdmin, setIsAdmin] = useState(() => {
-    const saved = localStorage.getItem('lukto_admin')
-    return saved === 'true'
+    try {
+      const saved = localStorage.getItem('lukto_admin')
+      return saved === 'true'
+    } catch {
+      return false
+    }
   })
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
@@ -223,7 +236,9 @@ function App() {
   // Dark mode effect
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
-    localStorage.setItem('lukto_darkMode', darkMode.toString())
+    try {
+      localStorage.setItem('lukto_darkMode', darkMode.toString())
+    } catch { /* Ignore localStorage errors in private mode */ }
   }, [darkMode])
 
   // Load predictions from Firebase
@@ -251,16 +266,16 @@ function App() {
       
       if (isSuperAdmin || isInAdminList) {
         setIsAdmin(true)
-        localStorage.setItem('lukto_admin', 'true')
+        try { localStorage.setItem('lukto_admin', 'true') } catch { /* Ignore */ }
       } else {
         // User is logged in but NOT an admin - remove admin privileges
         setIsAdmin(false)
-        localStorage.removeItem('lukto_admin')
+        try { localStorage.removeItem('lukto_admin') } catch { /* Ignore */ }
       }
     } else if (!user) {
       // No user logged in - clear admin status
       setIsAdmin(false)
-      localStorage.removeItem('lukto_admin')
+      try { localStorage.removeItem('lukto_admin') } catch { /* Ignore */ }
     }
   }, [user, adminEmails])
 
@@ -477,7 +492,7 @@ function App() {
     await signOut(auth)
     setUserPlayer(null)
     setIsAdmin(false)
-    localStorage.removeItem('lukto_admin')
+    try { localStorage.removeItem('lukto_admin') } catch { /* Ignore */ }
   }
 
   const handleLinkPlayer = (playerId) => {
@@ -557,7 +572,7 @@ function App() {
   const handleAdminLogin = () => {
     if (passwordInput === ADMIN_PASSWORD) {
       setIsAdmin(true)
-      localStorage.setItem('lukto_admin', 'true')
+      try { localStorage.setItem('lukto_admin', 'true') } catch { /* Ignore */ }
       setShowLoginModal(false)
       setPasswordInput('')
       setLoginError('')
@@ -568,7 +583,7 @@ function App() {
 
   const handleAdminLogout = () => {
     setIsAdmin(false)
-    localStorage.removeItem('lukto_admin')
+    try { localStorage.removeItem('lukto_admin') } catch { /* Ignore */ }
     setActiveTab('stats')
   }
 
@@ -1447,8 +1462,10 @@ function App() {
     }
   }
 
-  // Send notification
+  // Send notification (only on supported browsers)
   const sendNotification = (title, options = {}) => {
+    // Check if Notification API is available (not on iOS Safari)
+    if (typeof window === 'undefined' || !('Notification' in window)) return
     if (notificationPermission !== 'granted') return
     if (document.hasFocus()) return // Don't show if app is focused
     
