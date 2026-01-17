@@ -48,7 +48,9 @@ export const RatingsTab = ({ getRatingClass }) => {
     const allRatings = ratings[player.id] || []
     const filtered = allRatings.filter(r => filteredMatchIds.has(r.matchId))
     if (filtered.length > 0) {
-      const avg = (filtered.reduce((sum, r) => sum + r.score, 0) / filtered.length).toFixed(1)
+      const sum = filtered.reduce((acc, r) => acc + (typeof r.score === 'number' ? r.score : 0), 0)
+      const avgNum = sum / filtered.length
+      const avg = typeof avgNum === 'number' && !isNaN(avgNum) ? avgNum.toFixed(1) : '0.0'
       playerRatingsFiltered[player.id] = {
         id: player.id,
         name: player.name,
@@ -136,13 +138,12 @@ export const RatingsTab = ({ getRatingClass }) => {
                                 new Date(b[1].match?.date || 0) - new Date(a[1].match?.date || 0)
                             )
                             .map(([matchId, data]) => {
-                              const matchAvg =
-                                data.ratings.length > 0
-                                  ? (
-                                      data.ratings.reduce((sum, r) => sum + r.score, 0) /
-                                      data.ratings.length
-                                    ).toFixed(1)
-                                  : '-'
+                              let matchAvg = '-'
+                              if (data.ratings.length > 0) {
+                                const sum = data.ratings.reduce((acc, r) => acc + (typeof r.score === 'number' ? r.score : 0), 0)
+                                const avg = sum / data.ratings.length
+                                matchAvg = typeof avg === 'number' && !isNaN(avg) ? avg.toFixed(1) : '-'
+                              }
                               return (
                                 <tr key={matchId}>
                                   <td>

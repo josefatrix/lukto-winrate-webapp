@@ -46,11 +46,11 @@ export const MatchesTab = ({
             const playerRatings = ratings[playerId] || []
             const matchRatings = playerRatings.filter(r => r.matchId === match.id)
             if (matchRatings.length > 0) {
-              const avg = matchRatings.reduce((sum, r) => sum + r.score, 0) / matchRatings.length
+              const avg = matchRatings.reduce((sum, r) => sum + (typeof r.score === 'number' ? r.score : 0), 0) / matchRatings.length
               matchPlayerRatings.push({
                 playerId,
                 name: getPlayerName(playerId),
-                avgRating: avg.toFixed(1),
+                avgRating: typeof avg === 'number' && !isNaN(avg) ? avg.toFixed(1) : '0.0',
                 votes: matchRatings.length,
               })
             }

@@ -1151,11 +1151,11 @@ function App() {
                   </div>
                   <div className="asc-stats">
                     <div className="asc-stat">
-                      <span className="asc-stat-value">{playerData?.winRate?.toFixed(0) || 0}%</span>
+                      <span className="asc-stat-value">{typeof playerData?.winRate === 'number' ? Math.round(playerData.winRate) : 0}%</span>
                       <span className="asc-stat-label">Win Rate</span>
                     </div>
                     <div className="asc-stat">
-                      <span className="asc-stat-value">{playerData?.avgRating?.toFixed(1) || '-'}</span>
+                      <span className="asc-stat-value">{typeof playerData?.avgRating === 'number' ? playerData.avgRating.toFixed(1) : (playerData?.avgRating || '-')}</span>
                       <span className="asc-stat-label">Rating</span>
                     </div>
                     <div className="asc-stat">

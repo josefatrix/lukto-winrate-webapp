@@ -274,10 +274,11 @@ export const useStats = () => {
 
 // Helper function
 const calculatePlayerAvgRating = (playerId, ratings) => {
-  const playerRatings = ratings[playerId]
+  const playerRatings = ratings?.[playerId]
   if (!playerRatings || playerRatings.length === 0) return null
-  const sum = playerRatings.reduce((acc, r) => acc + r.score, 0)
-  return (sum / playerRatings.length).toFixed(1)
+  const sum = playerRatings.reduce((acc, r) => acc + (typeof r.score === 'number' ? r.score : 0), 0)
+  const avg = sum / playerRatings.length
+  return typeof avg === 'number' && !isNaN(avg) ? avg.toFixed(1) : null
 }
 
 export default useStats
