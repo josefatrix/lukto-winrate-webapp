@@ -171,9 +171,11 @@ function App() {
 
   // Check if user is admin when user or adminEmails change
   useEffect(() => {
-    if (user) {
-      const isSuperAdmin = user.email === SUPER_ADMIN_EMAIL
-      const isInAdminList = adminEmails.includes(user.email)
+    if (user && user.email) {
+      const userEmail = user.email.toLowerCase()
+      const isSuperAdmin = userEmail === SUPER_ADMIN_EMAIL.toLowerCase()
+      const isInAdminList = adminEmails.some(email => email.toLowerCase() === userEmail)
+      
       if (isSuperAdmin || isInAdminList) {
         setIsAdmin(true)
         localStorage.setItem('lukto_admin', 'true')
@@ -182,13 +184,10 @@ function App() {
         setIsAdmin(false)
         localStorage.removeItem('lukto_admin')
       }
-    } else {
-      // No user logged in - check if admin was set via password (keep it)
-      // But if someone logs out, we should clear admin status
-      const savedAdmin = localStorage.getItem('lukto_admin')
-      if (!savedAdmin) {
-        setIsAdmin(false)
-      }
+    } else if (!user) {
+      // No user logged in - clear admin status
+      setIsAdmin(false)
+      localStorage.removeItem('lukto_admin')
     }
   }, [user, adminEmails])
 
@@ -1478,7 +1477,7 @@ function App() {
           </div>
 
           {/* Sección de gestión de admins - solo para super admin */}
-          {user && user.email === SUPER_ADMIN_EMAIL && (
+          {user && user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() && (
             <div className="admin-management-section">
               <h3 className="subsection-title">Gestionar Administradores</h3>
               <p className="section-subtitle">
