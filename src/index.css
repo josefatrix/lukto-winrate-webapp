@@ -241,133 +241,102 @@ body {
    Premium Header - Glassmorphism
    ============================================ */
 .header-premium {
-  padding: 0.75rem;
+  padding: 0.5rem;
   margin-bottom: 0.25rem;
-  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Hero Section with Glass Effect */
+/* Hero Section - Ultra Minimal */
 .hero-section {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
-  border-radius: 14px;
-  background: linear-gradient(135deg, 
-    rgba(16, 185, 129, 0.12) 0%, 
-    rgba(16, 185, 129, 0.04) 50%,
-    var(--bg-glass) 100%
-  );
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(16, 185, 129, 0.15);
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: var(--shadow-sm), 
-              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
 }
 
 .hero-section:hover {
-  border-color: rgba(16, 185, 129, 0.25);
-  box-shadow: var(--shadow-md), var(--shadow-glow);
-  transform: translateY(-1px);
+  border-color: var(--border-glow);
 }
 
 .hero-background {
-  position: absolute;
-  top: -80%;
-  right: -20%;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, var(--accent-green-glow) 0%, transparent 70%);
-  pointer-events: none;
-  animation: float 6s ease-in-out infinite;
-  opacity: 0.4;
+  display: none;
 }
 
 .hero-content {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  z-index: 1;
+  gap: 0.5rem;
 }
 
 .hero-logo {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgba(16, 185, 129, 0.4));
-  transition: transform 0.3s ease;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .hero-logo:hover {
-  transform: scale(1.05);
+  opacity: 0.9;
 }
 
 .hero-text {
   display: flex;
   flex-direction: column;
+  gap: 0;
 }
 
 .hero-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--text-primary);
-  line-height: 1.1;
+  line-height: 1.2;
   margin: 0;
-  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-green) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .hero-subtitle {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 400;
   margin: 0;
-  letter-spacing: 0.02em;
 }
 
-/* Quick Actions */
+/* Quick Actions - Minimal */
 .quick-actions {
   display: flex;
-  gap: 0.5rem;
-  z-index: 1;
+  gap: 0.35rem;
 }
 
 .action-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   border: 1px solid var(--border-color);
-  background: var(--bg-card);
-  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: all 0.2s ease;
 }
 
 .action-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
 }
 
 .action-btn:hover {
-  background: var(--bg-elevated);
   color: var(--text-primary);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-color: var(--text-muted);
 }
 
 .action-btn:active {
-  transform: translateY(0);
+  transform: scale(0.95);
 }
 
 .action-btn.active {
@@ -376,74 +345,63 @@ body {
   background: rgba(16, 185, 129, 0.1);
 }
 
-/* Profile Card - Premium Glass */
+/* Profile Card - Ultra Minimal */
 .profile-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.65rem 0.85rem;
+  padding: 0.5rem 0.65rem;
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 14px;
+  border-radius: 10px;
   border: 1px solid var(--border-color);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: var(--shadow-sm);
-  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s backwards;
+  transition: all 0.2s ease;
 }
 
 .profile-card:hover {
   border-color: var(--border-glow);
-  box-shadow: var(--shadow-md);
 }
 
 .profile-card-left {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.5rem;
 }
 
 .profile-avatar-btn {
   position: relative;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
   border: none;
   background: none;
   padding: 0;
   cursor: pointer;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .profile-avatar-btn img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 12px;
-  transition: transform 0.25s ease;
+  border-radius: 8px;
 }
 
 .profile-avatar-btn:hover img {
-  transform: scale(1.05);
+  opacity: 0.9;
 }
 
 .avatar-ring {
-  position: absolute;
-  inset: -2px;
-  border-radius: 14px;
-  border: 2px solid var(--accent-green);
-  pointer-events: none;
-  opacity: 0.7;
+  display: none;
 }
 
 .profile-info {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
 }
 
 .profile-name {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -453,31 +411,31 @@ body {
 .profile-player {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.3rem;
 }
 
 .player-badge {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--accent-green);
   font-weight: 500;
 }
 
-/* Rank badges in header */
+/* Rank badges - Minimal */
 .rank-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
-  padding: 0.15rem 0.4rem;
-  border-radius: 5px;
-  font-size: 0.6rem;
+  gap: 0.15rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.55rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 
 .rank-badge svg {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   flex-shrink: 0;
 }
 
@@ -530,31 +488,29 @@ body {
 .profile-card-right {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
 }
 
-/* Premium Buttons */
+/* Minimal Buttons */
 .mode-btn {
-  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.6rem;
-  border-radius: 8px;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
   border: 1px solid var(--border-color);
-  background: var(--bg-glass);
+  background: var(--bg-secondary);
   color: var(--text-secondary);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s ease;
   font-family: inherit;
-  overflow: hidden;
 }
 
 .mode-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 .mode-btn::after {
@@ -596,35 +552,32 @@ body {
 }
 
 .logout-btn {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   border: 1px solid var(--border-color);
-  background: var(--bg-glass);
+  background: var(--bg-secondary);
   color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .logout-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
 }
 
 .logout-btn:hover {
   background: rgba(239, 68, 68, 0.1);
   border-color: rgba(239, 68, 68, 0.3);
   color: #ef4444;
-  transform: translateY(-1px);
 }
 
 .logout-btn:active {
-  transform: translateY(0) scale(0.95);
+  transform: scale(0.95);
 }
 
 /* Login Card */
@@ -757,33 +710,42 @@ body {
 /* Responsive adjustments for header */
 @media (max-width: 480px) {
   .hero-section {
-    padding: 1rem;
+    padding: 0.4rem 0.6rem;
   }
   
   .hero-logo {
-    width: 48px;
-    height: 48px;
+    width: 28px;
+    height: 28px;
   }
   
   .hero-title {
-    font-size: 1.4rem;
+    font-size: 0.9rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 0.6rem;
   }
   
   .profile-card {
-    padding: 1rem;
+    padding: 0.4rem 0.5rem;
   }
   
   .profile-avatar-btn {
-    width: 48px;
-    height: 48px;
+    width: 30px;
+    height: 30px;
   }
   
   .profile-name {
-    font-size: 1rem;
+    font-size: 0.8rem;
   }
   
   .mode-btn span {
     display: none;
+  }
+  
+  .rank-badge {
+    font-size: 0.5rem;
+    padding: 0.08rem 0.25rem;
   }
 }
 
