@@ -151,6 +151,13 @@ function App() {
   const [notificationPermission, setNotificationPermission] = useState(Notification?.permission || 'default')
   const previousRatingsRef = useRef({})
   
+  // Player profile
+  const [selectedPlayerProfile, setSelectedPlayerProfile] = useState(null)
+  const [showPlayerProfile, setShowPlayerProfile] = useState(false)
+  
+  // Time filter for leaderboards
+  const [timeFilter, setTimeFilter] = useState('all') // 'all', 'month', 'week'
+  
   // Auth state
   const [user, setUser] = useState(null)
   const [userPlayer, setUserPlayer] = useState(null)
@@ -783,13 +790,208 @@ function App() {
     return { bestTeammate, worstRival }
   }
 
+  // Calculate XP for a player
+  const calculateXP = (playerId) => {
+    const playerStats = stats.find(s => s.id === playerId)
+    if (!playerStats) return 0
+    
+    let xp = 0
+    // XP por partidos jugados (10 XP cada uno)
+    xp += playerStats.played * 10
+    // XP por victorias (25 XP cada una)
+    xp += playerStats.wins * 25
+    // XP por MVPs (50 XP cada uno)
+    xp += playerStats.mvps * 50
+    // XP por rating alto (rating * 5)
+    if (playerStats.avgRating) {
+      xp += Math.round(parseFloat(playerStats.avgRating) * 5)
+    }
+    
+    return xp
+  }
+
+  // Get rank based on XP
+  const getRank = (xp) => {
+    if (xp >= 500) return { name: 'Diamante', icon: '💎', color: '#b9f2ff', tier: 4 }
+    if (xp >= 300) return { name: 'Oro', icon: '🥇', color: '#ffd700', tier: 3 }
+    if (xp >= 150) return { name: 'Plata', icon: '🥈', color: '#c0c0c0', tier: 2 }
+    if (xp >= 50) return { name: 'Bronce', icon: '🥉', color: '#cd7f32', tier: 1 }
+    return { name: 'Sin rango', icon: '⚪', color: '#666', tier: 0 }
+  }
+
+  // Get XP progress to next rank
+  const getXPProgress = (xp) => {
+    const thresholds = [0, 50, 150, 300, 500]
+    for (let i = thresholds.length - 1; i >= 0; i--) {
+      if (xp >= thresholds[i]) {
+        const current = thresholds[i]
+        const next = thresholds[i + 1] || thresholds[i]
+        const progress = next === current ? 100 : ((xp - current) / (next - current)) * 100
+        return { current, next, progress: Math.min(progress, 100) }
+      }
+    }
+    return { current: 0, next: 50, progress: (xp / 50) * 100 }
+  }
+
+  // Filter matches by time period
+  const getFilteredMatches = () => {
+    const now = new Date()
+    return matches.filter(match => {
+      const matchDate = new Date(match.date)
+      if (timeFilter === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        return matchDate >= weekAgo
+      }
+      if (timeFilter === 'month') {
+        return matchDate.getMonth() === now.getMonth() && matchDate.getFullYear() === now.getFullYear()
+      }
+      return true
+    })
+  }
+
+  // Calculate stats for filtered period
+  const calculateFilteredStats = () => {
+    const filteredMatches = getFilteredMatches()
+    const statsMap = {}
+    
+    players.forEach(player => {
+      statsMap[player.id] = { 
+        wins: 0, 
+        losses: 0, 
+        played: 0,
+        mvps: 0,
+        name: player.name,
+        aliases: player.aliases || []
+      }
+    })
+
+    filteredMatches.forEach(match => {
+      const whiteWon = match.winner === 'white'
+      const allMatchPlayers = [...match.teamWhite, ...match.teamBlack]
+      
+      // Calculate MVP for this match
+      let mvpId = null
+      let mvpRating = -1
+      
+      allMatchPlayers.forEach(playerId => {
+        const playerRatings = ratings[playerId] || []
+        const matchRatings = playerRatings.filter(r => r.matchId === match.id)
+        if (matchRatings.length > 0) {
+          const avg = matchRatings.reduce((sum, r) => sum + r.score, 0) / matchRatings.length
+          if (avg > mvpRating) {
+            mvpRating = avg
+            mvpId = playerId
+          }
+        }
+      })
+      
+      if (mvpId && statsMap[mvpId]) {
+        statsMap[mvpId].mvps++
+      }
+      
+      match.teamWhite.forEach(playerId => {
+        if (statsMap[playerId]) {
+          statsMap[playerId].played++
+          if (whiteWon) statsMap[playerId].wins++
+          else statsMap[playerId].losses++
+        }
+      })
+      
+      match.teamBlack.forEach(playerId => {
+        if (statsMap[playerId]) {
+          statsMap[playerId].played++
+          if (!whiteWon) statsMap[playerId].wins++
+          else statsMap[playerId].losses++
+        }
+      })
+    })
+
+    return Object.entries(statsMap)
+      .filter(([_, s]) => s.played > 0)
+      .map(([id, s]) => ({
+        id,
+        ...s,
+        winRate: s.played > 0 ? (s.wins / s.played) * 100 : 0,
+        avgRating: calculatePlayerAvgRating(id)
+      }))
+      .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
+  }
+
+  // Get player of the month
+  const getPlayerOfTheMonth = () => {
+    const now = new Date()
+    const monthMatches = matches.filter(m => {
+      const d = new Date(m.date)
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    })
+    
+    if (monthMatches.length === 0) return null
+    
+    const monthStats = {}
+    monthMatches.forEach(match => {
+      const whiteWon = match.winner === 'white'
+      const allPlayers = [...match.teamWhite, ...match.teamBlack]
+      
+      allPlayers.forEach(playerId => {
+        if (!monthStats[playerId]) {
+          monthStats[playerId] = { wins: 0, played: 0, mvps: 0, totalRating: 0, ratingCount: 0 }
+        }
+        monthStats[playerId].played++
+        
+        const inWhite = match.teamWhite.includes(playerId)
+        if ((inWhite && whiteWon) || (!inWhite && !whiteWon)) {
+          monthStats[playerId].wins++
+        }
+        
+        // Check MVP
+        const playerRatings = ratings[playerId] || []
+        const matchRatings = playerRatings.filter(r => r.matchId === match.id)
+        if (matchRatings.length > 0) {
+          const avg = matchRatings.reduce((sum, r) => sum + r.score, 0) / matchRatings.length
+          monthStats[playerId].totalRating += avg
+          monthStats[playerId].ratingCount++
+        }
+      })
+    })
+    
+    // Calculate score for each player (wins * 3 + avgRating)
+    let bestPlayer = null
+    let bestScore = -1
+    
+    Object.entries(monthStats).forEach(([playerId, stats]) => {
+      if (stats.played >= 2) { // Minimum 2 games
+        const avgRating = stats.ratingCount > 0 ? stats.totalRating / stats.ratingCount : 5
+        const score = (stats.wins * 3) + avgRating + (stats.played * 0.5)
+        if (score > bestScore) {
+          bestScore = score
+          bestPlayer = { 
+            id: playerId, 
+            ...stats, 
+            avgRating: avgRating.toFixed(1),
+            winRate: ((stats.wins / stats.played) * 100).toFixed(0)
+          }
+        }
+      }
+    })
+    
+    return bestPlayer
+  }
+
   // Calculate achievements/badges
   const calculateAchievements = (playerId) => {
     const achievements = []
     const streaks = calculateStreaks(playerId)
     const playerStats = stats.find(s => s.id === playerId)
+    const xp = calculateXP(playerId)
+    const rank = getRank(xp)
     
     if (!playerStats) return achievements
+
+    // Rank achievements
+    if (rank.tier >= 1) achievements.push({ icon: '🥉', name: 'Rango Bronce', desc: '50+ XP' })
+    if (rank.tier >= 2) achievements.push({ icon: '🥈', name: 'Rango Plata', desc: '150+ XP' })
+    if (rank.tier >= 3) achievements.push({ icon: '🥇', name: 'Rango Oro', desc: '300+ XP' })
+    if (rank.tier >= 4) achievements.push({ icon: '💎', name: 'Rango Diamante', desc: '500+ XP' })
 
     // Win streak achievements
     if (streaks.maxWinStreak >= 3) achievements.push({ icon: '🔥', name: 'Racha de 3', desc: '3 victorias seguidas' })
@@ -804,16 +1006,24 @@ function App() {
     // Win rate achievements
     if (playerStats.winRate >= 60 && playerStats.played >= 5) achievements.push({ icon: '📈', name: 'Ganador', desc: '60%+ win rate' })
     if (playerStats.winRate >= 75 && playerStats.played >= 5) achievements.push({ icon: '🏆', name: 'Elite', desc: '75%+ win rate' })
+    if (playerStats.winRate === 100 && playerStats.played >= 3) achievements.push({ icon: '🎯', name: 'Perfecto', desc: '100% win rate' })
 
     // Games played achievements
     if (playerStats.played >= 5) achievements.push({ icon: '🎮', name: 'Regular', desc: '5 partidos jugados' })
-    if (playerStats.played >= 10) achievements.push({ icon: '🎯', name: 'Veterano', desc: '10 partidos jugados' })
+    if (playerStats.played >= 10) achievements.push({ icon: '🎲', name: 'Veterano', desc: '10 partidos jugados' })
     if (playerStats.played >= 20) achievements.push({ icon: '🏅', name: 'Leyenda LUKTO', desc: '20 partidos jugados' })
 
     // Rating achievements
-    if (playerStats.avgRating && parseFloat(playerStats.avgRating) >= 8) {
-      achievements.push({ icon: '💎', name: 'Diamante', desc: 'Rating promedio 8+' })
+    if (playerStats.avgRating) {
+      const rating = parseFloat(playerStats.avgRating)
+      if (rating >= 7) achievements.push({ icon: '👍', name: 'Buen jugador', desc: 'Rating 7+' })
+      if (rating >= 8) achievements.push({ icon: '💪', name: 'Crack', desc: 'Rating 8+' })
+      if (rating >= 9) achievements.push({ icon: '🌈', name: 'Fenómeno', desc: 'Rating 9+' })
     }
+
+    // XP milestones
+    if (xp >= 100) achievements.push({ icon: '💯', name: 'Centenario', desc: '100+ XP' })
+    if (xp >= 250) achievements.push({ icon: '🚀', name: 'Despegue', desc: '250+ XP' })
 
     return achievements
   }
@@ -1305,60 +1515,59 @@ function App() {
         </div>
       </header>
 
-      <nav className="nav-tabs">
-        <button 
-          className={`nav-tab ${activeTab === 'stats' ? 'active' : ''}`}
-          onClick={() => setActiveTab('stats')}
-        >
-          Estadísticas
-        </button>
-        <button 
-          className={`nav-tab ${activeTab === 'ratings' ? 'active' : ''}`}
-          onClick={() => setActiveTab('ratings')}
-        >
-          Calificaciones
-        </button>
-        <button 
-          className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analytics')}
-        >
-          Análisis
-        </button>
-        <button 
-          className={`nav-tab ${activeTab === 'matches' ? 'active' : ''}`}
-          onClick={() => setActiveTab('matches')}
-        >
-          Partidos
-        </button>
-        {isAdmin && (
-          <>
-            <button 
-              className={`nav-tab ${activeTab === 'new' ? 'active' : ''}`}
-              onClick={() => setActiveTab('new')}
-            >
-              + Partido
-            </button>
-            <button 
-              className={`nav-tab ${activeTab === 'players' ? 'active' : ''}`}
-              onClick={() => setActiveTab('players')}
-            >
-              Jugadores
-            </button>
-            <button 
-              className={`nav-tab ${activeTab === 'users' ? 'active' : ''}`}
-              onClick={() => setActiveTab('users')}
-            >
-              Vincular {pendingUsers.length > 0 && <span className="badge">{pendingUsers.length}</span>}
-            </button>
-            <button 
-              className={`nav-tab ${activeTab === 'allRatings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('allRatings')}
-            >
-              Historial
-            </button>
-          </>
-        )}
-      </nav>
+      {/* Top sub-navigation for filtering */}
+      {(activeTab === 'stats' || activeTab === 'ratings') && (
+        <div className="time-filter-bar">
+          <button 
+            className={`filter-btn ${timeFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setTimeFilter('all')}
+          >
+            Todo
+          </button>
+          <button 
+            className={`filter-btn ${timeFilter === 'month' ? 'active' : ''}`}
+            onClick={() => setTimeFilter('month')}
+          >
+            Este mes
+          </button>
+          <button 
+            className={`filter-btn ${timeFilter === 'week' ? 'active' : ''}`}
+            onClick={() => setTimeFilter('week')}
+          >
+            Esta semana
+          </button>
+        </div>
+      )}
+
+      {/* Admin top tabs */}
+      {isAdmin && (
+        <nav className="admin-tabs">
+          <button 
+            className={`admin-tab ${activeTab === 'new' ? 'active' : ''}`}
+            onClick={() => setActiveTab('new')}
+          >
+            + Partido
+          </button>
+          <button 
+            className={`admin-tab ${activeTab === 'players' ? 'active' : ''}`}
+            onClick={() => setActiveTab('players')}
+          >
+            Jugadores
+          </button>
+          <button 
+            className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            Vincular {pendingUsers.length > 0 && <span className="badge">{pendingUsers.length}</span>}
+          </button>
+          <button 
+            className={`admin-tab ${activeTab === 'allRatings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('allRatings')}
+          >
+            Historial
+          </button>
+        </nav>
+      )}
 
       {activeTab === 'stats' && !dataLoaded && (
         <section className="stats-section">
@@ -1377,25 +1586,70 @@ function App() {
 
       {activeTab === 'stats' && dataLoaded && (
         <section className="stats-section">
-          <h2 className="section-title">Ranking de Jugadores</h2>
-          {stats.length > 0 ? (
+          {/* Player of the Month Card */}
+          {(() => {
+            const potm = getPlayerOfTheMonth()
+            if (!potm) return null
+            const potmPlayer = players.find(p => p.id === potm.id)
+            return (
+              <div className="potm-card">
+                <div className="potm-badge">🏆 Jugador del Mes</div>
+                <div className="potm-content">
+                  {getPlayerPhoto(potm.id) ? (
+                    <img src={getPlayerPhoto(potm.id)} alt="" className="potm-avatar" />
+                  ) : (
+                    <div className="potm-avatar-placeholder">
+                      {getInitials(potmPlayer?.name || '')}
+                    </div>
+                  )}
+                  <div className="potm-info">
+                    <h3>{potmPlayer?.name}</h3>
+                    <div className="potm-stats">
+                      <span>{potm.wins}V - {potm.played - potm.wins}D</span>
+                      <span>{potm.winRate}%</span>
+                      <span>⭐ {potm.avgRating}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+
+          <h2 className="section-title">
+            {timeFilter === 'all' ? 'Ranking General' : 
+             timeFilter === 'month' ? 'Ranking del Mes' : 'Ranking de la Semana'}
+          </h2>
+          
+          {(() => {
+            const displayStats = timeFilter === 'all' ? stats : calculateFilteredStats()
+            return displayStats.length > 0 ? (
             <table className="stats-table">
               <thead>
                 <tr>
                   <th>#</th>
                   <th>Jugador</th>
+                  <th>Rango</th>
                   <th>Win Rate</th>
                   <th></th>
                   <th>V</th>
                   <th>D</th>
-                  <th>PJ</th>
                   <th>MVP</th>
-                  <th>Rating</th>
+                  <th>XP</th>
                 </tr>
               </thead>
               <tbody>
-                {stats.map((player, index) => (
-                  <tr key={player.id}>
+                {displayStats.map((player, index) => {
+                  const xp = calculateXP(player.id)
+                  const rank = getRank(xp)
+                  return (
+                  <tr 
+                    key={player.id} 
+                    onClick={() => {
+                      setSelectedPlayerProfile(player.id)
+                      setShowPlayerProfile(true)
+                    }}
+                    className="clickable-row"
+                  >
                     <td>
                       <span className={`rank rank-${index + 1}`}>
                         {index + 1}
@@ -1414,6 +1668,11 @@ function App() {
                       </div>
                     </td>
                     <td>
+                      <span className="rank-badge" style={{ color: rank.color }}>
+                        {rank.icon}
+                      </span>
+                    </td>
+                    <td>
                       <span className={`win-rate ${getWinRateClass(player.winRate)}`}>
                         {player.winRate.toFixed(0)}%
                       </span>
@@ -1428,32 +1687,25 @@ function App() {
                     </td>
                     <td><span className="stat-value wins">{player.wins}</span></td>
                     <td><span className="stat-value losses">{player.losses}</span></td>
-                    <td><span className="stat-value">{player.played}</span></td>
                     <td>
                       <span className={`mvp-count ${player.mvps > 0 ? 'has-mvps' : ''}`}>
                         {player.mvps > 0 ? player.mvps : '-'}
                       </span>
                     </td>
                     <td>
-                      {player.avgRating ? (
-                        <span className={`rating-value ${getRatingClass(parseFloat(player.avgRating))}`}>
-                          {player.avgRating}
-                        </span>
-                      ) : (
-                        <span className="no-rating">-</span>
-                      )}
+                      <span className="xp-value">{xp}</span>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           ) : (
             <div className="empty-state">
               <div className="icon">—</div>
               <h3>Sin estadísticas</h3>
-              <p>Agrega partidos para ver las estadísticas</p>
+              <p>{timeFilter !== 'all' ? 'No hay partidos en este período' : 'Agrega partidos para ver las estadísticas'}</p>
             </div>
-          )}
+          )})()}
         </section>
       )}
 
@@ -2573,6 +2825,183 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Player Profile Modal */}
+      {showPlayerProfile && selectedPlayerProfile && (() => {
+        const player = players.find(p => p.id === selectedPlayerProfile)
+        const playerStats = stats.find(s => s.id === selectedPlayerProfile)
+        const xp = calculateXP(selectedPlayerProfile)
+        const rank = getRank(xp)
+        const xpProgress = getXPProgress(xp)
+        const achievements = calculateAchievements(selectedPlayerProfile)
+        const streaks = calculateStreaks(selectedPlayerProfile)
+        const { bestTeammate, worstRival } = calculateTeammateRivalStats(selectedPlayerProfile)
+        
+        return (
+          <div className="modal-overlay" onClick={() => setShowPlayerProfile(false)}>
+            <div className="modal profile-modal" onClick={e => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setShowPlayerProfile(false)}>×</button>
+              
+              {/* Profile Header */}
+              <div className="profile-header">
+                {getPlayerPhoto(selectedPlayerProfile) ? (
+                  <img src={getPlayerPhoto(selectedPlayerProfile)} alt="" className="profile-avatar" />
+                ) : (
+                  <div className="profile-avatar-placeholder">
+                    {getInitials(player?.name || '')}
+                  </div>
+                )}
+                <h2>{player?.name}</h2>
+                <div className="profile-rank" style={{ color: rank.color }}>
+                  {rank.icon} {rank.name}
+                </div>
+              </div>
+              
+              {/* XP Progress */}
+              <div className="xp-progress-card">
+                <div className="xp-header">
+                  <span className="xp-total">{xp} XP</span>
+                  <span className="xp-next">Siguiente: {xpProgress.next} XP</span>
+                </div>
+                <div className="xp-bar">
+                  <div className="xp-fill" style={{ width: `${xpProgress.progress}%` }}></div>
+                </div>
+              </div>
+              
+              {/* Stats Grid */}
+              <div className="profile-stats-grid">
+                <div className="profile-stat">
+                  <span className="stat-number wins">{playerStats?.wins || 0}</span>
+                  <span className="stat-label">Victorias</span>
+                </div>
+                <div className="profile-stat">
+                  <span className="stat-number losses">{playerStats?.losses || 0}</span>
+                  <span className="stat-label">Derrotas</span>
+                </div>
+                <div className="profile-stat">
+                  <span className="stat-number">{playerStats?.winRate?.toFixed(0) || 0}%</span>
+                  <span className="stat-label">Win Rate</span>
+                </div>
+                <div className="profile-stat">
+                  <span className="stat-number">{playerStats?.mvps || 0}</span>
+                  <span className="stat-label">MVPs</span>
+                </div>
+                <div className="profile-stat">
+                  <span className="stat-number">{playerStats?.avgRating || '-'}</span>
+                  <span className="stat-label">Rating</span>
+                </div>
+                <div className="profile-stat">
+                  <span className="stat-number">{playerStats?.played || 0}</span>
+                  <span className="stat-label">Partidos</span>
+                </div>
+              </div>
+              
+              {/* Streaks */}
+              <div className="profile-section">
+                <h4>Rachas</h4>
+                <div className="profile-streaks">
+                  <div className={`streak-badge ${streaks.streakType}`}>
+                    Actual: {streaks.currentStreak} {streaks.streakType === 'win' ? 'V' : 'D'}
+                  </div>
+                  <div className="streak-badge win">Mejor: {streaks.maxWinStreak}V</div>
+                </div>
+              </div>
+              
+              {/* Teammate/Rival */}
+              <div className="profile-section">
+                <h4>Compañeros y Rivales</h4>
+                <div className="profile-tr-grid">
+                  <div className="profile-tr best">
+                    <span className="tr-icon">🤝</span>
+                    <span className="tr-title">Mejor compañero</span>
+                    <span className="tr-value">{bestTeammate ? getPlayerName(bestTeammate.id) : '—'}</span>
+                    {bestTeammate && <span className="tr-rate">{bestTeammate.winRate}% juntos</span>}
+                  </div>
+                  <div className="profile-tr worst">
+                    <span className="tr-icon">⚔️</span>
+                    <span className="tr-title">Peor rival</span>
+                    <span className="tr-value">{worstRival ? getPlayerName(worstRival.id) : '—'}</span>
+                    {worstRival && <span className="tr-rate">{worstRival.winRate}% contra él</span>}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Achievements */}
+              <div className="profile-section">
+                <h4>Logros ({achievements.length})</h4>
+                <div className="profile-achievements">
+                  {achievements.length > 0 ? (
+                    achievements.slice(0, 8).map((a, i) => (
+                      <div key={i} className="mini-achievement" title={a.desc}>
+                        <span>{a.icon}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="no-data">Juega más para desbloquear logros</p>
+                  )}
+                  {achievements.length > 8 && (
+                    <div className="mini-achievement more">+{achievements.length - 8}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Bottom Navigation */}
+      <nav className="bottom-nav">
+        <button 
+          className={`bottom-nav-item ${activeTab === 'stats' ? 'active' : ''}`}
+          onClick={() => setActiveTab('stats')}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 13h2v8H3v-8zm4-6h2v14H7V7zm4-4h2v18h-2V3zm4 8h2v10h-2V11zm4-4h2v14h-2V7z"/>
+          </svg>
+          <span>Ranking</span>
+        </button>
+        <button 
+          className={`bottom-nav-item ${activeTab === 'ratings' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ratings')}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+          </svg>
+          <span>Rating</span>
+        </button>
+        <button 
+          className={`bottom-nav-item ${activeTab === 'matches' ? 'active' : ''}`}
+          onClick={() => setActiveTab('matches')}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          <span>Partidos</span>
+        </button>
+        <button 
+          className={`bottom-nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('analytics')}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+          </svg>
+          <span>Análisis</span>
+        </button>
+        {userPlayer && (
+          <button 
+            className={`bottom-nav-item ${showPlayerProfile && selectedPlayerProfile === userPlayer ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedPlayerProfile(userPlayer)
+              setShowPlayerProfile(true)
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+            <span>Perfil</span>
+          </button>
+        )}
+      </nav>
 
       {/* Toast Notification */}
       {toast && (
