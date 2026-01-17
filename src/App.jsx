@@ -112,6 +112,107 @@ const getXPProgress = xp => {
   return { current: 0, next: 50, progress: (xp / 50) * 100 }
 }
 
+// ============ PLAYER PROFILE MODAL ============
+
+function PlayerProfileModal({ 
+  show, 
+  playerId, 
+  onClose, 
+  players, 
+  stats, 
+  ratings, 
+  calculateXP, 
+  getRank, 
+  getPlayerPhoto, 
+  getInitials, 
+  getPlayerName, 
+  getRatingClass 
+}) {
+  if (!show || !playerId) return null
+
+  const player = players?.find(p => p.id === playerId)
+  const playerStats = stats?.find(s => s.id === playerId) || {}
+  const xp = calculateXP ? calculateXP(playerId) : 0
+  const rank = getRank ? getRank(xp) : { name: 'Bronce', color: '#CD7F32' }
+  const playerRatingsList = ratings?.[playerId] || []
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal profile-modal-simple" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Perfil</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        
+        {!player ? (
+          <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+            Jugador no encontrado
+          </p>
+        ) : (
+          <div className="profile-simple-content">
+            <div className="profile-simple-header">
+              {getPlayerPhoto && getPlayerPhoto(playerId) ? (
+                <img src={getPlayerPhoto(playerId)} alt="" className="profile-simple-avatar" />
+              ) : (
+                <div className="profile-simple-avatar-placeholder">
+                  {getInitials ? getInitials(player.name) : player.name?.charAt(0)}
+                </div>
+              )}
+              <div className="profile-simple-info">
+                <h3>{player.name}</h3>
+                <span className="profile-simple-rank" style={{ color: rank?.color || '#CD7F32' }}>
+                  {rank?.name || 'Bronce'}
+                </span>
+              </div>
+            </div>
+
+            <div className="profile-simple-stats">
+              <div className="pss-item">
+                <span className="pss-value">{playerStats.played || 0}</span>
+                <span className="pss-label">Partidos</span>
+              </div>
+              <div className="pss-item">
+                <span className="pss-value win">{playerStats.wins || 0}</span>
+                <span className="pss-label">Victorias</span>
+              </div>
+              <div className="pss-item">
+                <span className="pss-value loss">{playerStats.losses || 0}</span>
+                <span className="pss-label">Derrotas</span>
+              </div>
+              <div className="pss-item">
+                <span className="pss-value">{playerStats.winRate?.toFixed(0) || 0}%</span>
+                <span className="pss-label">Win Rate</span>
+              </div>
+              <div className="pss-item">
+                <span className="pss-value">{playerStats.avgRating?.toFixed(1) || '-'}</span>
+                <span className="pss-label">Rating</span>
+              </div>
+              <div className="pss-item">
+                <span className="pss-value">{playerStats.mvps || 0}</span>
+                <span className="pss-label">MVPs</span>
+              </div>
+            </div>
+
+            {playerRatingsList.length > 0 && (
+              <div className="profile-simple-ratings">
+                <h4>Últimas Calificaciones</h4>
+                <div className="psr-list">
+                  {playerRatingsList.slice(-5).reverse().map((r, idx) => (
+                    <div key={idx} className="psr-item">
+                      <span className="psr-from">{getPlayerName ? getPlayerName(r.ratedBy) : r.ratedBy}</span>
+                      <span className={`psr-score ${getRatingClass ? getRatingClass(r.score) : ''}`}>{r.score}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ============ PENDING USER CARD ============
 
 function PendingUserCard({ pending, players, linkingUser, onLink, onDelete }) {
@@ -1716,93 +1817,21 @@ function App() {
       {/* Admin Login Modal */}
       {showLoginModal && <AdminLoginModal onClose={() => setShowLoginModal(false)} />}
 
-      {/* Player Profile Modal - Simple Version */}
-      {showPlayerProfile && selectedPlayerProfile && (() => {
-        const player = players?.find(p => p.id === selectedPlayerProfile)
-        const playerStats = stats?.find(s => s.id === selectedPlayerProfile) || {}
-        const xp = calculateXP?.(selectedPlayerProfile) || 0
-        const rank = getRank?.(xp) || { name: 'Bronce', color: '#CD7F32', key: 'bronce' }
-        const playerRatingsList = ratings?.[selectedPlayerProfile] || []
-
-        return (
-          <div className="modal-overlay" onClick={() => setShowPlayerProfile(false)}>
-            <div className="modal profile-modal-simple" onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>Perfil</h2>
-                <button className="modal-close" onClick={() => setShowPlayerProfile(false)}>×</button>
-              </div>
-              
-              {!player ? (
-                <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                  Jugador no encontrado
-                </p>
-              ) : (
-                <div className="profile-simple-content">
-                  {/* Avatar & Name */}
-                  <div className="profile-simple-header">
-                    {getPlayerPhoto(selectedPlayerProfile) ? (
-                      <img src={getPlayerPhoto(selectedPlayerProfile)} alt="" className="profile-simple-avatar" />
-                    ) : (
-                      <div className="profile-simple-avatar-placeholder">
-                        {getInitials(player.name)}
-                      </div>
-                    )}
-                    <div className="profile-simple-info">
-                      <h3>{player.name}</h3>
-                      <span className="profile-simple-rank" style={{ color: rank.color }}>
-                        {rank.name}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Stats Grid */}
-                  <div className="profile-simple-stats">
-                    <div className="pss-item">
-                      <span className="pss-value">{playerStats.played || 0}</span>
-                      <span className="pss-label">Partidos</span>
-                    </div>
-                    <div className="pss-item">
-                      <span className="pss-value win">{playerStats.wins || 0}</span>
-                      <span className="pss-label">Victorias</span>
-                    </div>
-                    <div className="pss-item">
-                      <span className="pss-value loss">{playerStats.losses || 0}</span>
-                      <span className="pss-label">Derrotas</span>
-                    </div>
-                    <div className="pss-item">
-                      <span className="pss-value">{playerStats.winRate?.toFixed(0) || 0}%</span>
-                      <span className="pss-label">Win Rate</span>
-                    </div>
-                    <div className="pss-item">
-                      <span className="pss-value">{playerStats.avgRating?.toFixed(1) || '-'}</span>
-                      <span className="pss-label">Rating</span>
-                    </div>
-                    <div className="pss-item">
-                      <span className="pss-value">{playerStats.mvps || 0}</span>
-                      <span className="pss-label">MVPs</span>
-                    </div>
-                  </div>
-
-                  {/* Recent Ratings */}
-                  {playerRatingsList.length > 0 && (
-                    <div className="profile-simple-ratings">
-                      <h4>Últimas Calificaciones</h4>
-                      <div className="psr-list">
-                        {playerRatingsList.slice(-5).reverse().map((r, idx) => (
-                          <div key={idx} className="psr-item">
-                            <span className="psr-from">{getPlayerName(r.ratedBy)}</span>
-                            <span className={`psr-score ${getRatingClass(r.score)}`}>{r.score}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })()}
+      {/* Player Profile Modal */}
+      <PlayerProfileModal 
+        show={showPlayerProfile}
+        playerId={selectedPlayerProfile}
+        onClose={() => setShowPlayerProfile(false)}
+        players={players}
+        stats={stats}
+        ratings={ratings}
+        calculateXP={calculateXP}
+        getRank={getRank}
+        getPlayerPhoto={getPlayerPhoto}
+        getInitials={getInitials}
+        getPlayerName={getPlayerName}
+        getRatingClass={getRatingClass}
+      />
 
       {/* Player Add/Edit Modal */}
       {showPlayerModal && (
