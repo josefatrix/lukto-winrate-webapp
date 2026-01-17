@@ -25,6 +25,11 @@
   box-sizing: border-box;
 }
 
+/* iOS-like transitions */
+*, *::before, *::after {
+  transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   background: var(--bg-primary);
@@ -83,7 +88,9 @@ body {
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), 
+              box-shadow 0.3s cubic-bezier(0.25, 0.1, 0.25, 1),
+              background 0.2s ease;
   border: none;
 }
 
@@ -572,6 +579,76 @@ body {
   font-weight: 600;
   color: var(--text-muted);
   font-size: 0.9rem;
+}
+
+/* Match Leaderboard */
+.match-leaderboard {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.leaderboard-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.leaderboard-items {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.leaderboard-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-card);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.leaderboard-position {
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.leaderboard-position.gold {
+  background: linear-gradient(135deg, #ffd60a, #ffb800);
+  color: #000;
+}
+
+.leaderboard-position.silver {
+  background: linear-gradient(135deg, #d1d1d6, #a1a1a6);
+  color: #000;
+}
+
+.leaderboard-position.bronze {
+  background: linear-gradient(135deg, #cd7f32, #a86428);
+  color: #fff;
+}
+
+.leaderboard-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.leaderboard-score {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-green);
+  margin-left: auto;
 }
 
 /* Form Styles */

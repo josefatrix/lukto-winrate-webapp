@@ -68,7 +68,7 @@ function PendingUserCard({ pending, players, linkingUser, onLink }) {
   const [selectedPlayer, setSelectedPlayer] = useState('')
   
   const handleLink = () => {
-    console.log('👆 Click vincular:', selectedPlayer)
+    console.log('Click vincular:', selectedPlayer)
     if (selectedPlayer && selectedPlayer !== '') {
       onLink(pending.odedBy, selectedPlayer)
     } else {
@@ -366,7 +366,7 @@ function App() {
 
   // Admin function to link a user to a player
   const adminLinkUserToPlayer = async (userId, playerId) => {
-    console.log('🔗 Vinculando:', { userId, playerId })
+    console.log('Vinculando:', { userId, playerId })
     
     if (!isAdmin) {
       alert('No tienes permisos de admin')
@@ -399,14 +399,14 @@ function App() {
         linkedAt: new Date().toISOString()
       })
       
-      console.log('✅ Vinculado a', playerToLink.name)
+      console.log('Vinculado a', playerToLink.name)
       
       // Force refresh after 1 second
       setTimeout(() => {
         window.location.reload()
       }, 1000)
     } catch (error) {
-      console.error('❌ Error:', error)
+      console.error('Error:', error)
       alert('Error: ' + error.message)
     } finally {
       setLinkingUser(null)
@@ -635,15 +635,15 @@ function App() {
     try {
       if (editingPlayerId) {
         await updateDoc(doc(db, 'players', editingPlayerId), playerData)
-        console.log('✅ Jugador actualizado')
+        console.log('Jugador actualizado')
       } else {
         const newPlayerId = Date.now().toString()
         await setDoc(doc(db, 'players', newPlayerId), playerData)
-        console.log('✅ Jugador creado:', newPlayerId)
+        console.log('Jugador creado:', newPlayerId)
       }
       closePlayerModal()
     } catch (error) {
-      console.error('❌ Error:', error)
+      console.error('Error:', error)
       alert('Error al guardar: ' + error.message)
     }
   }
@@ -749,7 +749,7 @@ function App() {
     })
     
     await batch.commit()
-    alert('✅ Calificaciones guardadas')
+    alert('Calificaciones guardadas')
     setShowRatingModal(false)
     setSelectedMatch(null)
     setCurrentRatings({})
@@ -839,7 +839,7 @@ function App() {
         <div className="admin-toggle">
           {isAdmin ? (
             <button className="admin-btn active" onClick={handleAdminLogout}>
-              😈 Modo Admin
+              Modo Admin
             </button>
           ) : (
             <button className="admin-btn" onClick={() => setShowLoginModal(true)}>
@@ -854,19 +854,19 @@ function App() {
           className={`nav-tab ${activeTab === 'stats' ? 'active' : ''}`}
           onClick={() => setActiveTab('stats')}
         >
-          📊 Estadísticas
+          Estadísticas
         </button>
         <button 
           className={`nav-tab ${activeTab === 'ratings' ? 'active' : ''}`}
           onClick={() => setActiveTab('ratings')}
         >
-          ⭐ Calificaciones
+          Calificaciones
         </button>
         <button 
           className={`nav-tab ${activeTab === 'matches' ? 'active' : ''}`}
           onClick={() => setActiveTab('matches')}
         >
-          ⚽ Partidos
+          Partidos
         </button>
         {isAdmin && (
           <>
@@ -874,25 +874,25 @@ function App() {
               className={`nav-tab ${activeTab === 'new' ? 'active' : ''}`}
               onClick={() => setActiveTab('new')}
             >
-              ➕ Nuevo Partido
+              + Partido
             </button>
             <button 
               className={`nav-tab ${activeTab === 'players' ? 'active' : ''}`}
               onClick={() => setActiveTab('players')}
             >
-              👥 Jugadores
+              Jugadores
             </button>
             <button 
               className={`nav-tab ${activeTab === 'users' ? 'active' : ''}`}
               onClick={() => setActiveTab('users')}
             >
-              🔗 Vincular Usuarios {pendingUsers.length > 0 && <span className="badge">{pendingUsers.length}</span>}
+              Vincular {pendingUsers.length > 0 && <span className="badge">{pendingUsers.length}</span>}
             </button>
             <button 
               className={`nav-tab ${activeTab === 'allRatings' ? 'active' : ''}`}
               onClick={() => setActiveTab('allRatings')}
             >
-              📋 Ver Calificaciones
+              Historial
             </button>
           </>
         )}
@@ -912,7 +912,7 @@ function App() {
                   <th>V</th>
                   <th>D</th>
                   <th>PJ</th>
-                  <th>⭐ Rating</th>
+                  <th>Rating</th>
                 </tr>
               </thead>
               <tbody>
@@ -950,7 +950,7 @@ function App() {
                     <td>
                       {player.avgRating ? (
                         <span className={`rating-value ${getRatingClass(parseFloat(player.avgRating))}`}>
-                          ⭐ {player.avgRating}
+                          {player.avgRating}
                         </span>
                       ) : (
                         <span className="no-rating">-</span>
@@ -962,7 +962,7 @@ function App() {
             </table>
           ) : (
             <div className="empty-state">
-              <div className="icon">📊</div>
+              <div className="icon">—</div>
               <h3>Sin estadísticas</h3>
               <p>Agrega partidos para ver las estadísticas</p>
             </div>
@@ -1019,7 +1019,7 @@ function App() {
                         </div>
                         <span className="accordion-player-name">{player.name}</span>
                         <span className={`rating-value ${getRatingClass(parseFloat(player.avgRating))}`}>
-                          ⭐ {player.avgRating}
+                          {player.avgRating}
                         </span>
                         <span className="stat-value votes-count">{playerRatings.length} votos</span>
                         <span className={`expand-icon ${isExpanded ? 'rotated' : ''}`}>▼</span>
@@ -1057,7 +1057,7 @@ function App() {
                                         </td>
                                         <td>
                                           <span className={`rating-value ${getRatingClass(parseFloat(matchAvg))}`}>
-                                            ⭐ {matchAvg}
+                                            {matchAvg}
                                           </span>
                                         </td>
                                         <td>
@@ -1079,7 +1079,7 @@ function App() {
             </div>
           ) : (
             <div className="empty-state">
-              <div className="icon">⭐</div>
+              <div className="icon">—</div>
               <h3>Sin calificaciones aún</h3>
               <p>Ve a la pestaña de Partidos y califica a tus compañeros</p>
             </div>
@@ -1091,76 +1091,115 @@ function App() {
         <section className="stats-section">
           <h2 className="section-title">Historial de Partidos</h2>
           {matches.length > 0 ? (
-            [...matches].reverse().map(match => (
-              <div key={match.id} className="match-card">
-                <div className="match-header">
-                  <div>
-                    <div className="match-date">{formatDate(match.date)}</div>
-                    <div className="match-venue">{match.venue}</div>
-                  </div>
-                  <div className="match-actions">
-                    {user && userPlayer && (
-                      <button 
-                        className="rate-match-btn"
-                        onClick={() => openRatingModal(match)}
-                      >
-                        ⭐ Calificar
-                      </button>
-                    )}
-                    {isAdmin && (
-                      <>
+            [...matches].reverse().map(match => {
+              // Calculate top 3 rated players for this match
+              const matchPlayerRatings = []
+              const allMatchPlayers = [...match.teamWhite, ...match.teamBlack]
+              allMatchPlayers.forEach(playerId => {
+                const playerRatings = ratings[playerId] || []
+                const matchRatings = playerRatings.filter(r => r.matchId === match.id)
+                if (matchRatings.length > 0) {
+                  const avg = matchRatings.reduce((sum, r) => sum + r.score, 0) / matchRatings.length
+                  matchPlayerRatings.push({
+                    playerId,
+                    name: getPlayerName(playerId),
+                    avgRating: avg.toFixed(1),
+                    votes: matchRatings.length
+                  })
+                }
+              })
+              const top3 = matchPlayerRatings
+                .sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating))
+                .slice(0, 3)
+              
+              return (
+                <div key={match.id} className="match-card">
+                  <div className="match-header">
+                    <div>
+                      <div className="match-date">{formatDate(match.date)}</div>
+                      <div className="match-venue">{match.venue}</div>
+                    </div>
+                    <div className="match-actions">
+                      {user && userPlayer && (
                         <button 
-                          className="edit-match-btn"
-                          onClick={() => openEditMatch(match)}
+                          className="rate-match-btn"
+                          onClick={() => openRatingModal(match)}
                         >
-                          ✏️ Editar
+                          Calificar
                         </button>
-                        <button 
-                          className="delete-match-btn"
-                          onClick={() => handleDeleteMatch(match.id)}
-                        >
-                          🗑️
-                        </button>
-                      </>
-                    )}
+                      )}
+                      {isAdmin && (
+                        <>
+                          <button 
+                            className="edit-match-btn"
+                            onClick={() => openEditMatch(match)}
+                          >
+                            Editar
+                          </button>
+                          <button 
+                            className="delete-match-btn"
+                            onClick={() => handleDeleteMatch(match.id)}
+                          >
+                            ×
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
+                  <div className="match-teams">
+                    <div className={`match-team ${match.winner === 'white' ? 'winner' : ''}`}>
+                      <div className="match-team-header">
+                        <span className="team-badge white"></span>
+                        Equipo Blanco
+                        {match.winner === 'white' && ' · Ganador'}
+                      </div>
+                      <div className="match-team-players">
+                        {match.teamWhite.map(id => (
+                          <span key={id} className="match-player-tag">
+                            {getPlayerName(id)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="vs-badge">VS</div>
+                    <div className={`match-team ${match.winner === 'black' ? 'winner' : ''}`}>
+                      <div className="match-team-header">
+                        <span className="team-badge black"></span>
+                        Equipo Negro
+                        {match.winner === 'black' && ' · Ganador'}
+                      </div>
+                      <div className="match-team-players">
+                        {match.teamBlack.map(id => (
+                          <span key={id} className="match-player-tag">
+                            {getPlayerName(id)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {top3.length > 0 && (
+                    <div className="match-leaderboard">
+                      <div className="leaderboard-title">Top del partido</div>
+                      <div className="leaderboard-items">
+                        {top3.map((player, idx) => (
+                          <div key={player.playerId} className="leaderboard-item">
+                            <span className={`leaderboard-position ${idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'}`}>
+                              {idx + 1}
+                            </span>
+                            <span className="leaderboard-name">{player.name}</span>
+                            <span className="leaderboard-score">{player.avgRating}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="match-teams">
-                  <div className={`match-team ${match.winner === 'white' ? 'winner' : ''}`}>
-                    <div className="match-team-header">
-                      <span className="team-badge white"></span>
-                      Equipo Blanco
-                      {match.winner === 'white' && ' 🏆'}
-                    </div>
-                    <div className="match-team-players">
-                      {match.teamWhite.map(id => (
-                        <span key={id} className="match-player-tag">
-                          {getPlayerName(id)}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="vs-badge">VS</div>
-                  <div className={`match-team ${match.winner === 'black' ? 'winner' : ''}`}>
-                    <div className="match-team-header">
-                      <span className="team-badge black"></span>
-                      Equipo Negro
-                      {match.winner === 'black' && ' 🏆'}
-                    </div>
-                    <div className="match-team-players">
-                      {match.teamBlack.map(id => (
-                        <span key={id} className="match-player-tag">
-                          {getPlayerName(id)}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
+              )
+            })
           ) : (
             <div className="empty-state">
-              <div className="icon">⚽</div>
+              <div className="icon">—</div>
               <h3>Sin partidos</h3>
               <p>Agrega tu primer partido</p>
             </div>
@@ -1303,7 +1342,7 @@ function App() {
                     }}
                     title="Editar jugador"
                   >
-                    ✏️
+                    Editar
                   </button>
                   <button 
                     className="delete-player-btn"
@@ -1319,7 +1358,7 @@ function App() {
               </div>
             ))}
             <div className="add-player-card" onClick={() => { setEditingPlayerId(null); setShowPlayerModal(true); }}>
-              <span style={{ fontSize: '1.5rem' }}>➕</span>
+              <span style={{ fontSize: '1.2rem', fontWeight: '300' }}>+</span>
               Agregar Jugador
             </div>
           </div>
@@ -1335,7 +1374,7 @@ function App() {
           
           {pendingUsers.length > 0 && (
             <div className="pending-users-section">
-              <h3 className="subsection-title">⏳ Usuarios Pendientes ({pendingUsers.length})</h3>
+              <h3 className="subsection-title">Usuarios Pendientes ({pendingUsers.length})</h3>
               <div className="user-links-list">
                 {pendingUsers.map(pending => (
                   <PendingUserCard 
@@ -1351,7 +1390,7 @@ function App() {
           )}
 
           <div className="linked-users-section">
-            <h3 className="subsection-title">✅ Usuarios Vinculados</h3>
+            <h3 className="subsection-title">Usuarios Vinculados</h3>
             <div className="user-links-list">
               {Object.entries(userLinks).filter(([_, data]) => data.playerId).length > 0 ? (
                 Object.entries(userLinks)
@@ -1387,7 +1426,7 @@ function App() {
           {/* Sección de gestión de admins - solo para super admin */}
           {user && user.email === SUPER_ADMIN_EMAIL && (
             <div className="admin-management-section">
-              <h3 className="subsection-title">👑 Gestionar Administradores</h3>
+              <h3 className="subsection-title">Gestionar Administradores</h3>
               <p className="section-subtitle">
                 Los admins pueden vincular usuarios y editar partidos
               </p>
@@ -1401,7 +1440,7 @@ function App() {
                   className="admin-email-input"
                 />
                 <button onClick={handleAddAdmin} className="add-admin-btn">
-                  ➕ Agregar Admin
+                  + Agregar
                 </button>
               </div>
 
@@ -1412,7 +1451,7 @@ function App() {
                 </div>
                 {adminEmails.map(email => (
                   <div key={email} className="admin-item">
-                    <span>😈 {email}</span>
+                    <span>{email}</span>
                     <button 
                       onClick={() => handleRemoveAdmin(email)}
                       className="remove-admin-btn"
@@ -1430,7 +1469,7 @@ function App() {
       {/* All Ratings Tab - Admin only */}
       {activeTab === 'allRatings' && isAdmin && (
         <section className="stats-section">
-          <h2 className="section-title">📋 Todas las Calificaciones</h2>
+          <h2 className="section-title">Historial de Calificaciones</h2>
           <p className="section-subtitle">
             Detalle de quién calificó a quién en cada partido
           </p>
@@ -1501,7 +1540,7 @@ function App() {
                             {Object.entries(ratingsByRater).map(([raterId, data]) => (
                               <div key={raterId} className="rater-section">
                                 <div className="rater-header">
-                                  <span className="rater-name">📝 {data.raterDisplayName || data.raterName}</span>
+                                  <span className="rater-name">{data.raterDisplayName || data.raterName}</span>
                                   <span className="rater-email">({data.raterEmail})</span>
                                   <span className="rater-action"> calificó:</span>
                                 </div>
@@ -1510,7 +1549,7 @@ function App() {
                                     <div key={idx} className="rating-detail">
                                       <span className="rated-player">{r.ratedPlayerName}</span>
                                       <span className={`rating-score ${getRatingClass(r.score)}`}>
-                                        ⭐ {r.score}
+                                        {r.score}
                                       </span>
                                     </div>
                                   ))}
@@ -1521,7 +1560,7 @@ function App() {
                           <div className="match-average">
                             <span className="match-average-label">Promedio del partido:</span>
                             <span className={`match-average-value ${getRatingClass(parseFloat(matchAvg))}`}>
-                              ⭐ {matchAvg}
+                              {matchAvg}
                             </span>
                           </div>
                         </>
@@ -1538,7 +1577,7 @@ function App() {
                   <div className="total-average-section">
                     <div className="total-average-label">Promedio Total de Todas las Calificaciones</div>
                     <div className={`total-average-value ${getRatingClass(parseFloat(totalAverage))}`}>
-                      ⭐ {totalAverage}
+                      {totalAverage}
                     </div>
                   </div>
                 )}
@@ -1557,7 +1596,7 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowLoginModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>🔐 Acceso Admin</h2>
+              <h2>Acceso Admin</h2>
               <button className="modal-close" onClick={() => setShowLoginModal(false)}>×</button>
             </div>
             <div className="form-group">
@@ -1608,7 +1647,7 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowRatingModal(false)}>
           <div className="modal rating-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>⭐ {hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'} Jugadores</h2>
+              <h2>{hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'} Jugadores</h2>
               <button className="modal-close" onClick={() => setShowRatingModal(false)}>×</button>
             </div>
             <p className="modal-subtitle">
@@ -1668,7 +1707,7 @@ function App() {
         <div className="modal-overlay" onClick={closePlayerModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingPlayerId ? '✏️ Editar Jugador' : '➕ Nuevo Jugador'}</h2>
+              <h2>{editingPlayerId ? 'Editar Jugador' : 'Nuevo Jugador'}</h2>
               <button className="modal-close" onClick={closePlayerModal}>×</button>
             </div>
             <div className="form-group">
