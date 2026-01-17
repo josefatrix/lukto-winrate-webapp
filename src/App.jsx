@@ -129,6 +129,7 @@ function App() {
   const [showLinkPlayerModal, setShowLinkPlayerModal] = useState(false)
   const [userLinks, setUserLinks] = useState({}) // {odedBy: { odedBy, userName, userPhoto, playerId }}
   const [pendingUsers, setPendingUsers] = useState([]) // Users waiting to be linked
+  const [userLinksLoaded, setUserLinksLoaded] = useState(false) // Track if initial load is complete
   
   // Admin mode - carga desde localStorage
   const [isAdmin, setIsAdmin] = useState(() => {
@@ -225,6 +226,7 @@ function App() {
       
       setUserLinks(links)
       setPendingUsers(pending)
+      setUserLinksLoaded(true) // Mark that initial load is complete
       
       // Check if current user is linked - this updates in real-time when admin links them
       if (user) {
@@ -243,6 +245,7 @@ function App() {
       }
     }, (error) => {
       console.error('Error loading user links:', error)
+      setUserLinksLoaded(true) // Mark loaded even on error
     })
 
     return () => unsubLinks()
@@ -1674,8 +1677,8 @@ function App() {
         </div>
       )}
 
-      {/* Pending User Modal - shown when user is not linked */}
-      {user && !userPlayer && !isAdmin && (
+      {/* Pending User Modal - shown when user is not linked and data has loaded */}
+      {user && !userPlayer && !isAdmin && userLinksLoaded && (
         <div className="modal-overlay">
           <div className="modal pending-modal">
             <div className="pending-content">
