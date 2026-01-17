@@ -1490,3 +1490,21 @@ body {
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* Rater email style */
+.rater-email {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-left: 0.5rem;
+}
+
+.rater-action {
+  color: var(--text-secondary);
+}
+
+.rater-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}

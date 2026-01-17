@@ -1254,10 +1254,17 @@ function App() {
               Object.entries(ratings).forEach(([playerId, playerRatings]) => {
                 playerRatings.forEach(rating => {
                   if (rating.matchId === match.id) {
+                    // Find the email of the rater from userLinks
+                    const raterLink = Object.entries(userLinks).find(([uid, data]) => data.playerId === rating.ratedBy)
+                    const raterEmail = raterLink ? (raterLink[1].userEmail || raterLink[1].odedByEmail) : 'Email no encontrado'
+                    const raterDisplayName = raterLink ? (raterLink[1].userName || raterLink[1].odedByName) : getPlayerName(rating.ratedBy)
+                    
                     matchRatings.push({
                       ...rating,
                       ratedPlayerName: getPlayerName(playerId),
-                      raterName: getPlayerName(rating.ratedBy)
+                      raterName: getPlayerName(rating.ratedBy),
+                      raterEmail: raterEmail,
+                      raterDisplayName: raterDisplayName
                     })
                   }
                 })
@@ -1269,6 +1276,8 @@ function App() {
                 if (!ratingsByRater[r.ratedBy]) {
                   ratingsByRater[r.ratedBy] = {
                     raterName: r.raterName,
+                    raterEmail: r.raterEmail,
+                    raterDisplayName: r.raterDisplayName,
                     ratings: []
                   }
                 }
@@ -1287,7 +1296,9 @@ function App() {
                       {Object.entries(ratingsByRater).map(([raterId, data]) => (
                         <div key={raterId} className="rater-section">
                           <div className="rater-header">
-                            <span className="rater-name">📝 {data.raterName} calificó:</span>
+                            <span className="rater-name">📝 {data.raterDisplayName || data.raterName}</span>
+                            <span className="rater-email">({data.raterEmail})</span>
+                            <span className="rater-action"> calificó:</span>
                           </div>
                           <div className="rater-ratings">
                             {data.ratings.map((r, idx) => (
