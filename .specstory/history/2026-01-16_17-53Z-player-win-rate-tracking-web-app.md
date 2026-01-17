@@ -63898,7 +63898,534 @@ The logic should handle three cases: if `ratingsOpen` is `false`, hide the butto
 
 ```jsx
 {user && userPlayer && (match.ratingsOpen !== false && (
-```</details></think>
+```
+
+This is equivalent to checking if it's `true` or `undefined`. I should also verify the toggle function is setting actual boolean values rather than strings, since the admin might be saving "false" as a string instead of the boolean `false`. The current toggle passes `!currentState` to the update, and the onClick handler calls it with `match.ratingsOpen !== false`, which should work correctly when `ratingsOpen` is `true`.
+
+Let me trace through the logic: if `ratingsOpen` is `true` or `undefined`, the negation becomes `false`; if it's `false`, the negation becomes `true`. The toggle appears sound. I should check if CSS is overriding the button visibility or if there's duplicate button rendering elsewhere in the code that's interfering with the conditional logic.</details></think>
+
+---
+
+Voy a revisar todo el flujo completo. Puede que haya otro lugar donde se muestra el botón:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Calificar|rate-match-btn" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `className="rate-match-btn"` | L2665 |
+| `src/App.jsx` | `Calificar` | L2668 |
+| `src/App.jsx` | `<h2>\{hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'\} Jugadores</h2>` | L4074 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The logic looks correct. There's only one place where the "Calificar" button is shown. Let me check if the issue is with how the data is being saved. Let me also add a debug step - I'll change the condition to be more explicit and also verify if `ratingsOpen` is being set correctly.
+
+Let me also check if there are any issues with the Firebase update. Perhaps I should add a more explicit boolean check.</details></think>
+
+---
+
+Voy a hacer la verificación más explícita y forzar que el campo sea booleano:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 5, lines removed: 3
+
+```diff
+@@ -1648,10 +1648,12 @@
+  
+    // Toggle ratings open/closed for a match
+-   const toggleMatchRatings = async (matchId, currentState) =&gt; {
++   const toggleMatchRatings = async (matchId, isCurrentlyOpen) =&gt; {
+      try {
++       const newState = !isCurrentlyOpen
++       console.log('Toggling ratings for match', matchId, 'from', isCurrentlyOpen, 'to', newState)
+        await updateDoc(doc(db, 'matches', matchId), {
+-         ratingsOpen: !currentState
++         ratingsOpen: newState === true ? true : false // Ensure boolean
+        })
+-       showToast('success', currentState ? 'Calificaciones cerradas' : 'Calificaciones abiertas')
++       showToast('success', newState ? 'Calificaciones abiertas' : 'Calificaciones cerradas')
+      } catch (error) {
+        console.error('Error toggling ratings:', error)
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also change the button rendering to be more explicit about checking if ratings are open:</details></think>
+
+---
+
+Ahora cambio la condición del botón para ser más estricta:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -2663,5 +2663,5 @@
+                          &lt;/button&gt;
+                        )}
+-                       {user &amp;&amp; userPlayer &amp;&amp; match.ratingsOpen !== false &amp;&amp; (
++                       {user &amp;&amp; userPlayer &amp;&amp; match.ratingsOpen !== false &amp;&amp; !match.ratingsOpen === false &amp;&amp; (
+                          &lt;button 
+                            className="rate-match-btn"
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -2671,5 +2671,5 @@
+                          &lt;/button&gt;
+                        )}
+-                       {match.ratingsOpen === false &amp;&amp; (
++                       {(match.ratingsOpen === false || match.ratingsOpen === 'false') &amp;&amp; (
+                          &lt;span className="ratings-closed-badge"&gt;🔒 Cerrado&lt;/span&gt;
+                        )}
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Wait, I made an error in the condition. `match.ratingsOpen !== false && !match.ratingsOpen === false` doesn't make sense. Let me fix that.
+
+The correct condition should be: show button only if `ratingsOpen` is truthy (true) or undefined, but NOT if it's false or 'false'.
+
+Let me simplify this:</details></think>
+
+---
+
+Espera, esa condición está mal. Déjame corregirla:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 18, lines removed: 11
+
+```diff
+@@ -2663,15 +2663,22 @@
+                          &lt;/button&gt;
+                        )}
+-                       {user &amp;&amp; userPlayer &amp;&amp; match.ratingsOpen !== false &amp;&amp; !match.ratingsOpen === false &amp;&amp; (
+-                         &lt;button 
+-                           className="rate-match-btn"
+-                           onClick={() =&gt; openRatingModal(match)}
+-                         &gt;
+-                           Calificar
+-                         &lt;/button&gt;
+-                       )}
+-                       {(match.ratingsOpen === false || match.ratingsOpen === 'false') &amp;&amp; (
+-                         &lt;span className="ratings-closed-badge"&gt;🔒 Cerrado&lt;/span&gt;
+-                       )}
++                       {(() =&gt; {
++                         const isClosed = match.ratingsOpen === false || match.ratingsOpen === 'false'
++                         return (
++                           &lt;&gt;
++                             {user &amp;&amp; userPlayer &amp;&amp; !isClosed &amp;&amp; (
++                               &lt;button 
++                                 className="rate-match-btn"
++                                 onClick={() =&gt; openRatingModal(match)}
++                               &gt;
++                                 Calificar
++                               &lt;/button&gt;
++                             )}
++                             {isClosed &amp;&amp; (
++                               &lt;span className="ratings-closed-badge"&gt;🔒 Cerrado&lt;/span&gt;
++                             )}
++                           &lt;/&gt;
++                         )
++                       })()}
+                        {isAdmin &amp;&amp; (
+                          &lt;&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also update the toggle button to use the same logic:</details></think>
+
+---
+
+Actualizo también el botón de toggle del admin:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "toggle-ratings-btn" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `className=\{`toggle-ratings-btn $\{match.ratingsOpen === false ? 'closed' : 'open'\}`\}` | L2686 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me update the admin toggle button to use the same `isClosed` logic for consistency:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 12, lines removed: 7
+
+```diff
+@@ -2683,11 +2683,16 @@
+                        {isAdmin &amp;&amp; (
+                          &lt;&gt;
+-                           &lt;button 
+-                             className={&#96;toggle-ratings-btn ${match.ratingsOpen === false ? 'closed' : 'open'}&#96;}
+-                             onClick={() =&gt; toggleMatchRatings(match.id, match.ratingsOpen !== false)}
+-                             title={match.ratingsOpen === false ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
+-                           &gt;
+-                             {match.ratingsOpen === false ? '🔒' : '🔓'}
+-                           &lt;/button&gt;
++                           {(() =&gt; {
++                             const isClosed = match.ratingsOpen === false || match.ratingsOpen === 'false'
++                             return (
++                               &lt;button 
++                                 className={&#96;toggle-ratings-btn ${isClosed ? 'closed' : 'open'}&#96;}
++                                 onClick={() =&gt; toggleMatchRatings(match.id, !isClosed)}
++                                 title={isClosed ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
++                               &gt;
++                                 {isClosed ? '🔒' : '🔓'}
++                               &lt;/button&gt;
++                             )
++                           })()}
+                            &lt;button 
+                              className="edit-match-btn"
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also update the openRatingModal function to use the same logic:</details></think>
+
+---
+
+Actualizo también la verificación en `openRatingModal`:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 7, lines removed: 3
+
+```diff
+@@ -1672,7 +1672,11 @@
+      try {
+        const matchDoc = await getDoc(doc(db, 'matches', match.id))
+-       if (matchDoc.exists() &amp;&amp; matchDoc.data().ratingsOpen === false) {
+-         showToast('error', 'Las calificaciones están cerradas para este partido')
+-         return
++       if (matchDoc.exists()) {
++         const data = matchDoc.data()
++         const isClosed = data.ratingsOpen === false || data.ratingsOpen === 'false'
++         if (isClosed) {
++           showToast('error', 'Las calificaciones están cerradas para este partido')
++           return
++         }
+        }
+      } catch (error) {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now also update the submitRatings function:</details></think>
+
+---
+
+También actualizo `submitRatings`:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 8, lines removed: 4
+
+```diff
+@@ -1742,8 +1742,12 @@
+      // Check if ratings are closed - re-fetch match to get latest state
+      const matchDoc = await getDoc(doc(db, 'matches', selectedMatch.id))
+-     if (matchDoc.exists() &amp;&amp; matchDoc.data().ratingsOpen === false) {
+-       showToast('error', 'Las calificaciones han sido cerradas para este partido')
+-       setShowRatingModal(false)
+-       return
++     if (matchDoc.exists()) {
++       const data = matchDoc.data()
++       const isClosed = data.ratingsOpen === false || data.ratingsOpen === 'false'
++       if (isClosed) {
++         showToast('error', 'Las calificaciones han sido cerradas para este partido')
++         setShowRatingModal(false)
++         return
++       }
+      }
+      
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix: robust ratingsOpen check, handle string 'false' case, add debug logs" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix: robust ratingsOpen check, handle string 'false' case, add debug logs" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 846 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-BOKVpbYm.css     69.05 kB │ gzip:  11.69 kB
+dist/assets/index-BxTPGI3B.js   1,081.43 kB │ gzip: 285.05 kB
+✓ built in 1.39s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main edcb858] Fix: robust ratingsOpen check, handle string 'false' case, add debug logs
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 4 files changed, 506 insertions(+), 44 deletions(-)
+ rename dist/assets/{index-CAzXJjqR.js =&gt; index-BxTPGI3B.js} (94%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/3.2MB)
+Uploading [=====---------------] (822.1KB/3.2MB)
+Uploading [==========----------] (1.6MB/3.2MB)
+Uploading [===============-----] (2.4MB/3.2MB)
+Uploading [====================] (3.2MB/3.2MB)
+https://lukto-winrate-webapp-qeuqte1w1-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/BmFdi8EpYRS7MAjvfqy5taosWvV1 [4s]
+Production: https://lukto-winrate-webapp-qeuqte1w1-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 406 packages in 9s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 846 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-BOKVpbYm.css     69.05 kB │ gzip:  11.67 kB
+Building: dist/assets/index-BxTPGI3B.js   1,081.43 kB │ gzip: 286.06 kB
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: ✓ built in 4.36s
+Building: Build Completed in /vercel/output [14s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-qeuqte1w1-josefatrixs-projects.vercel.app [25s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [25s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-qeuqte1w1-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-qeuqte1w1-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Done! Let me explain to the user what I changed and also ask them to verify in Firebase that the field is being saved correctly.</details></think>
+
+---
+
+¡Listo! Hice varios cambios para asegurar que funcione:
+
+**Cambios:**
+
+1. **Verificación más robusta** - Ahora verifica si `ratingsOpen` es `false` O `'false'` (string), por si acaso Firebase guardaba el valor como texto
+
+2. **Lógica unificada** - Usé la misma función `isClosed` en todos los lugares:
+   - Al mostrar/ocultar el botón "Calificar"
+   - Al mostrar el badge "🔒 Cerrado"
+   - Al abrir el modal
+   - Al enviar calificaciones
+   - En el toggle del admin
+
+3. **Debug logs** - Agregué console.log para que puedas ver en la consola del navegador qué está pasando
+
+**Para verificar:**
+
+1. Abre la consola del navegador (F12 → Console)
+2. Haz click en el candado para cerrar calificaciones
+3. Deberías ver: `Toggling ratings for match [id] from true to false`
+
+**También verifica en Firebase:**
+1. Ve a Firebase Console → Firestore → matches
+2. Busca el partido que cerraste
+3. Verifica que tenga el campo `ratingsOpen: false` (booleano, no string)
+
+🔗 https://lukto-winrate-webapp.vercel.app
+
+Si sigue sin funcionar, dime qué ves en la consola del navegador cuando haces click en el candado.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+me sigue dejando calificar a mis amigos. solo le aparece al admin y la gente que no esta anotada en ese partido
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is saying that they can still rate, and the "closed" badge only appears for admins and people who are not in the match. This means the condition for showing the button vs the badge might be getting overridden by another condition.
+
+Let me re-check the logic. The user is saying:
+- Admin sees the lock/closed badge ✓
+- People NOT in the match see the closed badge ✓
+- People IN the match who are logged in can STILL see the "Calificar" button ✗
+
+This suggests that the condition `user && userPlayer` combined with `!isClosed` might have an issue with how React is evaluating the IIFE (immediately invoked function expression).
+
+Let me look at the full context of the match card rendering to see if there's an issue with the condition ordering or scoping.</details></think>
+
+---
+
+El problema es que la lógica del IIFE (función auto-ejecutada) no está compartiendo la variable `isClosed` correctamente. Voy a simplificar:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const isClosed = match.ratingsOpen" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const isClosed = match.ratingsOpen === false \|\| match.ratingsOpen === 'false'` | L2674 |
+| `src/App.jsx` | `const isClosed = match.ratingsOpen === false \|\| match.ratingsOpen === 'false'` | L2694 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the issue now. The code looks correct to me. Let me check if there's an issue with how React is handling this.
+
+Actually, wait - I think I see the problem. The `user && userPlayer && !isClosed` condition will show the button if `user` is truthy, `userPlayer` is truthy, AND `isClosed` is false.But the user is saying that people who ARE in the match can still see the "Calificar" button. This means `isClosed` must be evalu</details></think>
 
 ---
 

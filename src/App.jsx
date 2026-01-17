@@ -1649,12 +1649,15 @@ function App() {
   // Toggle ratings open/closed for a match
   const toggleMatchRatings = async (matchId, isCurrentlyOpen) => {
     try {
-      const newState = !isCurrentlyOpen
-      console.log('Toggling ratings for match', matchId, 'from', isCurrentlyOpen, 'to', newState)
+      // Si está abierto (true), cerrar (false). Si está cerrado (false), abrir (true)
+      const newState = isCurrentlyOpen ? false : true
+      console.log('Toggle ratings:', matchId, 'isCurrentlyOpen:', isCurrentlyOpen, 'newState:', newState)
+      
       await updateDoc(doc(db, 'matches', matchId), {
-        ratingsOpen: newState === true ? true : false // Ensure boolean
+        ratingsOpen: newState
       })
-      showToast('success', newState ? 'Calificaciones abiertas' : 'Calificaciones cerradas')
+      
+      showToast('success', newState ? '✅ Calificaciones ABIERTAS' : '🔒 Calificaciones CERRADAS')
     } catch (error) {
       console.error('Error toggling ratings:', error)
       showToast('error', 'Error al cambiar estado')
@@ -2670,38 +2673,28 @@ function App() {
                           Predecir
                         </button>
                       )}
-                      {(() => {
-                        const isClosed = match.ratingsOpen === false || match.ratingsOpen === 'false'
-                        return (
-                          <>
-                            {user && userPlayer && !isClosed && (
-                              <button 
-                                className="rate-match-btn"
-                                onClick={() => openRatingModal(match)}
-                              >
-                                Calificar
-                              </button>
-                            )}
-                            {isClosed && (
-                              <span className="ratings-closed-badge">🔒 Cerrado</span>
-                            )}
-                          </>
-                        )
-                      })()}
+                      {/* SIEMPRE mostrar badge si está cerrado */}
+                      {match.ratingsOpen === false && (
+                        <span className="ratings-closed-badge">🔒 CERRADO</span>
+                      )}
+                      {/* Solo mostrar botón calificar si NO está cerrado */}
+                      {user && userPlayer && match.ratingsOpen !== false && (
+                        <button 
+                          className="rate-match-btn"
+                          onClick={() => openRatingModal(match)}
+                        >
+                          Calificar
+                        </button>
+                      )}
                       {isAdmin && (
                         <>
-                          {(() => {
-                            const isClosed = match.ratingsOpen === false || match.ratingsOpen === 'false'
-                            return (
-                              <button 
-                                className={`toggle-ratings-btn ${isClosed ? 'closed' : 'open'}`}
-                                onClick={() => toggleMatchRatings(match.id, !isClosed)}
-                                title={isClosed ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
-                              >
-                                {isClosed ? '🔒' : '🔓'}
-                              </button>
-                            )
-                          })()}
+                          <button 
+                            className={`toggle-ratings-btn ${match.ratingsOpen === false ? 'closed' : 'open'}`}
+                            onClick={() => toggleMatchRatings(match.id, match.ratingsOpen !== false)}
+                            title={match.ratingsOpen === false ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
+                          >
+                            {match.ratingsOpen === false ? '🔒' : '🔓'}
+                          </button>
                           <button 
                             className="edit-match-btn"
                             onClick={() => openEditMatch(match)}
