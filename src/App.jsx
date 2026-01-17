@@ -114,99 +114,219 @@ const getXPProgress = xp => {
 
 // ============ PLAYER PROFILE MODAL ============
 
-function PlayerProfileModal({ show, playerId, onClose, players }) {
-  if (!show) return null
+function PlayerProfileModal({ 
+  show, 
+  playerId, 
+  onClose, 
+  players, 
+  stats, 
+  matches,
+  ratings,
+  getPlayerPhoto,
+  getPlayerName,
+  calculateXP,
+  getRank
+}) {
+  if (!show || !playerId) return null
 
   const player = players?.find(p => p.id === playerId)
+  if (!player) {
+    return (
+      <div className="profile-overlay" onClick={onClose}>
+        <div className="profile-card" onClick={e => e.stopPropagation()}>
+          <button className="profile-close" onClick={onClose}>×</button>
+          <p style={{ textAlign: 'center', padding: '40px', color: '#888' }}>Jugador no encontrado</p>
+        </div>
+      </div>
+    )
+  }
+
+  const playerStats = stats?.find(s => s.id === playerId) || { played: 0, wins: 0, losses: 0, mvps: 0, winRate: 0 }
+  const xp = calculateXP ? calculateXP(playerId) : 0
+  const rank = getRank ? getRank(xp) : { name: 'Bronce', color: '#CD7F32', key: 'bronce' }
+  const playerRatings = ratings?.[playerId] || []
+  const photo = getPlayerPhoto ? getPlayerPhoto(playerId) : null
+  
+  // Calculate streaks
+  const playerMatches = matches?.filter(m => 
+    m.teamWhite?.includes(playerId) || m.teamBlack?.includes(playerId)
+  ).sort((a, b) => new Date(b.date) - new Date(a.date)) || []
+  
+  let currentStreak = 0
+  let streakType = null
+  for (const m of playerMatches) {
+    const inWhite = m.teamWhite?.includes(playerId)
+    const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
+    if (streakType === null) {
+      streakType = won ? 'win' : 'loss'
+      currentStreak = 1
+    } else if ((streakType === 'win' && won) || (streakType === 'loss' && !won)) {
+      currentStreak++
+    } else {
+      break
+    }
+  }
+
+  // Recent form (last 5 games)
+  const recentForm = playerMatches.slice(0, 5).map(m => {
+    const inWhite = m.teamWhite?.includes(playerId)
+    return (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black') ? 'W' : 'L'
+  })
+
+  // Best rating received
+  const bestRating = playerRatings.length > 0 ? Math.max(...playerRatings.map(r => r.score)) : 0
+  const avgRating = playerRatings.length > 0 
+    ? (playerRatings.reduce((s, r) => s + r.score, 0) / playerRatings.length).toFixed(1) 
+    : '-'
 
   return (
-    <div 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0,0,0,0.8)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        padding: '20px'
-      }}
-      onClick={onClose}
-    >
-      <div 
-        style={{
-          background: '#222',
-          borderRadius: '16px',
-          padding: '24px',
-          maxWidth: '350px',
-          width: '100%',
-          color: '#fff',
-          border: '1px solid #444'
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0, fontSize: '20px' }}>Perfil</h2>
-          <button 
-            onClick={onClose}
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              color: '#fff', 
-              fontSize: '24px', 
-              cursor: 'pointer' 
-            }}
-          >
-            ×
-          </button>
-        </div>
-        
-        {player ? (
-          <div>
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{ 
-                width: '80px', 
-                height: '80px', 
-                borderRadius: '50%', 
-                background: '#10b981', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                margin: '0 auto 12px',
-                fontSize: '32px',
-                fontWeight: 'bold'
-              }}>
+    <div className="profile-overlay" onClick={onClose}>
+      <div className="profile-card" onClick={e => e.stopPropagation()}>
+        {/* Hero Section */}
+        <div className="profile-hero" style={{ background: `linear-gradient(135deg, ${rank.color}22, ${rank.color}44)` }}>
+          <button className="profile-close" onClick={onClose}>×</button>
+          
+          <div className="profile-avatar-section">
+            {photo ? (
+              <img src={photo} alt="" className="profile-avatar" />
+            ) : (
+              <div className="profile-avatar-placeholder" style={{ borderColor: rank.color }}>
                 {player.name?.charAt(0)}
               </div>
-              <h3 style={{ margin: '0 0 4px', fontSize: '18px' }}>{player.name}</h3>
-              <span style={{ color: '#10b981', fontSize: '14px' }}>Jugador</span>
+            )}
+            <div className="profile-rank-badge" style={{ background: rank.color }}>
+              {getRankIcon(rank.key, 14)}
+              <span>{rank.name}</span>
             </div>
-            
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(3, 1fr)', 
-              gap: '12px',
-              textAlign: 'center'
-            }}>
-              <div style={{ background: '#333', borderRadius: '8px', padding: '12px' }}>
-                <div style={{ fontSize: '20px', fontWeight: 'bold' }}>0</div>
-                <div style={{ fontSize: '12px', color: '#888' }}>Partidos</div>
+          </div>
+          
+          <h2 className="profile-name">{player.name}</h2>
+          <p className="profile-xp">{xp} XP</p>
+          
+          {/* Recent Form */}
+          {recentForm.length > 0 && (
+            <div className="profile-form">
+              {recentForm.map((r, i) => (
+                <span key={i} className={`form-dot ${r === 'W' ? 'win' : 'loss'}`}>{r}</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Stats Grid */}
+        <div className="profile-stats-grid">
+          <div className="profile-stat">
+            <span className="stat-number">{playerStats.played}</span>
+            <span className="stat-label">Partidos</span>
+          </div>
+          <div className="profile-stat">
+            <span className="stat-number win">{playerStats.wins}</span>
+            <span className="stat-label">Victorias</span>
+          </div>
+          <div className="profile-stat">
+            <span className="stat-number loss">{playerStats.losses}</span>
+            <span className="stat-label">Derrotas</span>
+          </div>
+          <div className="profile-stat">
+            <span className="stat-number">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span>
+            <span className="stat-label">Win Rate</span>
+          </div>
+        </div>
+
+        {/* Performance Section */}
+        <div className="profile-section">
+          <h3 className="profile-section-title">Rendimiento</h3>
+          <div className="profile-performance">
+            <div className="perf-item">
+              <div className="perf-icon">⭐</div>
+              <div className="perf-info">
+                <span className="perf-value">{avgRating}</span>
+                <span className="perf-label">Rating Promedio</span>
               </div>
-              <div style={{ background: '#333', borderRadius: '8px', padding: '12px' }}>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#10b981' }}>0</div>
-                <div style={{ fontSize: '12px', color: '#888' }}>Victorias</div>
+            </div>
+            <div className="perf-item">
+              <div className="perf-icon">🏆</div>
+              <div className="perf-info">
+                <span className="perf-value">{playerStats.mvps || 0}</span>
+                <span className="perf-label">MVPs</span>
               </div>
-              <div style={{ background: '#333', borderRadius: '8px', padding: '12px' }}>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ef4444' }}>0</div>
-                <div style={{ fontSize: '12px', color: '#888' }}>Derrotas</div>
+            </div>
+            <div className="perf-item">
+              <div className="perf-icon">🔥</div>
+              <div className="perf-info">
+                <span className="perf-value">{bestRating || '-'}</span>
+                <span className="perf-label">Mejor Nota</span>
+              </div>
+            </div>
+            <div className="perf-item">
+              <div className="perf-icon">{streakType === 'win' ? '📈' : '📉'}</div>
+              <div className="perf-info">
+                <span className="perf-value" style={{ color: streakType === 'win' ? '#10b981' : '#ef4444' }}>
+                  {currentStreak} {streakType === 'win' ? 'W' : 'L'}
+                </span>
+                <span className="perf-label">Racha Actual</span>
               </div>
             </div>
           </div>
-        ) : (
-          <p style={{ textAlign: 'center', color: '#888' }}>Jugador no encontrado</p>
+        </div>
+
+        {/* Win Rate Progress */}
+        <div className="profile-section">
+          <h3 className="profile-section-title">Progreso</h3>
+          <div className="profile-progress">
+            <div className="progress-header">
+              <span>Win Rate</span>
+              <span>{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span>
+            </div>
+            <div className="progress-bar-bg">
+              <div 
+                className="progress-bar-fill" 
+                style={{ 
+                  width: `${playerStats.winRate || 0}%`,
+                  background: playerStats.winRate >= 50 ? '#10b981' : '#ef4444'
+                }}
+              />
+            </div>
+          </div>
+          <div className="profile-progress">
+            <div className="progress-header">
+              <span>XP al siguiente rango</span>
+              <span>{xp % 100}/100</span>
+            </div>
+            <div className="progress-bar-bg">
+              <div 
+                className="progress-bar-fill" 
+                style={{ width: `${xp % 100}%`, background: rank.color }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Matches */}
+        {playerMatches.length > 0 && (
+          <div className="profile-section">
+            <h3 className="profile-section-title">Últimos Partidos</h3>
+            <div className="profile-matches">
+              {playerMatches.slice(0, 3).map((m, i) => {
+                const inWhite = m.teamWhite?.includes(playerId)
+                const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
+                const matchRatings = playerRatings.filter(r => r.matchId === m.id)
+                const matchAvg = matchRatings.length > 0 
+                  ? (matchRatings.reduce((s, r) => s + r.score, 0) / matchRatings.length).toFixed(1)
+                  : '-'
+                return (
+                  <div key={i} className={`profile-match ${won ? 'won' : 'lost'}`}>
+                    <div className="match-result">{won ? 'V' : 'D'}</div>
+                    <div className="match-details">
+                      <span className="match-venue">{m.venue}</span>
+                      <span className="match-date">{new Date(m.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
+                    </div>
+                    <div className="match-rating">{matchAvg}</div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -1825,6 +1945,13 @@ function App() {
         playerId={selectedPlayerProfile}
         onClose={() => setShowPlayerProfile(false)}
         players={players}
+        stats={stats}
+        matches={matches}
+        ratings={ratings}
+        getPlayerPhoto={getPlayerPhoto}
+        getPlayerName={getPlayerName}
+        calculateXP={calculateXP}
+        getRank={getRank}
       />
 
       {/* Player Add/Edit Modal */}
