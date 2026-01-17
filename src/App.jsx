@@ -573,16 +573,24 @@ function App() {
       aliases: newPlayerAliases.split(',').map(a => a.trim()).filter(a => a)
     }
     
-    if (editingPlayerId) {
-      // Editar jugador existente
-      await updateDoc(doc(db, 'players', editingPlayerId), playerData)
-    } else {
-      // Crear nuevo jugador
-      const newPlayerId = Date.now().toString()
-      await setDoc(doc(db, 'players', newPlayerId), playerData)
+    try {
+      if (editingPlayerId) {
+        // Editar jugador existente
+        console.log('Editando jugador:', editingPlayerId, playerData)
+        await updateDoc(doc(db, 'players', editingPlayerId), playerData)
+        console.log('Jugador actualizado exitosamente')
+      } else {
+        // Crear nuevo jugador
+        const newPlayerId = Date.now().toString()
+        console.log('Creando jugador:', newPlayerId, playerData)
+        await setDoc(doc(db, 'players', newPlayerId), playerData)
+        console.log('Jugador creado exitosamente')
+      }
+      closePlayerModal()
+    } catch (error) {
+      console.error('Error guardando jugador:', error)
+      alert('Error al guardar jugador: ' + error.message)
     }
-    
-    closePlayerModal()
   }
 
   const openEditPlayer = (player) => {
