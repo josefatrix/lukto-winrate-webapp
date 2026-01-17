@@ -392,17 +392,12 @@ function App() {
     
     try {
       const linkRef = doc(db, 'userLinks', userId)
-      const currentData = pendingUsers.find(u => u.odedBy === userId) || {}
-      const { odedBy: _1, playerId: _2, ...cleanData } = currentData
       
-      const dataToSave = {
-        ...cleanData,
+      // Use updateDoc to just change playerId without deleting
+      await updateDoc(linkRef, {
         playerId: String(playerId),
         linkedAt: new Date().toISOString()
-      }
-      
-      await deleteDoc(linkRef)
-      await setDoc(linkRef, dataToSave)
+      })
       
       console.log('✅ Vinculado a', playerToLink.name)
       
