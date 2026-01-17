@@ -201,6 +201,7 @@ function App() {
   const [blockedUsers, setBlockedUsers] = useState([])
   const [mergePlayer1, setMergePlayer1] = useState('')
   const [mergePlayer2, setMergePlayer2] = useState('')
+  const [selectedPlayerToDeleteRatings, setSelectedPlayerToDeleteRatings] = useState(null)
   const [leagueSettings, setLeagueSettings] = useState({
     name: 'LUKTO',
     mvpMinVotes: 1,
@@ -3294,6 +3295,134 @@ function App() {
                   </div>
                 ))
               })()}
+            </div>
+          </div>
+
+          {/* Delete Ratings Admin Tool */}
+          <div className="tool-card">
+            <div className="tool-header">
+              <div className="tool-header-icon" style={{background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05))', borderColor: 'rgba(239, 68, 68, 0.2)'}}>
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{color: '#ef4444'}}>
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+              </div>
+              <h3>Eliminar Calificaciones</h3>
+            </div>
+            <p className="tool-description">Eliminar calificaciones de un jugador específico</p>
+            <div className="delete-ratings-section">
+              <select 
+                className="setting-select"
+                onChange={(e) => {
+                  const playerId = e.target.value
+                  if (playerId) {
+                    setSelectedPlayerToDeleteRatings(playerId)
+                  }
+                }}
+                value={selectedPlayerToDeleteRatings || ''}
+              >
+                <option value="">Seleccionar jugador que calificó...</option>
+                {players.map(p => {
+                  // Count how many ratings this player has given
+                  let ratingCount = 0
+                  Object.values(ratings).forEach(playerRatings => {
+                    ratingCount += playerRatings.filter(r => r.ratedBy === p.id).length
+                  })
+                  return (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({ratingCount} calificaciones dadas)
+                    </option>
+                  )
+                })}
+              </select>
+              
+              {selectedPlayerToDeleteRatings && (
+                <div className="ratings-to-delete">
+                  {(() => {
+                    const raterName = players.find(p => p.id === selectedPlayerToDeleteRatings)?.name
+                    const allRatingsFromPlayer = []
+                    
+                    Object.entries(ratings).forEach(([ratedPlayerId, playerRatings]) => {
+                      playerRatings.forEach(r => {
+                        if (r.ratedBy === selectedPlayerToDeleteRatings) {
+                          const ratedPlayerName = players.find(p => p.id === ratedPlayerId)?.name
+                          const match = matches.find(m => m.id === r.matchId)
+                          allRatingsFromPlayer.push({
+                            ...r,
+                            ratedPlayerId,
+                            ratedPlayerName,
+                            matchDate: match?.date,
+                            matchVenue: match?.venue
+                          })
+                        }
+                      })
+                    })
+                    
+                    if (allRatingsFromPlayer.length === 0) {
+                      return <p className="no-data">Este jugador no ha dado calificaciones</p>
+                    }
+                    
+                    // Group by match
+                    const byMatch = {}
+                    allRatingsFromPlayer.forEach(r => {
+                      if (!byMatch[r.matchId]) {
+                        byMatch[r.matchId] = {
+                          matchId: r.matchId,
+                          matchDate: r.matchDate,
+                          matchVenue: r.matchVenue,
+                          ratings: []
+                        }
+                      }
+                      byMatch[r.matchId].ratings.push(r)
+                    })
+                    
+                    return Object.values(byMatch).map(matchGroup => (
+                      <div key={matchGroup.matchId} className="rating-match-group">
+                        <div className="rating-match-header">
+                          <span>{matchGroup.matchVenue} - {matchGroup.matchDate}</span>
+                          <button 
+                            className="btn-danger-small"
+                            onClick={async () => {
+                              if (!confirm(`¿Eliminar TODAS las calificaciones de ${raterName} en este partido?`)) return
+                              
+                              const batch = writeBatch(db)
+                              matchGroup.ratings.forEach(r => {
+                                const ratingId = `${r.ratedPlayerId}_${r.matchId}_${selectedPlayerToDeleteRatings}`
+                                batch.delete(doc(db, 'ratings', ratingId))
+                              })
+                              await batch.commit()
+                              showToast('success', `Eliminadas ${matchGroup.ratings.length} calificaciones`)
+                            }}
+                          >
+                            Eliminar todas del partido
+                          </button>
+                        </div>
+                        <div className="rating-items-list">
+                          {matchGroup.ratings.map(r => (
+                            <div key={`${r.ratedPlayerId}_${r.matchId}`} className="rating-delete-item">
+                              <span className="rated-player">{r.ratedPlayerName}</span>
+                              <span className={`rating-score ${r.score >= 7 ? 'high' : r.score >= 5 ? 'medium' : 'low'}`}>
+                                {r.score}
+                              </span>
+                              <button 
+                                className="btn-delete-small"
+                                onClick={async () => {
+                                  if (!confirm(`¿Eliminar calificación de ${raterName} a ${r.ratedPlayerName}?`)) return
+                                  
+                                  const ratingId = `${r.ratedPlayerId}_${r.matchId}_${selectedPlayerToDeleteRatings}`
+                                  await deleteDoc(doc(db, 'ratings', ratingId))
+                                  showToast('success', 'Calificación eliminada')
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  })()}
+                </div>
+              )}
             </div>
           </div>
           

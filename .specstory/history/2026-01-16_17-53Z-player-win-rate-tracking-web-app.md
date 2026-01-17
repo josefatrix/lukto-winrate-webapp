@@ -61289,7 +61289,444 @@ mira si funciona bien lo de las calificaciones sospechosas
 _**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
 
 <think><details><summary>Thought Process</summary>
-The user wants me to check if the suspicious ratings functionality works correctly. Let me fin</details></think>
+The user wants me to check if the suspicious ratings functionality works correctly. Let me find that code and review it.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "getSuspiciousRaters|suspicious|sospechosas" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 9 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `<div className="suspicious-list">` | L3242 |
+| `src/App.jsx` | `const suspicious = Object.entries(userAverages)` | L3256 |
+| `src/App.jsx` | `if (suspicious.length === 0) \{` | L3264 |
+| `src/App.jsx` | `return suspicious.map(s => \{` | L3268 |
+| `src/App.jsx` | `<div key=\{s.odedBy\} className="suspicious-item">` | L3271 |
+| `src/App.jsx` | `<img src=\{userData?.userPhoto\} alt="" className="suspicious-avatar" />` | L3272 |
+| `src/App.jsx` | `<div className="suspicious-info">` | L3273 |
+| `src/App.jsx` | `<span className="suspicious-name">\{userData?.userName \|\| 'Usuario'\}</span>` | L3274 |
+| `src/App.jsx` | `<span className="suspicious-stats">Promedio: \{s.avg\} (\{s.count\} votos)</span>` | L3275 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the issue! On line 3248 and related lines, there's a typo: `r.odedBy` should be `r.ratedBy`. Let me check the rating structure to confirm.</details></think>
+
+---
+
+¡Encontré el problema! Hay un **typo** en el código. Dice `r.odedBy` en lugar de `r.ratedBy`. Esto hace que no funcione correctamente.
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "ratedBy|odedBy" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 60 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `onLink(pending.odedBy, selectedPlayer)` | L75 |
+| `src/App.jsx` | `<div className=\{`user-link-card pending $\{linkingUser === pending.odedBy ? 'linking' : ''\}`\}>` | L80 |
+| `src/App.jsx` | `<img src=\{pending.userPhoto \|\| pending.odedByPhoto\} alt="" className="user-link-avatar" />` | L82 |
+| `src/App.jsx` | `<div className="user-link-name">\{pending.userName \|\| pending.odedByName\}</div>` | L84 |
+| `src/App.jsx` | `<div className="user-link-email">\{pending.userEmail \|\| pending.odedByEmail\}</div>` | L85 |
+| `src/App.jsx` | `\{linkingUser === pending.odedBy ? (` | L89 |
+| `src/App.jsx` | `const [predictions, setPredictions] = useState(\{}) // \{matchId: \{odedBy: 'white'\|'black'\}}` | L123 |
+| `src/App.jsx` | `const [userLinks, setUserLinks] = useState(\{}) // \{odedBy: \{ odedBy, userName, userPhoto, playerId \}}` | L165 |
+| `src/App.jsx` | `preds[data.matchId][data.odedBy] = data.prediction` | L234 |
+| `src/App.jsx` | `links[docId] = \{ ...data, odedBy: docId \}` | L290 |
+| `src/App.jsx` | `pending.push(\{ ...data, odedBy: docId \})` | L293 |
+| `src/App.jsx` | `const isAlreadyPending = pending.some(p => p.odedBy === user.uid)` | L310 |
+| `src/App.jsx` | `const pendingUser = pendingUsers.find(p => p.odedBy === userId)` | L511 |
+| `src/App.jsx` | `const adminUnlinkUser = async (odedBy) => \{` | L542 |
+| `src/App.jsx` | `const linkRef = doc(db, 'userLinks', odedBy)` | L547 |
+| `src/App.jsx` | `odedBy: user.uid,` | L1394 |
+| `src/App.jsx` | `const getPredictionAccuracy = (odedBy) => \{` | L1409 |
+| `src/App.jsx` | `if (matchPreds[odedBy]) \{` | L1414 |
+| `src/App.jsx` | `if (matchPreds[odedBy] === match.winner) correct++` | L1418 |
+| `src/App.jsx` | `r => (r.ratedBy === userPlayer \|\| r.odedBy === userPlayer) && r.matchId === match.id` | L1683 |
+| `src/App.jsx` | `ratedBy: userPlayer,` | L1744 |
+| `src/App.jsx` | `r => (r.ratedBy === userPlayer \|\| r.odedBy === userPlayer) && r.matchId === matchId` | L1780 |
+| `src/App.jsx` | `playerRatings.some(r => (r.ratedBy === userPlayer \|\| r.odedBy === userPlayer) && r.matchId === matchId)` | L1798 |
+| `src/App.jsx` | `\{Object.entries(predictions[match.id]).map(([odedBy, prediction]) => \{` | L2737 |
+| `src/App.jsx` | `key=\{odedBy\}` | L2741 |
+| `src/App.jsx` | `// Count ratings by player who rated (ratedBy is the playerId)` | L2858 |
+| `src/App.jsx` | `const raterPlayerId = r.ratedBy` | L2862 |
+| `src/App.jsx` | `const newRatingId = `$\{mergePlayer1\}_$\{rating.matchId\}_$\{rating.odedBy\}`` | L3164 |
+| `src/App.jsx` | `const oldRatingId = `$\{mergePlayer2\}_$\{rating.matchId\}_$\{rating.odedBy\}`` | L3170 |
+| `src/App.jsx` | `Object.entries(userLinks).forEach(([odedBy, data]) => \{` | L3175 |
+| `src/App.jsx` | `batch.update(doc(db, 'userLinks', odedBy), \{` | L3177 |
+| `src/App.jsx` | `<div key=\{userData.odedBy\} className="blocked-user-item">` | L3210 |
+| `src/App.jsx` | `className=\{`btn-small $\{blockedUsers.includes(userData.odedBy) ? 'blocked' : ''\}`\}` | L3214 |
+| `src/App.jsx` | `const newBlocked = blockedUsers.includes(userData.odedBy)` | L3216 |
+| `src/App.jsx` | `? blockedUsers.filter(id => id !== userData.odedBy)` | L3217 |
+| `src/App.jsx` | `: [...blockedUsers, userData.odedBy]` | L3218 |
+| `src/App.jsx` | `showToast('success', blockedUsers.includes(userData.odedBy) ? 'Usuario desbloqueado' : 'Usuario bloqueado')` | L3221 |
+| `src/App.jsx` | `\{blockedUsers.includes(userData.odedBy) ? 'Desbloquear' : 'Bloquear'\}` | L3224 |
+| `src/App.jsx` | `if (!userAverages[r.odedBy]) \{` | L3248 |
+| `src/App.jsx` | `userAverages[r.odedBy] = \{ total: 0, count: 0 \}` | L3249 |
+| `src/App.jsx` | `userAverages[r.odedBy].total += r.score` | L3251 |
+| `src/App.jsx` | `userAverages[r.odedBy].count++` | L3252 |
+| `src/App.jsx` | `.map(([odedBy, data]) => (\{` | L3258 |
+| `src/App.jsx` | `odedBy,` | L3259 |
+| `src/App.jsx` | `const userData = userLinks[s.odedBy]` | L3269 |
+| `src/App.jsx` | `<div key=\{s.odedBy\} className="suspicious-item">` | L3271 |
+| `src/App.jsx` | `key=\{pending.odedBy\}` | L3518 |
+| `src/App.jsx` | `.map(([odedBy, data]) => (` | L3535 |
+| `src/App.jsx` | `<div key=\{odedBy\} className="user-link-card linked">` | L3536 |
+| `src/App.jsx` | `<img src=\{data.userPhoto \|\| data.odedByPhoto\} alt="" className="user-link-avatar" />` | L3538 |
+| `src/App.jsx` | `<div className="user-link-name">\{data.userName \|\| data.odedByName\}</div>` | L3540 |
+| `src/App.jsx` | `<div className="user-link-email">\{data.userEmail \|\| data.odedByEmail\}</div>` | L3541 |
+| `src/App.jsx` | `onClick=\{() => adminUnlinkUser(odedBy)\}` | L3549 |
+| `src/App.jsx` | `const raterLink = Object.entries(userLinks).find(([uid, data]) => data.playerId === rating.ratedBy)` | L3675 |
+| `src/App.jsx` | `const raterEmail = raterLink ? (raterLink[1].userEmail \|\| raterLink[1].odedByEmail) : 'Email no encontrado'` | L3676 |
+| `src/App.jsx` | `const raterDisplayName = raterLink ? (raterLink[1].userName \|\| raterLink[1].odedByName) : getPlayerName(rating.ratedBy)` | L3677 |
+| `src/App.jsx` | `raterName: getPlayerName(rating.ratedBy),` | L3682 |
+| `src/App.jsx` | `if (!ratingsByRater[r.ratedBy]) \{` | L3698 |
+| `src/App.jsx` | `ratingsByRater[r.ratedBy] = \{` | L3699 |
+| `src/App.jsx` | `ratingsByRater[r.ratedBy].ratings.push(r)` | L3706 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the issue now. In the suspicious ratings code, it uses `r.odedBy` but the rating structure uses `r.ratedBy`. This is a typo. Let me fix it.
+
+Looking at the code, the rating is saved with `ratedBy` (line 1744), so the suspicious ratings check should use `r.ratedBy` not `r.odedBy`.</details></think>
+
+---
+
+Encontré el error. El código usa `r.odedBy` pero las calificaciones se guardan con `r.ratedBy`. Voy a corregirlo:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 41, lines removed: 25
+
+```diff
+@@ -3243,39 +3243,55 @@
+                {(() =&gt; {
+                  // Find users who rate consistently low
+-                 const userAverages = {}
++                 // ratedBy is a playerId, so we need to find the user linked to that player
++                 const playerAverages = {}
+                  Object.values(ratings).forEach(playerRatings =&gt; {
+                    playerRatings.forEach(r =&gt; {
+-                     if (!userAverages[r.odedBy]) {
+-                       userAverages[r.odedBy] = { total: 0, count: 0 }
+-                     }
+-                     userAverages[r.odedBy].total += r.score
+-                     userAverages[r.odedBy].count++
++                     const raterPlayerId = r.ratedBy
++                     if (raterPlayerId) {
++                       if (!playerAverages[raterPlayerId]) {
++                         playerAverages[raterPlayerId] = { total: 0, count: 0 }
++                       }
++                       playerAverages[raterPlayerId].total += r.score
++                       playerAverages[raterPlayerId].count++
++                     }
+                    })
+                  })
+                  
+-                 const suspicious = Object.entries(userAverages)
+-                   .filter(([_, data]) =&gt; data.count &gt;= 5 &amp;&amp; (data.total / data.count) &lt; 5)
+-                   .map(([odedBy, data]) =&gt; ({
+-                     odedBy,
+-                     avg: (data.total / data.count).toFixed(1),
+-                     count: data.count
+-                   }))
++                 const suspicious = Object.entries(playerAverages)
++                   .filter(([_, data]) =&gt; data.count &gt;= 3 &amp;&amp; (data.total / data.count) &lt; 5)
++                   .map(([playerId, data]) =&gt; {
++                     // Find user linked to this player
++                     const linkedUser = Object.values(userLinks).find(u =&gt; u.playerId === playerId)
++                     const playerData = players.find(p =&gt; p.id === playerId)
++                     return {
++                       playerId,
++                       playerName: playerData?.name || 'Jugador',
++                       userName: linkedUser?.userName,
++                       userPhoto: linkedUser?.userPhoto,
++                       avg: (data.total / data.count).toFixed(1),
++                       count: data.count
++                     }
++                   })
+                  
+                  if (suspicious.length === 0) {
+                    return &lt;p className="no-data"&gt;No se detectaron patrones sospechosos&lt;/p&gt;
+                  }
+                  
+-                 return suspicious.map(s =&gt; {
+-                   const userData = userLinks[s.odedBy]
+-                   return (
+-                     &lt;div key={s.odedBy} className="suspicious-item"&gt;
+-                       &lt;img src={userData?.userPhoto} alt="" className="suspicious-avatar" /&gt;
+-                       &lt;div className="suspicious-info"&gt;
+-                         &lt;span className="suspicious-name"&gt;{userData?.userName || 'Usuario'}&lt;/span&gt;
+-                         &lt;span className="suspicious-stats"&gt;Promedio: {s.avg} ({s.count} votos)&lt;/span&gt;
+-                       &lt;/div&gt;
+-                     &lt;/div&gt;
+-                   )
+-                 })
++                 return suspicious.map(s =&gt; (
++                   &lt;div key={s.playerId} className="suspicious-item"&gt;
++                     {s.userPhoto ? (
++                       &lt;img src={s.userPhoto} alt="" className="suspicious-avatar" /&gt;
++                     ) : (
++                       &lt;div className="suspicious-avatar-placeholder"&gt;
++                         {s.playerName.charAt(0)}
++                       &lt;/div&gt;
++                     )}
++                     &lt;div className="suspicious-info"&gt;
++                       &lt;span className="suspicious-name"&gt;{s.playerName}&lt;/span&gt;
++                       {s.userName &amp;&amp; &lt;span className="suspicious-user"&gt;({s.userName})&lt;/span&gt;}
++                       &lt;span className="suspicious-stats"&gt;Promedio dado: {s.avg} ({s.count} votos)&lt;/span&gt;
++                     &lt;/div&gt;
++                   &lt;/div&gt;
++                 ))
+                })()}
+              &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to add the CSS for the new placeholder class and also check if there are any lint errors.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\.suspicious-avatar" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `.suspicious-avatar \{` | L4630 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to add the placeholder style for the suspicious avatar.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 21, lines removed: undefined
+
+```diff
+@@ -4634,7 +4634,28 @@
+    object-fit: cover;
+  }
++ 
++ .suspicious-avatar-placeholder {
++   width: 36px;
++   height: 36px;
++   border-radius: 50%;
++   background: linear-gradient(135deg, var(--primary), #059669);
++   color: white;
++   display: flex;
++   align-items: center;
++   justify-content: center;
++   font-weight: 600;
++   font-size: 0.9rem;
++ }
+  
+  .suspicious-info {
+    flex: 1;
++   display: flex;
++   flex-direction: column;
++   gap: 0.15rem;
++ }
++ 
++ .suspicious-user {
++   font-size: 0.75rem;
++   color: var(--text-muted);
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix suspicious ratings: use ratedBy instead of typo, show player name" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix suspicious ratings: use ratedBy instead of typo, show player name" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 846 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-Dva3vWc9.css     66.78 kB │ gzip:  11.32 kB
+dist/assets/index-BtH4Kwsg.js   1,075.12 kB │ gzip: 283.70 kB
+✓ built in 1.28s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 4b2c4f7] Fix suspicious ratings: use ratedBy instead of typo, show player name
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 6 files changed, 382 insertions(+), 55 deletions(-)
+ rename dist/assets/{index-ggcauGLc.js =&gt; index-BtH4Kwsg.js} (94%)
+ rename dist/assets/{index-DiVfNv0d.css =&gt; index-Dva3vWc9.css} (94%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/3.2MB)
+Uploading [=====---------------] (818.7KB/3.2MB)
+Uploading [==========----------] (1.6MB/3.2MB)
+Uploading [===============-----] (2.4MB/3.2MB)
+Uploading [====================] (3.2MB/3.2MB)
+https://lukto-winrate-webapp-53yw8zrq7-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/DeYeh1Y9pny5zeUKUfYpJd9Bd546 [4s]
+Production: https://lukto-winrate-webapp-53yw8zrq7-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 406 packages in 9s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 846 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-Dva3vWc9.css     66.78 kB │ gzip:  11.31 kB
+Building: dist/assets/index-BtH4Kwsg.js   1,075.12 kB │ gzip: 284.75 kB
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: ✓ built in 4.81s
+Building: Build Completed in /vercel/output [15s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-53yw8zrq7-josefatrixs-projects.vercel.app [36s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [36s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-53yw8zrq7-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-53yw8zrq7-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Done! Let me explain what I fixed.</details></think>
+
+---
+
+¡Corregido! El problema era un **typo**: el código usaba `r.odedBy` pero las calificaciones se guardan con `r.ratedBy`.
+
+**Lo que arreglé:**
+
+1. ✅ Ahora usa `r.ratedBy` correctamente
+2. ✅ Muestra el **nombre del jugador** que califica bajo
+3. ✅ Si tiene cuenta vinculada, muestra también el **nombre de Gmail**
+4. ✅ Reducí el mínimo de votos de 5 a **3** para detectar antes
+5. ✅ Agregué avatar placeholder si no hay foto
+
+**Cómo funciona ahora:**
+- Busca jugadores que hayan dado **3+ calificaciones**
+- Si su promedio de calificaciones dadas es **menor a 5**, los marca como sospechosos
+- Muestra: Nombre del jugador + (Gmail si tiene) + Promedio dado + Total de votos
+
+🔗 https://lukto-winrate-webapp.vercel.app
+
+Ve a **Herramientas Admin → Calificaciones Sospechosas** para probarlo.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+dame la opcion de admin de borar las calificaciones de otro. 
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+
 
 ---
 
