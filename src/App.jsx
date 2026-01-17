@@ -294,15 +294,21 @@ function App() {
   }
 
   // Admin function to link a user to a player
-  const adminLinkUserToPlayer = async (odedBy, playerId) => {
-    if (!isAdmin) return
+  const adminLinkUserToPlayer = async (userId, playerId) => {
+    if (!isAdmin) {
+      alert('No tienes permisos de admin')
+      return
+    }
     
     try {
-      const linkRef = doc(db, 'userLinks', odedBy)
-      await updateDoc(linkRef, { playerId })
+      console.log('Vinculando usuario:', userId, 'con jugador:', playerId)
+      const linkRef = doc(db, 'userLinks', userId)
+      await setDoc(linkRef, { playerId }, { merge: true })
+      console.log('Usuario vinculado exitosamente')
+      alert('✅ Usuario vinculado correctamente')
     } catch (error) {
       console.error('Error linking user:', error)
-      alert('Error al vincular usuario')
+      alert('Error al vincular usuario: ' + error.message)
     }
   }
 
