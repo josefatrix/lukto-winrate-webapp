@@ -69,12 +69,38 @@ export const AppProvider = ({ children }) => {
   // Refs
   const confettiTriggered = useRef({})
 
+  // Register user as pending when they log in
+  const registerPendingUser = async currentUser => {
+    if (!currentUser) return
+
+    try {
+      const linkRef = doc(db, 'userLinks', currentUser.uid)
+      await setDoc(
+        linkRef,
+        {
+          userName: currentUser.displayName,
+          userEmail: currentUser.email,
+          userPhoto: currentUser.photoURL,
+          playerId: null,
+          registeredAt: new Date().toISOString(),
+        },
+        { merge: true }
+      )
+      console.log('Usuario registrado:', currentUser.email)
+    } catch (error) {
+      console.error('Error registering user:', error)
+    }
+  }
+
   // Auth listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, currentUser => {
+    const unsubscribe = onAuthStateChanged(auth, async currentUser => {
       setUser(currentUser)
       if (!currentUser) {
         setUserPlayer(null)
+      } else {
+        // Register user as pending if not already linked
+        registerPendingUser(currentUser)
       }
     })
     return () => unsubscribe()
