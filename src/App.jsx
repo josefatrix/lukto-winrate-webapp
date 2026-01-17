@@ -485,6 +485,7 @@ function App() {
         wins: 0, 
         losses: 0, 
         played: 0,
+        mvps: 0,
         name: player.name,
         aliases: player.aliases || []
       }
@@ -492,6 +493,28 @@ function App() {
 
     matches.forEach(match => {
       const whiteWon = match.winner === 'white'
+      const allMatchPlayers = [...match.teamWhite, ...match.teamBlack]
+      
+      // Calculate MVP for this match (highest avg rating)
+      let mvpId = null
+      let mvpRating = -1
+      
+      allMatchPlayers.forEach(playerId => {
+        const playerRatings = ratings[playerId] || []
+        const matchRatings = playerRatings.filter(r => r.matchId === match.id)
+        if (matchRatings.length > 0) {
+          const avg = matchRatings.reduce((sum, r) => sum + r.score, 0) / matchRatings.length
+          if (avg > mvpRating) {
+            mvpRating = avg
+            mvpId = playerId
+          }
+        }
+      })
+      
+      // Count MVP
+      if (mvpId && stats[mvpId]) {
+        stats[mvpId].mvps++
+      }
       
       match.teamWhite.forEach(playerId => {
         if (stats[playerId]) {
@@ -912,6 +935,7 @@ function App() {
                   <th>V</th>
                   <th>D</th>
                   <th>PJ</th>
+                  <th>MVP</th>
                   <th>Rating</th>
                 </tr>
               </thead>
@@ -947,6 +971,11 @@ function App() {
                     <td><span className="stat-value wins">{player.wins}</span></td>
                     <td><span className="stat-value losses">{player.losses}</span></td>
                     <td><span className="stat-value">{player.played}</span></td>
+                    <td>
+                      <span className={`mvp-count ${player.mvps > 0 ? 'has-mvps' : ''}`}>
+                        {player.mvps > 0 ? player.mvps : '-'}
+                      </span>
+                    </td>
                     <td>
                       {player.avgRating ? (
                         <span className={`rating-value ${getRatingClass(parseFloat(player.avgRating))}`}>

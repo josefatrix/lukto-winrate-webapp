@@ -1555,6 +1555,20 @@ body {
 
 .no-rating { color: var(--text-muted); }
 
+/* MVP Count */
+.mvp-count {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.mvp-count.has-mvps {
+  background: linear-gradient(135deg, #ffd700, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .app-container {
