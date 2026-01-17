@@ -3317,6 +3317,73 @@ function App() {
               </div>
               <h3>Eliminar Calificaciones</h3>
             </div>
+            
+            {/* Delete all ratings from a specific match */}
+            <div className="delete-by-match-section">
+              <p className="tool-description">Eliminar TODAS las calificaciones de un partido</p>
+              <div className="match-delete-controls">
+                <select 
+                  className="setting-select"
+                  id="matchToDeleteRatings"
+                >
+                  <option value="">Seleccionar partido...</option>
+                  {[...matches].sort((a, b) => new Date(b.date) - new Date(a.date)).map(m => {
+                    // Count ratings for this match
+                    let ratingCount = 0
+                    Object.values(ratings).forEach(playerRatings => {
+                      ratingCount += playerRatings.filter(r => r.matchId === m.id).length
+                    })
+                    return (
+                      <option key={m.id} value={m.id}>
+                        {m.venue} - {m.date} ({ratingCount} calificaciones)
+                      </option>
+                    )
+                  })}
+                </select>
+                <button 
+                  className="btn-danger"
+                  onClick={async () => {
+                    const select = document.getElementById('matchToDeleteRatings')
+                    const matchId = select.value
+                    if (!matchId) {
+                      showToast('error', 'Selecciona un partido')
+                      return
+                    }
+                    
+                    const match = matches.find(m => m.id === matchId)
+                    if (!confirm(`¿Eliminar TODAS las calificaciones del partido ${match?.venue} - ${match?.date}?`)) return
+                    
+                    // Find all ratings for this match
+                    const batch = writeBatch(db)
+                    let count = 0
+                    
+                    Object.entries(ratings).forEach(([playerId, playerRatings]) => {
+                      playerRatings.forEach(r => {
+                        if (r.matchId === matchId) {
+                          const ratingId = `${playerId}_${matchId}_${r.ratedBy}`
+                          batch.delete(doc(db, 'ratings', ratingId))
+                          count++
+                        }
+                      })
+                    })
+                    
+                    if (count === 0) {
+                      showToast('info', 'No hay calificaciones para este partido')
+                      return
+                    }
+                    
+                    await batch.commit()
+                    showToast('success', `Eliminadas ${count} calificaciones del partido`)
+                    select.value = ''
+                  }}
+                >
+                  Eliminar del Partido
+                </button>
+              </div>
+            </div>
+            
+            <hr className="tool-divider" />
+            
             <p className="tool-description">Eliminar calificaciones de un jugador específico</p>
             <div className="delete-ratings-section">
               <select 
