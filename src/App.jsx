@@ -376,6 +376,8 @@ function App() {
       
       console.log('Guardando en Firebase:', JSON.stringify(dataToSave))
       
+      // Delete first to clear any corrupted data, then create fresh
+      await deleteDoc(linkRef)
       await setDoc(linkRef, dataToSave)
       
       console.log('✅ Usuario vinculado exitosamente a', playerToLink.name)
