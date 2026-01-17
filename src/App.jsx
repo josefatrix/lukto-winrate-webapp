@@ -1414,40 +1414,27 @@ function App() {
                       
                       {Object.keys(ratingsByRater).length > 0 ? (
                         <>
-                          <table className="stats-table">
-                            <thead>
-                              <tr>
-                                <th>Calificador</th>
-                                <th>Email</th>
-                                <th>Jugador</th>
-                                <th>Nota</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {Object.entries(ratingsByRater).flatMap(([raterId, data]) => 
-                                data.ratings.map((r, idx) => (
-                                  <tr key={`${raterId}-${idx}`}>
-                                    {idx === 0 && (
-                                      <>
-                                        <td rowSpan={data.ratings.length}>
-                                          <span className="rater-name">{data.raterDisplayName || data.raterName}</span>
-                                        </td>
-                                        <td rowSpan={data.ratings.length}>
-                                          <span className="rater-email">{data.raterEmail}</span>
-                                        </td>
-                                      </>
-                                    )}
-                                    <td>{r.ratedPlayerName}</td>
-                                    <td>
-                                      <span className={`rating-value ${getRatingClass(r.score)}`}>
+                          <div className="ratings-by-rater">
+                            {Object.entries(ratingsByRater).map(([raterId, data]) => (
+                              <div key={raterId} className="rater-section">
+                                <div className="rater-header">
+                                  <span className="rater-name">📝 {data.raterDisplayName || data.raterName}</span>
+                                  <span className="rater-email">({data.raterEmail})</span>
+                                  <span className="rater-action"> calificó:</span>
+                                </div>
+                                <div className="rater-ratings">
+                                  {data.ratings.map((r, idx) => (
+                                    <div key={idx} className="rating-detail">
+                                      <span className="rated-player">{r.ratedPlayerName}</span>
+                                      <span className={`rating-score ${getRatingClass(r.score)}`}>
                                         ⭐ {r.score}
                                       </span>
-                                    </td>
-                                  </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                           <div className="match-average">
                             <span className="match-average-label">Promedio del partido:</span>
                             <span className={`match-average-value ${getRatingClass(parseFloat(matchAvg))}`}>
