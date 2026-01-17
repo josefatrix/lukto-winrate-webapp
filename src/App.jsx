@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { auth, googleProvider, db } from './firebase'
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth'
 import { 
@@ -13,6 +13,8 @@ import {
   writeBatch,
   updateDoc
 } from 'firebase/firestore'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import confetti from 'canvas-confetti'
 
 // ⚠️ CAMBIA ESTA CONTRASEÑA por una que solo tú conozcas
 const ADMIN_PASSWORD = 'lukto2026'
@@ -118,10 +120,32 @@ function App() {
   const [players, setPlayers] = useState(initialPlayers)
   const [matches, setMatches] = useState(initialMatches)
   const [ratings, setRatings] = useState({})
+  const [predictions, setPredictions] = useState({}) // {matchId: {odedBy: 'white'|'black'}}
   const [showPlayerModal, setShowPlayerModal] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
   const [newPlayerAliases, setNewPlayerAliases] = useState('')
   const [editingPlayerId, setEditingPlayerId] = useState(null)
+  
+  // Dark mode - persiste en localStorage
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('lukto_darkMode')
+    return saved !== 'false' // Default to dark mode
+  })
+  
+  // Loading states for skeleton
+  const [dataLoaded, setDataLoaded] = useState(false)
+  
+  // Head to head modal
+  const [showH2HModal, setShowH2HModal] = useState(false)
+  const [h2hPlayer1, setH2hPlayer1] = useState(null)
+  const [h2hPlayer2, setH2hPlayer2] = useState(null)
+  
+  // Prediction modal
+  const [showPredictionModal, setShowPredictionModal] = useState(false)
+  const [selectedMatchForPrediction, setSelectedMatchForPrediction] = useState(null)
+  
+  // Confetti ref
+  const confettiTriggered = useRef({})
   
   // Auth state
   const [user, setUser] = useState(null)
@@ -168,6 +192,28 @@ function App() {
       }
     })
     return () => unsubscribe()
+  }, [])
+
+  // Dark mode effect
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
+    localStorage.setItem('lukto_darkMode', darkMode.toString())
+  }, [darkMode])
+
+  // Load predictions from Firebase
+  useEffect(() => {
+    const unsubPredictions = onSnapshot(collection(db, 'predictions'), (snapshot) => {
+      const preds = {}
+      snapshot.docs.forEach(docSnap => {
+        const data = docSnap.data()
+        if (!preds[data.matchId]) preds[data.matchId] = {}
+        preds[data.matchId][data.odedBy] = data.prediction
+      })
+      setPredictions(preds)
+    }, (error) => {
+      console.log('No predictions yet:', error)
+    })
+    return () => unsubPredictions()
   }, [])
 
   // Check if user is admin when user or adminEmails change
@@ -296,8 +342,10 @@ function App() {
           const matchesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
           setMatches(matchesData.sort((a, b) => new Date(a.date) - new Date(b.date)))
         }
+        setDataLoaded(true) // Mark data as loaded
       }, (error) => {
         console.error('Error loading matches:', error)
+        setDataLoaded(true)
       })
 
       // Load ratings
@@ -585,6 +633,276 @@ function App() {
     setTimeout(() => setToast(null), 3000)
   }
 
+  // Calculate player streaks (win/loss streaks)
+  const calculateStreaks = (playerId) => {
+    const sortedMatches = [...matches].sort((a, b) => new Date(a.date) - new Date(b.date))
+    let currentStreak = 0
+    let streakType = null // 'win' or 'loss'
+    let maxWinStreak = 0
+    let maxLossStreak = 0
+    let tempStreak = 0
+    let tempType = null
+
+    sortedMatches.forEach(match => {
+      const inWhite = match.teamWhite.includes(playerId)
+      const inBlack = match.teamBlack.includes(playerId)
+      if (!inWhite && !inBlack) return
+
+      const won = (inWhite && match.winner === 'white') || (inBlack && match.winner === 'black')
+      
+      if (won) {
+        if (tempType === 'win') {
+          tempStreak++
+        } else {
+          tempStreak = 1
+          tempType = 'win'
+        }
+        maxWinStreak = Math.max(maxWinStreak, tempStreak)
+      } else {
+        if (tempType === 'loss') {
+          tempStreak++
+        } else {
+          tempStreak = 1
+          tempType = 'loss'
+        }
+        maxLossStreak = Math.max(maxLossStreak, tempStreak)
+      }
+      
+      currentStreak = tempStreak
+      streakType = tempType
+    })
+
+    return { currentStreak, streakType, maxWinStreak, maxLossStreak }
+  }
+
+  // Calculate head-to-head stats between two players
+  const calculateH2H = (player1Id, player2Id) => {
+    let sameTeamWins = 0
+    let sameTeamLosses = 0
+    let oppositeWins = 0 // player1 wins against player2
+    let oppositeLosses = 0 // player1 loses against player2
+    let totalTogether = 0
+    let totalOpposite = 0
+
+    matches.forEach(match => {
+      const p1White = match.teamWhite.includes(player1Id)
+      const p1Black = match.teamBlack.includes(player1Id)
+      const p2White = match.teamWhite.includes(player2Id)
+      const p2Black = match.teamBlack.includes(player2Id)
+      
+      if (!p1White && !p1Black) return
+      if (!p2White && !p2Black) return
+
+      const sameTeam = (p1White && p2White) || (p1Black && p2Black)
+      
+      if (sameTeam) {
+        totalTogether++
+        const team = p1White ? 'white' : 'black'
+        if (match.winner === team) sameTeamWins++
+        else sameTeamLosses++
+      } else {
+        totalOpposite++
+        const p1Team = p1White ? 'white' : 'black'
+        if (match.winner === p1Team) oppositeWins++
+        else oppositeLosses++
+      }
+    })
+
+    return {
+      sameTeamWins,
+      sameTeamLosses,
+      totalTogether,
+      sameTeamWinRate: totalTogether > 0 ? (sameTeamWins / totalTogether * 100).toFixed(0) : 0,
+      oppositeWins,
+      oppositeLosses,
+      totalOpposite,
+      h2hWinRate: totalOpposite > 0 ? (oppositeWins / totalOpposite * 100).toFixed(0) : 0
+    }
+  }
+
+  // Calculate best teammate and worst rival
+  const calculateTeammateRivalStats = (playerId) => {
+    const teammateStats = {}
+    const rivalStats = {}
+
+    matches.forEach(match => {
+      const inWhite = match.teamWhite.includes(playerId)
+      const inBlack = match.teamBlack.includes(playerId)
+      if (!inWhite && !inBlack) return
+
+      const myTeam = inWhite ? match.teamWhite : match.teamBlack
+      const opposingTeam = inWhite ? match.teamBlack : match.teamWhite
+      const won = (inWhite && match.winner === 'white') || (inBlack && match.winner === 'black')
+
+      // Teammates
+      myTeam.forEach(tid => {
+        if (tid === playerId) return
+        if (!teammateStats[tid]) teammateStats[tid] = { wins: 0, total: 0 }
+        teammateStats[tid].total++
+        if (won) teammateStats[tid].wins++
+      })
+
+      // Rivals
+      opposingTeam.forEach(rid => {
+        if (!rivalStats[rid]) rivalStats[rid] = { wins: 0, total: 0 }
+        rivalStats[rid].total++
+        if (won) rivalStats[rid].wins++
+      })
+    })
+
+    // Find best teammate (highest win rate with at least 2 games)
+    let bestTeammate = null
+    let bestTeammateRate = -1
+    Object.entries(teammateStats).forEach(([id, stats]) => {
+      if (stats.total >= 2) {
+        const rate = stats.wins / stats.total
+        if (rate > bestTeammateRate) {
+          bestTeammateRate = rate
+          bestTeammate = { id, ...stats, winRate: (rate * 100).toFixed(0) }
+        }
+      }
+    })
+
+    // Find worst rival (lowest win rate against with at least 2 games)
+    let worstRival = null
+    let worstRivalRate = 2
+    Object.entries(rivalStats).forEach(([id, stats]) => {
+      if (stats.total >= 2) {
+        const rate = stats.wins / stats.total
+        if (rate < worstRivalRate) {
+          worstRivalRate = rate
+          worstRival = { id, ...stats, winRate: (rate * 100).toFixed(0) }
+        }
+      }
+    })
+
+    return { bestTeammate, worstRival }
+  }
+
+  // Calculate achievements/badges
+  const calculateAchievements = (playerId) => {
+    const achievements = []
+    const streaks = calculateStreaks(playerId)
+    const playerStats = stats.find(s => s.id === playerId)
+    
+    if (!playerStats) return achievements
+
+    // Win streak achievements
+    if (streaks.maxWinStreak >= 3) achievements.push({ icon: '🔥', name: 'Racha de 3', desc: '3 victorias seguidas' })
+    if (streaks.maxWinStreak >= 5) achievements.push({ icon: '⚡', name: 'Imparable', desc: '5 victorias seguidas' })
+    if (streaks.maxWinStreak >= 7) achievements.push({ icon: '👑', name: 'Leyenda', desc: '7 victorias seguidas' })
+
+    // MVP achievements
+    if (playerStats.mvps >= 1) achievements.push({ icon: '⭐', name: 'Primer MVP', desc: 'Tu primer MVP' })
+    if (playerStats.mvps >= 3) achievements.push({ icon: '🌟', name: 'Estrella', desc: '3 MVPs' })
+    if (playerStats.mvps >= 5) achievements.push({ icon: '💫', name: 'Superestrella', desc: '5 MVPs' })
+
+    // Win rate achievements
+    if (playerStats.winRate >= 60 && playerStats.played >= 5) achievements.push({ icon: '📈', name: 'Ganador', desc: '60%+ win rate' })
+    if (playerStats.winRate >= 75 && playerStats.played >= 5) achievements.push({ icon: '🏆', name: 'Elite', desc: '75%+ win rate' })
+
+    // Games played achievements
+    if (playerStats.played >= 5) achievements.push({ icon: '🎮', name: 'Regular', desc: '5 partidos jugados' })
+    if (playerStats.played >= 10) achievements.push({ icon: '🎯', name: 'Veterano', desc: '10 partidos jugados' })
+    if (playerStats.played >= 20) achievements.push({ icon: '🏅', name: 'Leyenda LUKTO', desc: '20 partidos jugados' })
+
+    // Rating achievements
+    if (playerStats.avgRating && parseFloat(playerStats.avgRating) >= 8) {
+      achievements.push({ icon: '💎', name: 'Diamante', desc: 'Rating promedio 8+' })
+    }
+
+    return achievements
+  }
+
+  // Trigger confetti for MVP
+  const triggerMVPConfetti = (matchId, mvpPlayerId) => {
+    if (confettiTriggered.current[matchId]) return
+    if (mvpPlayerId !== userPlayer) return
+    
+    confettiTriggered.current[matchId] = true
+    
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#10b981', '#ffd700', '#ffffff']
+    })
+  }
+
+  // Get performance data for chart (rating and win rate over time)
+  const getPerformanceData = (playerId) => {
+    const sortedMatches = [...matches].sort((a, b) => new Date(a.date) - new Date(b.date))
+    let wins = 0
+    let total = 0
+    const data = []
+
+    sortedMatches.forEach(match => {
+      const inWhite = match.teamWhite.includes(playerId)
+      const inBlack = match.teamBlack.includes(playerId)
+      if (!inWhite && !inBlack) return
+
+      total++
+      const won = (inWhite && match.winner === 'white') || (inBlack && match.winner === 'black')
+      if (won) wins++
+
+      // Calculate average rating up to this match
+      const playerRatings = ratings[playerId] || []
+      const matchesUpToNow = sortedMatches.filter(m => new Date(m.date) <= new Date(match.date)).map(m => m.id)
+      const relevantRatings = playerRatings.filter(r => matchesUpToNow.includes(r.matchId))
+      const avgRating = relevantRatings.length > 0 
+        ? relevantRatings.reduce((sum, r) => sum + r.score, 0) / relevantRatings.length 
+        : null
+
+      data.push({
+        name: new Date(match.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+        winRate: Math.round((wins / total) * 100),
+        rating: avgRating ? parseFloat(avgRating.toFixed(1)) : null,
+        match: match.venue
+      })
+    })
+
+    return data
+  }
+
+  // Submit prediction
+  const submitPrediction = async (matchId, prediction) => {
+    if (!user || !userPlayer) return
+    
+    try {
+      const predRef = doc(db, 'predictions', `${user.uid}_${matchId}`)
+      await setDoc(predRef, {
+        odedBy: user.uid,
+        playerId: userPlayer,
+        matchId,
+        prediction,
+        timestamp: new Date().toISOString()
+      })
+      setShowPredictionModal(false)
+      showToast('success', 'Predicción registrada')
+    } catch (error) {
+      console.error('Error submitting prediction:', error)
+      showToast('error', 'Error al guardar predicción')
+    }
+  }
+
+  // Get prediction accuracy for a player
+  const getPredictionAccuracy = (odedBy) => {
+    let correct = 0
+    let total = 0
+    
+    Object.entries(predictions).forEach(([matchId, matchPreds]) => {
+      if (matchPreds[odedBy]) {
+        const match = matches.find(m => m.id === matchId)
+        if (match && match.winner) {
+          total++
+          if (matchPreds[odedBy] === match.winner) correct++
+        }
+      }
+    })
+    
+    return { correct, total, accuracy: total > 0 ? Math.round((correct / total) * 100) : 0 }
+  }
+
   const handlePlayerToggle = (playerId, team) => {
     if (team === 'white') {
       if (teamWhite.includes(playerId)) {
@@ -840,8 +1158,17 @@ function App() {
   }
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
       <header className="header">
+        <div className="header-top">
+          <button 
+            className="theme-toggle"
+            onClick={() => setDarkMode(!darkMode)}
+            title={darkMode ? 'Modo claro' : 'Modo oscuro'}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+        </div>
         <h1>LUKTO STATS</h1>
         <p className="subtitle">Win Rate & Ratings Tracker</p>
         
@@ -901,6 +1228,12 @@ function App() {
           Calificaciones
         </button>
         <button 
+          className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('analytics')}
+        >
+          Análisis
+        </button>
+        <button 
           className={`nav-tab ${activeTab === 'matches' ? 'active' : ''}`}
           onClick={() => setActiveTab('matches')}
         >
@@ -936,7 +1269,22 @@ function App() {
         )}
       </nav>
 
-      {activeTab === 'stats' && (
+      {activeTab === 'stats' && !dataLoaded && (
+        <section className="stats-section">
+          <h2 className="section-title">Ranking de Jugadores</h2>
+          <div className="skeleton-container">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="skeleton-row">
+                <div className="skeleton skeleton-avatar"></div>
+                <div className="skeleton skeleton-text"></div>
+                <div className="skeleton skeleton-bar"></div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {activeTab === 'stats' && dataLoaded && (
         <section className="stats-section">
           <h2 className="section-title">Ranking de Jugadores</h2>
           {stats.length > 0 ? (
@@ -1013,6 +1361,216 @@ function App() {
               <div className="icon">—</div>
               <h3>Sin estadísticas</h3>
               <p>Agrega partidos para ver las estadísticas</p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Analytics Tab - Performance graphs, streaks, H2H, achievements */}
+      {activeTab === 'analytics' && (
+        <section className="stats-section analytics-section">
+          <h2 className="section-title">Análisis Avanzado</h2>
+          
+          {/* Player selector for detailed analytics */}
+          <div className="analytics-player-select">
+            <label>Selecciona un jugador para ver su análisis:</label>
+            <select 
+              value={h2hPlayer1 || ''}
+              onChange={(e) => setH2hPlayer1(e.target.value)}
+              className="player-select-dropdown"
+            >
+              <option value="">Seleccionar jugador...</option>
+              {stats.map(player => (
+                <option key={player.id} value={player.id}>{player.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {h2hPlayer1 && (() => {
+            const player = stats.find(p => p.id === h2hPlayer1)
+            const streaks = calculateStreaks(h2hPlayer1)
+            const { bestTeammate, worstRival } = calculateTeammateRivalStats(h2hPlayer1)
+            const achievements = calculateAchievements(h2hPlayer1)
+            const performanceData = getPerformanceData(h2hPlayer1)
+
+            return (
+              <div className="player-analytics">
+                {/* Player header */}
+                <div className="analytics-player-header">
+                  {getPlayerPhoto(h2hPlayer1) ? (
+                    <img src={getPlayerPhoto(h2hPlayer1)} alt="" className="analytics-avatar" />
+                  ) : (
+                    <div className="analytics-avatar-placeholder">
+                      {getInitials(player?.name || '')}
+                    </div>
+                  )}
+                  <div className="analytics-player-info">
+                    <h3>{player?.name}</h3>
+                    <p>{player?.played} partidos · {player?.winRate.toFixed(0)}% win rate</p>
+                  </div>
+                </div>
+
+                {/* Streaks */}
+                <div className="analytics-card">
+                  <h4>Rachas</h4>
+                  <div className="streaks-grid">
+                    <div className="streak-item">
+                      <span className="streak-label">Racha actual</span>
+                      <span className={`streak-value ${streaks.streakType}`}>
+                        {streaks.currentStreak} {streaks.streakType === 'win' ? 'V' : 'D'}
+                      </span>
+                    </div>
+                    <div className="streak-item">
+                      <span className="streak-label">Mejor racha de victorias</span>
+                      <span className="streak-value win">{streaks.maxWinStreak}</span>
+                    </div>
+                    <div className="streak-item">
+                      <span className="streak-label">Peor racha de derrotas</span>
+                      <span className="streak-value loss">{streaks.maxLossStreak}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Best teammate / Worst rival */}
+                <div className="analytics-card">
+                  <h4>Compañeros y Rivales</h4>
+                  <div className="teammate-rival-grid">
+                    {bestTeammate ? (
+                      <div className="teammate-card best">
+                        <span className="tr-label">Mejor compañero</span>
+                        <span className="tr-name">{getPlayerName(bestTeammate.id)}</span>
+                        <span className="tr-stats">{bestTeammate.wins}V - {bestTeammate.total - bestTeammate.wins}D ({bestTeammate.winRate}%)</span>
+                      </div>
+                    ) : (
+                      <div className="teammate-card empty">
+                        <span className="tr-label">Mejor compañero</span>
+                        <span className="tr-name">—</span>
+                        <span className="tr-stats">Necesitas más partidos</span>
+                      </div>
+                    )}
+                    {worstRival ? (
+                      <div className="teammate-card worst">
+                        <span className="tr-label">Peor rival</span>
+                        <span className="tr-name">{getPlayerName(worstRival.id)}</span>
+                        <span className="tr-stats">{worstRival.wins}V - {worstRival.total - worstRival.wins}D ({worstRival.winRate}%)</span>
+                      </div>
+                    ) : (
+                      <div className="teammate-card empty">
+                        <span className="tr-label">Peor rival</span>
+                        <span className="tr-name">—</span>
+                        <span className="tr-stats">Necesitas más partidos</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Performance chart */}
+                {performanceData.length > 1 && (
+                  <div className="analytics-card chart-card">
+                    <h4>Evolución del Rendimiento</h4>
+                    <div className="chart-container">
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={performanceData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#333' : '#eee'} />
+                          <XAxis dataKey="name" stroke={darkMode ? '#888' : '#666'} fontSize={12} />
+                          <YAxis yAxisId="left" domain={[0, 100]} stroke="#10b981" fontSize={12} />
+                          <YAxis yAxisId="right" orientation="right" domain={[0, 10]} stroke="#f59e0b" fontSize={12} />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: darkMode ? '#1a1a1a' : '#fff',
+                              border: `1px solid ${darkMode ? '#333' : '#eee'}`,
+                              borderRadius: '8px'
+                            }}
+                          />
+                          <Legend />
+                          <Line 
+                            yAxisId="left"
+                            type="monotone" 
+                            dataKey="winRate" 
+                            stroke="#10b981" 
+                            strokeWidth={2}
+                            dot={{ fill: '#10b981' }}
+                            name="Win Rate %"
+                          />
+                          <Line 
+                            yAxisId="right"
+                            type="monotone" 
+                            dataKey="rating" 
+                            stroke="#f59e0b" 
+                            strokeWidth={2}
+                            dot={{ fill: '#f59e0b' }}
+                            name="Rating"
+                            connectNulls
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {/* Achievements */}
+                <div className="analytics-card">
+                  <h4>Logros Desbloqueados</h4>
+                  {achievements.length > 0 ? (
+                    <div className="achievements-grid">
+                      {achievements.map((achievement, idx) => (
+                        <div key={idx} className="achievement-badge">
+                          <span className="achievement-icon">{achievement.icon}</span>
+                          <span className="achievement-name">{achievement.name}</span>
+                          <span className="achievement-desc">{achievement.desc}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="no-achievements">Juega más partidos para desbloquear logros</p>
+                  )}
+                </div>
+
+                {/* Head to Head section */}
+                <div className="analytics-card h2h-card">
+                  <h4>Comparar con otro jugador</h4>
+                  <select 
+                    value={h2hPlayer2 || ''}
+                    onChange={(e) => setH2hPlayer2(e.target.value)}
+                    className="player-select-dropdown"
+                  >
+                    <option value="">Seleccionar oponente...</option>
+                    {stats.filter(p => p.id !== h2hPlayer1).map(player => (
+                      <option key={player.id} value={player.id}>{player.name}</option>
+                    ))}
+                  </select>
+
+                  {h2hPlayer2 && (() => {
+                    const h2h = calculateH2H(h2hPlayer1, h2hPlayer2)
+                    return (
+                      <div className="h2h-results">
+                        <div className="h2h-section">
+                          <h5>Cuando juegan juntos</h5>
+                          <div className="h2h-stat">
+                            <span>{h2h.sameTeamWins}V - {h2h.sameTeamLosses}D</span>
+                            <span className="h2h-rate">{h2h.sameTeamWinRate}% win rate</span>
+                          </div>
+                        </div>
+                        <div className="h2h-section">
+                          <h5>Cuando son rivales</h5>
+                          <div className="h2h-stat">
+                            <span>{h2h.oppositeWins}V - {h2h.oppositeLosses}D</span>
+                            <span className="h2h-rate">{h2h.h2hWinRate}% vs {getPlayerName(h2hPlayer2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+              </div>
+            )
+          })()}
+
+          {!h2hPlayer1 && (
+            <div className="empty-state">
+              <div className="icon">📊</div>
+              <h3>Selecciona un jugador</h3>
+              <p>Elige un jugador para ver su análisis detallado</p>
             </div>
           )}
         </section>
@@ -1172,6 +1730,17 @@ function App() {
                       <div className="match-venue">{match.venue}</div>
                     </div>
                     <div className="match-actions">
+                      {user && userPlayer && !predictions[match.id]?.[user.uid] && !match.winner && (
+                        <button 
+                          className="predict-btn"
+                          onClick={() => {
+                            setSelectedMatchForPrediction(match)
+                            setShowPredictionModal(true)
+                          }}
+                        >
+                          Predecir
+                        </button>
+                      )}
                       {user && userPlayer && (
                         <button 
                           className="rate-match-btn"
@@ -1234,15 +1803,42 @@ function App() {
                     <div className="match-leaderboard">
                       <div className="leaderboard-title">Top del partido</div>
                       <div className="leaderboard-items">
-                        {top3.map((player, idx) => (
-                          <div key={player.playerId} className="leaderboard-item">
-                            <span className={`leaderboard-position ${idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'}`}>
-                              {idx + 1}
+                        {top3.map((player, idx) => {
+                          // Trigger confetti if current user is MVP
+                          if (idx === 0 && player.playerId === userPlayer) {
+                            setTimeout(() => triggerMVPConfetti(match.id, player.playerId), 500)
+                          }
+                          return (
+                            <div key={player.playerId} className={`leaderboard-item ${idx === 0 && player.playerId === userPlayer ? 'is-me' : ''}`}>
+                              <span className={`leaderboard-position ${idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'}`}>
+                                {idx + 1}
+                              </span>
+                              <span className="leaderboard-name">{player.name}</span>
+                              <span className="leaderboard-score">{player.avgRating}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Show predictions for this match */}
+                  {predictions[match.id] && Object.keys(predictions[match.id]).length > 0 && (
+                    <div className="match-predictions">
+                      <div className="predictions-title">Predicciones</div>
+                      <div className="predictions-summary">
+                        {Object.entries(predictions[match.id]).map(([odedBy, prediction]) => {
+                          const predictionCorrect = match.winner === prediction
+                          return (
+                            <span 
+                              key={odedBy} 
+                              className={`prediction-chip ${match.winner ? (predictionCorrect ? 'correct' : 'wrong') : ''}`}
+                            >
+                              {prediction === 'white' ? '⬜' : '⬛'}
+                              {match.winner && (predictionCorrect ? ' ✓' : ' ✗')}
                             </span>
-                            <span className="leaderboard-name">{player.name}</span>
-                            <span className="leaderboard-score">{player.avgRating}</span>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </div>
                   )}
@@ -1802,6 +2398,45 @@ function App() {
             <button className="submit-btn" onClick={handleAddPlayer}>
               {editingPlayerId ? 'Guardar cambios' : 'Agregar jugador'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Prediction Modal */}
+      {showPredictionModal && selectedMatchForPrediction && (
+        <div className="modal-overlay" onClick={() => setShowPredictionModal(false)}>
+          <div className="modal prediction-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>¿Quién ganará?</h2>
+              <button className="modal-close" onClick={() => setShowPredictionModal(false)}>×</button>
+            </div>
+            <p className="prediction-match-info">
+              {formatDate(selectedMatchForPrediction.date)} - {selectedMatchForPrediction.venue}
+            </p>
+            <div className="prediction-options">
+              <button 
+                className="prediction-btn white"
+                onClick={() => submitPrediction(selectedMatchForPrediction.id, 'white')}
+              >
+                <span className="team-badge white"></span>
+                <span>Equipo Blanco</span>
+                <div className="prediction-players">
+                  {selectedMatchForPrediction.teamWhite.slice(0, 3).map(id => getPlayerName(id)).join(', ')}
+                  {selectedMatchForPrediction.teamWhite.length > 3 && '...'}
+                </div>
+              </button>
+              <button 
+                className="prediction-btn black"
+                onClick={() => submitPrediction(selectedMatchForPrediction.id, 'black')}
+              >
+                <span className="team-badge black"></span>
+                <span>Equipo Negro</span>
+                <div className="prediction-players">
+                  {selectedMatchForPrediction.teamBlack.slice(0, 3).map(id => getPlayerName(id)).join(', ')}
+                  {selectedMatchForPrediction.teamBlack.length > 3 && '...'}
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       )}
