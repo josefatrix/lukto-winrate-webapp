@@ -71,8 +71,6 @@ function PendingUserCard({ pending, players, linkingUser, onLink }) {
     console.log('Click vincular:', selectedPlayer)
     if (selectedPlayer && selectedPlayer !== '') {
       onLink(pending.odedBy, selectedPlayer)
-    } else {
-      alert('Selecciona un jugador primero')
     }
   }
   
@@ -149,6 +147,8 @@ function App() {
   const [currentRatings, setCurrentRatings] = useState({})
   const [expandedPlayer, setExpandedPlayer] = useState(null)
   const [linkingUser, setLinkingUser] = useState(null) // Track which user is being linked
+  const [ratingSuccess, setRatingSuccess] = useState(false) // Show success state in rating modal
+  const [toast, setToast] = useState(null) // { type: 'success' | 'error', message: string }
   
   // Match form state
   const [matchDate, setMatchDate] = useState('')
@@ -258,7 +258,6 @@ function App() {
       console.log('Usuario registrado exitosamente:', user.email)
     } catch (error) {
       console.error('Error registering pending user:', error)
-      alert('Error al registrar usuario: ' + error.message + '\n\nEl admin debe configurar las reglas de Firestore.')
     }
   }
 
@@ -368,15 +367,9 @@ function App() {
   const adminLinkUserToPlayer = async (userId, playerId) => {
     console.log('Vinculando:', { userId, playerId })
     
-    if (!isAdmin) {
-      alert('No tienes permisos de admin')
-      return
-    }
+    if (!isAdmin) return
     
-    if (!userId || !playerId || playerId === '') {
-      alert('Error: Datos inválidos')
-      return
-    }
+    if (!userId || !playerId || playerId === '') return
     
     if (linkingUser === userId) return
     
@@ -384,7 +377,6 @@ function App() {
     const playerToLink = players.find(p => p.id === playerId)
     if (!playerToLink) {
       console.log('Jugadores disponibles:', players.map(p => ({ id: p.id, name: p.name })))
-      alert('Error: Jugador "' + playerId + '" no encontrado. Revisa la consola.')
       return
     }
     
@@ -407,7 +399,6 @@ function App() {
       }, 1000)
     } catch (error) {
       console.error('Error:', error)
-      alert('Error: ' + error.message)
     } finally {
       setLinkingUser(null)
     }
@@ -423,7 +414,6 @@ function App() {
       await updateDoc(linkRef, { playerId: null })
     } catch (error) {
       console.error('Error unlinking user:', error)
-      alert('Error al desvincular usuario')
     }
   }
 
@@ -449,7 +439,7 @@ function App() {
   // Add admin email
   const handleAddAdmin = async () => {
     if (!newAdminEmail.trim() || !newAdminEmail.includes('@')) {
-      alert('Ingresa un email válido')
+      showToast('error', 'Ingresa un email válido')
       return
     }
     
@@ -459,7 +449,7 @@ function App() {
       setNewAdminEmail('')
     } catch (error) {
       console.error('Error adding admin:', error)
-      alert('Error al agregar admin')
+      showToast('error', 'Error al agregar admin')
     }
   }
 
@@ -472,7 +462,7 @@ function App() {
       await setDoc(doc(db, 'settings', 'admins'), { emails: newList })
     } catch (error) {
       console.error('Error removing admin:', error)
-      alert('Error al quitar admin')
+      showToast('error', 'Error al quitar admin')
     }
   }
 
@@ -580,6 +570,12 @@ function App() {
     return link?.userPhoto || null
   }
 
+  // Show toast notification
+  const showToast = (type, message) => {
+    setToast({ type, message })
+    setTimeout(() => setToast(null), 3000)
+  }
+
   const handlePlayerToggle = (playerId, team) => {
     if (team === 'white') {
       if (teamWhite.includes(playerId)) {
@@ -598,7 +594,7 @@ function App() {
 
   const handleAddMatch = async () => {
     if (!matchDate || teamWhite.length === 0 || teamBlack.length === 0 || !winner) {
-      alert('Por favor completa todos los campos')
+      showToast('error', 'Completa todos los campos')
       return
     }
 
@@ -649,7 +645,7 @@ function App() {
       await deleteDoc(doc(db, 'matches', matchId))
     } catch (error) {
       console.error('Error deleting match:', error)
-      alert('Error al eliminar partido')
+      showToast('error', 'Error al eliminar partido')
     }
   }
 
@@ -673,7 +669,7 @@ function App() {
       closePlayerModal()
     } catch (error) {
       console.error('Error:', error)
-      alert('Error al guardar: ' + error.message)
+      showToast('error', 'Error al guardar')
     }
   }
 
@@ -698,7 +694,7 @@ function App() {
       await deleteDoc(doc(db, 'players', playerId))
     } catch (error) {
       console.error('Error deleting player:', error)
-      alert('Error al eliminar jugador')
+      showToast('error', 'Error al eliminar jugador')
     }
   }
 
@@ -710,20 +706,20 @@ function App() {
       })
     } catch (error) {
       console.error('Error updating player:', error)
-      alert('Error al actualizar jugador')
+      showToast('error', 'Error al actualizar jugador')
     }
   }
 
   // Rating functions
   const openRatingModal = (match) => {
     if (!userPlayer) {
-      alert('Primero debes vincular tu cuenta con un jugador')
+      showToast('error', 'Primero debes vincular tu cuenta')
       return
     }
     
     const allPlayers = [...match.teamWhite, ...match.teamBlack]
     if (!allPlayers.includes(userPlayer)) {
-      alert('Solo puedes calificar partidos en los que jugaste')
+      showToast('error', 'Solo puedes calificar partidos en los que jugaste')
       return
     }
     
@@ -759,7 +755,7 @@ function App() {
     
     if (missingRatings.length > 0) {
       const missingNames = missingRatings.map(id => getPlayerName(id)).join(', ')
-      alert(`⚠️ Debes calificar a TODOS los jugadores.\n\nFaltan: ${missingNames}`)
+      showToast('error', `Faltan por calificar: ${missingNames}`)
       return
     }
     
@@ -778,10 +774,14 @@ function App() {
     })
     
     await batch.commit()
-    alert('Calificaciones guardadas')
+    setRatingSuccess(true)
+  }
+  
+  const closeRatingModal = () => {
     setShowRatingModal(false)
     setSelectedMatch(null)
     setCurrentRatings({})
+    setRatingSuccess(false)
   }
 
   const deleteMyRatings = async (matchId) => {
@@ -1691,64 +1691,77 @@ function App() {
 
       {/* Rating Modal */}
       {showRatingModal && selectedMatch && (
-        <div className="modal-overlay" onClick={() => setShowRatingModal(false)}>
+        <div className="modal-overlay" onClick={closeRatingModal}>
           <div className="modal rating-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'} Jugadores</h2>
-              <button className="modal-close" onClick={() => setShowRatingModal(false)}>×</button>
-            </div>
-            <p className="modal-subtitle">
-              {formatDate(selectedMatch.date)} - {selectedMatch.venue}
-            </p>
-            
-            <div className="rating-list">
-              {getPlayersToRate(selectedMatch).map(playerId => (
-                <div key={playerId} className="rating-item">
-                  <div className="rating-player">
-                    {getPlayerPhoto(playerId) ? (
-                      <img src={getPlayerPhoto(playerId)} alt="" className="player-avatar-img small" />
-                    ) : (
-                      <div className="player-avatar small">
-                        {getInitials(getPlayerName(playerId))}
-                      </div>
-                    )}
-                    <span>{getPlayerName(playerId)}</span>
-                  </div>
-                  <div className="rating-stars">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(score => (
-                      <button
-                        key={score}
-                        className={`star-btn ${currentRatings[playerId] >= score ? 'active' : ''}`}
-                        onClick={() => handleRatingChange(playerId, score)}
-                      >
-                        {score}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="modal-actions">
-              {hasMyRatings(selectedMatch.id) && (
-                <button 
-                  className="delete-btn"
-                  onClick={() => deleteMyRatings(selectedMatch.id)}
-                >
-                  🗑️ BORRAR MIS CALIFICACIONES
+            {ratingSuccess ? (
+              <div className="success-state">
+                <div className="success-icon">✓</div>
+                <h2>Calificaciones guardadas</h2>
+                <p>Tus calificaciones se han guardado correctamente</p>
+                <button className="submit-btn" onClick={closeRatingModal}>
+                  Aceptar
                 </button>
-              )}
-              <button 
-                className="submit-btn"
-                onClick={submitRatings}
-                disabled={Object.keys(currentRatings).length === 0}
-              >
-                {Object.keys(currentRatings).length < getPlayersToRate(selectedMatch).length 
-                  ? `FALTAN ${getPlayersToRate(selectedMatch).length - Object.keys(currentRatings).length} JUGADORES`
-                  : (hasMyRatings(selectedMatch.id) ? 'ACTUALIZAR' : 'GUARDAR') + ' CALIFICACIONES'
-                }
-              </button>
-            </div>
+              </div>
+            ) : (
+              <>
+                <div className="modal-header">
+                  <h2>{hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'} Jugadores</h2>
+                  <button className="modal-close" onClick={closeRatingModal}>×</button>
+                </div>
+                <p className="modal-subtitle">
+                  {formatDate(selectedMatch.date)} - {selectedMatch.venue}
+                </p>
+                
+                <div className="rating-list">
+                  {getPlayersToRate(selectedMatch).map(playerId => (
+                    <div key={playerId} className="rating-item">
+                      <div className="rating-player">
+                        {getPlayerPhoto(playerId) ? (
+                          <img src={getPlayerPhoto(playerId)} alt="" className="player-avatar-img small" />
+                        ) : (
+                          <div className="player-avatar small">
+                            {getInitials(getPlayerName(playerId))}
+                          </div>
+                        )}
+                        <span>{getPlayerName(playerId)}</span>
+                      </div>
+                      <div className="rating-stars">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(score => (
+                          <button
+                            key={score}
+                            className={`star-btn ${currentRatings[playerId] >= score ? 'active' : ''}`}
+                            onClick={() => handleRatingChange(playerId, score)}
+                          >
+                            {score}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="modal-actions">
+                  {hasMyRatings(selectedMatch.id) && (
+                    <button 
+                      className="delete-btn"
+                      onClick={() => deleteMyRatings(selectedMatch.id)}
+                    >
+                      Borrar mis calificaciones
+                    </button>
+                  )}
+                  <button 
+                    className="submit-btn"
+                    onClick={submitRatings}
+                    disabled={Object.keys(currentRatings).length === 0}
+                  >
+                    {Object.keys(currentRatings).length < getPlayersToRate(selectedMatch).length 
+                      ? `Faltan ${getPlayersToRate(selectedMatch).length - Object.keys(currentRatings).length} jugadores`
+                      : (hasMyRatings(selectedMatch.id) ? 'Actualizar' : 'Guardar')
+                    }
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -1780,9 +1793,16 @@ function App() {
               />
             </div>
             <button className="submit-btn" onClick={handleAddPlayer}>
-              {editingPlayerId ? 'GUARDAR CAMBIOS' : 'AGREGAR JUGADOR'}
+              {editingPlayerId ? 'Guardar cambios' : 'Agregar jugador'}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`toast ${toast.type}`}>
+          {toast.message}
         </div>
       )}
     </div>

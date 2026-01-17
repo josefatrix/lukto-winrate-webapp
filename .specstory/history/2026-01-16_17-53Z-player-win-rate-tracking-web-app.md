@@ -32957,7 +32957,570 @@ Output mode: content
 ---
 
 <think><details><summary>Thought Process</summary>
-I can see that `userLinks` stores `</details></think>
+I can see that `userLinks` stores `userPhoto` for each user. Now I need to:
+
+1. Create a helper function to get the photo URL for a player based on their playerId
+2. Update the stats table to show photos instead of initials when available
+
+Let me look at the stats table rendering:</details></think>
+
+---
+
+Perfecto, ya tenemos las fotos guardadas en `userLinks`. Ahora modifico el código para mostrarlas en las tablas:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "getInitials" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 5 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const getInitials = (name) => \{` | L568 |
+| `src/App.jsx` | `\{getInitials(player.name)\}` | L953 |
+| `src/App.jsx` | `\{getInitials(player.name)\}` | L1047 |
+| `src/App.jsx` | `\{getInitials(player.name)\}` | L1355 |
+| `src/App.jsx` | `\{getInitials(getPlayerName(playerId))\}` | L1691 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I'll add a helper function to get the player's photo URL from userLinks and update the places where avatars are shown.</details></think>
+
+---
+
+Ahora agrego una función para obtener la foto del jugador y actualizo los avatares:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 6, lines removed: undefined
+
+```diff
+@@ -574,4 +574,10 @@
+      return player ? player.name : 'Desconocido'
+    }
++ 
++   // Get player photo from userLinks
++   const getPlayerPhoto = (playerId) =&gt; {
++     const link = Object.values(userLinks).find(data =&gt; data.playerId === playerId)
++     return link?.userPhoto || null
++   }
+  
+    const handlePlayerToggle = (playerId, team) =&gt; {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to create a reusable PlayerAvatar component or update all the places where avatars are shown. Let me update the stats table first:</details></think>
+
+---
+
+Ahora actualizo la tabla de estadísticas para mostrar las fotos:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 7, lines removed: 3
+
+```diff
+@@ -956,7 +956,11 @@
+                      &lt;td&gt;
+                        &lt;div className="player-name"&gt;
+-                         &lt;div className="player-avatar"&gt;
+-                           {getInitials(player.name)}
+-                         &lt;/div&gt;
++                         {getPlayerPhoto(player.id) ? (
++                           &lt;img src={getPlayerPhoto(player.id)} alt="" className="player-avatar-img" /&gt;
++                         ) : (
++                           &lt;div className="player-avatar"&gt;
++                             {getInitials(player.name)}
++                           &lt;/div&gt;
++                         )}
+                          {player.name}
+                        &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the ratings accordion:</details></think>
+
+---
+
+Actualizo el accordion de calificaciones:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 7, lines removed: 3
+
+```diff
+@@ -1054,7 +1054,11 @@
+                            {index + 1}
+                          &lt;/span&gt;
+-                         &lt;div className="player-avatar"&gt;
+-                           {getInitials(player.name)}
+-                         &lt;/div&gt;
++                         {getPlayerPhoto(player.id) ? (
++                           &lt;img src={getPlayerPhoto(player.id)} alt="" className="player-avatar-img" /&gt;
++                         ) : (
++                           &lt;div className="player-avatar"&gt;
++                             {getInitials(player.name)}
++                           &lt;/div&gt;
++                         )}
+                          &lt;span className="accordion-player-name"&gt;{player.name}&lt;/span&gt;
+                          &lt;span className={&#96;rating-value ${getRatingClass(parseFloat(player.avgRating))}&#96;}&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the players grid:</details></think>
+
+---
+
+Actualizo la lista de jugadores:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 7, lines removed: 3
+
+```diff
+@@ -1366,7 +1366,11 @@
+              {players.map(player =&gt; (
+                &lt;div key={player.id} className="player-card"&gt;
+-                 &lt;div className="player-avatar"&gt;
+-                   {getInitials(player.name)}
+-                 &lt;/div&gt;
++                 {getPlayerPhoto(player.id) ? (
++                   &lt;img src={getPlayerPhoto(player.id)} alt="" className="player-avatar-img" /&gt;
++                 ) : (
++                   &lt;div className="player-avatar"&gt;
++                     {getInitials(player.name)}
++                   &lt;/div&gt;
++                 )}
+                  &lt;div className="player-card-info"&gt;
+                    &lt;h3&gt;{player.name}&lt;/h3&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the rating modal:</details></think>
+
+---
+
+Actualizo el modal de calificaciones:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 7, lines removed: 3
+
+```diff
+@@ -1706,7 +1706,11 @@
+                  &lt;div key={playerId} className="rating-item"&gt;
+                    &lt;div className="rating-player"&gt;
+-                     &lt;div className="player-avatar small"&gt;
+-                       {getInitials(getPlayerName(playerId))}
+-                     &lt;/div&gt;
++                     {getPlayerPhoto(playerId) ? (
++                       &lt;img src={getPlayerPhoto(playerId)} alt="" className="player-avatar-img small" /&gt;
++                     ) : (
++                       &lt;div className="player-avatar small"&gt;
++                         {getInitials(getPlayerName(playerId))}
++                       &lt;/div&gt;
++                     )}
+                      &lt;span&gt;{getPlayerName(playerId)}&lt;/span&gt;
+                    &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to add the CSS for the player-avatar-img class:</details></think>
+
+---
+
+Ahora agrego los estilos CSS para las fotos:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 19, lines removed: undefined
+
+```diff
+@@ -312,4 +312,23 @@
+    flex-shrink: 0;
+  }
++ 
++ .player-avatar-img {
++   width: 36px;
++   height: 36px;
++   border-radius: 50%;
++   object-fit: cover;
++   flex-shrink: 0;
++ }
++ 
++ .player-avatar-img.small {
++   width: 28px;
++   height: 28px;
++ }
++ 
++ .player-avatar.small {
++   width: 28px;
++   height: 28px;
++   font-size: 0.7rem;
++ }
+  
+  .win-rate {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also update the responsive styles for the avatar images:</details></think>
+
+---
+
+Actualizo los estilos responsive para las fotos:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -1498,5 +1498,6 @@
+    }
+    
+-   .player-avatar {
++   .player-avatar,
++   .player-avatar-img {
+      width: 28px;
+      height: 28px;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also update the mobile styles:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -1577,5 +1577,6 @@
+    }
+    
+-   .player-avatar {
++   .player-avatar,
++   .player-avatar-img {
+      width: 30px;
+      height: 30px;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me deploy the changes:</details></think>
+
+---
+
+Ahora despliego los cambios:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Show Gmail photos in player tables and avatars" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Show Gmail photos in player tables and avatars" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 48 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.69 kB │ gzip:   0.39 kB
+dist/assets/index-D1oTMBXA.css   22.86 kB │ gzip:   4.40 kB
+dist/assets/index-C6kh3zdL.js   634.44 kB │ gzip: 163.40 kB
+✓ built in 774ms
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main ae30b05] Show Gmail photos in player tables and avatars
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 7 files changed, 3186 insertions(+), 481 deletions(-)
+ rename dist/assets/{index-CB_nHdRV.js =&gt; index-C6kh3zdL.js} (75%)
+ delete mode 100644 dist/assets/index-CVnp9xZJ.css
+ create mode 100644 dist/assets/index-D1oTMBXA.css
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/1.7MB)
+Uploading [=====---------------] (436.1KB/1.7MB)
+Uploading [==========----------] (864.3KB/1.7MB)
+Uploading [===============-----] (1.3MB/1.7MB)
+Uploading [====================] (1.7MB/1.7MB)
+https://lukto-winrate-webapp-nlxm9f196-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/4JA4k53EuzrPTq81iQ7n1QUu3JSS [4s]
+Production: https://lukto-winrate-webapp-nlxm9f196-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 48 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                   0.69 kB │ gzip:   0.39 kB
+Building: dist/assets/index-D1oTMBXA.css   22.86 kB │ gzip:   4.42 kB
+Building: dist/assets/index-C6kh3zdL.js   634.44 kB │ gzip: 164.00 kB
+Building: ✓ built in 2.60s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [9s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-nlxm9f196-josefatrixs-projects.vercel.app [18s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [19s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-nlxm9f196-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-nlxm9f196-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The deployment is complete. Let me summarize the changes for the user.</details></think>
+
+---
+
+**Listo!** Ahora las fotos de Gmail aparecen en:
+
+1. **Tabla de estadísticas** - Al lado del nombre de cada jugador
+2. **Sección de calificaciones** - En el accordion de cada jugador
+3. **Lista de jugadores** - En las tarjetas de jugadores
+4. **Modal de calificar** - Al lado de cada jugador a calificar
+
+**Cómo funciona:**
+- Si el jugador tiene una cuenta de Gmail vinculada → se muestra su foto de perfil
+- Si no tiene cuenta vinculada → se muestran las iniciales (como antes)
+
+Las fotos son circulares y se ajustan automáticamente en móvil.
+
+👉 **https://lukto-winrate-webapp.vercel.app**
+
+Refresca con **Cmd+Shift+R** para ver los cambios.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+no me gusta eso, no combina con la UI ademas que se actualice y se cierre la ventana. tampoco quiero esos mensajes raros que salen. que salga de la misma UI que actualizaste las calificaciones y le des aceptar para que ce cierre la ventana
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants:
+1. Remove the ugly browser alert() dialogs
+2. When ratings are saved, show a nice in-UI message that matches the design
+3. When they click "OK/Aceptar", close the modal
+
+I need to:
+1. Replace alert() calls with a nicer in-UI toast or success state
+2. Make the modal close after showing the success message and user acknowledges it
+
+Let me find where the alert is called for ratings:</details></think>
+
+---
+
+Entiendo, voy a quitar esos alerts feos y hacer una confirmación dentro del modal con el mismo estilo. Primero busco dónde están los alerts:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "alert\(" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 19 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `alert('Selecciona un jugador primero')` | L75 |
+| `src/App.jsx` | `alert('Error al registrar usuario: ' + error.message + '\n\nEl admin debe configurar las reglas de Firestore.')` | L261 |
+| `src/App.jsx` | `alert('No tienes permisos de admin')` | L372 |
+| `src/App.jsx` | `alert('Error: Datos inválidos')` | L377 |
+| `src/App.jsx` | `alert('Error: Jugador "' + playerId + '" no encontrado. Revisa la consola.')` | L387 |
+| `src/App.jsx` | `alert('Error: ' + error.message)` | L410 |
+| `src/App.jsx` | `alert('Error al desvincular usuario')` | L426 |
+| `src/App.jsx` | `alert('Ingresa un email válido')` | L452 |
+| `src/App.jsx` | `alert('Error al agregar admin')` | L462 |
+| `src/App.jsx` | `alert('Error al quitar admin')` | L475 |
+| `src/App.jsx` | `alert('Por favor completa todos los campos')` | L601 |
+| `src/App.jsx` | `alert('Error al eliminar partido')` | L652 |
+| `src/App.jsx` | `alert('Error al guardar: ' + error.message)` | L676 |
+| `src/App.jsx` | `alert('Error al eliminar jugador')` | L701 |
+| `src/App.jsx` | `alert('Error al actualizar jugador')` | L713 |
+| `src/App.jsx` | `alert('Primero debes vincular tu cuenta con un jugador')` | L720 |
+| `src/App.jsx` | `alert('Solo puedes calificar partidos en los que jugaste')` | L726 |
+| `src/App.jsx` | `alert(`⚠️ Debes calificar a TODOS los jugadores.\n\nFaltan: $\{missingNames\}`)` | L762 |
+| `src/App.jsx` | `alert('Calificaciones guardadas')` | L781 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to:
+1. Create a state for showing success/error messages in the modal
+2. Replace the alerts with inline UI messages
+3. When success, show the message and then close when user clicksLet me update the App.jsx to add a toast/notification system that's built into the UI.I'll create a state for showing a result in the rating modal, and when they click OK, it closes.</details></think>
+
+---
+
+Voy a reemplazar todos los alerts con mensajes integrados en la UI. Primero agrego un estado para manejar las notificaciones:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const \[showRatingModal" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const [showRatingModal, setShowRatingModal] = useState(false)` | L147 |
+
+
+</details>
+</tool-use>
+
+---
+
+
 
 ---
 
