@@ -71,6 +71,7 @@ function App() {
   const [showPlayerModal, setShowPlayerModal] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
   const [newPlayerAliases, setNewPlayerAliases] = useState('')
+  const [editingPlayerId, setEditingPlayerId] = useState(null)
   
   // Auth state
   const [user, setUser] = useState(null)
@@ -526,16 +527,34 @@ function App() {
   const handleAddPlayer = async () => {
     if (!newPlayerName.trim()) return
     
-    const newPlayerId = Date.now().toString()
-    const newPlayer = {
+    const playerData = {
       name: newPlayerName.trim(),
       aliases: newPlayerAliases.split(',').map(a => a.trim()).filter(a => a)
     }
     
-    await setDoc(doc(db, 'players', newPlayerId), newPlayer)
+    if (editingPlayerId) {
+      // Editar jugador existente
+      await updateDoc(doc(db, 'players', editingPlayerId), playerData)
+    } else {
+      // Crear nuevo jugador
+      const newPlayerId = Date.now().toString()
+      await setDoc(doc(db, 'players', newPlayerId), playerData)
+    }
     
+    closePlayerModal()
+  }
+
+  const openEditPlayer = (player) => {
+    setEditingPlayerId(player.id)
+    setNewPlayerName(player.name)
+    setNewPlayerAliases(player.aliases ? player.aliases.join(', ') : '')
+    setShowPlayerModal(true)
+  }
+
+  const closePlayerModal = () => {
     setNewPlayerName('')
     setNewPlayerAliases('')
+    setEditingPlayerId(null)
     setShowPlayerModal(false)
   }
 
@@ -1098,19 +1117,31 @@ function App() {
                     </div>
                   )}
                 </div>
-                <button 
-                  className="delete-player-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDeletePlayer(player.id, player.name)
-                  }}
-                  title="Eliminar jugador"
-                >
-                  🗑️
-                </button>
+                <div className="player-card-actions">
+                  <button 
+                    className="edit-player-btn"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openEditPlayer(player)
+                    }}
+                    title="Editar jugador"
+                  >
+                    ✏️
+                  </button>
+                  <button 
+                    className="delete-player-btn"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeletePlayer(player.id, player.name)
+                    }}
+                    title="Eliminar jugador"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
             ))}
-            <div className="add-player-card" onClick={() => setShowPlayerModal(true)}>
+            <div className="add-player-card" onClick={() => { setEditingPlayerId(null); setShowPlayerModal(true); }}>
               <span style={{ fontSize: '1.5rem' }}>➕</span>
               Agregar Jugador
             </div>
@@ -1440,13 +1471,13 @@ function App() {
         </div>
       )}
 
-      {/* Add Player Modal */}
+      {/* Add/Edit Player Modal */}
       {showPlayerModal && isAdmin && (
-        <div className="modal-overlay" onClick={() => setShowPlayerModal(false)}>
+        <div className="modal-overlay" onClick={closePlayerModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Nuevo Jugador</h2>
-              <button className="modal-close" onClick={() => setShowPlayerModal(false)}>×</button>
+              <h2>{editingPlayerId ? '✏️ Editar Jugador' : '➕ Nuevo Jugador'}</h2>
+              <button className="modal-close" onClick={closePlayerModal}>×</button>
             </div>
             <div className="form-group">
               <label>Nombre</label>
@@ -1467,7 +1498,7 @@ function App() {
               />
             </div>
             <button className="submit-btn" onClick={handleAddPlayer}>
-              AGREGAR JUGADOR
+              {editingPlayerId ? 'GUARDAR CAMBIOS' : 'AGREGAR JUGADOR'}
             </button>
           </div>
         </div>
