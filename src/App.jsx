@@ -321,13 +321,24 @@ function App() {
 
   // Admin function to link a user to a player
   const adminLinkUserToPlayer = async (userId, playerId) => {
+    console.log('=== adminLinkUserToPlayer llamado ===')
+    console.log('userId:', userId, '| playerId:', playerId, '| tipo playerId:', typeof playerId)
+    
     if (!isAdmin) {
       alert('No tienes permisos de admin')
       return
     }
     
-    if (!userId || !playerId) {
-      console.error('Missing userId or playerId', { userId, playerId })
+    // Validate inputs strictly
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      console.error('Invalid userId:', userId)
+      alert('Error: ID de usuario inválido')
+      return
+    }
+    
+    if (!playerId || typeof playerId !== 'string' || playerId.trim() === '') {
+      console.error('Invalid playerId:', playerId)
+      alert('Error: ID de jugador inválido')
       return
     }
     
@@ -340,7 +351,7 @@ function App() {
     // Find the player to verify it exists
     const playerToLink = players.find(p => p.id === playerId)
     if (!playerToLink) {
-      console.error('Player not found:', playerId)
+      console.error('Player not found:', playerId, 'Available players:', players.map(p => p.id))
       alert('Error: Jugador no encontrado')
       return
     }
@@ -354,22 +365,22 @@ function App() {
       // Get current user data
       const currentData = pendingUsers.find(u => u.odedBy === userId) || {}
       
-      // Remove odedBy from currentData to avoid duplication
-      const { odedBy: _, ...cleanData } = currentData
+      // Remove odedBy and any existing playerId from currentData
+      const { odedBy: _1, playerId: _2, ...cleanData } = currentData
       
       const dataToSave = {
         ...cleanData,
-        playerId: playerId,
+        playerId: String(playerId), // Ensure it's a string
         linkedAt: new Date().toISOString()
       }
       
-      console.log('Guardando en Firebase:', dataToSave)
+      console.log('Guardando en Firebase:', JSON.stringify(dataToSave))
       
       await setDoc(linkRef, dataToSave)
       
-      console.log('Usuario vinculado exitosamente a', playerToLink.name)
+      console.log('✅ Usuario vinculado exitosamente a', playerToLink.name)
     } catch (error) {
-      console.error('Error linking user:', error)
+      console.error('❌ Error linking user:', error)
       alert('Error al vincular usuario: ' + error.message)
     } finally {
       setLinkingUser(null)
@@ -1320,12 +1331,13 @@ function App() {
                         <select 
                           className="player-select-dropdown"
                           onChange={(e) => {
-                            if (e.target.value) {
-                              adminLinkUserToPlayer(pending.odedBy, e.target.value)
-                              e.target.value = '' // Reset select
+                            const selectedPlayerId = e.target.value
+                            if (selectedPlayerId && selectedPlayerId !== '') {
+                              console.log('Dropdown seleccionado:', selectedPlayerId)
+                              adminLinkUserToPlayer(pending.odedBy, selectedPlayerId)
                             }
                           }}
-                          defaultValue=""
+                          value=""
                         >
                           <option value="">Selecciona jugador...</option>
                           {players.map(player => (
