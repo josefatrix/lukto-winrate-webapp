@@ -1721,6 +1721,21 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowPlayerProfile(false)}>
           <div className="premium-profile-modal" onClick={e => e.stopPropagation()}>
             {(() => {
+              // Check if data is loaded
+              if (!players || players.length === 0) {
+                return (
+                  <div className="premium-loading">
+                    <button className="premium-close" onClick={() => setShowPlayerProfile(false)}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                      </svg>
+                    </button>
+                    <div className="loading-spinner"></div>
+                    <p>Cargando...</p>
+                  </div>
+                )
+              }
+
               const player = players.find(p => p.id === selectedPlayerProfile)
               if (!player) {
                 return (
