@@ -2404,6 +2404,32 @@ body {
   color: #fff;
 }
 
+.user-link-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.delete-user-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-user-btn:hover {
+  background: var(--accent-red);
+  color: #fff;
+}
+
 .user-link-card.linking {
   opacity: 0.6;
   pointer-events: none;

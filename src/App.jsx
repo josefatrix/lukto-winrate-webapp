@@ -114,7 +114,7 @@ const getXPProgress = xp => {
 
 // ============ PENDING USER CARD ============
 
-function PendingUserCard({ pending, players, linkingUser, onLink }) {
+function PendingUserCard({ pending, players, linkingUser, onLink, onDelete }) {
   const [selectedPlayer, setSelectedPlayer] = useState('')
 
   const handleLink = () => {
@@ -155,6 +155,13 @@ function PendingUserCard({ pending, players, linkingUser, onLink }) {
             </select>
             <button className="link-btn" onClick={handleLink}>
               ✓
+            </button>
+            <button 
+              className="delete-user-btn" 
+              onClick={() => onDelete(pending.odedBy, pending.userName || pending.userEmail)}
+              title="Eliminar cuenta"
+            >
+              🗑️
             </button>
           </>
         )}
@@ -647,8 +654,25 @@ function App() {
     try {
       const linkRef = doc(db, 'userLinks', odedBy)
       await updateDoc(linkRef, { playerId: null })
+      showToast('success', 'Usuario desvinculado')
     } catch (error) {
       console.error('Error unlinking user:', error)
+      showToast('error', 'Error al desvincular')
+    }
+  }
+
+  const adminDeleteUser = async (userId, userName) => {
+    if (!isAdmin) return
+    if (!confirm(`¿Eliminar completamente a "${userName}"? Esta acción no se puede deshacer.`)) return
+
+    try {
+      const batch = writeBatch(db)
+      batch.delete(doc(db, 'userLinks', userId))
+      await batch.commit()
+      showToast('success', 'Cuenta eliminada')
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      showToast('error', 'Error al eliminar')
     }
   }
 
@@ -851,6 +875,7 @@ function App() {
                     players={players}
                     linkingUser={linkingUser}
                     onLink={adminLinkUserToPlayer}
+                    onDelete={adminDeleteUser}
                   />
                 ))}
               </div>
@@ -879,9 +904,22 @@ function App() {
                       <div className="user-link-player">
                         → <strong>{getPlayerName(data.playerId)}</strong>
                       </div>
-                      <button className="unlink-btn" onClick={() => adminUnlinkUser(odedBy)}>
-                        ✕
-                      </button>
+                      <div className="user-link-actions">
+                        <button 
+                          className="unlink-btn" 
+                          onClick={() => adminUnlinkUser(odedBy)}
+                          title="Desvincular"
+                        >
+                          ✕
+                        </button>
+                        <button 
+                          className="delete-user-btn" 
+                          onClick={() => adminDeleteUser(odedBy, data.userName || data.userEmail)}
+                          title="Eliminar cuenta"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   ))
               ) : (
