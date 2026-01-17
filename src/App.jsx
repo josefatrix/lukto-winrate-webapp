@@ -1463,7 +1463,8 @@ function App() {
       venue: matchVenue,
       teamWhite: [...teamWhite],
       teamBlack: [...teamBlack],
-      winner
+      winner,
+      ratingsOpen: true // Por defecto, calificaciones abiertas
     }
 
     if (editingMatchId) {
@@ -1599,10 +1600,29 @@ function App() {
     }
   }
 
+  // Toggle ratings open/closed for a match
+  const toggleMatchRatings = async (matchId, currentState) => {
+    try {
+      await updateDoc(doc(db, 'matches', matchId), {
+        ratingsOpen: !currentState
+      })
+      showToast('success', currentState ? 'Calificaciones cerradas' : 'Calificaciones abiertas')
+    } catch (error) {
+      console.error('Error toggling ratings:', error)
+      showToast('error', 'Error al cambiar estado')
+    }
+  }
+
   // Rating functions
   const openRatingModal = (match) => {
     if (!userPlayer) {
       showToast('error', 'Primero debes vincular tu cuenta')
+      return
+    }
+    
+    // Check if ratings are closed for this match
+    if (match.ratingsOpen === false) {
+      showToast('error', 'Las calificaciones están cerradas para este partido')
       return
     }
     
@@ -2564,7 +2584,7 @@ function App() {
                           Predecir
                         </button>
                       )}
-                      {user && userPlayer && (
+                      {user && userPlayer && match.ratingsOpen !== false && (
                         <button 
                           className="rate-match-btn"
                           onClick={() => openRatingModal(match)}
@@ -2572,8 +2592,18 @@ function App() {
                           Calificar
                         </button>
                       )}
+                      {user && userPlayer && match.ratingsOpen === false && !isAdmin && (
+                        <span className="ratings-closed-badge">Cerrado</span>
+                      )}
                       {isAdmin && (
                         <>
+                          <button 
+                            className={`toggle-ratings-btn ${match.ratingsOpen === false ? 'closed' : 'open'}`}
+                            onClick={() => toggleMatchRatings(match.id, match.ratingsOpen !== false)}
+                            title={match.ratingsOpen === false ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
+                          >
+                            {match.ratingsOpen === false ? '🔒' : '🔓'}
+                          </button>
                           <button 
                             className="edit-match-btn"
                             onClick={() => openEditMatch(match)}

@@ -1220,7 +1220,8 @@ body {
 
 .rate-match-btn,
 .edit-match-btn,
-.delete-match-btn {
+.delete-match-btn,
+.toggle-ratings-btn {
   padding: 0.4rem 0.75rem;
   border-radius: 6px;
   font-size: 0.8rem;
@@ -1246,6 +1247,38 @@ body {
 .delete-match-btn:hover {
   background: rgba(255, 69, 58, 0.2);
   color: var(--accent-red);
+}
+
+/* Toggle Ratings Button */
+.toggle-ratings-btn {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.toggle-ratings-btn.open {
+  background: rgba(52, 199, 89, 0.15);
+  color: var(--accent-green);
+}
+
+.toggle-ratings-btn.closed {
+  background: rgba(255, 69, 58, 0.15);
+  color: var(--accent-red);
+}
+
+.toggle-ratings-btn:hover {
+  opacity: 0.8;
+}
+
+/* Ratings Closed Badge */
+.ratings-closed-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(255, 69, 58, 0.15);
+  color: var(--accent-red);
+  text-transform: uppercase;
 }
 
 /* Match Teams */
