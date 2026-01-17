@@ -977,6 +977,146 @@ function App() {
     return bestPlayer
   }
 
+  // Achievement icons as SVG components
+  const achievementIcons = {
+    bronze: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="8" r="6"/>
+        <path d="M12 14v6"/>
+        <path d="M9 18h6"/>
+      </svg>
+    ),
+    silver: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="8" r="6"/>
+        <path d="M12 14v6"/>
+        <path d="M9 18h6"/>
+        <circle cx="12" cy="8" r="3"/>
+      </svg>
+    ),
+    gold: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="8" r="6"/>
+        <path d="M12 14v6"/>
+        <path d="M9 18h6"/>
+        <path d="M12 5l1 2h2l-1.5 1.5.5 2-2-1-2 1 .5-2L9 7h2z"/>
+      </svg>
+    ),
+    diamond: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M6 3h12l4 6-10 12L2 9l4-6z"/>
+        <path d="M2 9h20"/>
+        <path d="M12 3v6"/>
+      </svg>
+    ),
+    fire: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 2c.5 2.5 3 4 3 7a3 3 0 11-6 0c0-3 2.5-4.5 3-7z"/>
+        <path d="M12 22c-4.97 0-7-3.58-7-7 0-4 3-6 4-8 0 2 2 3 3 3 1 0 3-1 3-3 1 2 4 4 4 8 0 3.42-2.03 7-7 7z"/>
+      </svg>
+    ),
+    lightning: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+      </svg>
+    ),
+    crown: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M2 7l4 4 6-6 6 6 4-4v11H2V7z"/>
+        <path d="M2 18h20"/>
+      </svg>
+    ),
+    star: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+    ),
+    stars: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 2l2 4 4.5.5-3.5 3 1 4.5-4-2.5-4 2.5 1-4.5-3.5-3L10 6l2-4z"/>
+        <path d="M5 15l1 2 2 .5-1.5 1.5.5 2-2-1.5-2 1.5.5-2-1.5-1.5 2-.5 1-2z"/>
+        <path d="M19 15l1 2 2 .5-1.5 1.5.5 2-2-1.5-2 1.5.5-2-1.5-1.5 2-.5 1-2z"/>
+      </svg>
+    ),
+    trophy: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M6 9H4a2 2 0 01-2-2V5c0-1.1.9-2 2-2h2"/>
+        <path d="M18 9h2a2 2 0 002-2V5a2 2 0 00-2-2h-2"/>
+        <path d="M4 22h16"/>
+        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+        <path d="M18 2H6v7a6 6 0 1012 0V2z"/>
+      </svg>
+    ),
+    target: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/>
+        <circle cx="12" cy="12" r="6"/>
+        <circle cx="12" cy="12" r="2"/>
+      </svg>
+    ),
+    gamepad: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="2" y="6" width="20" height="12" rx="2"/>
+        <path d="M6 12h4"/>
+        <path d="M8 10v4"/>
+        <circle cx="17" cy="10" r="1"/>
+        <circle cx="17" cy="14" r="1"/>
+      </svg>
+    ),
+    medal: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="15" r="6"/>
+        <path d="M8.21 13.89L7 2h10l-1.21 11.89"/>
+        <path d="M12 9v6"/>
+        <path d="M9 15h6"/>
+      </svg>
+    ),
+    thumbsUp: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/>
+        <path d="M7 22V11l2.5-8.5a1.5 1.5 0 013 0L14 7h5a2 2 0 012 2v2a6 6 0 01-6 6H7z"/>
+      </svg>
+    ),
+    muscle: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M4 15s1-1 3-1 2 2 4 2 2-2 4-2 3 1 3 1V8s-1 1-3 1-2-2-4-2-2 2-4 2-3-1-3-1v7z"/>
+        <path d="M3 22v-6"/>
+        <path d="M21 22v-6"/>
+      </svg>
+    ),
+    chart: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M3 3v18h18"/>
+        <path d="M7 16l4-8 4 4 5-6"/>
+      </svg>
+    ),
+    rocket: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91-.79-.79-2.07-.8-2.91-.09z"/>
+        <path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/>
+        <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
+        <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+      </svg>
+    ),
+    hundred: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M4 7v10"/>
+        <circle cx="10" cy="12" r="3"/>
+        <circle cx="18" cy="12" r="3"/>
+        <path d="M10 9v0"/>
+        <path d="M18 9v0"/>
+      </svg>
+    ),
+    sparkle: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z"/>
+        <path d="M5 3l.5 2L7.5 5l-2 .5L5 7.5l-.5-2L2.5 5l2-.5L5 3z"/>
+        <path d="M19 17l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5.5-2z"/>
+      </svg>
+    )
+  }
+
   // Calculate achievements/badges
   const calculateAchievements = (playerId) => {
     const achievements = []
@@ -988,42 +1128,42 @@ function App() {
     if (!playerStats) return achievements
 
     // Rank achievements
-    if (rank.tier >= 1) achievements.push({ icon: '🥉', name: 'Rango Bronce', desc: '50+ XP' })
-    if (rank.tier >= 2) achievements.push({ icon: '🥈', name: 'Rango Plata', desc: '150+ XP' })
-    if (rank.tier >= 3) achievements.push({ icon: '🥇', name: 'Rango Oro', desc: '300+ XP' })
-    if (rank.tier >= 4) achievements.push({ icon: '💎', name: 'Rango Diamante', desc: '500+ XP' })
+    if (rank.tier >= 1) achievements.push({ iconKey: 'bronze', name: 'Rango Bronce', desc: 'Alcanzaste 50 puntos de experiencia', color: '#cd7f32' })
+    if (rank.tier >= 2) achievements.push({ iconKey: 'silver', name: 'Rango Plata', desc: 'Alcanzaste 150 puntos de experiencia', color: '#c0c0c0' })
+    if (rank.tier >= 3) achievements.push({ iconKey: 'gold', name: 'Rango Oro', desc: 'Alcanzaste 300 puntos de experiencia', color: '#ffd700' })
+    if (rank.tier >= 4) achievements.push({ iconKey: 'diamond', name: 'Rango Diamante', desc: 'Alcanzaste 500 puntos de experiencia', color: '#00d4ff' })
 
     // Win streak achievements
-    if (streaks.maxWinStreak >= 3) achievements.push({ icon: '🔥', name: 'Racha de 3', desc: '3 victorias seguidas' })
-    if (streaks.maxWinStreak >= 5) achievements.push({ icon: '⚡', name: 'Imparable', desc: '5 victorias seguidas' })
-    if (streaks.maxWinStreak >= 7) achievements.push({ icon: '👑', name: 'Leyenda', desc: '7 victorias seguidas' })
+    if (streaks.maxWinStreak >= 3) achievements.push({ iconKey: 'fire', name: 'En Llamas', desc: 'Ganaste 3 partidos consecutivos', color: '#f97316' })
+    if (streaks.maxWinStreak >= 5) achievements.push({ iconKey: 'lightning', name: 'Imparable', desc: 'Ganaste 5 partidos consecutivos', color: '#facc15' })
+    if (streaks.maxWinStreak >= 7) achievements.push({ iconKey: 'crown', name: 'Rey Absoluto', desc: 'Ganaste 7 partidos consecutivos', color: '#ffd700' })
 
     // MVP achievements
-    if (playerStats.mvps >= 1) achievements.push({ icon: '⭐', name: 'Primer MVP', desc: 'Tu primer MVP' })
-    if (playerStats.mvps >= 3) achievements.push({ icon: '🌟', name: 'Estrella', desc: '3 MVPs' })
-    if (playerStats.mvps >= 5) achievements.push({ icon: '💫', name: 'Superestrella', desc: '5 MVPs' })
+    if (playerStats.mvps >= 1) achievements.push({ iconKey: 'star', name: 'Primera Estrella', desc: 'Conseguiste tu primer MVP del partido', color: '#10b981' })
+    if (playerStats.mvps >= 3) achievements.push({ iconKey: 'stars', name: 'Estrella Constante', desc: 'Fuiste MVP en 3 partidos diferentes', color: '#8b5cf6' })
+    if (playerStats.mvps >= 5) achievements.push({ iconKey: 'sparkle', name: 'Superestrella', desc: 'Acumulaste 5 premios MVP', color: '#ec4899' })
 
     // Win rate achievements
-    if (playerStats.winRate >= 60 && playerStats.played >= 5) achievements.push({ icon: '📈', name: 'Ganador', desc: '60%+ win rate' })
-    if (playerStats.winRate >= 75 && playerStats.played >= 5) achievements.push({ icon: '🏆', name: 'Elite', desc: '75%+ win rate' })
-    if (playerStats.winRate === 100 && playerStats.played >= 3) achievements.push({ icon: '🎯', name: 'Perfecto', desc: '100% win rate' })
+    if (playerStats.winRate >= 60 && playerStats.played >= 5) achievements.push({ iconKey: 'chart', name: 'Máquina de Ganar', desc: 'Mantienes un 60% o más de victorias', color: '#22c55e' })
+    if (playerStats.winRate >= 75 && playerStats.played >= 5) achievements.push({ iconKey: 'trophy', name: 'Élite', desc: 'Mantienes un impresionante 75% de victorias', color: '#ffd700' })
+    if (playerStats.winRate === 100 && playerStats.played >= 3) achievements.push({ iconKey: 'target', name: 'Invicto', desc: 'No has perdido un solo partido', color: '#ef4444' })
 
     // Games played achievements
-    if (playerStats.played >= 5) achievements.push({ icon: '🎮', name: 'Regular', desc: '5 partidos jugados' })
-    if (playerStats.played >= 10) achievements.push({ icon: '🎲', name: 'Veterano', desc: '10 partidos jugados' })
-    if (playerStats.played >= 20) achievements.push({ icon: '🏅', name: 'Leyenda LUKTO', desc: '20 partidos jugados' })
+    if (playerStats.played >= 5) achievements.push({ iconKey: 'gamepad', name: 'Jugador Regular', desc: 'Participaste en al menos 5 partidos', color: '#6366f1' })
+    if (playerStats.played >= 10) achievements.push({ iconKey: 'medal', name: 'Veterano', desc: 'Acumulaste experiencia en 10 partidos', color: '#14b8a6' })
+    if (playerStats.played >= 20) achievements.push({ iconKey: 'trophy', name: 'Leyenda LUKTO', desc: 'Eres parte de la historia con 20 partidos', color: '#f59e0b' })
 
     // Rating achievements
     if (playerStats.avgRating) {
       const rating = parseFloat(playerStats.avgRating)
-      if (rating >= 7) achievements.push({ icon: '👍', name: 'Buen jugador', desc: 'Rating 7+' })
-      if (rating >= 8) achievements.push({ icon: '💪', name: 'Crack', desc: 'Rating 8+' })
-      if (rating >= 9) achievements.push({ icon: '🌈', name: 'Fenómeno', desc: 'Rating 9+' })
+      if (rating >= 7) achievements.push({ iconKey: 'thumbsUp', name: 'Respetado', desc: 'Tus compañeros te califican con 7 o más', color: '#3b82f6' })
+      if (rating >= 8) achievements.push({ iconKey: 'muscle', name: 'Crack', desc: 'Destacas con un rating promedio de 8+', color: '#f97316' })
+      if (rating >= 9) achievements.push({ iconKey: 'sparkle', name: 'Fenómeno', desc: 'Eres excepcional con rating de 9+', color: '#ec4899' })
     }
 
     // XP milestones
-    if (xp >= 100) achievements.push({ icon: '💯', name: 'Centenario', desc: '100+ XP' })
-    if (xp >= 250) achievements.push({ icon: '🚀', name: 'Despegue', desc: '250+ XP' })
+    if (xp >= 100) achievements.push({ iconKey: 'hundred', name: 'Centenario', desc: 'Alcanzaste los 100 puntos de experiencia', color: '#10b981' })
+    if (xp >= 250) achievements.push({ iconKey: 'rocket', name: 'Despegue Total', desc: 'Volaste hasta los 250 XP', color: '#8b5cf6' })
 
     return achievements
   }
@@ -1927,20 +2067,32 @@ function App() {
                 )}
 
                 {/* Achievements */}
-                <div className="analytics-card">
-                  <h4>Logros Desbloqueados</h4>
+                <div className="analytics-card achievements-card">
+                  <h4>Logros Desbloqueados ({achievements.length})</h4>
                   {achievements.length > 0 ? (
                     <div className="achievements-grid">
                       {achievements.map((achievement, idx) => (
-                        <div key={idx} className="achievement-badge">
-                          <span className="achievement-icon">{achievement.icon}</span>
-                          <span className="achievement-name">{achievement.name}</span>
-                          <span className="achievement-desc">{achievement.desc}</span>
+                        <div key={idx} className="achievement-badge" style={{'--achievement-color': achievement.color}}>
+                          <div className="achievement-icon-wrapper">
+                            {achievementIcons[achievement.iconKey]}
+                          </div>
+                          <div className="achievement-info">
+                            <span className="achievement-name">{achievement.name}</span>
+                            <span className="achievement-desc">{achievement.desc}</span>
+                          </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="no-achievements">Juega más partidos para desbloquear logros</p>
+                    <div className="no-achievements">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="empty-icon">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M8 15h8"/>
+                        <circle cx="9" cy="9" r="1"/>
+                        <circle cx="15" cy="9" r="1"/>
+                      </svg>
+                      <p>Juega más partidos para desbloquear logros</p>
+                    </div>
                   )}
                 </div>
 
@@ -3032,8 +3184,13 @@ function App() {
                 <div className="profile-achievements">
                   {achievements.length > 0 ? (
                     achievements.slice(0, 8).map((a, i) => (
-                      <div key={i} className="mini-achievement" title={a.desc}>
-                        <span>{a.icon}</span>
+                      <div 
+                        key={i} 
+                        className="mini-achievement" 
+                        title={`${a.name}: ${a.desc}`}
+                        style={{'--achievement-color': a.color}}
+                      >
+                        {achievementIcons[a.iconKey]}
                       </div>
                     ))
                   ) : (
