@@ -664,16 +664,20 @@ function App() {
         const avgRating = calculatePlayerAvgRating(id)
         const ratingValue = avgRating ? parseFloat(avgRating) : 5 // Default 5 si no hay ratings
         
-        // Fórmula combinada para ranking (prioriza rendimiento individual):
-        // 20% Win Rate + 40% Rating + 30% MVPs + 10% Partidos jugados
-        // Con factor de confianza según partidos jugados
-        const baseScore = (winRate * 0.2) + (ratingValue * 4 * 0.4) + (s.mvps * 10 * 0.3) + (s.played * 0.1)
+        // Fórmula óptima para ranking justo:
+        // Usa MVP RATE (no total) para ser justo con todos
+        const mvpRate = s.played > 0 ? (s.mvps / s.played) * 100 : 0
         
-        // Factor de confianza: más partidos = más confiable el score
-        let confidenceFactor = 1
-        if (s.played === 1) confidenceFactor = 0.5
-        else if (s.played === 2) confidenceFactor = 0.75
-        else if (s.played === 3) confidenceFactor = 0.9
+        // Base score: 45% Rating + 25% MVP Rate + 20% Win Rate + 10% Participación
+        const baseScore = 
+          (ratingValue * 10 * 0.45) +           // 45% - Rendimiento individual
+          (mvpRate * 0.25) +                     // 25% - Frecuencia de ser MVP
+          (winRate * 0.20) +                     // 20% - Éxito del equipo
+          (Math.min(s.played, 5) * 2)            // 10% - Participación (max 10 pts)
+        
+        // Factor de confianza con curva logarítmica suave
+        // 1 partido = 0.50, 2 = 0.65, 3 = 0.80, 4 = 0.90, 5+ = 1.0
+        const confidenceFactor = Math.min(1, 0.35 + (Math.log(s.played + 1) / Math.log(6)))
         
         const rankingScore = baseScore * confidenceFactor
         
@@ -1051,14 +1055,16 @@ function App() {
         const avgRating = calculatePlayerAvgRating(id)
         const ratingValue = avgRating ? parseFloat(avgRating) : 5
         
-        // Misma fórmula combinada para ranking (prioriza rendimiento individual)
-        // Con factor de confianza según partidos jugados
-        const baseScore = (winRate * 0.2) + (ratingValue * 4 * 0.4) + (s.mvps * 10 * 0.3) + (s.played * 0.1)
+        // Misma fórmula óptima para ranking justo
+        const mvpRate = s.played > 0 ? (s.mvps / s.played) * 100 : 0
         
-        let confidenceFactor = 1
-        if (s.played === 1) confidenceFactor = 0.5
-        else if (s.played === 2) confidenceFactor = 0.75
-        else if (s.played === 3) confidenceFactor = 0.9
+        const baseScore = 
+          (ratingValue * 10 * 0.45) +
+          (mvpRate * 0.25) +
+          (winRate * 0.20) +
+          (Math.min(s.played, 5) * 2)
+        
+        const confidenceFactor = Math.min(1, 0.35 + (Math.log(s.played + 1) / Math.log(6)))
         
         const rankingScore = baseScore * confidenceFactor
         
