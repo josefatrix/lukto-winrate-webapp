@@ -1996,7 +1996,10 @@ function App() {
 
       {activeTab === 'ratings' && (
         <section className="stats-section">
-          <h2 className="section-title">Ranking por Calificaciones</h2>
+          <h2 className="section-title">
+            {timeFilter === 'all' ? 'Ranking por Calificaciones' : 
+             timeFilter === 'month' ? 'Calificaciones del Mes' : 'Calificaciones de la Semana'}
+          </h2>
           <p className="section-subtitle">
             {user ? (
               userPlayer ? 
@@ -2007,13 +2010,34 @@ function App() {
             )}
           </p>
           
-          {stats.filter(p => p.avgRating).length > 0 ? (
+          {(() => {
+            // Get filtered matches for time period
+            const filteredMatches = getFilteredMatches()
+            const filteredMatchIds = new Set(filteredMatches.map(m => m.id))
+            
+            // Calculate filtered ratings stats
+            const playerRatingsFiltered = {}
+            players.forEach(player => {
+              const allRatings = ratings[player.id] || []
+              const filtered = allRatings.filter(r => filteredMatchIds.has(r.matchId))
+              if (filtered.length > 0) {
+                const avg = (filtered.reduce((sum, r) => sum + r.score, 0) / filtered.length).toFixed(1)
+                playerRatingsFiltered[player.id] = {
+                  id: player.id,
+                  name: player.name,
+                  avgRating: avg,
+                  ratings: filtered
+                }
+              }
+            })
+            
+            const sortedPlayers = Object.values(playerRatingsFiltered)
+              .sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating))
+            
+            return sortedPlayers.length > 0 ? (
             <div className="ratings-accordion">
-              {stats
-                .filter(p => p.avgRating)
-                .sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating))
-                .map((player, index) => {
-                  const playerRatings = ratings[player.id] || []
+              {sortedPlayers.map((player, index) => {
+                  const playerRatings = player.ratings
                   const isExpanded = expandedPlayer === player.id
                   
                   // Group ratings by match
@@ -2108,10 +2132,11 @@ function App() {
           ) : (
             <div className="empty-state">
               <div className="icon">—</div>
-              <h3>Sin calificaciones aún</h3>
-              <p>Ve a la pestaña de Partidos y califica a tus compañeros</p>
+              <h3>Sin calificaciones</h3>
+              <p>{timeFilter !== 'all' ? 'No hay calificaciones en este período' : 'Ve a la pestaña de Partidos y califica a tus compañeros'}</p>
             </div>
-          )}
+          )
+          })()}
         </section>
       )}
 
