@@ -17,6 +17,9 @@ import {
 // ⚠️ CAMBIA ESTA CONTRASEÑA por una que solo tú conozcas
 const ADMIN_PASSWORD = 'lukto2026'
 
+// 📧 Email del super admin (siempre tiene acceso)
+const SUPER_ADMIN_EMAIL = 'joseescorcia01@gmail.com'
+
 // Datos iniciales de jugadores con sus aliases
 const initialPlayers = [
   { id: '1', name: 'Colombia Pana', aliases: ['Costaman'] },
@@ -76,11 +79,16 @@ function App() {
   const [userLinks, setUserLinks] = useState({}) // {odedBy: { odedBy, userName, userPhoto, playerId }}
   const [pendingUsers, setPendingUsers] = useState([]) // Users waiting to be linked
   
-  // Admin mode
-  const [isAdmin, setIsAdmin] = useState(false)
+  // Admin mode - carga desde localStorage
+  const [isAdmin, setIsAdmin] = useState(() => {
+    const saved = localStorage.getItem('lukto_admin')
+    return saved === 'true'
+  })
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
   const [loginError, setLoginError] = useState('')
+  const [adminEmails, setAdminEmails] = useState([]) // Lista de admins desde Firebase
+  const [newAdminEmail, setNewAdminEmail] = useState('')
   
   // Rating modal
   const [showRatingModal, setShowRatingModal] = useState(false)
@@ -104,6 +112,31 @@ function App() {
       }
     })
     return () => unsubscribe()
+  }, [])
+
+  // Check if user is admin when user or adminEmails change
+  useEffect(() => {
+    if (user) {
+      const isSuperAdmin = user.email === SUPER_ADMIN_EMAIL
+      const isInAdminList = adminEmails.includes(user.email)
+      if (isSuperAdmin || isInAdminList) {
+        setIsAdmin(true)
+        localStorage.setItem('lukto_admin', 'true')
+      }
+    }
+  }, [user, adminEmails])
+
+  // Load admin emails from Firebase
+  useEffect(() => {
+    const unsubAdmins = onSnapshot(doc(db, 'settings', 'admins'), (docSnap) => {
+      if (docSnap.exists()) {
+        setAdminEmails(docSnap.data().emails || [])
+      }
+    }, (error) => {
+      console.log('No admin settings yet:', error)
+    })
+
+    return () => unsubAdmins()
   }, [])
 
   // Load user links from Firebase and check current user's link
@@ -291,6 +324,7 @@ function App() {
   const handleAdminLogin = () => {
     if (passwordInput === ADMIN_PASSWORD) {
       setIsAdmin(true)
+      localStorage.setItem('lukto_admin', 'true')
       setShowLoginModal(false)
       setPasswordInput('')
       setLoginError('')
@@ -301,7 +335,38 @@ function App() {
 
   const handleAdminLogout = () => {
     setIsAdmin(false)
+    localStorage.removeItem('lukto_admin')
     setActiveTab('stats')
+  }
+
+  // Add admin email
+  const handleAddAdmin = async () => {
+    if (!newAdminEmail.trim() || !newAdminEmail.includes('@')) {
+      alert('Ingresa un email válido')
+      return
+    }
+    
+    try {
+      const newList = [...adminEmails, newAdminEmail.trim().toLowerCase()]
+      await setDoc(doc(db, 'settings', 'admins'), { emails: newList })
+      setNewAdminEmail('')
+    } catch (error) {
+      console.error('Error adding admin:', error)
+      alert('Error al agregar admin')
+    }
+  }
+
+  // Remove admin email
+  const handleRemoveAdmin = async (email) => {
+    if (!confirm(`¿Quitar permisos de admin a ${email}?`)) return
+    
+    try {
+      const newList = adminEmails.filter(e => e !== email)
+      await setDoc(doc(db, 'settings', 'admins'), { emails: newList })
+    } catch (error) {
+      console.error('Error removing admin:', error)
+      alert('Error al quitar admin')
+    }
   }
 
   // Calculate stats for each player
@@ -1107,6 +1172,47 @@ function App() {
               )}
             </div>
           </div>
+
+          {/* Sección de gestión de admins - solo para super admin */}
+          {user && user.email === SUPER_ADMIN_EMAIL && (
+            <div className="admin-management-section">
+              <h3 className="subsection-title">👑 Gestionar Administradores</h3>
+              <p className="section-subtitle">
+                Los admins pueden vincular usuarios y editar partidos
+              </p>
+              
+              <div className="add-admin-form">
+                <input 
+                  type="email"
+                  value={newAdminEmail}
+                  onChange={(e) => setNewAdminEmail(e.target.value)}
+                  placeholder="email@gmail.com"
+                  className="admin-email-input"
+                />
+                <button onClick={handleAddAdmin} className="add-admin-btn">
+                  ➕ Agregar Admin
+                </button>
+              </div>
+
+              <div className="admin-list">
+                <div className="admin-item super">
+                  <span>👑 {SUPER_ADMIN_EMAIL}</span>
+                  <span className="admin-badge">Super Admin</span>
+                </div>
+                {adminEmails.map(email => (
+                  <div key={email} className="admin-item">
+                    <span>😈 {email}</span>
+                    <button 
+                      onClick={() => handleRemoveAdmin(email)}
+                      className="remove-admin-btn"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
 
