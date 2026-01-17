@@ -3,5 +3,9 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    target: ['es2015', 'safari11', 'ios11'],
+    cssTarget: ['safari11', 'ios11']
+  }
 })
 
