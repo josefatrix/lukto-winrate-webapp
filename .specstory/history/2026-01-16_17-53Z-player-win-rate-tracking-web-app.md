@@ -60478,3 +60478,234 @@ Con esta fórmula, **Javi** debería subir en el ranking por sus MVPs, incluso s
 
 ---
 
+_**User (2026-01-16 17:53Z)**_
+
+pero hay jugadores que solo tienen 1 partido vs otros que tienen 3. necesito algo mas justo
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is right. A player with 1 game and 100% win rate shouldn't rank higher than someone with 3 games and 66% win rate. The sample size matters for fairness.
+
+I should implement a system that:
+1. Requires a minimum number of games to be ranked (or penalizes low game count)
+2. OR weights the stats by confidence/sample size
+
+Options:
+1. **Minimum games threshold** - Players with less than X games appear at the bottom or separately
+2. **Confidence multiplier** - Score gets multiplied by a factor based on games played (e.g., 1 game = 0.5x, 2 games = 0.75x, 3+ games = 1x)
+3. **Games have more weight** - Increase the "Partidos" percentage significantly
+
+I think option 2 (confidence multiplier) is the fairest. It doesn't exclude players but gives more credit to those with more games played.
+
+Let me implement a confidence factor:
+- 1 game: 50% of score
+- 2 games: 75% of score  
+- 3 games: 90% of score
+- 4+ games: 100% of score
+
+This way players with few games can still appear but won't unfairly outrank consistent players.</details></think>
+
+---
+
+Tienes razón. Un jugador con 1 partido al 100% no debería estar arriba de uno con 3 partidos al 66%. Necesitamos un **factor de confianza** basado en partidos jugados:
+
+**Nueva fórmula con factor de confianza:**
+- 1 partido → Score × 50%
+- 2 partidos → Score × 75%
+- 3 partidos → Score × 90%
+- 4+ partidos → Score × 100%
+
+Así quien tenga pocos partidos no puede dominar el ranking injustamente.
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 10, lines removed: 1
+
+```diff
+@@ -667,5 +667,14 @@
+          // Fórmula combinada para ranking (balanceada):
+          // 30% Win Rate + 30% Rating + 30% MVPs + 10% Partidos jugados
+-         const rankingScore = (winRate * 0.3) + (ratingValue * 3 * 0.3) + (s.mvps * 10 * 0.3) + (s.played * 0.1)
++         // Con factor de confianza según partidos jugados
++         const baseScore = (winRate * 0.3) + (ratingValue * 3 * 0.3) + (s.mvps * 10 * 0.3) + (s.played * 0.1)
++         
++         // Factor de confianza: más partidos = más confiable el score
++         let confidenceFactor = 1
++         if (s.played === 1) confidenceFactor = 0.5
++         else if (s.played === 2) confidenceFactor = 0.75
++         else if (s.played === 3) confidenceFactor = 0.9
++         
++         const rankingScore = baseScore * confidenceFactor
+          
+          return {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the second instance in getStatsForPeriod as well.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 9, lines removed: 1
+
+```diff
+@@ -1053,5 +1053,13 @@
+          
+          // Misma fórmula combinada para ranking (balanceada)
+-         const rankingScore = (winRate * 0.3) + (ratingValue * 3 * 0.3) + (s.mvps * 10 * 0.3) + (s.played * 0.1)
++         // Con factor de confianza según partidos jugados
++         const baseScore = (winRate * 0.3) + (ratingValue * 3 * 0.3) + (s.mvps * 10 * 0.3) + (s.played * 0.1)
++         
++         let confidenceFactor = 1
++         if (s.played === 1) confidenceFactor = 0.5
++         else if (s.played === 2) confidenceFactor = 0.75
++         else if (s.played === 3) confidenceFactor = 0.9
++         
++         const rankingScore = baseScore * confidenceFactor
+          
+          return {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add confidence factor: penalize players with few games for fairer ranking" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Add confidence factor: penalize players with few games for fairer ranking" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 846 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-DiVfNv0d.css     66.45 kB │ gzip:  11.29 kB
+dist/assets/index-BPH8rYBl.js   1,074.77 kB │ gzip: 283.66 kB
+✓ built in 1.26s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main d1e3660] Add confidence factor: penalize players with few games for fairer ranking
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 4 files changed, 380 insertions(+), 99 deletions(-)
+ rename dist/assets/{index-CFuQq7wl.js =&gt; index-BPH8rYBl.js} (88%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/3MB)
+Uploading [=====---------------] (785.5KB/3MB)
+Uploading [==========----------] (1.5MB/3MB)
+Uploading [===============-----] (2.3MB/3MB)
+Uploading [====================] (3.0MB/3MB)
+https://lukto-winrate-webapp-ntitqcouj-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/A8Hb9PCY76o5ejJyRpABoAWej5ds [4s]
+Production: https://lukto-winrate-webapp-ntitqcouj-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 406 packages in 9s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-ntitqcouj-josefatrixs-projects.vercel.app [25s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [31s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-ntitqcouj-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-ntitqcouj-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Done! Let me inform the user.</details></think>
+
+---
+
+¡Listo! Ahora el ranking es más justo con el **factor de confianza**:
+
+| Partidos Jugados | Factor | Efecto |
+|------------------|--------|--------|
+| 1 partido | ×0.50 | Score reducido a la mitad |
+| 2 partidos | ×0.75 | Score reducido 25% |
+| 3 partidos | ×0.90 | Score reducido 10% |
+| 4+ partidos | ×1.00 | Score completo |
+
+**Ejemplo:**
+- Jugador A: 1 partido, 100% win rate → Score base 40 × 0.5 = **20**
+- Jugador B: 3 partidos, 66% win rate → Score base 30 × 0.9 = **27** ✅
+
+Ahora los jugadores con más partidos tienen ventaja justa, y los que tienen pocos partidos necesitan demostrar consistencia para subir.
+
+🔗 https://lukto-winrate-webapp.vercel.app
+
+---
+
