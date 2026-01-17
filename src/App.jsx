@@ -3360,7 +3360,8 @@ function App() {
                     Object.entries(ratings).forEach(([playerId, playerRatings]) => {
                       playerRatings.forEach(r => {
                         if (r.matchId === matchId) {
-                          const ratingId = `${playerId}_${matchId}_${r.ratedBy}`
+                          // Format: ${ratedBy}_${ratedPlayerId}_${matchId}
+                          const ratingId = `${r.ratedBy}_${playerId}_${matchId}`
                           batch.delete(doc(db, 'ratings', ratingId))
                           count++
                         }
@@ -3462,7 +3463,8 @@ function App() {
                               
                               const batch = writeBatch(db)
                               matchGroup.ratings.forEach(r => {
-                                const ratingId = `${r.ratedPlayerId}_${r.matchId}_${selectedPlayerToDeleteRatings}`
+                                // Format: ${ratedBy}_${ratedPlayerId}_${matchId}
+                                const ratingId = `${selectedPlayerToDeleteRatings}_${r.ratedPlayerId}_${r.matchId}`
                                 batch.delete(doc(db, 'ratings', ratingId))
                               })
                               await batch.commit()
@@ -3484,7 +3486,8 @@ function App() {
                                 onClick={async () => {
                                   if (!confirm(`¿Eliminar calificación de ${raterName} a ${r.ratedPlayerName}?`)) return
                                   
-                                  const ratingId = `${r.ratedPlayerId}_${r.matchId}_${selectedPlayerToDeleteRatings}`
+                                  // Format: ${ratedBy}_${ratedPlayerId}_${matchId}
+                                  const ratingId = `${selectedPlayerToDeleteRatings}_${r.ratedPlayerId}_${r.matchId}`
                                   await deleteDoc(doc(db, 'ratings', ratingId))
                                   showToast('success', 'Calificación eliminada')
                                 }}

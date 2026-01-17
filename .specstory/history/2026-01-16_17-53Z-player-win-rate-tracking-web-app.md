@@ -62014,88 +62014,129 @@ Let me add the CSS for the delete ratings section after the suspicious-stats sty
 
 <details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
 
-Status: **loading**
+**Chunk 1**
+Lines added: 114, lines removed: undefined
 
-```css
-.suspicious-stats {
-  font-size: 0.8rem;
-  color: #FF453A;
-}
-
-/* Delete Ratings Section */
-.delete-ratings-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.ratings-to-delete {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.rating-match-group {
-  background: var(--bg-tertiary);
-  border-radius: 8px;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-}
-
-.rating-match-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.rating-items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.rating-delete-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.5rem;
-  background: var(--bg-glass);
-  border-radius: 6px;
-}
-
-.rating-delete-item .rated-player {
-  flex: 1;
-  font-size: 0.85rem;
-  color: var(--text-primary);
-}
-
-.rating-delete-item .rating-score {
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 0.8rem;
-}
-
-.rating-delete-item .rating-score.high {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
-}
-
-.rating-delete-item .rating-score.medium {
-  background: rgba(251, 191, 36, 0.2);
-  color: #fbbf24;
-}
-
-.rating-delete-item .rating-score.low {
-  background: rgba(239, 68, 
+```diff
+@@ -4671,4 +4671,118 @@
+    color: #FF453A;
+  }
++ 
++ /* Delete Ratings Section */
++ .delete-ratings-section {
++   display: flex;
++   flex-direction: column;
++   gap: 1rem;
++ }
++ 
++ .ratings-to-delete {
++   display: flex;
++   flex-direction: column;
++   gap: 0.75rem;
++   max-height: 400px;
++   overflow-y: auto;
++ }
++ 
++ .rating-match-group {
++   background: var(--bg-tertiary);
++   border-radius: 8px;
++   padding: 0.75rem;
++   border: 1px solid var(--border-color);
++ }
++ 
++ .rating-match-header {
++   display: flex;
++   justify-content: space-between;
++   align-items: center;
++   margin-bottom: 0.5rem;
++   padding-bottom: 0.5rem;
++   border-bottom: 1px solid var(--border-color);
++   font-size: 0.85rem;
++   font-weight: 600;
++   color: var(--text-primary);
++ }
++ 
++ .rating-items-list {
++   display: flex;
++   flex-direction: column;
++   gap: 0.4rem;
++ }
++ 
++ .rating-delete-item {
++   display: flex;
++   align-items: center;
++   gap: 0.5rem;
++   padding: 0.4rem 0.5rem;
++   background: var(--bg-glass);
++   border-radius: 6px;
++ }
++ 
++ .rating-delete-item .rated-player {
++   flex: 1;
++   font-size: 0.85rem;
++   color: var(--text-primary);
++ }
++ 
++ .rating-delete-item .rating-score {
++   padding: 0.2rem 0.5rem;
++   border-radius: 4px;
++   font-weight: 600;
++   font-size: 0.8rem;
++ }
++ 
++ .rating-delete-item .rating-score.high {
++   background: rgba(16, 185, 129, 0.2);
++   color: #10b981;
++ }
++ 
++ .rating-delete-item .rating-score.medium {
++   background: rgba(251, 191, 36, 0.2);
++   color: #fbbf24;
++ }
++ 
++ .rating-delete-item .rating-score.low {
++   background: rgba(239, 68, 68, 0.2);
++   color: #ef4444;
++ }
++ 
++ .btn-delete-small {
++   width: 24px;
++   height: 24px;
++   border-radius: 50%;
++   border: none;
++   background: rgba(239, 68, 68, 0.15);
++   color: #ef4444;
++   cursor: pointer;
++   display: flex;
++   align-items: center;
++   justify-content: center;
++   font-size: 0.75rem;
++   transition: all 0.2s ease;
++ }
++ 
++ .btn-delete-small:hover {
++   background: #ef4444;
++   color: white;
++ }
++ 
++ .btn-danger-small {
++   padding: 0.3rem 0.6rem;
++   border-radius: 6px;
++   border: none;
++   background: rgba(239, 68, 68, 0.15);
++   color: #ef4444;
++   cursor: pointer;
++   font-size: 0.7rem;
++   font-weight: 500;
++   transition: all 0.2s ease;
++ }
++ 
++ .btn-danger-small:hover {
++   background: #ef4444;
++   color: white;
++ }
+  
+  /* Settings Form */
 ```
 
 </details>
@@ -62104,19 +62145,140 @@ Status: **loading**
 
 ---
 
-
-
----
-
-
+<think><details><summary>Thought Process</summary>
+Now let me build and deploy.</details></think>
 
 ---
 
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Admin tool: delete ratings from specific players by match" && npx vercel --prod --yes --force</summary>
 
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Admin tool: delete ratings from specific players by match" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 846 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-D_F39c4k.css     68.40 kB │ gzip:  11.53 kB
+dist/assets/index-CSnnA3YE.js   1,078.11 kB │ gzip: 284.40 kB
+✓ built in 1.28s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 67c9001] Admin tool: delete ratings from specific players by match
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 6 files changed, 905 insertions(+), 225 deletions(-)
+ rename dist/assets/{index-BtH4Kwsg.js =&gt; index-CSnnA3YE.js} (62%)
+ rename dist/assets/{index-Dva3vWc9.css =&gt; index-D_F39c4k.css} (92%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/3.2MB)
+Uploading [=====---------------] (828.5KB/3.2MB)
+Uploading [==========----------] (1.6MB/3.2MB)
+Uploading [===============-----] (2.4MB/3.2MB)
+Uploading [====================] (3.2MB/3.2MB)
+https://lukto-winrate-webapp-3ib5q4e3t-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/AwhYFfBxF6UKKRYwyQ15oTqM1Ztg [4s]
+Production: https://lukto-winrate-webapp-3ib5q4e3t-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 406 packages in 9s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 846 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-D_F39c4k.css     68.40 kB │ gzip:  11.52 kB
+Building: dist/assets/index-CSnnA3YE.js   1,078.11 kB │ gzip: 285.46 kB
+Building: ✓ built in 4.46s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [14s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-3ib5q4e3t-josefatrixs-projects.vercel.app [25s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [25s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-3ib5q4e3t-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-3ib5q4e3t-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
 
 ---
 
+<think><details><summary>Thought Process</summary>
+Done! Let me explain the new feature to the user.</details></think>
 
+---
+
+¡Listo! Ahora tienes una nueva herramienta de admin para **eliminar calificaciones**:
+
+**Cómo usarlo:**
+
+1. Ve a **Herramientas Admin**
+2. Busca la sección **"Eliminar Calificaciones"** (icono de basura rojo)
+3. Selecciona el **jugador que dio las calificaciones**
+4. Verás todas sus calificaciones organizadas por partido
+5. Puedes:
+   - **Eliminar una calificación específica** (botón ✕)
+   - **Eliminar TODAS las calificaciones de ese partido** (botón rojo)
+
+**Características:**
+- ✅ Muestra cuántas calificaciones ha dado cada jugador
+- ✅ Organizado por partido (fecha y lugar)
+- ✅ Muestra el score con colores (verde=alto, amarillo=medio, rojo=bajo)
+- ✅ Confirmación antes de eliminar
+- ✅ Se actualiza en tiempo real
+
+🔗 https://lukto-winrate-webapp.vercel.app
 
 ---
 
@@ -62128,19 +62290,37 @@ coloque un partiudo para que nadie pudiera votar pero hay gente que si pudo hace
 
 _**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
 
+<think><details><summary>Thought Process</summary>
+The user is saying they created a match where voting/ratings should be closed, but some people were still able to vote. This is a bug in the ratings toggle feature. Let me investigate the code to see how the ratings are being blocked and why it might not be working correctly.
 
+Let me check the logic that prevents ratings when `ratingsOpen` is false.</details></think>
 
 ---
 
-
+Voy a revisar el código que bloquea las calificaciones:
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="grep">
+<tool-use data-tool-type="search" data-tool-name="grep">
 <details>
-<summary>Tool use: **grep**</summary>
+<summary>Tool use: **grep** • Grep for "ratingsOpen|openRatingModal" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 11 matches</summary>
 
-Status: **loading**
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `ratingsOpen: true // Por defecto, calificaciones abiertas` | L1512 |
+| `src/App.jsx` | `ratingsOpen: !currentState` | L1652 |
+| `src/App.jsx` | `const openRatingModal = (match) => \{` | L1662 |
+| `src/App.jsx` | `if (match.ratingsOpen === false) \{` | L1669 |
+| `src/App.jsx` | `\{user && userPlayer && match.ratingsOpen !== false && (` | L2642 |
+| `src/App.jsx` | `onClick=\{() => openRatingModal(match)\}` | L2645 |
+| `src/App.jsx` | `\{user && userPlayer && match.ratingsOpen === false && !isAdmin && (` | L2650 |
+| `src/App.jsx` | `className=\{`toggle-ratings-btn $\{match.ratingsOpen === false ? 'closed' : 'open'\}`\}` | L2656 |
+| `src/App.jsx` | `onClick=\{() => toggleMatchRatings(match.id, match.ratingsOpen !== false)\}` | L2657 |
+| `src/App.jsx` | `title=\{match.ratingsOpen === false ? 'Abrir calificaciones' : 'Cerrar calificaciones'\}` | L2658 |
+| `src/App.jsx` | `\{match.ratingsOpen === false ? '🔒' : '🔓'\}` | L2660 |
 
 
 </details>
@@ -62148,7 +62328,608 @@ Status: **loading**
 
 ---
 
+<think><details><summary>Thought Process</summary>
+I see the issue! The problem is that the check `match.ratingsOpen === false` is correct, but there might be an issue with how the match data is being loaded or how the state is being compared.
 
+Looking at the code:
+1. When creating a new match, `ratingsOpen: true` is set by default
+2. The `toggleMatchRatings` function sets `ratingsOpen: !currentState`
+3. The `openRatingModal` checks `if (match.ratingsOpen === false)`
+
+The potential issue is that when a user already has the page loaded, and the admin closes ratings, the user's local state might not have updated yet. Let me also check if there's any issue with the data loading.
+
+Also, I notice that the button visibility check is `match.ratingsOpen !== false` which should work, but the openRatingModal also has its own check.
+
+Let me also check if there could be a race condition or caching issue. The most likely problem is that when the admin toggles the ratings, users who already have the modal open or are in the process of submitting might still be able to submit.
+
+Let me also check the `submitRatings` function to see if it validates the ratingsOpen status before submitting:</details></think>
+
+---
+
+Veo que el bloqueo está en `openRatingModal`, pero **no está en `submitRatings`**. Si alguien ya tiene el modal abierto cuando cierras las calificaciones, puede seguir enviando. Voy a agregar la validación también al enviar:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const submitRatings" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const submitRatings = async () => \{` | L1720 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see! The `submitRatings` function doesn't check if `ratingsOpen` is false before submitting. I need to add that check. Let me fix this.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 8, lines removed: undefined
+
+```diff
+@@ -1720,4 +1720,12 @@
+    const submitRatings = async () =&gt; {
+      if (!selectedMatch || !userPlayer) return
++     
++     // Check if ratings are closed - re-fetch match to get latest state
++     const matchDoc = await getDoc(doc(db, 'matches', selectedMatch.id))
++     if (matchDoc.exists() &amp;&amp; matchDoc.data().ratingsOpen === false) {
++       showToast('error', 'Las calificaciones han sido cerradas para este partido')
++       setShowRatingModal(false)
++       return
++     }
+      
+      // Check if user is blocked
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to import `getDoc` if it's not already imported. Let me check the imports.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "import.*getDoc|from 'firebase/firestore'" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `\} from 'firebase/firestore'` | L15 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me check the full import statement to see if `getDoc` is imported.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to add `getDoc` to the imports from firebase/firestore.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -7,5 +7,6 @@
+    setDoc, 
+    deleteDoc,
+-   getDocs, 
++   getDocs,
++   getDoc,
+    onSnapshot,
+    query,
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix: validate ratingsOpen at submit time to prevent race condition" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix: validate ratingsOpen at submit time to prevent race condition" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 846 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-D_F39c4k.css     68.40 kB │ gzip:  11.53 kB
+dist/assets/index-D2OeiLnz.js   1,079.67 kB │ gzip: 284.56 kB
+✓ built in 1.24s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 04b5214] Fix: validate ratingsOpen at submit time to prevent race condition
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 4 files changed, 688 insertions(+), 242 deletions(-)
+ rename dist/assets/{index-CSnnA3YE.js =&gt; index-D2OeiLnz.js} (62%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/3.1MB)
+Uploading [=====---------------] (801.5KB/3.1MB)
+Uploading [==========----------] (1.5MB/3.1MB)
+Uploading [===============-----] (2.3MB/3.1MB)
+Uploading [====================] (3.1MB/3.1MB)
+https://lukto-winrate-webapp-998fqffuu-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/2nNnPrhgR5FQCXNvapSNGiCG6YFh [5s]
+Production: https://lukto-winrate-webapp-998fqffuu-josefatrixs-projects.vercel.app [5s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 406 packages in 9s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 846 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-D_F39c4k.css     68.40 kB │ gzip:  11.52 kB
+Building: dist/assets/index-D2OeiLnz.js   1,079.67 kB │ gzip: 285.59 kB
+Building: ✓ built in 4.32s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [14s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-998fqffuu-josefatrixs-projects.vercel.app [26s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [26s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-998fqffuu-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-998fqffuu-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Done! The fix has been deployed. Let me explain to the user what was happening.</details></think>
+
+---
+
+¡Corregido! El problema era que:
+
+**Antes:**
+1. Usuario abre el modal de calificar
+2. Admin cierra las calificaciones
+3. Usuario le da "Enviar" → ⚠️ **Se enviaban igual** porque solo se validaba al abrir el modal
+
+**Ahora:**
+1. Usuario abre el modal de calificar
+2. Admin cierra las calificaciones
+3. Usuario le da "Enviar" → ✅ **Se verifica de nuevo en Firebase** antes de guardar
+4. Si está cerrado: muestra error y cierra el modal
+
+**La validación ahora ocurre en dos momentos:**
+- ✅ Al abrir el modal (primera barrera)
+- ✅ Al enviar las calificaciones (segunda barrera, re-consulta Firebase)
+
+Esto evita la "condición de carrera" donde alguien tenía el modal abierto antes de que cerraras.
+
+🔗 https://lukto-winrate-webapp.vercel.app
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+pero no eliminar todas las calificaciones. las de un partido en especifico
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants to delete all ratings from a specific match, not delete all ratings or ratings from a specific player. They want an admin tool to delete all ratings associated with a particular match.
+
+Let me add that functionality to the admin tools.</details></think>
+
+---
+
+Voy a agregar la opción de eliminar todas las calificaciones de un partido específico:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Eliminar Calificaciones|delete-ratings-section" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `<h3>Eliminar Calificaciones</h3>` | L3318 |
+| `src/App.jsx` | `<div className="delete-ratings-section">` | L3321 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I'll add a new section at the top of the delete ratings tool to allow deleting all ratings from a specific match.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 67, lines removed: undefined
+
+```diff
+@@ -3318,4 +3318,71 @@
+                &lt;h3&gt;Eliminar Calificaciones&lt;/h3&gt;
+              &lt;/div&gt;
++             
++             {/* Delete all ratings from a specific match */}
++             &lt;div className="delete-by-match-section"&gt;
++               &lt;p className="tool-description"&gt;Eliminar TODAS las calificaciones de un partido&lt;/p&gt;
++               &lt;div className="match-delete-controls"&gt;
++                 &lt;select 
++                   className="setting-select"
++                   id="matchToDeleteRatings"
++                 &gt;
++                   &lt;option value=""&gt;Seleccionar partido...&lt;/option&gt;
++                   {[...matches].sort((a, b) =&gt; new Date(b.date) - new Date(a.date)).map(m =&gt; {
++                     // Count ratings for this match
++                     let ratingCount = 0
++                     Object.values(ratings).forEach(playerRatings =&gt; {
++                       ratingCount += playerRatings.filter(r =&gt; r.matchId === m.id).length
++                     })
++                     return (
++                       &lt;option key={m.id} value={m.id}&gt;
++                         {m.venue} - {m.date} ({ratingCount} calificaciones)
++                       &lt;/option&gt;
++                     )
++                   })}
++                 &lt;/select&gt;
++                 &lt;button 
++                   className="btn-danger"
++                   onClick={async () =&gt; {
++                     const select = document.getElementById('matchToDeleteRatings')
++                     const matchId = select.value
++                     if (!matchId) {
++                       showToast('error', 'Selecciona un partido')
++                       return
++                     }
++                     
++                     const match = matches.find(m =&gt; m.id === matchId)
++                     if (!confirm(&#96;¿Eliminar TODAS las calificaciones del partido ${match?.venue} - ${match?.date}?&#96;)) return
++                     
++                     // Find all ratings for this match
++                     const batch = writeBatch(db)
++                     let count = 0
++                     
++                     Object.entries(ratings).forEach(([playerId, playerRatings]) =&gt; {
++                       playerRatings.forEach(r =&gt; {
++                         if (r.matchId === matchId) {
++                           const ratingId = &#96;${playerId}_${matchId}_${r.ratedBy}&#96;
++                           batch.delete(doc(db, 'ratings', ratingId))
++                           count++
++                         }
++                       })
++                     })
++                     
++                     if (count === 0) {
++                       showToast('info', 'No hay calificaciones para este partido')
++                       return
++                     }
++                     
++                     await batch.commit()
++                     showToast('success', &#96;Eliminadas ${count} calificaciones del partido&#96;)
++                     select.value = ''
++                   }}
++                 &gt;
++                   Eliminar del Partido
++                 &lt;/button&gt;
++               &lt;/div&gt;
++             &lt;/div&gt;
++             
++             &lt;hr className="tool-divider" /&gt;
++             
+              &lt;p className="tool-description"&gt;Eliminar calificaciones de un jugador específico&lt;/p&gt;
+              &lt;div className="delete-ratings-section"&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to add the CSS for the new elements.</details></think>
+
+---
+
+Ahora agrego los estilos:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 39, lines removed: undefined
+
+```diff
+@@ -4673,4 +4673,43 @@
+  
+  /* Delete Ratings Section */
++ .delete-by-match-section {
++   margin-bottom: 1rem;
++ }
++ 
++ .match-delete-controls {
++   display: flex;
++   gap: 0.75rem;
++   align-items: center;
++   margin-top: 0.5rem;
++ }
++ 
++ .match-delete-controls .setting-select {
++   flex: 1;
++ }
++ 
++ .btn-danger {
++   padding: 0.5rem 1rem;
++   border-radius: 8px;
++   border: none;
++   background: #ef4444;
++   color: white;
++   cursor: pointer;
++   font-size: 0.85rem;
++   font-weight: 600;
++   transition: all 0.2s ease;
++   white-space: nowrap;
++ }
++ 
++ .btn-danger:hover {
++   background: #dc2626;
++   transform: translateY(-1px);
++ }
++ 
++ .tool-divider {
++   border: none;
++   border-top: 1px solid var(--border-color);
++   margin: 1rem 0;
++ }
++ 
+  .delete-ratings-section {
+    display: flex;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Admin: delete all ratings from a specific match" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Admin: delete all ratings from a specific match" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 846 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-CmXXBWuF.css     68.90 kB │ gzip:  11.63 kB
+dist/assets/index-CV7lZrf2.js   1,081.01 kB │ gzip: 284.88 kB
+✓ built in 1.30s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 3115e02] Admin: delete all ratings from a specific match
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 5 files changed, 213 insertions(+), 107 deletions(-)
+ rename dist/assets/{index-D2OeiLnz.js =&gt; index-CV7lZrf2.js} (87%)
+ rename dist/assets/{index-D_F39c4k.css =&gt; index-CmXXBWuF.css} (91%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/1.4MB)
+Uploading [=====---------------] (356.8KB/1.4MB)
+Uploading [==========----------] (704.9KB/1.4MB)
+Uploading [===============-----] (1.0MB/1.4MB)
+Uploading [====================] (1.4MB/1.4MB)
+https://lukto-winrate-webapp-sst7d9s36-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/43kt1o1vyEp4oUJBTHsXQm6tiWwx [4s]
+Production: https://lukto-winrate-webapp-sst7d9s36-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 406 packages in 8s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 846 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-CmXXBWuF.css     68.90 kB │ gzip:  11.62 kB
+Building: dist/assets/index-CV7lZrf2.js   1,081.01 kB │ gzip: 285.91 kB
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: ✓ built in 4.40s
+Building: Build Completed in /vercel/output [14s]
+Building: Deploying outputs...
+Building: Deployment completed
+Building: Creating build cache...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-sst7d9s36-josefatrixs-projects.vercel.app [25s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [25s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-sst7d9s36-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-sst7d9s36-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Done! Let me explain the new feature.</details></think>
+
+---
+
+¡Listo! Ahora en **Herramientas Admin → Eliminar Calificaciones** tienes dos opciones:
+
+**1. Eliminar por partido** (nueva)
+- Selecciona el partido del dropdown
+- Muestra cuántas calificaciones tiene cada partido
+- Botón rojo "Eliminar del Partido" → borra TODAS las calificaciones de ese partido
+
+**2. Eliminar por jugador** (existente)
+- Selecciona quién dio las calificaciones
+- Puedes borrar una por una o todas las de un partido específico
+
+Los partidos están ordenados por fecha (más recientes primero) para que encuentres fácil el que necesitas.
+
+🔗 https://lukto-winrate-webapp.vercel.app
 
 ---
 
