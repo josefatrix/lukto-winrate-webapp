@@ -94,6 +94,16 @@ export const StatsTab = ({
     return <span className="sort-icon active">{sortDir === 'asc' ? '↑' : '↓'}</span>
   }
 
+  // Sort options for chips
+  const sortOptions = [
+    { key: 'rankingScore', label: 'Score', icon: '📊' },
+    { key: 'winRate', label: 'Win Rate', icon: '🎯' },
+    { key: 'avgRating', label: 'Rating', icon: '⭐' },
+    { key: 'mvps', label: 'MVPs', icon: '🏆' },
+    { key: 'wins', label: 'Victorias', icon: '✓' },
+    { key: 'xp', label: 'XP', icon: '✨' },
+  ]
+
   return (
     <section className="stats-section">
       {/* Show latest announcement to all users */}
@@ -195,6 +205,26 @@ export const StatsTab = ({
         {searchQuery && (
           <button className="search-clear" onClick={() => setSearchQuery('')}>×</button>
         )}
+      </div>
+
+      {/* Sort Chips */}
+      <div className="sort-chips">
+        <span className="sort-label">Ordenar:</span>
+        <div className="sort-chips-scroll">
+          {sortOptions.map(opt => (
+            <button
+              key={opt.key}
+              className={`sort-chip ${sortBy === opt.key ? 'active' : ''}`}
+              onClick={() => handleSort(opt.key)}
+            >
+              <span className="sort-chip-icon">{opt.icon}</span>
+              <span className="sort-chip-label">{opt.label}</span>
+              {sortBy === opt.key && (
+                <span className="sort-chip-dir">{sortDir === 'desc' ? '↓' : '↑'}</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {filteredStats.length > 0 ? (
