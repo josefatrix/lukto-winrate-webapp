@@ -1646,15 +1646,21 @@ body {
 }
 
 .sort-chip-icon {
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sort-chip-icon svg {
+  width: 14px;
+  height: 14px;
 }
 
 .sort-chip-label {
   font-size: 12px;
 }
 
-.sort-chip-dir {
-  font-size: 10px;
+.sort-chip-arrow {
   opacity: 0.8;
   margin-left: 2px;
 }

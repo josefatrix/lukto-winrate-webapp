@@ -94,14 +94,49 @@ export const StatsTab = ({
     return <span className="sort-icon active">{sortDir === 'asc' ? '↑' : '↓'}</span>
   }
 
+  // Custom SVG icons for sort chips
+  const SortIcons = {
+    score: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+      </svg>
+    ),
+    winRate: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+      </svg>
+    ),
+    rating: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+      </svg>
+    ),
+    mvp: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2z"/>
+      </svg>
+    ),
+    wins: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+      </svg>
+    ),
+    xp: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+      </svg>
+    ),
+  }
+
   // Sort options for chips
   const sortOptions = [
-    { key: 'rankingScore', label: 'Score', icon: '📊' },
-    { key: 'winRate', label: 'Win Rate', icon: '🎯' },
-    { key: 'avgRating', label: 'Rating', icon: '⭐' },
-    { key: 'mvps', label: 'MVPs', icon: '🏆' },
-    { key: 'wins', label: 'Victorias', icon: '✓' },
-    { key: 'xp', label: 'XP', icon: '✨' },
+    { key: 'rankingScore', label: 'Score', icon: SortIcons.score },
+    { key: 'winRate', label: 'Win Rate', icon: SortIcons.winRate },
+    { key: 'avgRating', label: 'Rating', icon: SortIcons.rating },
+    { key: 'mvps', label: 'MVPs', icon: SortIcons.mvp },
+    { key: 'wins', label: 'Victorias', icon: SortIcons.wins },
+    { key: 'xp', label: 'XP', icon: SortIcons.xp },
   ]
 
   return (
@@ -220,7 +255,12 @@ export const StatsTab = ({
               <span className="sort-chip-icon">{opt.icon}</span>
               <span className="sort-chip-label">{opt.label}</span>
               {sortBy === opt.key && (
-                <span className="sort-chip-dir">{sortDir === 'desc' ? '↓' : '↑'}</span>
+                <svg className="sort-chip-arrow" viewBox="0 0 24 24" fill="currentColor" width="10" height="10">
+                  {sortDir === 'desc' 
+                    ? <path d="M7 10l5 5 5-5H7z"/>
+                    : <path d="M7 14l5-5 5 5H7z"/>
+                  }
+                </svg>
               )}
             </button>
           ))}
