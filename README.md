@@ -45,7 +45,7 @@ Aplicación web para trackear estadísticas de partidos de fútbol, win rates, c
 
 ```bash
 # Clonar repositorio
-git clone https://github.com/tu-usuario/lukto-winrate-webapp.git
+git clone https://github.com/josefatrix/lukto-winrate-webapp.git
 cd lukto-winrate-webapp
 
 # Instalar dependencias
@@ -78,14 +78,38 @@ VITE_FIREBASE_PROJECT_ID=tu-proyecto
 
 ```
 lukto-winrate-webapp/
-├── public/              # Assets estáticos (iconos, manifest)
+├── public/                    # Assets estáticos
+│   ├── lukto-logo.png
+│   ├── manifest.json
+│   └── sw.js                  # Service Worker
 ├── src/
-│   ├── App.jsx          # Componente principal
-│   ├── firebase.js      # Configuración de Firebase
-│   ├── index.css        # Estilos globales
-│   └── main.jsx         # Entry point
-├── index.html           # HTML principal
-├── vite.config.js       # Configuración de Vite
+│   ├── components/
+│   │   ├── common/            # Componentes reutilizables
+│   │   │   ├── Modal.jsx
+│   │   │   ├── Toast.jsx
+│   │   │   └── Skeleton.jsx
+│   │   ├── layout/            # Layout components
+│   │   │   ├── Header.jsx
+│   │   │   └── BottomNav.jsx
+│   │   ├── tabs/              # Tabs principales
+│   │   │   ├── StatsTab.jsx
+│   │   │   ├── RatingsTab.jsx
+│   │   │   └── MatchesTab.jsx
+│   │   └── modals/            # Modales
+│   │       ├── AdminLoginModal.jsx
+│   │       └── PendingUserModal.jsx
+│   ├── contexts/
+│   │   └── AppContext.jsx     # Estado global
+│   ├── hooks/
+│   │   └── useStats.js        # Lógica de estadísticas
+│   ├── utils/                 # Funciones auxiliares
+│   ├── constants/             # Configuración
+│   ├── App.jsx                # Componente principal
+│   ├── firebase.js            # Config Firebase
+│   ├── index.css              # Estilos globales
+│   └── main.jsx               # Entry point
+├── index.html
+├── vite.config.js
 └── package.json
 ```
 
@@ -97,12 +121,10 @@ lukto-winrate-webapp/
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Usuarios autenticados pueden leer todo
     match /{document=**} {
       allow read: if request.auth != null;
     }
     
-    // Solo admins pueden escribir en ciertas colecciones
     match /players/{playerId} {
       allow write: if request.auth != null;
     }
@@ -143,10 +165,9 @@ La app es instalable como PWA:
 
 ## 📄 Licencia
 
-MIT © 2026 Jose Escorcia
+MIT © 2026
 
 ## 👨‍💻 Autor
 
 **Jose Escorcia**
-- GitHub: [@joseescorcia](https://github.com/joseescorcia)
-
+- GitHub: [@josefatrix](https://github.com/josefatrix)
