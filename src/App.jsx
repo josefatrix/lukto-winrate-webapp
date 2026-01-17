@@ -159,15 +159,23 @@ function App() {
       const links = {}
       const pending = []
       
+      console.log('=== UserLinks snapshot update ===')
+      console.log('Total docs:', snapshot.docs.length)
+      
       snapshot.docs.forEach(docSnap => {
         const data = docSnap.data()
         const docId = docSnap.id
+        
+        console.log('Doc:', docId, '| playerId:', data.playerId, '| type:', typeof data.playerId)
+        
         // Check if playerId exists and is not null/undefined/empty
         if (data.playerId && data.playerId !== '' && data.playerId !== null) {
           links[docId] = { ...data, odedBy: docId }
+          console.log('  -> Vinculado')
         } else {
           // User is pending (registered but not linked)
           pending.push({ ...data, odedBy: docId })
+          console.log('  -> Pendiente')
         }
       })
       
@@ -325,27 +333,41 @@ function App() {
     
     // Prevent double-clicks
     if (linkingUser === userId) {
+      console.log('Already linking this user, ignoring')
+      return
+    }
+    
+    // Find the player to verify it exists
+    const playerToLink = players.find(p => p.id === playerId)
+    if (!playerToLink) {
+      console.error('Player not found:', playerId)
+      alert('Error: Jugador no encontrado')
       return
     }
     
     setLinkingUser(userId)
     
     try {
-      console.log('Vinculando usuario:', userId, 'con jugador:', playerId)
+      console.log('Vinculando usuario:', userId, 'con jugador:', playerId, '(' + playerToLink.name + ')')
       const linkRef = doc(db, 'userLinks', userId)
       
-      // Get current data first
+      // Get current user data
       const currentData = pendingUsers.find(u => u.odedBy === userId) || {}
       
-      // Update with all fields to ensure playerId is set
-      await setDoc(linkRef, {
-        ...currentData,
-        odedBy: userId,
+      // Remove odedBy from currentData to avoid duplication
+      const { odedBy: _, ...cleanData } = currentData
+      
+      const dataToSave = {
+        ...cleanData,
         playerId: playerId,
         linkedAt: new Date().toISOString()
-      })
+      }
       
-      console.log('Usuario vinculado exitosamente')
+      console.log('Guardando en Firebase:', dataToSave)
+      
+      await setDoc(linkRef, dataToSave)
+      
+      console.log('Usuario vinculado exitosamente a', playerToLink.name)
     } catch (error) {
       console.error('Error linking user:', error)
       alert('Error al vincular usuario: ' + error.message)
