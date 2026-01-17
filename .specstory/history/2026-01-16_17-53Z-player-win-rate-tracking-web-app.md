@@ -26293,6 +26293,2317 @@ Lines added: 3, lines removed: 1
 
 ---
 
+<think><details><summary>Thought Process</summary>
+Now let me add the match leaderboard styles:</details></think>
+
+---
+
+Ahora agrego los estilos para el leaderboard del partido:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "/\* Match Card \*/" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `/* Match Card */` | L454 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me add the leaderboard styles after the match card styles. First, let me find where the match teams section ends:</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for ".vs-badge \{" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `.vs-badge \{` | L576 |
+| `src/index.css` | `.vs-badge \{` | L1694 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me add the match leaderboard styles before the Form Styles section:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 70, lines removed: undefined
+
+```diff
+@@ -581,4 +581,74 @@
+    font-size: 0.9rem;
+  }
++ 
++ /* Match Leaderboard */
++ .match-leaderboard {
++   margin-top: 1rem;
++   padding-top: 1rem;
++   border-top: 1px solid var(--border-color);
++ }
++ 
++ .leaderboard-title {
++   font-size: 0.75rem;
++   text-transform: uppercase;
++   letter-spacing: 0.05em;
++   color: var(--text-muted);
++   margin-bottom: 0.75rem;
++   font-weight: 500;
++ }
++ 
++ .leaderboard-items {
++   display: flex;
++   gap: 0.75rem;
++   flex-wrap: wrap;
++ }
++ 
++ .leaderboard-item {
++   display: flex;
++   align-items: center;
++   gap: 0.5rem;
++   background: var(--bg-card);
++   padding: 0.5rem 0.75rem;
++   border-radius: 8px;
++   border: 1px solid var(--border-color);
++ }
++ 
++ .leaderboard-position {
++   font-size: 0.7rem;
++   font-weight: 700;
++   width: 20px;
++   height: 20px;
++   display: flex;
++   align-items: center;
++   justify-content: center;
++   border-radius: 4px;
++ }
++ 
++ .leaderboard-position.gold {
++   background: linear-gradient(135deg, #ffd60a, #ffb800);
++   color: #000;
++ }
++ 
++ .leaderboard-position.silver {
++   background: linear-gradient(135deg, #d1d1d6, #a1a1a6);
++   color: #000;
++ }
++ 
++ .leaderboard-position.bronze {
++   background: linear-gradient(135deg, #cd7f32, #a86428);
++   color: #fff;
++ }
++ 
++ .leaderboard-name {
++   font-size: 0.85rem;
++   font-weight: 500;
++ }
++ 
++ .leaderboard-score {
++   font-size: 0.8rem;
++   font-weight: 600;
++   color: var(--accent-green);
++   margin-left: auto;
++ }
+  
+  /* Form Styles */
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the App.jsx to:
+1. Remove emojis from nav tabs and sections
+2. Add the match leaderboard (top 3 ratings per match)Let me first look at the current nav tabs and sections to remove emojis:</details></think>
+
+---
+
+Ahora actualizo el App.jsx para quitar emojis y agregar el leaderboard:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "📊|⭐|⚽|➕|👥|🔗|📋" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 24 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `console.log('🔗 Vinculando:', \{ userId, playerId \})` | L369 |
+| `src/App.jsx` | `📊 Estadísticas` | L857 |
+| `src/App.jsx` | `⭐ Calificaciones` | L863 |
+| `src/App.jsx` | `⚽ Partidos` | L869 |
+| `src/App.jsx` | `➕ Nuevo Partido` | L877 |
+| `src/App.jsx` | `👥 Jugadores` | L883 |
+| `src/App.jsx` | `🔗 Vincular Usuarios \{pendingUsers.length > 0 && <span className="badge">\{pendingUsers.length\}</span>\}` | L889 |
+| `src/App.jsx` | `📋 Ver Calificaciones` | L895 |
+| `src/App.jsx` | `<th>⭐ Rating</th>` | L915 |
+| `src/App.jsx` | `⭐ \{player.avgRating\}` | L953 |
+| `src/App.jsx` | `<div className="icon">📊</div>` | L965 |
+| `src/App.jsx` | `⭐ \{player.avgRating\}` | L1022 |
+| `src/App.jsx` | `⭐ \{matchAvg\}` | L1060 |
+| `src/App.jsx` | `<div className="icon">⭐</div>` | L1082 |
+| `src/App.jsx` | `⭐ Calificar` | L1107 |
+| `src/App.jsx` | `<div className="icon">⚽</div>` | L1163 |
+| `src/App.jsx` | `<span style=\{{ fontSize: '1.5rem' \}}>➕</span>` | L1322 |
+| `src/App.jsx` | `➕ Agregar Admin` | L1404 |
+| `src/App.jsx` | `<h2 className="section-title">📋 Todas las Calificaciones</h2>` | L1433 |
+| `src/App.jsx` | `⭐ \{r.score\}` | L1513 |
+| `src/App.jsx` | `⭐ \{matchAvg\}` | L1524 |
+| `src/App.jsx` | `⭐ \{totalAverage\}` | L1541 |
+| `src/App.jsx` | `<h2>⭐ \{hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'\} Jugadores</h2>` | L1611 |
+| `src/App.jsx` | `<h2>\{editingPlayerId ? '✏️ Editar Jugador' : '➕ Nuevo Jugador'\}</h2>` | L1671 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me replace all those emojis with more professional text or icons. I'll update the nav tabs first:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: 3
+
+```diff
+@@ -855,17 +855,17 @@
+            onClick={() =&gt; setActiveTab('stats')}
+          &gt;
+-           📊 Estadísticas
++           Estadísticas
+          &lt;/button&gt;
+          &lt;button 
+            className={&#96;nav-tab ${activeTab === 'ratings' ? 'active' : ''}&#96;}
+            onClick={() =&gt; setActiveTab('ratings')}
+          &gt;
+-           ⭐ Calificaciones
++           Calificaciones
+          &lt;/button&gt;
+          &lt;button 
+            className={&#96;nav-tab ${activeTab === 'matches' ? 'active' : ''}&#96;}
+            onClick={() =&gt; setActiveTab('matches')}
+          &gt;
+-           ⚽ Partidos
++           Partidos
+          &lt;/button&gt;
+          {isAdmin &amp;&amp; (
+```
+
+**Chunk 2**
+Lines added: 4, lines removed: 4
+
+```diff
+@@ -875,23 +875,23 @@
+                onClick={() =&gt; setActiveTab('new')}
+              &gt;
+-               ➕ Nuevo Partido
++               + Partido
+              &lt;/button&gt;
+              &lt;button 
+                className={&#96;nav-tab ${activeTab === 'players' ? 'active' : ''}&#96;}
+                onClick={() =&gt; setActiveTab('players')}
+              &gt;
+-               👥 Jugadores
++               Jugadores
+              &lt;/button&gt;
+              &lt;button 
+                className={&#96;nav-tab ${activeTab === 'users' ? 'active' : ''}&#96;}
+                onClick={() =&gt; setActiveTab('users')}
+              &gt;
+-               🔗 Vincular Usuarios {pendingUsers.length &gt; 0 &amp;&amp; &lt;span className="badge"&gt;{pendingUsers.length}&lt;/span&gt;}
++               Vincular {pendingUsers.length &gt; 0 &amp;&amp; &lt;span className="badge"&gt;{pendingUsers.length}&lt;/span&gt;}
+              &lt;/button&gt;
+              &lt;button 
+                className={&#96;nav-tab ${activeTab === 'allRatings' ? 'active' : ''}&#96;}
+                onClick={() =&gt; setActiveTab('allRatings')}
+              &gt;
+-               📋 Ver Calificaciones
++               Historial
+              &lt;/button&gt;
+            &lt;/&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the other emojis in the code:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -913,5 +913,5 @@
+                    &lt;th&gt;D&lt;/th&gt;
+                    &lt;th&gt;PJ&lt;/th&gt;
+-                   &lt;th&gt;⭐ Rating&lt;/th&gt;
++                   &lt;th&gt;Rating&lt;/th&gt;
+                  &lt;/tr&gt;
+                &lt;/thead&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the rating displays and other emojis:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -951,5 +951,5 @@
+                        {player.avgRating ? (
+                          &lt;span className={&#96;rating-value ${getRatingClass(parseFloat(player.avgRating))}&#96;}&gt;
+-                           ⭐ {player.avgRating}
++                           {player.avgRating}
+                          &lt;/span&gt;
+                        ) : (
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1020,5 +1020,5 @@
+                          &lt;span className="accordion-player-name"&gt;{player.name}&lt;/span&gt;
+                          &lt;span className={&#96;rating-value ${getRatingClass(parseFloat(player.avgRating))}&#96;}&gt;
+-                           ⭐ {player.avgRating}
++                           {player.avgRating}
+                          &lt;/span&gt;
+                          &lt;span className="stat-value votes-count"&gt;{playerRatings.length} votos&lt;/span&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me search for remaining star emojis and other emojis:</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "⭐|📊|⚽|➕|👥|🔗|📋|✏️|😈|👆|✅|❌|🔐" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 27 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `console.log('👆 Click vincular:', selectedPlayer)` | L71 |
+| `src/App.jsx` | `console.log('🔗 Vinculando:', \{ userId, playerId \})` | L369 |
+| `src/App.jsx` | `console.log('✅ Vinculado a', playerToLink.name)` | L402 |
+| `src/App.jsx` | `console.error('❌ Error:', error)` | L409 |
+| `src/App.jsx` | `console.log('✅ Jugador actualizado')` | L638 |
+| `src/App.jsx` | `console.log('✅ Jugador creado:', newPlayerId)` | L642 |
+| `src/App.jsx` | `console.error('❌ Error:', error)` | L646 |
+| `src/App.jsx` | `alert('✅ Calificaciones guardadas')` | L752 |
+| `src/App.jsx` | `😈 Modo Admin` | L842 |
+| `src/App.jsx` | `<div className="icon">📊</div>` | L965 |
+| `src/App.jsx` | `⭐ \{matchAvg\}` | L1060 |
+| `src/App.jsx` | `<div className="icon">⭐</div>` | L1082 |
+| `src/App.jsx` | `⭐ Calificar` | L1107 |
+| `src/App.jsx` | `✏️ Editar` | L1116 |
+| `src/App.jsx` | `<div className="icon">⚽</div>` | L1163 |
+| `src/App.jsx` | `✏️` | L1306 |
+| `src/App.jsx` | `<span style=\{{ fontSize: '1.5rem' \}}>➕</span>` | L1322 |
+| `src/App.jsx` | `<h3 className="subsection-title">✅ Usuarios Vinculados</h3>` | L1354 |
+| `src/App.jsx` | `➕ Agregar Admin` | L1404 |
+| `src/App.jsx` | `<span>😈 \{email\}</span>` | L1415 |
+| `src/App.jsx` | `<h2 className="section-title">📋 Todas las Calificaciones</h2>` | L1433 |
+| `src/App.jsx` | `⭐ \{r.score\}` | L1513 |
+| `src/App.jsx` | `⭐ \{matchAvg\}` | L1524 |
+| `src/App.jsx` | `⭐ \{totalAverage\}` | L1541 |
+| `src/App.jsx` | `<h2>🔐 Acceso Admin</h2>` | L1560 |
+| `src/App.jsx` | `<h2>⭐ \{hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'\} Jugadores</h2>` | L1611 |
+| `src/App.jsx` | `<h2>\{editingPlayerId ? '✏️ Editar Jugador' : '➕ Nuevo Jugador'\}</h2>` | L1671 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to remove a lot more emojis. Let me do this methodically:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -840,5 +840,5 @@
+            {isAdmin ? (
+              &lt;button className="admin-btn active" onClick={handleAdminLogout}&gt;
+-               😈 Modo Admin
++               Modo Admin
+              &lt;/button&gt;
+            ) : (
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue removing emojis one by one:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -963,5 +963,5 @@
+            ) : (
+              &lt;div className="empty-state"&gt;
+-               &lt;div className="icon"&gt;📊&lt;/div&gt;
++               &lt;div className="icon"&gt;—&lt;/div&gt;
+                &lt;h3&gt;Sin estadísticas&lt;/h3&gt;
+                &lt;p&gt;Agrega partidos para ver las estadísticas&lt;/p&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1080,5 +1080,5 @@
+            ) : (
+              &lt;div className="empty-state"&gt;
+-               &lt;div className="icon"&gt;⭐&lt;/div&gt;
++               &lt;div className="icon"&gt;—&lt;/div&gt;
+                &lt;h3&gt;Sin calificaciones aún&lt;/h3&gt;
+                &lt;p&gt;Ve a la pestaña de Partidos y califica a tus compañeros&lt;/p&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue with more replacements:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1161,5 +1161,5 @@
+            ) : (
+              &lt;div className="empty-state"&gt;
+-               &lt;div className="icon"&gt;⚽&lt;/div&gt;
++               &lt;div className="icon"&gt;—&lt;/div&gt;
+                &lt;h3&gt;Sin partidos&lt;/h3&gt;
+                &lt;p&gt;Agrega tu primer partido&lt;/p&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me find and replace the remaining star rating emojis and others:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1058,5 +1058,5 @@
+                                          &lt;td&gt;
+                                            &lt;span className={&#96;rating-value ${getRatingClass(parseFloat(matchAvg))}&#96;}&gt;
+-                                             ⭐ {matchAvg}
++                                             {matchAvg}
+                                            &lt;/span&gt;
+                                          &lt;/td&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me do more replacements:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1105,5 +1105,5 @@
+                          onClick={() =&gt; openRatingModal(match)}
+                        &gt;
+-                         ⭐ Calificar
++                         Calificar
+                        &lt;/button&gt;
+                      )}
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue replacing emojis:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1114,5 +1114,5 @@
+                            onClick={() =&gt; openEditMatch(match)}
+                          &gt;
+-                           ✏️ Editar
++                           Editar
+                          &lt;/button&gt;
+                          &lt;button 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue with more:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1304,5 +1304,5 @@
+                      title="Editar jugador"
+                    &gt;
+-                     ✏️
++                     Editar
+                    &lt;/button&gt;
+                    &lt;button 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1320,5 +1320,5 @@
+              ))}
+              &lt;div className="add-player-card" onClick={() =&gt; { setEditingPlayerId(null); setShowPlayerModal(true); }}&gt;
+-               &lt;span style={{ fontSize: '1.5rem' }}&gt;➕&lt;/span&gt;
++               &lt;span style={{ fontSize: '1.2rem', fontWeight: '300' }}&gt;+&lt;/span&gt;
+                Agregar Jugador
+              &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1352,5 +1352,5 @@
+  
+            &lt;div className="linked-users-section"&gt;
+-             &lt;h3 className="subsection-title"&gt;✅ Usuarios Vinculados&lt;/h3&gt;
++             &lt;h3 className="subsection-title"&gt;Usuarios Vinculados&lt;/h3&gt;
+              &lt;div className="user-links-list"&gt;
+                {Object.entries(userLinks).filter(([_, data]) =&gt; data.playerId).length &gt; 0 ? (
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1402,5 +1402,5 @@
+                  /&gt;
+                  &lt;button onClick={handleAddAdmin} className="add-admin-btn"&gt;
+-                   ➕ Agregar Admin
++                   + Agregar
+                  &lt;/button&gt;
+                &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1413,5 +1413,5 @@
+                  {adminEmails.map(email =&gt; (
+                    &lt;div key={email} className="admin-item"&gt;
+-                     &lt;span&gt;😈 {email}&lt;/span&gt;
++                     &lt;span&gt;{email}&lt;/span&gt;
+                      &lt;button 
+                        onClick={() =&gt; handleRemoveAdmin(email)}
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1431,5 +1431,5 @@
+        {activeTab === 'allRatings' &amp;&amp; isAdmin &amp;&amp; (
+          &lt;section className="stats-section"&gt;
+-           &lt;h2 className="section-title"&gt;📋 Todas las Calificaciones&lt;/h2&gt;
++           &lt;h2 className="section-title"&gt;Historial de Calificaciones&lt;/h2&gt;
+            &lt;p className="section-subtitle"&gt;
+              Detalle de quién calificó a quién en cada partido
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1511,5 +1511,5 @@
+                                        &lt;span className="rated-player"&gt;{r.ratedPlayerName}&lt;/span&gt;
+                                        &lt;span className={&#96;rating-score ${getRatingClass(r.score)}&#96;}&gt;
+-                                         ⭐ {r.score}
++                                         {r.score}
+                                        &lt;/span&gt;
+                                      &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1522,5 +1522,5 @@
+                              &lt;span className="match-average-label"&gt;Promedio del partido:&lt;/span&gt;
+                              &lt;span className={&#96;match-average-value ${getRatingClass(parseFloat(matchAvg))}&#96;}&gt;
+-                               ⭐ {matchAvg}
++                               {matchAvg}
+                              &lt;/span&gt;
+                            &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1539,5 +1539,5 @@
+                      &lt;div className="total-average-label"&gt;Promedio Total de Todas las Calificaciones&lt;/div&gt;
+                      &lt;div className={&#96;total-average-value ${getRatingClass(parseFloat(totalAverage))}&#96;}&gt;
+-                       ⭐ {totalAverage}
++                       {totalAverage}
+                      &lt;/div&gt;
+                    &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1558,5 +1558,5 @@
+            &lt;div className="modal" onClick={e =&gt; e.stopPropagation()}&gt;
+              &lt;div className="modal-header"&gt;
+-               &lt;h2&gt;🔐 Acceso Admin&lt;/h2&gt;
++               &lt;h2&gt;Acceso Admin&lt;/h2&gt;
+                &lt;button className="modal-close" onClick={() =&gt; setShowLoginModal(false)}&gt;×&lt;/button&gt;
+              &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1609,5 +1609,5 @@
+            &lt;div className="modal rating-modal" onClick={e =&gt; e.stopPropagation()}&gt;
+              &lt;div className="modal-header"&gt;
+-               &lt;h2&gt;⭐ {hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'} Jugadores&lt;/h2&gt;
++               &lt;h2&gt;{hasMyRatings(selectedMatch.id) ? 'Editar' : 'Calificar'} Jugadores&lt;/h2&gt;
+                &lt;button className="modal-close" onClick={() =&gt; setShowRatingModal(false)}&gt;×&lt;/button&gt;
+              &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1669,5 +1669,5 @@
+            &lt;div className="modal" onClick={e =&gt; e.stopPropagation()}&gt;
+              &lt;div className="modal-header"&gt;
+-               &lt;h2&gt;{editingPlayerId ? '✏️ Editar Jugador' : '➕ Nuevo Jugador'}&lt;/h2&gt;
++               &lt;h2&gt;{editingPlayerId ? 'Editar Jugador' : 'Nuevo Jugador'}&lt;/h2&gt;
+                &lt;button className="modal-close" onClick={closePlayerModal}&gt;×&lt;/button&gt;
+              &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me find the matches section to add the leaderboard. Let me first search for where the match cards are rendered:</details></think>
+
+---
+
+Ahora agrego el leaderboard de top 3 en cada partido. Primero busco dónde está la sección de partidos:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "activeTab === 'matches'" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `className=\{`nav-tab $\{activeTab === 'matches' ? 'active' : ''\}`\}` | L866 |
+| `src/App.jsx` | `\{activeTab === 'matches' && (` | L1090 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to:1. Replace the trophy emojis (🏆 and 🗑️) with something more professional
+2. Add the leaderboard section to each match card
+
+Let me first replace those emojis and add the leaderboard:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 106, lines removed: 67
+
+```diff
+@@ -1092,71 +1092,110 @@
+            &lt;h2 className="section-title"&gt;Historial de Partidos&lt;/h2&gt;
+            {matches.length &gt; 0 ? (
+-             [...matches].reverse().map(match =&gt; (
+-               &lt;div key={match.id} className="match-card"&gt;
+-                 &lt;div className="match-header"&gt;
+-                   &lt;div&gt;
+-                     &lt;div className="match-date"&gt;{formatDate(match.date)}&lt;/div&gt;
+-                     &lt;div className="match-venue"&gt;{match.venue}&lt;/div&gt;
+-                   &lt;/div&gt;
+-                   &lt;div className="match-actions"&gt;
+-                     {user &amp;&amp; userPlayer &amp;&amp; (
+-                       &lt;button 
+-                         className="rate-match-btn"
+-                         onClick={() =&gt; openRatingModal(match)}
+-                       &gt;
+-                         Calificar
+-                       &lt;/button&gt;
+-                     )}
+-                     {isAdmin &amp;&amp; (
+-                       &lt;&gt;
+-                         &lt;button 
+-                           className="edit-match-btn"
+-                           onClick={() =&gt; openEditMatch(match)}
+-                         &gt;
+-                           Editar
+-                         &lt;/button&gt;
+-                         &lt;button 
+-                           className="delete-match-btn"
+-                           onClick={() =&gt; handleDeleteMatch(match.id)}
+-                         &gt;
+-                           🗑️
+-                         &lt;/button&gt;
+-                       &lt;/&gt;
+-                     )}
+-                   &lt;/div&gt;
+-                 &lt;/div&gt;
+-                 &lt;div className="match-teams"&gt;
+-                   &lt;div className={&#96;match-team ${match.winner === 'white' ? 'winner' : ''}&#96;}&gt;
+-                     &lt;div className="match-team-header"&gt;
+-                       &lt;span className="team-badge white"&gt;&lt;/span&gt;
+-                       Equipo Blanco
+-                       {match.winner === 'white' &amp;&amp; ' 🏆'}
+-                     &lt;/div&gt;
+-                     &lt;div className="match-team-players"&gt;
+-                       {match.teamWhite.map(id =&gt; (
+-                         &lt;span key={id} className="match-player-tag"&gt;
+-                           {getPlayerName(id)}
+-                         &lt;/span&gt;
+-                       ))}
+-                     &lt;/div&gt;
+-                   &lt;/div&gt;
+-                   &lt;div className="vs-badge"&gt;VS&lt;/div&gt;
+-                   &lt;div className={&#96;match-team ${match.winner === 'black' ? 'winner' : ''}&#96;}&gt;
+-                     &lt;div className="match-team-header"&gt;
+-                       &lt;span className="team-badge black"&gt;&lt;/span&gt;
+-                       Equipo Negro
+-                       {match.winner === 'black' &amp;&amp; ' 🏆'}
+-                     &lt;/div&gt;
+-                     &lt;div className="match-team-players"&gt;
+-                       {match.teamBlack.map(id =&gt; (
+-                         &lt;span key={id} className="match-player-tag"&gt;
+-                           {getPlayerName(id)}
+-                         &lt;/span&gt;
+-                       ))}
+-                     &lt;/div&gt;
+-                   &lt;/div&gt;
+-                 &lt;/div&gt;
+-               &lt;/div&gt;
+-             ))
++             [...matches].reverse().map(match =&gt; {
++               // Calculate top 3 rated players for this match
++               const matchPlayerRatings = []
++               const allMatchPlayers = [...match.teamWhite, ...match.teamBlack]
++               allMatchPlayers.forEach(playerId =&gt; {
++                 const playerRatings = ratings[playerId] || []
++                 const matchRatings = playerRatings.filter(r =&gt; r.matchId === match.id)
++                 if (matchRatings.length &gt; 0) {
++                   const avg = matchRatings.reduce((sum, r) =&gt; sum + r.score, 0) / matchRatings.length
++                   matchPlayerRatings.push({
++                     playerId,
++                     name: getPlayerName(playerId),
++                     avgRating: avg.toFixed(1),
++                     votes: matchRatings.length
++                   })
++                 }
++               })
++               const top3 = matchPlayerRatings
++                 .sort((a, b) =&gt; parseFloat(b.avgRating) - parseFloat(a.avgRating))
++                 .slice(0, 3)
++               
++               return (
++                 &lt;div key={match.id} className="match-card"&gt;
++                   &lt;div className="match-header"&gt;
++                     &lt;div&gt;
++                       &lt;div className="match-date"&gt;{formatDate(match.date)}&lt;/div&gt;
++                       &lt;div className="match-venue"&gt;{match.venue}&lt;/div&gt;
++                     &lt;/div&gt;
++                     &lt;div className="match-actions"&gt;
++                       {user &amp;&amp; userPlayer &amp;&amp; (
++                         &lt;button 
++                           className="rate-match-btn"
++                           onClick={() =&gt; openRatingModal(match)}
++                         &gt;
++                           Calificar
++                         &lt;/button&gt;
++                       )}
++                       {isAdmin &amp;&amp; (
++                         &lt;&gt;
++                           &lt;button 
++                             className="edit-match-btn"
++                             onClick={() =&gt; openEditMatch(match)}
++                           &gt;
++                             Editar
++                           &lt;/button&gt;
++                           &lt;button 
++                             className="delete-match-btn"
++                             onClick={() =&gt; handleDeleteMatch(match.id)}
++                           &gt;
++                             ×
++                           &lt;/button&gt;
++                         &lt;/&gt;
++                       )}
++                     &lt;/div&gt;
++                   &lt;/div&gt;
++                   &lt;div className="match-teams"&gt;
++                     &lt;div className={&#96;match-team ${match.winner === 'white' ? 'winner' : ''}&#96;}&gt;
++                       &lt;div className="match-team-header"&gt;
++                         &lt;span className="team-badge white"&gt;&lt;/span&gt;
++                         Equipo Blanco
++                         {match.winner === 'white' &amp;&amp; ' · Ganador'}
++                       &lt;/div&gt;
++                       &lt;div className="match-team-players"&gt;
++                         {match.teamWhite.map(id =&gt; (
++                           &lt;span key={id} className="match-player-tag"&gt;
++                             {getPlayerName(id)}
++                           &lt;/span&gt;
++                         ))}
++                       &lt;/div&gt;
++                     &lt;/div&gt;
++                     &lt;div className="vs-badge"&gt;VS&lt;/div&gt;
++                     &lt;div className={&#96;match-team ${match.winner === 'black' ? 'winner' : ''}&#96;}&gt;
++                       &lt;div className="match-team-header"&gt;
++                         &lt;span className="team-badge black"&gt;&lt;/span&gt;
++                         Equipo Negro
++                         {match.winner === 'black' &amp;&amp; ' · Ganador'}
++                       &lt;/div&gt;
++                       &lt;div className="match-team-players"&gt;
++                         {match.teamBlack.map(id =&gt; (
++                           &lt;span key={id} className="match-player-tag"&gt;
++                             {getPlayerName(id)}
++                           &lt;/span&gt;
++                         ))}
++                       &lt;/div&gt;
++                     &lt;/div&gt;
++                   &lt;/div&gt;
++                   
++                   {top3.length &gt; 0 &amp;&amp; (
++                     &lt;div className="match-leaderboard"&gt;
++                       &lt;div className="leaderboard-title"&gt;Top del partido&lt;/div&gt;
++                       &lt;div className="leaderboard-items"&gt;
++                         {top3.map((player, idx) =&gt; (
++                           &lt;div key={player.playerId} className="leaderboard-item"&gt;
++                             &lt;span className={&#96;leaderboard-position ${idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'}&#96;}&gt;
++                               {idx + 1}
++                             &lt;/span&gt;
++                             &lt;span className="leaderboard-name"&gt;{player.name}&lt;/span&gt;
++                             &lt;span className="leaderboard-score"&gt;{player.avgRating}&lt;/span&gt;
++                           &lt;/div&gt;
++                         ))}
++                       &lt;/div&gt;
++                     &lt;/div&gt;
++                   )}
++                 &lt;/div&gt;
++               )
++             })
+            ) : (
+              &lt;div className="empty-state"&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also update other remaining emojis and clean up some console logs:</details></think>
+
+---
+
+Ahora quito los emojis de los console.log también:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -69,5 +69,5 @@
+    
+    const handleLink = () =&gt; {
+-     console.log('👆 Click vincular:', selectedPlayer)
++     console.log('Click vincular:', selectedPlayer)
+      if (selectedPlayer &amp;&amp; selectedPlayer !== '') {
+        onLink(pending.odedBy, selectedPlayer)
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue cleaning up console logs:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -367,5 +367,5 @@
+    // Admin function to link a user to a player
+    const adminLinkUserToPlayer = async (userId, playerId) =&gt; {
+-     console.log('🔗 Vinculando:', { userId, playerId })
++     console.log('Vinculando:', { userId, playerId })
+      
+      if (!isAdmin) {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -400,5 +400,5 @@
+        })
+        
+-       console.log('✅ Vinculado a', playerToLink.name)
++       console.log('Vinculado a', playerToLink.name)
+        
+        // Force refresh after 1 second
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -407,5 +407,5 @@
+        }, 1000)
+      } catch (error) {
+-       console.error('❌ Error:', error)
++       console.error('Error:', error)
+        alert('Error: ' + error.message)
+      } finally {
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -644,5 +644,5 @@
+        closePlayerModal()
+      } catch (error) {
+-       console.error('❌ Error:', error)
++       console.error('Error:', error)
+        alert('Error al guardar: ' + error.message)
+      }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -636,5 +636,5 @@
+        if (editingPlayerId) {
+          await updateDoc(doc(db, 'players', editingPlayerId), playerData)
+-         console.log('✅ Jugador actualizado')
++         console.log('Jugador actualizado')
+        } else {
+          const newPlayerId = Date.now().toString()
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -640,5 +640,5 @@
+          const newPlayerId = Date.now().toString()
+          await setDoc(doc(db, 'players', newPlayerId), playerData)
+-         console.log('✅ Jugador creado:', newPlayerId)
++         console.log('Jugador creado:', newPlayerId)
+        }
+        closePlayerModal()
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -750,5 +750,5 @@
+      
+      await batch.commit()
+-     alert('✅ Calificaciones guardadas')
++     alert('Calificaciones guardadas')
+      setShowRatingModal(false)
+      setSelectedMatch(null)
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also look for any remaining subsection titles with emojis:</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "subsection-title" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `<h3 className="subsection-title">⏳ Usuarios Pendientes (\{pendingUsers.length\})</h3>` | L1377 |
+| `src/App.jsx` | `<h3 className="subsection-title">Usuarios Vinculados</h3>` | L1393 |
+| `src/App.jsx` | `<h3 className="subsection-title">👑 Gestionar Administradores</h3>` | L1429 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to clean those emojis:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1375,5 +1375,5 @@
+            {pendingUsers.length &gt; 0 &amp;&amp; (
+              &lt;div className="pending-users-section"&gt;
+-               &lt;h3 className="subsection-title"&gt;⏳ Usuarios Pendientes ({pendingUsers.length})&lt;/h3&gt;
++               &lt;h3 className="subsection-title"&gt;Usuarios Pendientes ({pendingUsers.length})&lt;/h3&gt;
+                &lt;div className="user-links-list"&gt;
+                  {pendingUsers.map(pending =&gt; (
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me continue:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1427,5 +1427,5 @@
+            {user &amp;&amp; user.email === SUPER_ADMIN_EMAIL &amp;&amp; (
+              &lt;div className="admin-management-section"&gt;
+-               &lt;h3 className="subsection-title"&gt;👑 Gestionar Administradores&lt;/h3&gt;
++               &lt;h3 className="subsection-title"&gt;Gestionar Administradores&lt;/h3&gt;
+                &lt;p className="section-subtitle"&gt;
+                  Los admins pueden vincular usuarios y editar partidos
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me also check for any other remaining emojis:</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "📝|🎯|💫" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `<span className="rater-name">📝 \{data.raterDisplayName \|\| data.raterName\}</span>` | L1543 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me fix that one too:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1541,5 +1541,5 @@
+                                &lt;div key={raterId} className="rater-section"&gt;
+                                  &lt;div className="rater-header"&gt;
+-                                   &lt;span className="rater-name"&gt;📝 {data.raterDisplayName || data.raterName}&lt;/span&gt;
++                                   &lt;span className="rater-name"&gt;{data.raterDisplayName || data.raterName}&lt;/span&gt;
+                                    &lt;span className="rater-email"&gt;({data.raterEmail})&lt;/span&gt;
+                                    &lt;span className="rater-action"&gt; calificó:&lt;/span&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me deploy all these changes:</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Professional UI: Remove emojis, add match leaderboard, iOS transitions" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Professional UI: Remove emojis, add match leaderboard, iOS transitions" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 48 modules transformed.
+warnings when minifying css:
+▲ [WARNING] Unexpected "}" [css-syntax-error]
+
+    &lt;stdin&gt;:1929:0:
+      1929 │ }
+           ╵ ^
+
+
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.75 kB │ gzip:   0.43 kB
+dist/assets/index-Bp5GSGwq.css   26.57 kB │ gzip:   5.00 kB
+dist/assets/index-BmQVM21Q.js   633.67 kB │ gzip: 163.18 kB
+✓ built in 684ms
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main d2866cc] Professional UI: Remove emojis, add match leaderboard, iOS transitions
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 7 files changed, 1066 insertions(+), 253 deletions(-)
+ rename dist/assets/{index-tGqKoY6E.js =&gt; index-BmQVM21Q.js} (75%)
+ create mode 100644 dist/assets/index-Bp5GSGwq.css
+ delete mode 100644 dist/assets/index-DPXKCQUI.css
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/1.5MB)
+Uploading [=====---------------] (394.9KB/1.5MB)
+Uploading [==========----------] (778.9KB/1.5MB)
+Uploading [===============-----] (1.1MB/1.5MB)
+Uploading [====================] (1.5MB/1.5MB)
+https://lukto-winrate-webapp-7ni1tx54p-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/9PpwvZJE6GPR2Qe7qCWWDqagQBvM [4s]
+Production: https://lukto-winrate-webapp-7ni1tx54p-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-7ni1tx54p-josefatrixs-projects.vercel.app [20s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [25s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-7ni1tx54p-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-7ni1tx54p-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+<think><details><summary>Thought Process</summary>
+The deployment was successful. Let me provide a summary of the changes:</details></think>
+
+---
+
+**Listo.** Los cambios están desplegados:
+
+**Cambios realizados:**
+
+1. **Leaderboard Top 3 en cada partido**
+   - Ahora cada tarjeta de partido muestra los 3 jugadores mejor calificados de ese partido
+   - Posiciones con colores: dorado (1°), plata (2°), bronce (3°)
+   - Muestra nombre y calificación promedio
+
+2. **Transiciones estilo iOS**
+   - Curva de animación `cubic-bezier(0.25, 0.1, 0.25, 1)` (la misma que usa Apple)
+   - Transiciones más suaves y naturales en todos los elementos
+
+3. **Look más profesional**
+   - Eliminados todos los emojis (📊, ⭐, 🏆, ✏️, etc.)
+   - Texto limpio y minimalista
+   - "Ganador" en vez de 🏆
+   - Botón de eliminar con "×" en vez de 🗑️
+   - Tabs renombrados: "Vincular" (más corto), "Historial" (para calificaciones)
+
+👉 **https://lukto-winrate-webapp.vercel.app**
+
+Refresca con **Cmd+Shift+R** para ver los cambios.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+no se ve bien distribuido la barra donde esta estadisticas en el modo no admin
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is saying the navigation bar where "Estadísticas" is located doesn't look well distributed in non-admin mode. Looking at the screenshot, I can see the nav tabs (Estadísticas, Calificaciones, Partidos) are not centered or well distributed.
+
+The user also reverted the CSS changes I made earlier. So I need to work with the current CSS state which has been reverted to a different style.
+
+Let me read the current index.css to understand the current state and fix the nav tabs distribution.</details></think>
+
+---
+
+Veo que el CSS fue revertido. Déjame ver el estado actual del archivo y arreglar la distribución de la barra de navegación:
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the issue. The nav-tabs have `width: fit-content` which makes them shrink to fit their content. In non-admin mode, there are only 3 tabs (Estadísticas, Calificaciones, Partidos), so the bar looks small.
+
+Let me update the CSS to make the nav tabs look better distributed and also add iOS-like transitions. I'll also need to add the leaderboard styles that were removed when the CSS was reverted.
+
+Let me update the nav tabs styling to make them more evenly distributed:</details></think>
+
+---
+
+Veo el problema. La barra de navegación usa `width: fit-content` lo cual hace que se vea muy pequeña cuando hay pocos tabs. Voy a arreglarlo para que se vea mejor distribuida:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 22, lines removed: 9
+
+```diff
+@@ -107,35 +107,48 @@
+    display: flex;
+    justify-content: center;
+-   gap: 0.5rem;
++   gap: 0.25rem;
+    margin-bottom: 2.5rem;
+    background: var(--bg-secondary);
+-   padding: 0.5rem;
+-   border-radius: 1rem;
+-   width: fit-content;
++   padding: 0.375rem;
++   border-radius: 0.75rem;
++   max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
++   border: 1px solid var(--border-color);
+  }
+  
+  .nav-tab {
+-   padding: 0.875rem 1.75rem;
++   flex: 1;
++   padding: 0.75rem 1.25rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: 'Outfit', sans-serif;
+-   font-size: 0.95rem;
++   font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+-   border-radius: 0.75rem;
+-   transition: all 0.2s ease;
++   border-radius: 0.5rem;
++   transition: all 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
++   white-space: nowrap;
+  }
+  
+  .nav-tab:hover {
+    color: var(--text-primary);
+-   background: var(--bg-card);
++   background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .nav-tab.active {
+    background: var(--accent-gold);
+    color: var(--bg-primary);
++   font-weight: 600;
++ }
++ 
++ .nav-tab .badge {
++   background: var(--accent-red);
++   color: white;
++   font-size: 0.65rem;
++   padding: 0.1rem 0.4rem;
++   border-radius: 100px;
++   margin-left: 0.35rem;
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to also add iOS-like transitions globally and add the match leaderboard styles that were removed. Let me also check if there are missing styles for the match cards and other elements.</details></think>
+
+---
+
+Ahora agrego transiciones estilo iOS globalmente y los estilos del leaderboard que faltan:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 5, lines removed: undefined
+
+```diff
+@@ -21,4 +21,9 @@
+    box-sizing: border-box;
+  }
++ 
++ /* iOS-like smooth transitions */
++ *, *::before, *::after {
++   transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
++ }
+  
+  body {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me check if the match card styles and leaderboard styles exist. Let me search for them:</details></think>
+
+---
+
+Ahora verifico si faltan estilos del match card y leaderboard:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\.match-card|\.match-leaderboard" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `.match-card \{` | L555 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The match-leaderboard styles are missing. Let me check the match-card section and add the leaderboard styles:</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to add the match leaderboard styles and also the match actions styles. Let me add them after the vs-badge:</details></think>
+
+---
+
+Agrego los estilos del leaderboard y los botones de acción de partidos:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 114, lines removed: undefined
+
+```diff
+@@ -626,4 +626,118 @@
+    color: var(--text-muted);
+  }
++ 
++ /* Match Actions */
++ .match-actions {
++   display: flex;
++   gap: 0.5rem;
++ }
++ 
++ .rate-match-btn,
++ .edit-match-btn,
++ .delete-match-btn {
++   padding: 0.5rem 1rem;
++   border-radius: 0.5rem;
++   font-size: 0.85rem;
++   font-family: 'Outfit', sans-serif;
++   cursor: pointer;
++   transition: all 0.2s ease;
++   border: 1px solid var(--border-color);
++   background: transparent;
++   color: var(--text-secondary);
++ }
++ 
++ .rate-match-btn:hover {
++   background: var(--accent-gold);
++   border-color: var(--accent-gold);
++   color: var(--bg-primary);
++ }
++ 
++ .edit-match-btn:hover {
++   background: rgba(255, 255, 255, 0.1);
++   border-color: var(--text-primary);
++   color: var(--text-primary);
++ }
++ 
++ .delete-match-btn:hover {
++   background: rgba(239, 68, 68, 0.1);
++   border-color: var(--accent-red);
++   color: var(--accent-red);
++ }
++ 
++ /* Match Leaderboard */
++ .match-leaderboard {
++   margin-top: 1.25rem;
++   padding-top: 1.25rem;
++   border-top: 1px solid var(--border-color);
++ }
++ 
++ .leaderboard-title {
++   font-size: 0.7rem;
++   text-transform: uppercase;
++   letter-spacing: 0.1em;
++   color: var(--text-muted);
++   margin-bottom: 0.75rem;
++   font-weight: 600;
++ }
++ 
++ .leaderboard-items {
++   display: flex;
++   gap: 0.75rem;
++   flex-wrap: wrap;
++ }
++ 
++ .leaderboard-item {
++   display: flex;
++   align-items: center;
++   gap: 0.625rem;
++   background: var(--bg-card);
++   padding: 0.625rem 1rem;
++   border-radius: 0.75rem;
++   border: 1px solid var(--border-color);
++   transition: all 0.2s ease;
++ }
++ 
++ .leaderboard-item:hover {
++   border-color: var(--accent-gold);
++ }
++ 
++ .leaderboard-position {
++   font-size: 0.75rem;
++   font-weight: 700;
++   width: 22px;
++   height: 22px;
++   display: flex;
++   align-items: center;
++   justify-content: center;
++   border-radius: 6px;
++ }
++ 
++ .leaderboard-position.gold {
++   background: linear-gradient(135deg, #ffd700, #f59e0b);
++   color: #000;
++ }
++ 
++ .leaderboard-position.silver {
++   background: linear-gradient(135deg, #e5e7eb, #9ca3af);
++   color: #000;
++ }
++ 
++ .leaderboard-position.bronze {
++   background: linear-gradient(135deg, #cd7f32, #a86428);
++   color: #fff;
++ }
++ 
++ .leaderboard-name {
++   font-size: 0.875rem;
++   font-weight: 500;
++   color: var(--text-primary);
++ }
++ 
++ .leaderboard-score {
++   font-size: 0.85rem;
++   font-weight: 700;
++   color: var(--accent-emerald);
++   margin-left: auto;
++ }
+  
+  /* Modal */
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I also need to check if there are missing styles for other elements like user auth section, rating modal, etc. Let me check what's in the CSS and what might be missing:</details></think>
+
+---
+
+Ahora verifico si faltan otros estilos importantes como la sección de autenticación:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\.auth-section|\.user-info|\.auth-btn" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The auth section styles are missing. I need to add them. Let me add them after the header styles:</details></think>
+
+---
+
+Faltan los estilos de autenticación. Los agrego:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 70, lines removed: undefined
+
+```diff
+@@ -73,4 +73,74 @@
+    text-transform: uppercase;
+  }
++ 
++ /* Auth Section */
++ .auth-section {
++   margin-top: 1.5rem;
++ }
++ 
++ .auth-btn {
++   display: inline-flex;
++   align-items: center;
++   gap: 0.75rem;
++   padding: 0.75rem 1.5rem;
++   border-radius: 2rem;
++   font-family: 'Outfit', sans-serif;
++   font-size: 0.9rem;
++   font-weight: 500;
++   cursor: pointer;
++   transition: all 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
++   border: none;
++ }
++ 
++ .auth-btn.google {
++   background: #fff;
++   color: #1f2937;
++ }
++ 
++ .auth-btn.google:hover {
++   transform: scale(1.02);
++   box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
++ }
++ 
++ .auth-btn.logout {
++   background: transparent;
++   border: 1px solid var(--border-color);
++   color: var(--text-secondary);
++   padding: 0.5rem 1rem;
++   font-size: 0.85rem;
++ }
++ 
++ .auth-btn.logout:hover {
++   border-color: var(--accent-red);
++   color: var(--accent-red);
++ }
++ 
++ .user-info {
++   display: inline-flex;
++   flex-direction: column;
++   align-items: center;
++   gap: 0.75rem;
++   background: var(--bg-card);
++   padding: 1.25rem 2rem;
++   border-radius: 1rem;
++   border: 1px solid var(--border-color);
++ }
++ 
++ .user-avatar {
++   width: 48px;
++   height: 48px;
++   border-radius: 50%;
++   border: 2px solid var(--border-color);
++ }
++ 
++ .user-name {
++   font-weight: 600;
++   color: var(--text-primary);
++ }
++ 
++ .linked-player {
++   color: var(--accent-emerald);
++   font-size: 0.9rem;
++ }
+  
+  /* Admin Toggle */
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me check if there are missing styles for other important elements like rating items, user links, etc:</details></think>
+
+---
+
+Verifico si faltan estilos de calificaciones y vinculación de usuarios:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\.rating-item|\.user-link-card|\.rating-stars" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Many styles are missing. Let me check the end of the file to add all the missing styles:</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me see the rest of the file to understand what's already there and what's missing:</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The file is missing a lot of styles. I need to add all the missing styles for:
+- Rating modal and rating items
+- User linking section
+- Accordion for ratings
+- Admin management
+- Player card actions
+
+Let me add all these missing styles before the responsive section:</details></think>
+
+---
+
+Necesito agregar muchos estilos que faltan. Los agrego antes de la sección responsive:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+Status: **loading**
+
+```css
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+}
+
+.empty-state .icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/* Modal Rating */
+.modal.rating-modal {
+  max-width: 560px;
+}
+
+.modal-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.rating-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.rating-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem;
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+}
+
+.rating-player {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex: 1;
+}
+
+.rating-stars {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.star-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.star-btn:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.star-btn.active {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: var(--bg-primary);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.cancel-btn {
+  padding: 0.875rem 1.5rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+.delete-btn {
+  padding: 0.625rem 1.25rem;
+  background: transparent;
+  border: 1px solid var(--accent-red);
+  border-radius: 0.5rem;
+  color: var(--accent-red);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: var(--accent-red);
+  color: white;
+}
+
+/* User Links Section */
+.subsection-title {
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.section-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.pending-users-section {
+  margin-bottom: 1.5rem;
+}
+
+.linked-users
+```
+
+</details>
+
+</tool-use>
+
+---
+
 
 
 ---
