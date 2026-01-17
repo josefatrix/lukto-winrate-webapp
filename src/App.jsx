@@ -974,6 +974,19 @@ function App() {
     return 'denied'
   })
 
+  // Global haptic feedback for all buttons
+  useEffect(() => {
+    const handleClick = (e) => {
+      const target = e.target.closest('button, .btn, .pill, .nav-item, .admin-tab, .clickable-row, .badge-v2, .prediction-team, .xp-bet-btn, .winner-btn, .match-card, [role="button"]')
+      if (target && navigator.vibrate) {
+        navigator.vibrate(3) // Short vibration
+      }
+    }
+    
+    document.addEventListener('click', handleClick, { passive: true })
+    return () => document.removeEventListener('click', handleClick)
+  }, [])
+
   // ============ CALCULATED VALUES ============
 
   const displayStats = timeFilter === 'all' ? stats : filteredStats

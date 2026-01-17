@@ -10021,8 +10021,98 @@ body {
 .match-card:nth-child(5) { animation-delay: 0.25s; }
 
 /* ============================================
-   HAPTIC BUTTON FEEDBACK
+   HAPTIC BUTTON FEEDBACK - GLOBAL
    ============================================ */
+
+/* Apply to all interactive elements */
+button,
+.btn,
+.pill,
+.submit-btn,
+.action-btn,
+.nav-item,
+.admin-tab,
+.winner-btn,
+.prediction-team,
+.xp-bet-btn,
+.badge-v2,
+.clickable-row,
+.match-card,
+.rating-btn,
+.sc-btn,
+.profile-share,
+.profile-close,
+.link-btn,
+.toggle-btn,
+[role="button"] {
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button::after,
+.btn::after,
+.pill::after,
+.submit-btn::after,
+.action-btn::after,
+.nav-item::after,
+.admin-tab::after,
+.winner-btn::after,
+.prediction-team::after,
+.xp-bet-btn::after,
+.sc-btn::after,
+.link-btn::after,
+.toggle-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease-out, height 0.4s ease-out, opacity 0.4s ease-out;
+  pointer-events: none;
+  opacity: 0;
+}
+
+button:active::after,
+.btn:active::after,
+.pill:active::after,
+.submit-btn:active::after,
+.action-btn:active::after,
+.nav-item:active::after,
+.admin-tab:active::after,
+.winner-btn:active::after,
+.prediction-team:active::after,
+.xp-bet-btn:active::after,
+.sc-btn:active::after,
+.link-btn:active::after,
+.toggle-btn:active::after {
+  width: 300%;
+  height: 300%;
+  opacity: 1;
+}
+
+/* Scale effect on press */
+button:active,
+.btn:active,
+.pill:active,
+.submit-btn:active,
+.action-btn:active,
+.nav-item:active,
+.winner-btn:active,
+.prediction-team:active,
+.xp-bet-btn:active,
+.sc-btn:active,
+.badge-v2:active,
+.link-btn:active {
+  transform: scale(0.97);
+}
+
+/* Legacy class for backwards compatibility */
 .btn-haptic {
   position: relative;
   overflow: hidden;
