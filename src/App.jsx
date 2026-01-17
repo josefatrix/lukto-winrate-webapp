@@ -193,6 +193,19 @@ function App() {
   const [teamBlack, setTeamBlack] = useState([])
   const [winner, setWinner] = useState('')
   const [editingMatchId, setEditingMatchId] = useState(null)
+  
+  // Admin tools state
+  const [activityLogs, setActivityLogs] = useState([])
+  const [announcements, setAnnouncements] = useState([])
+  const [newAnnouncement, setNewAnnouncement] = useState('')
+  const [blockedUsers, setBlockedUsers] = useState([])
+  const [mergePlayer1, setMergePlayer1] = useState('')
+  const [mergePlayer2, setMergePlayer2] = useState('')
+  const [leagueSettings, setLeagueSettings] = useState({
+    name: 'LUKTO',
+    mvpMinVotes: 1,
+    mvpMethod: 'average' // 'average' or 'total'
+  })
 
   // Listen to auth state
   useEffect(() => {
@@ -384,6 +397,47 @@ function App() {
     }
   }, [])
 
+  // Load admin settings (blocked users, league settings, announcements)
+  useEffect(() => {
+    // Load blocked users
+    const unsubBlocked = onSnapshot(doc(db, 'settings', 'blockedUsers'), (docSnap) => {
+      if (docSnap.exists()) {
+        setBlockedUsers(docSnap.data().list || [])
+      }
+    })
+    
+    // Load league settings
+    const unsubLeague = onSnapshot(doc(db, 'settings', 'league'), (docSnap) => {
+      if (docSnap.exists()) {
+        setLeagueSettings(docSnap.data())
+      }
+    })
+    
+    // Load announcements
+    const unsubAnnouncements = onSnapshot(collection(db, 'announcements'), (snapshot) => {
+      const announcementsData = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      setAnnouncements(announcementsData)
+    })
+    
+    // Load activity logs
+    const unsubLogs = onSnapshot(collection(db, 'activityLogs'), (snapshot) => {
+      const logsData = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .slice(0, 50) // Keep last 50 logs
+      setActivityLogs(logsData)
+    })
+    
+    return () => {
+      unsubBlocked()
+      unsubLeague()
+      unsubAnnouncements()
+      unsubLogs()
+    }
+  }, [])
+
   const initializeFirestore = async () => {
     const batch = writeBatch(db)
     
@@ -453,10 +507,22 @@ function App() {
     try {
       const linkRef = doc(db, 'userLinks', userId)
       
+      // Get the pending user info
+      const pendingUser = pendingUsers.find(p => p.odedBy === userId)
+      
       // Use updateDoc to just change playerId without deleting
       await updateDoc(linkRef, {
         playerId: String(playerId),
         linkedAt: new Date().toISOString()
+      })
+      
+      // Log activity
+      await logActivity('user_link', {
+        linkedUserId: userId,
+        linkedUserEmail: pendingUser?.userEmail,
+        linkedUserName: pendingUser?.userName,
+        playerId: playerId,
+        playerName: playerToLink.name
       })
       
       console.log('Vinculado a', playerToLink.name)
@@ -1403,10 +1469,19 @@ function App() {
     if (editingMatchId) {
       // Update existing match
       await updateDoc(doc(db, 'matches', editingMatchId), matchData)
+      await logActivity('match_edit', {
+        matchId: editingMatchId,
+        matchDate: matchData.date
+      })
     } else {
       // Create new match
       const newMatchId = Date.now().toString()
       await setDoc(doc(db, 'matches', newMatchId), matchData)
+      await logActivity('match_create', {
+        matchId: newMatchId,
+        matchDate: matchData.date,
+        venue: matchData.venue
+      })
     }
     
     resetMatchForm()
@@ -1560,8 +1635,31 @@ function App() {
     })
   }
 
+  // Log activity
+  const logActivity = async (type, details) => {
+    try {
+      const logId = Date.now().toString()
+      await setDoc(doc(db, 'activityLogs', logId), {
+        type,
+        details,
+        userId: user?.uid,
+        userName: user?.displayName,
+        userEmail: user?.email,
+        timestamp: new Date().toISOString()
+      })
+    } catch (error) {
+      console.error('Error logging activity:', error)
+    }
+  }
+
   const submitRatings = async () => {
     if (!selectedMatch || !userPlayer) return
+    
+    // Check if user is blocked
+    if (blockedUsers.includes(user?.uid)) {
+      showToast('error', 'Tu cuenta ha sido bloqueada para calificar')
+      return
+    }
     
     // Verificar que todos los jugadores estén calificados
     const playersToRate = getPlayersToRate(selectedMatch)
@@ -1588,6 +1686,14 @@ function App() {
     })
     
     await batch.commit()
+    
+    // Log activity
+    await logActivity('rating', {
+      matchId: selectedMatch.id,
+      matchDate: selectedMatch.date,
+      ratingsCount: Object.keys(currentRatings).length
+    })
+    
     setRatingSuccess(true)
   }
   
@@ -1816,6 +1922,12 @@ function App() {
       {isAdmin && (
         <nav className="admin-tabs">
           <button 
+            className={`admin-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            Dashboard
+          </button>
+          <button 
             className={`admin-tab ${activeTab === 'new' ? 'active' : ''}`}
             onClick={() => setActiveTab('new')}
           >
@@ -1832,6 +1944,12 @@ function App() {
             onClick={() => setActiveTab('users')}
           >
             Vincular {pendingUsers.length > 0 && <span className="badge">{pendingUsers.length}</span>}
+          </button>
+          <button 
+            className={`admin-tab ${activeTab === 'tools' ? 'active' : ''}`}
+            onClick={() => setActiveTab('tools')}
+          >
+            Herramientas
           </button>
           <button 
             className={`admin-tab ${activeTab === 'allRatings' ? 'active' : ''}`}
@@ -1859,6 +1977,18 @@ function App() {
 
       {activeTab === 'stats' && dataLoaded && (
         <section className="stats-section">
+          {/* Show latest announcement to all users */}
+          {announcements.length > 0 && (
+            <div className="user-announcement">
+              <div className="user-announcement-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+              </div>
+              <p className="user-announcement-text">{announcements[0].message}</p>
+            </div>
+          )}
+          
           {/* Player of Week / Month Cards */}
           <div className="featured-players">
             {/* Player of the Week */}
@@ -2545,6 +2675,562 @@ function App() {
               <p>Agrega tu primer partido</p>
             </div>
           )}
+        </section>
+      )}
+
+      {/* Admin Dashboard */}
+      {activeTab === 'dashboard' && isAdmin && (
+        <section className="stats-section dashboard-section">
+          <h2 className="section-title">Panel de Administración</h2>
+          
+          {/* Quick Stats Cards */}
+          <div className="dashboard-grid">
+            <div className="dashboard-card">
+              <div className="dashboard-card-icon users">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                </svg>
+              </div>
+              <div className="dashboard-card-content">
+                <span className="dashboard-card-value">{Object.keys(userLinks).length}</span>
+                <span className="dashboard-card-label">Usuarios Registrados</span>
+              </div>
+            </div>
+            
+            <div className="dashboard-card">
+              <div className="dashboard-card-icon matches">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+              <div className="dashboard-card-content">
+                <span className="dashboard-card-value">{matches.length}</span>
+                <span className="dashboard-card-label">Partidos Totales</span>
+              </div>
+            </div>
+            
+            <div className="dashboard-card">
+              <div className="dashboard-card-icon week">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/>
+                </svg>
+              </div>
+              <div className="dashboard-card-content">
+                <span className="dashboard-card-value">
+                  {matches.filter(m => {
+                    const d = new Date(m.date)
+                    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                    return d >= weekAgo
+                  }).length}
+                </span>
+                <span className="dashboard-card-label">Partidos esta Semana</span>
+              </div>
+            </div>
+            
+            <div className="dashboard-card">
+              <div className="dashboard-card-icon ratings">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+              </div>
+              <div className="dashboard-card-content">
+                <span className="dashboard-card-value">
+                  {Object.values(ratings).reduce((sum, r) => sum + r.length, 0)}
+                </span>
+                <span className="dashboard-card-label">Calificaciones Totales</span>
+              </div>
+            </div>
+            
+            <div className="dashboard-card">
+              <div className="dashboard-card-icon pending">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+              </div>
+              <div className="dashboard-card-content">
+                <span className="dashboard-card-value">{pendingUsers.length}</span>
+                <span className="dashboard-card-label">Usuarios Pendientes</span>
+              </div>
+            </div>
+            
+            <div className="dashboard-card">
+              <div className="dashboard-card-icon players">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+              <div className="dashboard-card-content">
+                <span className="dashboard-card-value">{players.length}</span>
+                <span className="dashboard-card-label">Jugadores</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Most Active Users */}
+          <div className="dashboard-section-card">
+            <h3 className="dashboard-section-title">Usuarios Más Activos</h3>
+            <div className="active-users-list">
+              {(() => {
+                // Count ratings by user
+                const userRatingCounts = {}
+                Object.values(ratings).forEach(playerRatings => {
+                  playerRatings.forEach(r => {
+                    if (!userRatingCounts[r.odedBy]) {
+                      userRatingCounts[r.odedBy] = { count: 0, odedBy: r.odedBy }
+                    }
+                    userRatingCounts[r.odedBy].count++
+                  })
+                })
+                
+                const sortedUsers = Object.values(userRatingCounts)
+                  .sort((a, b) => b.count - a.count)
+                  .slice(0, 5)
+                
+                if (sortedUsers.length === 0) {
+                  return <p className="no-data">Aún no hay calificaciones</p>
+                }
+                
+                return sortedUsers.map((userData, idx) => {
+                  const userLink = userLinks[userData.odedBy]
+                  return (
+                    <div key={userData.odedBy} className="active-user-item">
+                      <span className="active-user-rank">{idx + 1}</span>
+                      {userLink?.userPhoto ? (
+                        <img src={userLink.userPhoto} alt="" className="active-user-avatar" />
+                      ) : (
+                        <div className="active-user-avatar-placeholder">?</div>
+                      )}
+                      <div className="active-user-info">
+                        <span className="active-user-name">{userLink?.userName || 'Usuario'}</span>
+                        <span className="active-user-player">{userLink?.playerId ? getPlayerName(userLink.playerId) : 'Sin vincular'}</span>
+                      </div>
+                      <span className="active-user-count">{userData.count} votos</span>
+                    </div>
+                  )
+                })
+              })()}
+            </div>
+          </div>
+          
+          {/* Recent Activity */}
+          <div className="dashboard-section-card">
+            <h3 className="dashboard-section-title">Últimos Partidos</h3>
+            <div className="recent-matches-list">
+              {[...matches].reverse().slice(0, 5).map(match => (
+                <div key={match.id} className="recent-match-item">
+                  <div className="recent-match-date">{formatDate(match.date)}</div>
+                  <div className="recent-match-venue">{match.venue}</div>
+                  <div className="recent-match-result">
+                    <span className={match.winner === 'white' ? 'winner' : ''}>Blancos</span>
+                    <span className="vs">vs</span>
+                    <span className={match.winner === 'black' ? 'winner' : ''}>Negros</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Announcements Section */}
+          <div className="dashboard-section-card">
+            <h3 className="dashboard-section-title">Anuncios</h3>
+            <div className="announcement-form">
+              <textarea
+                placeholder="Escribe un anuncio para todos los usuarios..."
+                value={newAnnouncement}
+                onChange={(e) => setNewAnnouncement(e.target.value)}
+                className="announcement-input"
+              />
+              <button 
+                className="btn-primary"
+                onClick={async () => {
+                  if (newAnnouncement.trim()) {
+                    const announcementId = Date.now().toString()
+                    await setDoc(doc(db, 'announcements', announcementId), {
+                      message: newAnnouncement,
+                      createdAt: new Date().toISOString(),
+                      createdBy: user?.email
+                    })
+                    setNewAnnouncement('')
+                    showToast('success', 'Anuncio publicado')
+                  }
+                }}
+              >
+                Publicar Anuncio
+              </button>
+            </div>
+            {/* List of announcements */}
+            {announcements.length > 0 && (
+              <div className="announcements-list">
+                {announcements.map(announcement => (
+                  <div key={announcement.id} className="announcement-item">
+                    <p className="announcement-message">{announcement.message}</p>
+                    <div className="announcement-meta">
+                      <span>{new Date(announcement.createdAt).toLocaleDateString()}</span>
+                      <button 
+                        className="btn-delete-small"
+                        onClick={async () => {
+                          await deleteDoc(doc(db, 'announcements', announcement.id))
+                          showToast('success', 'Anuncio eliminado')
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Activity Logs Section */}
+          <div className="dashboard-section-card">
+            <h3 className="dashboard-section-title">Historial de Actividad</h3>
+            <div className="activity-logs-list">
+              {activityLogs.length === 0 ? (
+                <p className="no-data">No hay actividad registrada</p>
+              ) : (
+                activityLogs.slice(0, 20).map(log => (
+                  <div key={log.id} className="activity-log-item">
+                    <div className="activity-log-icon">
+                      {log.type === 'rating' && (
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                      )}
+                      {log.type === 'match_create' && (
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                      )}
+                      {log.type === 'match_edit' && (
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                      )}
+                      {log.type === 'user_link' && (
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                          <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                        </svg>
+                      )}
+                    </div>
+                    <div className="activity-log-content">
+                      <span className="activity-log-action">
+                        {log.type === 'rating' && `${log.userName || 'Usuario'} calificó ${log.details?.ratingsCount || 0} jugadores`}
+                        {log.type === 'match_create' && `${log.userName || 'Admin'} creó un partido (${log.details?.matchDate})`}
+                        {log.type === 'match_edit' && `${log.userName || 'Admin'} editó un partido`}
+                        {log.type === 'user_link' && `${log.userName || 'Admin'} vinculó a ${log.details?.linkedUserName} con ${log.details?.playerName}`}
+                      </span>
+                      <span className="activity-log-time">
+                        {new Date(log.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Admin Tools */}
+      {activeTab === 'tools' && isAdmin && (
+        <section className="stats-section tools-section">
+          <h2 className="section-title">Herramientas de Admin</h2>
+          
+          {/* Export Data */}
+          <div className="tool-card">
+            <div className="tool-header">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+              </svg>
+              <h3>Exportar Datos</h3>
+            </div>
+            <p className="tool-description">Descarga las estadísticas en formato CSV</p>
+            <div className="tool-actions">
+              <button 
+                className="btn-secondary"
+                onClick={() => {
+                  // Generate CSV for players stats
+                  const headers = ['Jugador', 'Partidos', 'Victorias', 'Derrotas', 'Win Rate', 'MVPs', 'Rating Promedio']
+                  const rows = stats.map(p => [
+                    p.name,
+                    p.played,
+                    p.wins,
+                    p.losses,
+                    p.winRate.toFixed(1) + '%',
+                    p.mvps || 0,
+                    p.avgRating || '-'
+                  ])
+                  
+                  const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
+                  const blob = new Blob([csv], { type: 'text/csv' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `lukto-stats-${new Date().toISOString().split('T')[0]}.csv`
+                  a.click()
+                  showToast('success', 'Estadísticas exportadas')
+                }}
+              >
+                Exportar Estadísticas
+              </button>
+              <button 
+                className="btn-secondary"
+                onClick={() => {
+                  // Export all matches
+                  const headers = ['Fecha', 'Lugar', 'Equipo Blanco', 'Equipo Negro', 'Ganador']
+                  const rows = matches.map(m => [
+                    m.date,
+                    m.venue,
+                    m.teamWhite.map(id => getPlayerName(id)).join('; '),
+                    m.teamBlack.map(id => getPlayerName(id)).join('; '),
+                    m.winner === 'white' ? 'Blancos' : 'Negros'
+                  ])
+                  
+                  const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
+                  const blob = new Blob([csv], { type: 'text/csv' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `lukto-partidos-${new Date().toISOString().split('T')[0]}.csv`
+                  a.click()
+                  showToast('success', 'Partidos exportados')
+                }}
+              >
+                Exportar Partidos
+              </button>
+            </div>
+          </div>
+          
+          {/* Merge Players */}
+          <div className="tool-card">
+            <div className="tool-header">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                <path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/>
+              </svg>
+              <h3>Fusionar Jugadores</h3>
+            </div>
+            <p className="tool-description">Combina dos jugadores duplicados en uno solo</p>
+            <div className="merge-form">
+              <select 
+                value={mergePlayer1} 
+                onChange={(e) => setMergePlayer1(e.target.value)}
+                className="player-select-dropdown"
+              >
+                <option value="">Jugador a mantener...</option>
+                {players.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <span className="merge-arrow">←</span>
+              <select 
+                value={mergePlayer2} 
+                onChange={(e) => setMergePlayer2(e.target.value)}
+                className="player-select-dropdown"
+              >
+                <option value="">Jugador a eliminar...</option>
+                {players.filter(p => p.id !== mergePlayer1).map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <button 
+                className="btn-danger"
+                disabled={!mergePlayer1 || !mergePlayer2}
+                onClick={async () => {
+                  if (!mergePlayer1 || !mergePlayer2) return
+                  if (!confirm(`¿Fusionar "${getPlayerName(mergePlayer2)}" en "${getPlayerName(mergePlayer1)}"? Esta acción no se puede deshacer.`)) return
+                  
+                  const batch = writeBatch(db)
+                  
+                  // Update all matches to replace player2 with player1
+                  matches.forEach(match => {
+                    let updated = false
+                    const newWhite = match.teamWhite.map(id => {
+                      if (id === mergePlayer2) { updated = true; return mergePlayer1 }
+                      return id
+                    })
+                    const newBlack = match.teamBlack.map(id => {
+                      if (id === mergePlayer2) { updated = true; return mergePlayer1 }
+                      return id
+                    })
+                    
+                    if (updated) {
+                      batch.update(doc(db, 'matches', match.id), {
+                        teamWhite: newWhite,
+                        teamBlack: newBlack
+                      })
+                    }
+                  })
+                  
+                  // Move ratings from player2 to player1
+                  const player2Ratings = ratings[mergePlayer2] || []
+                  for (const rating of player2Ratings) {
+                    const newRatingId = `${mergePlayer1}_${rating.matchId}_${rating.odedBy}`
+                    batch.set(doc(db, 'ratings', newRatingId), {
+                      ...rating,
+                      playerId: mergePlayer1
+                    })
+                    // Delete old rating
+                    const oldRatingId = `${mergePlayer2}_${rating.matchId}_${rating.odedBy}`
+                    batch.delete(doc(db, 'ratings', oldRatingId))
+                  }
+                  
+                  // Update userLinks if anyone was linked to player2
+                  Object.entries(userLinks).forEach(([odedBy, data]) => {
+                    if (data.playerId === mergePlayer2) {
+                      batch.update(doc(db, 'userLinks', odedBy), {
+                        playerId: mergePlayer1
+                      })
+                    }
+                  })
+                  
+                  // Delete player2
+                  batch.delete(doc(db, 'players', mergePlayer2))
+                  
+                  await batch.commit()
+                  setMergePlayer1('')
+                  setMergePlayer2('')
+                  showToast('success', 'Jugadores fusionados correctamente')
+                }}
+              >
+                Fusionar
+              </button>
+            </div>
+          </div>
+          
+          {/* Block User */}
+          <div className="tool-card">
+            <div className="tool-header">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/>
+              </svg>
+              <h3>Usuarios Bloqueados</h3>
+            </div>
+            <p className="tool-description">Impide que usuarios problemáticos califiquen</p>
+            <div className="blocked-users-list">
+              {Object.values(userLinks).filter(u => u.playerId).map(userData => (
+                <div key={userData.odedBy} className="blocked-user-item">
+                  <img src={userData.userPhoto} alt="" className="blocked-user-avatar" />
+                  <span className="blocked-user-name">{userData.userName}</span>
+                  <button 
+                    className={`btn-small ${blockedUsers.includes(userData.odedBy) ? 'blocked' : ''}`}
+                    onClick={async () => {
+                      const newBlocked = blockedUsers.includes(userData.odedBy)
+                        ? blockedUsers.filter(id => id !== userData.odedBy)
+                        : [...blockedUsers, userData.odedBy]
+                      setBlockedUsers(newBlocked)
+                      await setDoc(doc(db, 'settings', 'blockedUsers'), { list: newBlocked })
+                      showToast('success', blockedUsers.includes(userData.odedBy) ? 'Usuario desbloqueado' : 'Usuario bloqueado')
+                    }}
+                  >
+                    {blockedUsers.includes(userData.odedBy) ? 'Desbloquear' : 'Bloquear'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Suspicious Ratings */}
+          <div className="tool-card">
+            <div className="tool-header">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+              </svg>
+              <h3>Calificaciones Sospechosas</h3>
+            </div>
+            <p className="tool-description">Usuarios que califican consistentemente bajo a otros</p>
+            <div className="suspicious-list">
+              {(() => {
+                // Find users who rate consistently low
+                const userAverages = {}
+                Object.values(ratings).forEach(playerRatings => {
+                  playerRatings.forEach(r => {
+                    if (!userAverages[r.odedBy]) {
+                      userAverages[r.odedBy] = { total: 0, count: 0 }
+                    }
+                    userAverages[r.odedBy].total += r.score
+                    userAverages[r.odedBy].count++
+                  })
+                })
+                
+                const suspicious = Object.entries(userAverages)
+                  .filter(([_, data]) => data.count >= 5 && (data.total / data.count) < 5)
+                  .map(([odedBy, data]) => ({
+                    odedBy,
+                    avg: (data.total / data.count).toFixed(1),
+                    count: data.count
+                  }))
+                
+                if (suspicious.length === 0) {
+                  return <p className="no-data">No se detectaron patrones sospechosos</p>
+                }
+                
+                return suspicious.map(s => {
+                  const userData = userLinks[s.odedBy]
+                  return (
+                    <div key={s.odedBy} className="suspicious-item">
+                      <img src={userData?.userPhoto} alt="" className="suspicious-avatar" />
+                      <div className="suspicious-info">
+                        <span className="suspicious-name">{userData?.userName || 'Usuario'}</span>
+                        <span className="suspicious-stats">Promedio: {s.avg} ({s.count} votos)</span>
+                      </div>
+                    </div>
+                  )
+                })
+              })()}
+            </div>
+          </div>
+          
+          {/* League Settings */}
+          <div className="tool-card">
+            <div className="tool-header">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+              </svg>
+              <h3>Configuración de Liga</h3>
+            </div>
+            <div className="settings-form">
+              <div className="setting-item">
+                <label>Nombre de la Liga</label>
+                <input 
+                  type="text" 
+                  value={leagueSettings.name}
+                  onChange={(e) => setLeagueSettings({...leagueSettings, name: e.target.value})}
+                  className="setting-input"
+                />
+              </div>
+              <div className="setting-item">
+                <label>Votos mínimos para MVP</label>
+                <input 
+                  type="number" 
+                  min="1"
+                  value={leagueSettings.mvpMinVotes}
+                  onChange={(e) => setLeagueSettings({...leagueSettings, mvpMinVotes: parseInt(e.target.value) || 1})}
+                  className="setting-input"
+                />
+              </div>
+              <div className="setting-item">
+                <label>Método de cálculo MVP</label>
+                <select 
+                  value={leagueSettings.mvpMethod}
+                  onChange={(e) => setLeagueSettings({...leagueSettings, mvpMethod: e.target.value})}
+                  className="setting-select"
+                >
+                  <option value="average">Promedio más alto</option>
+                  <option value="total">Total de puntos más alto</option>
+                </select>
+              </div>
+              <button 
+                className="btn-primary"
+                onClick={async () => {
+                  await setDoc(doc(db, 'settings', 'league'), leagueSettings)
+                  showToast('success', 'Configuración guardada')
+                }}
+              >
+                Guardar Configuración
+              </button>
+            </div>
+          </div>
         </section>
       )}
 
