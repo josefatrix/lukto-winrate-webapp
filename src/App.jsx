@@ -664,9 +664,9 @@ function App() {
         const avgRating = calculatePlayerAvgRating(id)
         const ratingValue = avgRating ? parseFloat(avgRating) : 5 // Default 5 si no hay ratings
         
-        // Fórmula combinada para ranking:
-        // 40% Win Rate + 30% Rating (×10 para escalar) + 20% MVPs (×5) + 10% Partidos jugados
-        const rankingScore = (winRate * 0.4) + (ratingValue * 10 * 0.3) + (s.mvps * 5 * 0.2) + (s.played * 0.1)
+        // Fórmula combinada para ranking (balanceada):
+        // 30% Win Rate + 30% Rating + 30% MVPs + 10% Partidos jugados
+        const rankingScore = (winRate * 0.3) + (ratingValue * 3 * 0.3) + (s.mvps * 10 * 0.3) + (s.played * 0.1)
         
         return {
           id,
@@ -1042,8 +1042,8 @@ function App() {
         const avgRating = calculatePlayerAvgRating(id)
         const ratingValue = avgRating ? parseFloat(avgRating) : 5
         
-        // Misma fórmula combinada para ranking
-        const rankingScore = (winRate * 0.4) + (ratingValue * 10 * 0.3) + (s.mvps * 5 * 0.2) + (s.played * 0.1)
+        // Misma fórmula combinada para ranking (balanceada)
+        const rankingScore = (winRate * 0.3) + (ratingValue * 3 * 0.3) + (s.mvps * 10 * 0.3) + (s.played * 0.1)
         
         return {
           id,
