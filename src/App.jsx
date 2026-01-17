@@ -1647,12 +1647,14 @@ function App() {
   }
 
   // Toggle ratings open/closed for a match
-  const toggleMatchRatings = async (matchId, currentState) => {
+  const toggleMatchRatings = async (matchId, isCurrentlyOpen) => {
     try {
+      const newState = !isCurrentlyOpen
+      console.log('Toggling ratings for match', matchId, 'from', isCurrentlyOpen, 'to', newState)
       await updateDoc(doc(db, 'matches', matchId), {
-        ratingsOpen: !currentState
+        ratingsOpen: newState === true ? true : false // Ensure boolean
       })
-      showToast('success', currentState ? 'Calificaciones cerradas' : 'Calificaciones abiertas')
+      showToast('success', newState ? 'Calificaciones abiertas' : 'Calificaciones cerradas')
     } catch (error) {
       console.error('Error toggling ratings:', error)
       showToast('error', 'Error al cambiar estado')
@@ -1669,9 +1671,13 @@ function App() {
     // ALWAYS check latest state from Firebase (not local cache)
     try {
       const matchDoc = await getDoc(doc(db, 'matches', match.id))
-      if (matchDoc.exists() && matchDoc.data().ratingsOpen === false) {
-        showToast('error', 'Las calificaciones están cerradas para este partido')
-        return
+      if (matchDoc.exists()) {
+        const data = matchDoc.data()
+        const isClosed = data.ratingsOpen === false || data.ratingsOpen === 'false'
+        if (isClosed) {
+          showToast('error', 'Las calificaciones están cerradas para este partido')
+          return
+        }
       }
     } catch (error) {
       console.error('Error checking match status:', error)
@@ -1735,10 +1741,14 @@ function App() {
     
     // Check if ratings are closed - re-fetch match to get latest state
     const matchDoc = await getDoc(doc(db, 'matches', selectedMatch.id))
-    if (matchDoc.exists() && matchDoc.data().ratingsOpen === false) {
-      showToast('error', 'Las calificaciones han sido cerradas para este partido')
-      setShowRatingModal(false)
-      return
+    if (matchDoc.exists()) {
+      const data = matchDoc.data()
+      const isClosed = data.ratingsOpen === false || data.ratingsOpen === 'false'
+      if (isClosed) {
+        showToast('error', 'Las calificaciones han sido cerradas para este partido')
+        setShowRatingModal(false)
+        return
+      }
     }
     
     // Check if user is blocked
@@ -2660,26 +2670,38 @@ function App() {
                           Predecir
                         </button>
                       )}
-                      {user && userPlayer && match.ratingsOpen !== false && (
-                        <button 
-                          className="rate-match-btn"
-                          onClick={() => openRatingModal(match)}
-                        >
-                          Calificar
-                        </button>
-                      )}
-                      {match.ratingsOpen === false && (
-                        <span className="ratings-closed-badge">🔒 Cerrado</span>
-                      )}
+                      {(() => {
+                        const isClosed = match.ratingsOpen === false || match.ratingsOpen === 'false'
+                        return (
+                          <>
+                            {user && userPlayer && !isClosed && (
+                              <button 
+                                className="rate-match-btn"
+                                onClick={() => openRatingModal(match)}
+                              >
+                                Calificar
+                              </button>
+                            )}
+                            {isClosed && (
+                              <span className="ratings-closed-badge">🔒 Cerrado</span>
+                            )}
+                          </>
+                        )
+                      })()}
                       {isAdmin && (
                         <>
-                          <button 
-                            className={`toggle-ratings-btn ${match.ratingsOpen === false ? 'closed' : 'open'}`}
-                            onClick={() => toggleMatchRatings(match.id, match.ratingsOpen !== false)}
-                            title={match.ratingsOpen === false ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
-                          >
-                            {match.ratingsOpen === false ? '🔒' : '🔓'}
-                          </button>
+                          {(() => {
+                            const isClosed = match.ratingsOpen === false || match.ratingsOpen === 'false'
+                            return (
+                              <button 
+                                className={`toggle-ratings-btn ${isClosed ? 'closed' : 'open'}`}
+                                onClick={() => toggleMatchRatings(match.id, !isClosed)}
+                                title={isClosed ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
+                              >
+                                {isClosed ? '🔒' : '🔓'}
+                              </button>
+                            )
+                          })()}
                           <button 
                             className="edit-match-btn"
                             onClick={() => openEditMatch(match)}

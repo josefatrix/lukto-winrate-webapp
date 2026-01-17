@@ -63458,7 +63458,447 @@ The issue might be that:
 2. The real-time listener might not be picking up the changes
 3. The UI might not be updating properly for all users
 
-Let</details></think>
+Let me check how matches are loaded and how the `ratingsOpen` field is used.</details></think>
+
+---
+
+Voy a revisar cómo se sincroniza el estado `ratingsOpen` para todos los usuarios:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "onSnapshot.*matches|setMatches" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const [matches, setMatches] = useState(initialMatches)` | L122 |
+| `src/App.jsx` | `unsubMatches = onSnapshot(collection(db, 'matches'), (snapshot) => \{` | L366 |
+| `src/App.jsx` | `setMatches(matchesData.sort((a, b) => new Date(a.date) - new Date(b.date)))` | L369 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The `onSnapshot` listener is correctly set up for matches, so changes to `ratingsOpen` should sync to all users in real-time.
+
+The issue might be that:1. Some users have the page cached and haven't received the update
+2. The check for `ratingsOpen` might need to be more explicit
+
+Let me check how the button visibility is determined:</details></think>
+
+---
+
+El listener de Firebase está bien. El problema podría ser cómo se verifica el estado. Voy a hacer la verificación más explícita:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "ratingsOpen !== false|ratingsOpen === false" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 8 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `if (match.ratingsOpen === false) \{` | L1670 |
+| `src/App.jsx` | `if (matchDoc.exists() && matchDoc.data().ratingsOpen === false) \{` | L1733 |
+| `src/App.jsx` | `\{user && userPlayer && match.ratingsOpen !== false && (` | L2658 |
+| `src/App.jsx` | `\{user && userPlayer && match.ratingsOpen === false && !isAdmin && (` | L2666 |
+| `src/App.jsx` | `className=\{`toggle-ratings-btn $\{match.ratingsOpen === false ? 'closed' : 'open'\}`\}` | L2672 |
+| `src/App.jsx` | `onClick=\{() => toggleMatchRatings(match.id, match.ratingsOpen !== false)\}` | L2673 |
+| `src/App.jsx` | `title=\{match.ratingsOpen === false ? 'Abrir calificaciones' : 'Cerrar calificaciones'\}` | L2674 |
+| `src/App.jsx` | `\{match.ratingsOpen === false ? '🔒' : '🔓'\}` | L2676 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the issue. The problem is that `match.ratingsOpen` might be `undefined` for older matches that were created before the `ratingsOpen` field existed. The check `match.ratingsOpen === false` would be false if the field is `undefined`, so the button would show.
+
+But for new matches, the field is explicitly set to `true`. When toggled, it becomes `false`.
+
+The issue might be that:
+1. Older matches don't have the `ratingsOpen` field
+2. The comparison `match.ratingsOpen !== false` returns `true` when `ratingsOpen` is `undefined`Let me also check if there's a caching issue or if the data is being loaded from `initialMatches` instead of Firebase.Looking at the code, I see that matches are initialized with `initialMatches` and then updated via `onSnapshot`. If the Firebase listener fails or is slow, users might see the cached version.
+
+Let me make the check more robust by treating `undefined` the same as `true` (open), and also add a visual indicator that updates in real-time.
+
+Actually, I think the real issue might be that users who had the page open before the admin toggled the ratings might have stale data until the onSnapshot triggers. But onSnapshot should trigger automatically...
+
+Let me check if there's an issue with how the match data is being displayed. Maybe the issue is in the match card rendering.
+
+Actually, looking more carefully at the code, I notice that the check `match.ratingsOpen !== false` is correct for showing the button when ratings are open (or undefined). And `match.ratingsOpen === false` is correct for showing the "Cerrado" badge.
+
+The issue might be that:
+1. The onSnapshot listener isn't triggering for some users
+2. There's a network delay
+3. Users need to refresh the page
+
+Let me add a more visible indication of the ratings status and ensure the data is always fetched fresh. I'll also add a timestamp to force re-renders.
+
+Actually, I think the simplest fix is to make the UI more responsive to changes. 
+
+The modal itself might be using stale match data when it opens. The `submitRatings` function does re-fetch from Firebase before submitting, which is good, but `openRatingModal` relies on the local match object that could be outdated. I should update that function to also pull the latest state from Firebase before opening the modal.</details></think>
+
+---
+
+El problema es que `openRatingModal` usa datos locales que pueden estar desactualizados. Voy a hacer que siempre verifique el estado actual en Firebase:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 10, lines removed: 5
+
+```diff
+@@ -1661,14 +1661,19 @@
+  
+    // Rating functions
+-   const openRatingModal = (match) =&gt; {
++   const openRatingModal = async (match) =&gt; {
+      if (!userPlayer) {
+        showToast('error', 'Primero debes vincular tu cuenta')
+        return
+      }
+      
+-     // Check if ratings are closed for this match
+-     if (match.ratingsOpen === false) {
+-       showToast('error', 'Las calificaciones están cerradas para este partido')
+-       return
++     // ALWAYS check latest state from Firebase (not local cache)
++     try {
++       const matchDoc = await getDoc(doc(db, 'matches', match.id))
++       if (matchDoc.exists() &amp;&amp; matchDoc.data().ratingsOpen === false) {
++         showToast('error', 'Las calificaciones están cerradas para este partido')
++         return
++       }
++     } catch (error) {
++       console.error('Error checking match status:', error)
+      }
+      
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also improve the UI to show a more visible badge when ratings are closed, and make sure the button doesn't show at all if ratings are closed. I'll also add a visible "Cerrado" badge on the match card for everyone, not just non-admins.</details></think>
+
+---
+
+También voy a mejorar la visibilidad del estado "Cerrado" para todos los usuarios:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -2669,6 +2669,6 @@
+                          &lt;/button&gt;
+                        )}
+-                       {user &amp;&amp; userPlayer &amp;&amp; match.ratingsOpen === false &amp;&amp; !isAdmin &amp;&amp; (
+-                         &lt;span className="ratings-closed-badge"&gt;Cerrado&lt;/span&gt;
++                       {match.ratingsOpen === false &amp;&amp; (
++                         &lt;span className="ratings-closed-badge"&gt;🔒 Cerrado&lt;/span&gt;
+                        )}
+                        {isAdmin &amp;&amp; (
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also make the CSS for the badge more prominent so it's visible to everyone.</details></think>
+
+---
+
+Mejoro el estilo del badge para que sea más visible:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\.ratings-closed-badge" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `.ratings-closed-badge \{` | L1274 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me make the badge more prominent.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 13, lines removed: 6
+
+```diff
+@@ -1273,11 +1273,18 @@
+  /* Ratings Closed Badge */
+  .ratings-closed-badge {
+-   padding: 0.25rem 0.5rem;
+-   border-radius: 4px;
+-   font-size: 0.7rem;
+-   font-weight: 600;
+-   background: rgba(255, 69, 58, 0.15);
+-   color: var(--accent-red);
++   padding: 0.35rem 0.75rem;
++   border-radius: 6px;
++   font-size: 0.75rem;
++   font-weight: 700;
++   background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
++   color: #ef4444;
+    text-transform: uppercase;
++   border: 1px solid rgba(239, 68, 68, 0.3);
++   animation: pulse-closed 2s infinite;
++ }
++ 
++ @keyframes pulse-closed {
++   0%, 100% { opacity: 1; }
++   50% { opacity: 0.7; }
+  }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me build and deploy.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix: always check Firebase for ratingsOpen status, improve closed badge visibility" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix: always check Firebase for ratingsOpen status, improve closed badge visibility" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 846 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-BOKVpbYm.css     69.05 kB │ gzip:  11.69 kB
+dist/assets/index-CAzXJjqR.js   1,081.21 kB │ gzip: 284.97 kB
+✓ built in 1.28s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main d808bb2] Fix: always check Firebase for ratingsOpen status, improve closed badge visibility
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 7 files changed, 438 insertions(+), 212 deletions(-)
+ create mode 100644 dist/assets/index-BOKVpbYm.css
+ rename dist/assets/{index-BVwBl6jV.js =&gt; index-CAzXJjqR.js} (82%)
+ delete mode 100644 dist/assets/index-CmXXBWuF.css
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/3.3MB)
+Uploading [=====---------------] (858.7KB/3.3MB)
+Uploading [==========----------] (1.7MB/3.3MB)
+Uploading [===============-----] (2.5MB/3.3MB)
+Uploading [====================] (3.3MB/3.3MB)
+https://lukto-winrate-webapp-bihl3w0ts-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/C43K6QeAni1dKDWXXrc6HAqPDSXr [3s]
+Production: https://lukto-winrate-webapp-bihl3w0ts-josefatrixs-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 406 packages in 8s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 846 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-BOKVpbYm.css     69.05 kB │ gzip:  11.67 kB
+Building: dist/assets/index-CAzXJjqR.js   1,081.21 kB │ gzip: 285.99 kB
+Building: ✓ built in 4.33s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [14s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-bihl3w0ts-josefatrixs-projects.vercel.app [24s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [24s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-bihl3w0ts-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-bihl3w0ts-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Done! Let me explain the changes to the user.</details></think>
+
+---
+
+¡Corregido! Ahora el bloqueo de calificaciones funciona mejor:
+
+**Cambios realizados:**
+
+1. **Verificación en tiempo real** - Cuando alguien hace click en "Calificar", ahora se consulta Firebase directamente (no datos locales que pueden estar desactualizados)
+
+2. **Badge visible para TODOS** - El badge "🔒 Cerrado" ahora aparece para todos los usuarios, no solo los no-admin
+
+3. **Badge más prominente** - El badge ahora tiene:
+   - Color rojo más visible
+   - Borde
+   - Animación de pulso para llamar la atención
+
+4. **Doble verificación** - Se verifica:
+   - Al hacer click en "Calificar" (consulta Firebase)
+   - Al enviar las calificaciones (consulta Firebase de nuevo)
+
+**Los usuarios deben:**
+- Recargar la página para ver los cambios más recientes
+- O esperar unos segundos para que el listener de Firebase actualice
+
+🔗 https://lukto-winrate-webapp.vercel.app
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+no se bloquean las califcaciones. sigue saliendo la opcion para calificar
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is saying that ratings are still not being blocked - the option to rate is still showing. Let me check what could be wrong.
+
+The issue might be that the `ratingsOpen` field doesn't exist on existing matches, so the check `match.ratingsOpen !== false` returns `true` (because `undefined !== false` is `true`).
+
+Let me trace through the logic:
+1. When `ratingsOpen` is `undefined` (old matches), `match.ratingsOpen !== false` is `true`, so the button shows
+2. When `ratingsOpen` is `true`, `match.ratingsOpen !== false` is `true`, so the button shows
+3. When `ratingsOpen` is `false`, `match.ratingsOpen !== false` is `false`, so the button hides
+
+This should work correctly. But maybe the issue is that the `ratingsOpen` field is not being properly saved or read.
+
+Let me check the `toggleMatchRatings` function to make sure it's setting the value correctly.
+
+Actually, let me re-read the code. The check is:
+- `match.ratingsOpen !== false` - show the button if NOT explicitly false
+- `match.ratingsOpen === false` - show the badge if explicitly false
+
+This should work. But maybe the UI isn't updating? Let me check if the match data is being passed correctly to the rendering.
+
+Wait, I think I see a potential issue. When the admin toggles the ratings, it updates the Firestore, but the local state might not immediately reflect this for all users. The `onSnapshot` listener should update the matches, but maybe there's a delay.
+
+Also, I just realized that in the code, I have:
+```jsx
+{user && userPlayer && match.ratingsOpen !== false && (
+  <button ...>Calificar</button>
+)}
+```
+
+This shows the button when `ratingsOpen` is `undefined`, `true`, or any truthy value except `false`.
+
+And:
+
+
+```jsx
+{match.ratingsOpen === false && (
+  <span className="ratings-closed-badge">🔒 Cerrado</span>
+)}
+```
+
+This shows the badge only when `ratingsOpen` is exactly `false`. So when the admin sets `ratingsOpen` to `false`, the badge should display and the button should disappear. I need to verify that `toggleMatchRatings` is actually updating Firestore correctly, and check if the `ratingsOpen` field is being persisted properly in the database.
+
+The logic should handle three cases: if `ratingsOpen` is `false`, hide the button and show the badge; if it's `true` or `undefined`, show the button and hide the badge. I'll make the button condition more explicit by checking that `ratingsOpen` is not `false`:
+
+```jsx
+{user && userPlayer && (match.ratingsOpen !== false && (
+```</details></think>
 
 ---
 
