@@ -131,12 +131,42 @@ export const Header = ({
     user,
     userPlayer,
     isAdmin,
+    setIsAdmin,
+    adminEmails,
     darkMode,
     setDarkMode,
     handleGoogleLogin,
     handleLogout,
+    SUPER_ADMIN_EMAIL,
     getPlayerName,
   } = useApp()
+
+  // Handle admin button click - check if user is authorized
+  const handleAdminClick = () => {
+    if (!user) {
+      // Not logged in - show modal to prompt Google login
+      onShowLoginModal()
+      return
+    }
+
+    // Check if user is authorized
+    const userEmail = user.email?.toLowerCase() || ''
+    const isSuperAdmin = SUPER_ADMIN_EMAIL && userEmail === SUPER_ADMIN_EMAIL.toLowerCase()
+    const isInAdminList = adminEmails?.some(email => email.toLowerCase() === userEmail)
+
+    if (isSuperAdmin || isInAdminList) {
+      // User is authorized - enable admin mode directly
+      setIsAdmin(true)
+      try {
+        localStorage.setItem('lukto_admin', 'true')
+      } catch {
+        /* Ignore */
+      }
+    } else {
+      // User is not authorized - show modal explaining they don't have access
+      onShowLoginModal()
+    }
+  }
 
   return (
     <header className="header-premium">
@@ -216,7 +246,7 @@ export const Header = ({
                 Admin
               </button>
             ) : (
-              <button className="mode-btn" onClick={onShowLoginModal}>
+              <button className="mode-btn" onClick={handleAdminClick}>
                 <LockIcon />
                 Admin
               </button>
