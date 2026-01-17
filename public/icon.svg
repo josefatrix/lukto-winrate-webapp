@@ -1,12 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#10b981"/>
-      <stop offset="100%" style="stop-color:#059669"/>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a"/>
+      <stop offset="100%" style="stop-color:#000000"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#34d399"/>
+      <stop offset="100%" style="stop-color:#10b981"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fcd34d"/>
+      <stop offset="100%" style="stop-color:#f59e0b"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="108" fill="#000"/>
-  <circle cx="256" cy="256" r="180" fill="none" stroke="url(#grad)" stroke-width="24"/>
-  <text x="256" y="290" text-anchor="middle" fill="#fff" font-family="system-ui, -apple-system, sans-serif" font-size="140" font-weight="700">L</text>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGrad)"/>
+  
+  <!-- Decorative ring -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="url(#accentGrad)" stroke-width="8" opacity="0.3"/>
+  
+  <!-- Stats bars -->
+  <rect x="120" y="280" width="40" height="120" rx="8" fill="url(#accentGrad)" opacity="0.6"/>
+  <rect x="180" y="220" width="40" height="180" rx="8" fill="url(#accentGrad)" opacity="0.8"/>
+  <rect x="240" y="160" width="40" height="240" rx="8" fill="url(#accentGrad)"/>
+  <rect x="300" y="200" width="40" height="200" rx="8" fill="url(#goldGrad)" opacity="0.9"/>
+  <rect x="360" y="260" width="40" height="140" rx="8" fill="url(#goldGrad)" opacity="0.7"/>
+  
+  <!-- Trophy/Crown accent -->
+  <path d="M256 80 L280 130 L330 130 L290 165 L305 215 L256 185 L207 215 L222 165 L182 130 L232 130 Z" 
+        fill="url(#goldGrad)" opacity="0.9"/>
+  
+  <!-- L letter overlay -->
+  <text x="256" y="450" text-anchor="middle" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="80" font-weight="800" opacity="0.15">LUKTO</text>
 </svg>
-
