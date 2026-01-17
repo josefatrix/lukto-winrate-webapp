@@ -11,3 +11,9 @@ export * from './layout'
 // Stats components
 export * from './stats'
 
+// Tabs
+export * from './tabs'
+
+// Modals
+export * from './modals'
+
