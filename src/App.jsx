@@ -124,6 +124,17 @@ function App() {
       if (isSuperAdmin || isInAdminList) {
         setIsAdmin(true)
         localStorage.setItem('lukto_admin', 'true')
+      } else {
+        // User is logged in but NOT an admin - remove admin privileges
+        setIsAdmin(false)
+        localStorage.removeItem('lukto_admin')
+      }
+    } else {
+      // No user logged in - check if admin was set via password (keep it)
+      // But if someone logs out, we should clear admin status
+      const savedAdmin = localStorage.getItem('lukto_admin')
+      if (!savedAdmin) {
+        setIsAdmin(false)
       }
     }
   }, [user, adminEmails])
@@ -286,6 +297,8 @@ function App() {
   const handleLogout = async () => {
     await signOut(auth)
     setUserPlayer(null)
+    setIsAdmin(false)
+    localStorage.removeItem('lukto_admin')
   }
 
   const handleLinkPlayer = (playerId) => {
