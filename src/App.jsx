@@ -159,13 +159,15 @@ function App() {
       const links = {}
       const pending = []
       
-      snapshot.docs.forEach(doc => {
-        const data = doc.data()
-        if (data.playerId) {
-          links[doc.id] = data
+      snapshot.docs.forEach(docSnap => {
+        const data = docSnap.data()
+        const docId = docSnap.id
+        // Check if playerId exists and is not null/undefined/empty
+        if (data.playerId && data.playerId !== '' && data.playerId !== null) {
+          links[docId] = { ...data, odedBy: docId }
         } else {
           // User is pending (registered but not linked)
-          pending.push({ odedBy: doc.id, ...data })
+          pending.push({ ...data, odedBy: docId })
         }
       })
       
@@ -316,6 +318,11 @@ function App() {
       return
     }
     
+    if (!userId || !playerId) {
+      console.error('Missing userId or playerId', { userId, playerId })
+      return
+    }
+    
     // Prevent double-clicks
     if (linkingUser === userId) {
       return
@@ -326,9 +333,19 @@ function App() {
     try {
       console.log('Vinculando usuario:', userId, 'con jugador:', playerId)
       const linkRef = doc(db, 'userLinks', userId)
-      await setDoc(linkRef, { playerId }, { merge: true })
+      
+      // Get current data first
+      const currentData = pendingUsers.find(u => u.odedBy === userId) || {}
+      
+      // Update with all fields to ensure playerId is set
+      await setDoc(linkRef, {
+        ...currentData,
+        odedBy: userId,
+        playerId: playerId,
+        linkedAt: new Date().toISOString()
+      })
+      
       console.log('Usuario vinculado exitosamente')
-      // Don't show alert - the UI will update automatically via onSnapshot
     } catch (error) {
       console.error('Error linking user:', error)
       alert('Error al vincular usuario: ' + error.message)

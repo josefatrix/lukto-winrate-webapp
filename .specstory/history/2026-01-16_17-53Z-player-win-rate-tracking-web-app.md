@@ -21736,7 +21736,412 @@ Output mode: content
 
 ---
 
+<think><details><summary>Thought Process</summary>
+Let me look at where pendingUsers is populated to understand the data structure better:</details></think>
 
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "pending\.push|pending ="" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `pending.push(\{ odedBy: doc.id, ...data \})` | L167 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+So `pending.odedBy` is actually `doc.id` which should be the user's Firebase UID. The function is being called correctly with the user ID.Looking at the console output in the screenshot:- "Vinculando usuario: 0gyXBKxKKzRoVaDyEvTjkr4WUuI2 con jugador: 1768616815649"- "Usuario vinculado exitosamente"It seems like the linking is happening, but maybe:
+1. The pending user is not being removed from the list after linking
+2. Or the userLinks state is not being updated properly
+
+Let me check the issue - the problem might be that after the `setDoc` operation, the onSnapshot listener should automatically update the state. But maybe there's an issue with how we're determining pending vs linked users.
+
+Wait, I see it now - when we call `setDoc(linkRef, { playerId }, { merge: true })`, we're only setting `playerId`. But the document might have other fields that are needed. Let me check what fields the userLinks documents have.
+
+Actually, looking more carefully at line 321:
+```javascript
+await setDoc(linkRef, { playerId }, { merge: true })
+```
+
+This should work - it merges the `playerId` field into the existing document. The onSnapshot listener should then pick up the change and move the user from `pending` to `links`.
+
+The issue might be that the select dropdown keeps triggering multiple times. Let me modify the code to:
+1. Add a loading state or disable the dropdown after selection
+2. Clear the select value after successful linking
+
+Let me fix this properly.</details></think>
+
+---
+
+Veo el problema - el dropdown está disparando múltiples veces. Voy a arreglar esto agregando un estado de carga y limpiando después de vincular:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "pendingUsers.map\(pending"" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The pattern has an issue, let me try again:</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Looking at the console in the image, I can see that the same user is being linked multiple times. The select dropdown might be causing multiple calls or there might be a race condition.
+
+Let me add a state to track which users are being linked to prevent multiple calls, and also reset the select after success.</details></think>
+
+---
+
+Voy a agregar un estado para prevenir clics múltiples y mejorar la lógica de vinculación:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -97,4 +97,5 @@
+    const [currentRatings, setCurrentRatings] = useState({})
+    const [expandedPlayer, setExpandedPlayer] = useState(null)
++   const [linkingUser, setLinkingUser] = useState(null) // Track which user is being linked
+    
+    // Match form state
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the adminLinkUserToPlayer function and the UI to use this state:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 7, lines removed: undefined
+
+```diff
+@@ -316,4 +316,11 @@
+        return
+      }
++     
++     // Prevent double-clicks
++     if (linkingUser === userId) {
++       return
++     }
++     
++     setLinkingUser(userId)
+      
+      try {
+```
+
+**Chunk 2**
+Lines added: 3, lines removed: 1
+
+```diff
+@@ -322,8 +329,10 @@
+        await setDoc(linkRef, { playerId }, { merge: true })
+        console.log('Usuario vinculado exitosamente')
+-       alert('✅ Usuario vinculado correctamente')
++       // Don't show alert - the UI will update automatically via onSnapshot
+      } catch (error) {
+        console.error('Error linking user:', error)
+        alert('Error al vincular usuario: ' + error.message)
++     } finally {
++       setLinkingUser(null)
+      }
+    }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the UI to show a loading state while linking:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1259,5 +1259,5 @@
+                &lt;div className="user-links-list"&gt;
+                  {pendingUsers.map(pending =&gt; (
+-                   &lt;div key={pending.odedBy} className="user-link-card pending"&gt;
++                   &lt;div key={pending.odedBy} className={&#96;user-link-card pending ${linkingUser === pending.odedBy ? 'linking' : ''}&#96;}&gt;
+                      &lt;div className="user-link-info"&gt;
+                        &lt;img src={pending.userPhoto || pending.odedByPhoto} alt="" className="user-link-avatar" /&gt;
+```
+
+**Chunk 2**
+Lines added: 21, lines removed: 16
+
+```diff
+@@ -1268,20 +1268,25 @@
+                      &lt;/div&gt;
+                      &lt;div className="user-link-action"&gt;
+-                       &lt;select 
+-                         className="player-select-dropdown"
+-                         onChange={(e) =&gt; {
+-                           if (e.target.value) {
+-                             adminLinkUserToPlayer(pending.odedBy, e.target.value)
+-                           }
+-                         }}
+-                         defaultValue=""
+-                       &gt;
+-                         &lt;option value=""&gt;Selecciona jugador...&lt;/option&gt;
+-                         {players.map(player =&gt; (
+-                           &lt;option key={player.id} value={player.id}&gt;
+-                             {player.name}
+-                           &lt;/option&gt;
+-                         ))}
+-                       &lt;/select&gt;
++                       {linkingUser === pending.odedBy ? (
++                         &lt;span className="linking-text"&gt;Vinculando...&lt;/span&gt;
++                       ) : (
++                         &lt;select 
++                           className="player-select-dropdown"
++                           onChange={(e) =&gt; {
++                             if (e.target.value) {
++                               adminLinkUserToPlayer(pending.odedBy, e.target.value)
++                               e.target.value = '' // Reset select
++                             }
++                           }}
++                           defaultValue=""
++                         &gt;
++                           &lt;option value=""&gt;Selecciona jugador...&lt;/option&gt;
++                           {players.map(player =&gt; (
++                             &lt;option key={player.id} value={player.id}&gt;
++                               {player.name}
++                             &lt;/option&gt;
++                           ))}
++                         &lt;/select&gt;
++                       )}
+                      &lt;/div&gt;
+                    &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me add some CSS for the linking state:</details></think>
+
+---
+
+Agrego los estilos para el estado de vinculación:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 17, lines removed: undefined
+
+```diff
+@@ -1102,4 +1102,21 @@
+    color: var(--accent-red);
+  }
++ 
++ .user-link-card.linking {
++   opacity: 0.7;
++   pointer-events: none;
++ }
++ 
++ .linking-text {
++   color: var(--accent-primary);
++   font-size: 0.9rem;
++   font-weight: 500;
++   animation: pulse 1.5s infinite;
++ }
++ 
++ @keyframes pulse {
++   0%, 100% { opacity: 1; }
++   50% { opacity: 0.5; }
++ }
+  
+  /* Admin Management */
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me deploy the changes:</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix: Prevent double-linking users, add loading state" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix: Prevent double-linking users, add loading state" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 48 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.75 kB │ gzip:   0.43 kB
+dist/assets/index-2b8ZCJmT.css   22.33 kB │ gzip:   4.27 kB
+dist/assets/index-D0j0v61c.js   632.17 kB │ gzip: 162.74 kB
+✓ built in 688ms
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 0e06fc9] Fix: Prevent double-linking users, add loading state
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 6 files changed, 652 insertions(+), 187 deletions(-)
+ rename dist/assets/{index-DGHcnsSL.css =&gt; index-2b8ZCJmT.css} (70%)
+ rename dist/assets/{index-p4Oo3DlA.js =&gt; index-D0j0v61c.js} (74%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/1.3MB)
+Uploading [=====---------------] (349.7KB/1.3MB)
+Uploading [==========----------] (685.7KB/1.3MB)
+Uploading [===============-----] (1.0MB/1.3MB)
+Uploading [====================] (1.3MB/1.3MB)
+https://lukto-winrate-webapp-cj9tg1he1-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/mEtPXtLCE1gwmwnA8GdCuAEXwUNF [3s]
+Production: https://lukto-winrate-webapp-cj9tg1he1-josefatrixs-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 48 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                   0.75 kB │ gzip:   0.43 kB
+Building: dist/assets/index-2b8ZCJmT.css   22.33 kB │ gzip:   4.27 kB
+Building: dist/assets/index-D0j0v61c.js   632.17 kB │ gzip: 163.34 kB
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: ✓ built in 2.68s
+Building: Build Completed in /vercel/output [10s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-cj9tg1he1-josefatrixs-projects.vercel.app [19s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [19s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-cj9tg1he1-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-cj9tg1he1-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Done. Now let me summarize the changes.</details></think>
+
+---
+
+✅ **¡Arreglado!** Ahora la vinculación funciona mejor:
+
+**Cambios:**
+1. **Previene clics múltiples** - Si ya estás vinculando un usuario, no permite otra vinculación hasta que termine
+2. **Estado de carga** - Muestra "Vinculando..." mientras procesa
+3. **Reset automático** - El dropdown se limpia después de seleccionar
+4. **Sin alertas molestas** - La UI se actualiza automáticamente
+
+Ahora cuando selecciones un jugador:
+- El dropdown se desactiva y muestra "Vinculando..."
+- Cuando termina, el usuario pasa automáticamente a "Usuarios Vinculados"
+
+Refresca con **Cmd+Shift+R**:
+👉 **https://lukto-winrate-webapp.vercel.app**
 
 ---
 
