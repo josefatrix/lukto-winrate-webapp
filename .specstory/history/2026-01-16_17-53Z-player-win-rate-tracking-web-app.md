@@ -43870,64 +43870,920 @@ Let me redesign it to look like modern apps (Spotify, Nike, etc.)</details></thi
 
 <details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
 
-Status: **loading**
+**Chunk 1**
+Lines added: 82, lines removed: 35
 
-```javascriptreact
-      {/* Premium Header */}
-      <header className="header-premium">
-        {/* Top Bar */}
-        <div className="top-bar">
-          <div className="logo-mini">
-            <img src="/lukto-logo.png" alt="LUKTO" />
-          </div>
-          
-          <div className="top-bar-actions">
-            {'Notification' in window && (
-              <button 
-                className={`icon-btn ${notificationPermission === 'granted' ? 'active' : ''}`}
-                onClick={requestNotificationPermission}
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                  <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
-                </svg>
-              </button>
-            )}
-            <button 
-              className="icon-btn"
-              onClick={() => setDarkMode(!darkMode)}
-            >
-              {darkMode ? (
-                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                  <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                  <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
-                </svg>
-              )}
-            </button>
-            {user ? (
-              <button 
-                className="user-avatar-btn"
-                onClick={() => {
-                  if (userPlayer) {
-                    setSelectedPlayerProfile(userPlayer)
-                    setShowPlayerProfile(true)
-                  }
-                }}
-              >
-                <img src={user.photoURL} alt="" />
-              </button>
-            ) : (
-              <button className="icon-btn login-btn" onClick={handleGoogleLogin}>
-                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
+```diff
+@@ -1451,44 +1451,91 @@
+    return (
+      &lt;div className={&#96;app-container ${darkMode ? 'dark' : 'light'}&#96;}&gt;
+-       &lt;header className="header"&gt;
+-         &lt;div className="header-top"&gt;
+-           {/* Notification toggle */}
+-           {'Notification' in window &amp;&amp; (
+-             &lt;button 
+-               className={&#96;notification-toggle ${notificationPermission === 'granted' ? 'active' : ''}&#96;}
+-               onClick={requestNotificationPermission}
+-               title={notificationPermission === 'granted' ? 'Notificaciones activadas' : 'Activar notificaciones'}
+-             &gt;
+-               {notificationPermission === 'granted' ? '🔔' : '🔕'}
+-             &lt;/button&gt;
+-           )}
+-           &lt;button 
+-             className="theme-toggle"
+-             onClick={() =&gt; setDarkMode(!darkMode)}
+-             title={darkMode ? 'Modo claro' : 'Modo oscuro'}
+-           &gt;
+-             {darkMode ? '☀️' : '🌙'}
+-           &lt;/button&gt;
+-         &lt;/div&gt;
+-         &lt;img src="/lukto-logo.png" alt="LUKTO" className="app-logo" /&gt;
+-         &lt;p className="subtitle"&gt;Win Rate &amp; Ratings Tracker&lt;/p&gt;
+-         
+-         {/* User auth section */}
+-         &lt;div className="auth-section"&gt;
+-           {user ? (
+-             &lt;div className="user-info"&gt;
+-               &lt;img src={user.photoURL} alt="" className="user-avatar" /&gt;
+-               &lt;span className="user-name"&gt;{user.displayName}&lt;/span&gt;
++       {/* Premium Header */}
++       &lt;header className="header-premium"&gt;
++         {/* Top Bar */}
++         &lt;div className="top-bar"&gt;
++           &lt;div className="logo-mini"&gt;
++             &lt;img src="/lukto-logo.png" alt="LUKTO" /&gt;
++           &lt;/div&gt;
++           
++           &lt;div className="top-bar-actions"&gt;
++             {'Notification' in window &amp;&amp; (
++               &lt;button 
++                 className={&#96;icon-btn ${notificationPermission === 'granted' ? 'active' : ''}&#96;}
++                 onClick={requestNotificationPermission}
++               &gt;
++                 &lt;svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"&gt;
++                   &lt;path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/&gt;
++                 &lt;/svg&gt;
++               &lt;/button&gt;
++             )}
++             &lt;button 
++               className="icon-btn"
++               onClick={() =&gt; setDarkMode(!darkMode)}
++             &gt;
++               {darkMode ? (
++                 &lt;svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"&gt;
++                   &lt;path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/&gt;
++                 &lt;/svg&gt;
++               ) : (
++                 &lt;svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"&gt;
++                   &lt;path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/&gt;
++                 &lt;/svg&gt;
++               )}
++             &lt;/button&gt;
++             {user ? (
++               &lt;button 
++                 className="user-avatar-btn"
++                 onClick={() =&gt; {
++                   if (userPlayer) {
++                     setSelectedPlayerProfile(userPlayer)
++                     setShowPlayerProfile(true)
++                   }
++                 }}
++               &gt;
++                 &lt;img src={user.photoURL} alt="" /&gt;
++               &lt;/button&gt;
++             ) : (
++               &lt;button className="icon-btn login-btn" onClick={handleGoogleLogin}&gt;
++                 &lt;svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"&gt;
++                   &lt;path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/&gt;
++                 &lt;/svg&gt;
++               &lt;/button&gt;
++             )}
++           &lt;/div&gt;
++         &lt;/div&gt;
++ 
++         {/* User Welcome Card - only show if logged in */}
++         {user &amp;&amp; (
++           &lt;div className="welcome-card"&gt;
++             &lt;div className="welcome-content"&gt;
++               &lt;span className="welcome-greeting"&gt;Hola,&lt;/span&gt;
++               &lt;span className="welcome-name"&gt;{user.displayName?.split(' ')[0]}&lt;/span&gt;
+                {userPlayer &amp;&amp; (
+-                 &lt;span className="linked-player"&gt;
+-                   ({getPlayerName(userPlayer)})
+-                 &lt;/span&gt;
++                 &lt;span className="welcome-player"&gt;{getPlayerName(userPlayer)}&lt;/span&gt;
++               )}
++             &lt;/div&gt;
++             &lt;div className="welcome-actions"&gt;
++               {isAdmin ? (
++                 &lt;button className="chip-btn active" onClick={handleAdminLogout}&gt;
++                   Admin
++                 &lt;/button&gt;
++               ) : (
++                 &lt;button className="chip-btn" onClick={() =&gt; setShowLoginModal(true)}&gt;
++                   Admin
++                 &lt;/button&gt;
+                )}
+-               &lt;button className="auth-btn logout" onClick={handleLogout}&gt;
++               &lt;button className="chip-btn outline" onClick={handleLogout}&gt;
+                  Salir
+                &lt;/button&gt;
+              &lt;/div&gt;
+-           ) : (
+-             &lt;button className="auth-btn google" onClick={handleGoogleLogin}&gt;
++           &lt;/div&gt;
++         )}
++ 
++         {/* Login prompt if not logged in */}
++         {!user &amp;&amp; (
++           &lt;div className="login-prompt"&gt;
++             &lt;p&gt;Inicia sesión para calificar jugadores&lt;/p&gt;
++             &lt;button className="google-btn" onClick={handleGoogleLogin}&gt;
+                &lt;svg viewBox="0 0 24 24" width="18" height="18"&gt;
+                  &lt;path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/&gt;
 ```
+
+**Chunk 2**
+Lines added: 8, lines removed: 21
+
+```diff
+@@ -1497,37 +1544,24 @@
+                  &lt;path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/&gt;
+                &lt;/svg&gt;
+-               Entrar con Google
++               Continuar con Google
+              &lt;/button&gt;
+-           )}
+-         &lt;/div&gt;
+-         
+-         {/* Admin button */}
+-         &lt;div className="admin-toggle"&gt;
+-           {isAdmin ? (
+-             &lt;button className="admin-btn active" onClick={handleAdminLogout}&gt;
+-               Modo Admin
+-             &lt;/button&gt;
+-           ) : (
+-             &lt;button className="admin-btn" onClick={() =&gt; setShowLoginModal(true)}&gt;
+-               🔒 Modo Admin
+-             &lt;/button&gt;
+-           )}
+-         &lt;/div&gt;
++           &lt;/div&gt;
++         )}
+        &lt;/header&gt;
+  
+-       {/* Top sub-navigation for filtering */}
++       {/* Time Filter Pills */}
+        {(activeTab === 'stats' || activeTab === 'ratings') &amp;&amp; (
+-         &lt;div className="time-filter-bar"&gt;
++         &lt;div className="filter-pills"&gt;
+            &lt;button 
+-             className={&#96;filter-btn ${timeFilter === 'all' ? 'active' : ''}&#96;}
++             className={&#96;pill ${timeFilter === 'all' ? 'active' : ''}&#96;}
+              onClick={() =&gt; setTimeFilter('all')}
+            &gt;
+              Todo
+            &lt;/button&gt;
+            &lt;button 
+-             className={&#96;filter-btn ${timeFilter === 'month' ? 'active' : ''}&#96;}
++             className={&#96;pill ${timeFilter === 'month' ? 'active' : ''}&#96;}
+              onClick={() =&gt; setTimeFilter('month')}
+            &gt;
+-             Este mes
++             Mes
+            &lt;/button&gt;
+            &lt;button 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the last filter button and the CSS to match the new design. Let me first update the rest of the filter bar, then update the CSS.</details></think>
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me find the current state of that section in the file.</details></think>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Esta semana" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `Esta semana` | L1571 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see, the old filter-btn class is still there. Let me fix that.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -1566,8 +1566,8 @@
+            &lt;/button&gt;
+            &lt;button 
+-             className={&#96;filter-btn ${timeFilter === 'week' ? 'active' : ''}&#96;}
++             className={&#96;pill ${timeFilter === 'week' ? 'active' : ''}&#96;}
+              onClick={() =&gt; setTimeFilter('week')}
+            &gt;
+-             Esta semana
++             Semana
+            &lt;/button&gt;
+          &lt;/div&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the CSS to add the new premium header styles.</details></think>
+
+---
+
+Ahora actualizo los estilos CSS para el nuevo diseño premium:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 223, lines removed: 13
+
+```diff
+@@ -71,24 +71,234 @@
+  }
+  
+- /* Header */
+- .header {
+-   text-align: center;
+-   padding: 1.5rem 1rem;
++ /* ============================================
++    Premium Header
++    ============================================ */
++ .header-premium {
++   padding: 0.75rem 1rem;
++   margin-bottom: 0.5rem;
++ }
++ 
++ .top-bar {
++   display: flex;
++   align-items: center;
++   justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  
+- .app-logo {
+-   width: 140px;
+-   height: 140px;
++ .logo-mini {
++   display: flex;
++   align-items: center;
++ }
++ 
++ .logo-mini img {
++   width: 44px;
++   height: 44px;
+    object-fit: contain;
+-   margin-bottom: 0.5rem;
+-   filter: drop-shadow(0 4px 20px rgba(16, 185, 129, 0.3));
+-   transition: transform 0.3s ease;
++   filter: drop-shadow(0 2px 8px rgba(16, 185, 129, 0.3));
++ }
++ 
++ .top-bar-actions {
++   display: flex;
++   align-items: center;
++   gap: 0.5rem;
++ }
++ 
++ .icon-btn {
++   width: 40px;
++   height: 40px;
++   border-radius: 12px;
++   border: none;
++   background: var(--bg-elevated);
++   color: var(--text-secondary);
++   display: flex;
++   align-items: center;
++   justify-content: center;
++   cursor: pointer;
++   transition: all 0.2s ease;
+  }
+  
+- .app-logo:hover {
++ .icon-btn:hover {
++   background: var(--bg-card-hover);
++   color: var(--text-primary);
++ }
++ 
++ .icon-btn.active {
++   color: var(--accent-green);
++ }
++ 
++ .icon-btn.login-btn {
++   background: var(--accent-green);
++   color: #000;
++ }
++ 
++ .user-avatar-btn {
++   width: 40px;
++   height: 40px;
++   border-radius: 12px;
++   border: 2px solid var(--accent-green);
++   background: none;
++   padding: 0;
++   cursor: pointer;
++   overflow: hidden;
++   transition: all 0.2s ease;
++ }
++ 
++ .user-avatar-btn:hover {
+    transform: scale(1.05);
+- }
+- 
++   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
++ }
++ 
++ .user-avatar-btn img {
++   width: 100%;
++   height: 100%;
++   object-fit: cover;
++ }
++ 
++ /* Welcome Card */
++ .welcome-card {
++   display: flex;
++   align-items: center;
++   justify-content: space-between;
++   padding: 1rem 1.25rem;
++   background: var(--bg-card);
++   border-radius: 16px;
++   border: 1px solid var(--border-color);
++ }
++ 
++ .welcome-content {
++   display: flex;
++   flex-direction: column;
++ }
++ 
++ .welcome-greeting {
++   font-size: 0.8rem;
++   color: var(--text-muted);
++ }
++ 
++ .welcome-name {
++   font-size: 1.25rem;
++   font-weight: 600;
++   color: var(--text-primary);
++   line-height: 1.2;
++ }
++ 
++ .welcome-player {
++   font-size: 0.85rem;
++   color: var(--accent-green);
++   font-weight: 500;
++ }
++ 
++ .welcome-actions {
++   display: flex;
++   gap: 0.5rem;
++ }
++ 
++ .chip-btn {
++   padding: 0.5rem 1rem;
++   border-radius: 20px;
++   border: none;
++   background: var(--bg-elevated);
++   color: var(--text-secondary);
++   font-size: 0.8rem;
++   font-weight: 500;
++   cursor: pointer;
++   transition: all 0.2s ease;
++   font-family: inherit;
++ }
++ 
++ .chip-btn:hover {
++   background: var(--bg-card-hover);
++ }
++ 
++ .chip-btn.active {
++   background: var(--accent-green);
++   color: #000;
++ }
++ 
++ .chip-btn.outline {
++   background: transparent;
++   border: 1px solid var(--border-color);
++ }
++ 
++ .chip-btn.outline:hover {
++   border-color: var(--text-muted);
++ }
++ 
++ /* Login Prompt */
++ .login-prompt {
++   text-align: center;
++   padding: 1.5rem;
++   background: var(--bg-card);
++   border-radius: 16px;
++   border: 1px solid var(--border-color);
++ }
++ 
++ .login-prompt p {
++   color: var(--text-secondary);
++   font-size: 0.9rem;
++   margin-bottom: 1rem;
++ }
++ 
++ .google-btn {
++   display: inline-flex;
++   align-items: center;
++   gap: 0.75rem;
++   padding: 0.875rem 1.5rem;
++   border-radius: 12px;
++   border: none;
++   background: #fff;
++   color: #333;
++   font-size: 0.9rem;
++   font-weight: 500;
++   cursor: pointer;
++   transition: all 0.2s ease;
++   font-family: inherit;
++ }
++ 
++ .google-btn:hover {
++   transform: scale(1.02);
++   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
++ }
++ 
++ /* Filter Pills */
++ .filter-pills {
++   display: flex;
++   gap: 0.5rem;
++   padding: 0 1rem;
++   margin-bottom: 1rem;
++   overflow-x: auto;
++   -webkit-overflow-scrolling: touch;
++   scrollbar-width: none;
++ }
++ 
++ .filter-pills::-webkit-scrollbar {
++   display: none;
++ }
++ 
++ .pill {
++   padding: 0.5rem 1rem;
++   border-radius: 20px;
++   border: 1px solid var(--border-color);
++   background: transparent;
++   color: var(--text-secondary);
++   font-size: 0.8rem;
++   font-weight: 500;
++   cursor: pointer;
++   transition: all 0.2s ease;
++   white-space: nowrap;
++   font-family: inherit;
++ }
++ 
++ .pill:hover {
++   border-color: var(--text-muted);
++ }
++ 
++ .pill.active {
++   background: var(--accent-green);
++   border-color: var(--accent-green);
++   color: #000;
++ }
++ 
++ /* Legacy header styles (keep for compatibility) */
+  .header h1 {
+    font-size: 2.5rem;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me build and deploy the changes.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Redesign header with premium/elegant UI like top apps" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Redesign header with premium/elegant UI like top apps" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 735 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.70 kB
+dist/assets/index-gF1ULG2r.css     41.16 kB │ gzip:   7.26 kB
+dist/assets/index-SW0Srtvq.js   1,021.89 kB │ gzip: 278.76 kB
+✓ built in 2.62s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main db5937f] Redesign header with premium/elegant UI like top apps
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 7 files changed, 867 insertions(+), 280 deletions(-)
+ delete mode 100644 dist/assets/index-DldxXri0.css
+ rename dist/assets/{index-Dg98H3hp.js =&gt; index-SW0Srtvq.js} (66%)
+ create mode 100644 dist/assets/index-gF1ULG2r.css
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/2.5MB)
+Uploading [=====---------------] (638.9KB/2.5MB)
+Uploading [==========----------] (1.2MB/2.5MB)
+Uploading [===============-----] (1.9MB/2.5MB)
+Uploading [====================] (2.5MB/2.5MB)
+https://lukto-winrate-webapp-q2g5fvscy-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/7hVVTqwZqnKHiUo4VRNsRaFo386g [3s]
+Production: https://lukto-winrate-webapp-q2g5fvscy-josefatrixs-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 202 packages in 7s
+Building: 18 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 735 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.70 kB
+Building: dist/assets/index-gF1ULG2r.css     41.16 kB │ gzip:   7.24 kB
+Building: dist/assets/index-SW0Srtvq.js   1,021.89 kB │ gzip: 279.92 kB
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: ✓ built in 4.63s
+Building: Build Completed in /vercel/output [13s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-q2g5fvscy-josefatrixs-projects.vercel.app [24s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [24s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-q2g5fvscy-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-q2g5fvscy-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+<think><details><summary>Thought Process</summary>
+The deployment was successful. Let me summarize the changes for the user.</details></think>
+
+---
+
+¡Listo! Rediseñé completamente el header con un estilo más premium y elegante. Los cambios incluyen:
+
+**Nuevo diseño del header:**
+
+1. **Top Bar minimalista** - Logo pequeño a la izquierda, iconos de acción a la derecha
+2. **Iconos SVG limpios** - Campana para notificaciones, sol/luna para tema (en lugar de emojis)
+3. **Avatar compacto** - Tu foto de perfil con borde verde esmeralda, clickeable
+4. **Welcome Card elegante** - Muestra "Hola, [Nombre]" con tu jugador vinculado
+5. **Botones tipo chip** - "Admin" y "Salir" como pequeños chips modernos
+6. **Filter Pills** - Filtros de tiempo más compactos ("Todo", "Mes", "Semana")
+
+**Características de diseño:**
+
+- Bordes redondeados suaves (12px-16px)
+- Transiciones fluidas
+- Espaciado optimizado
+- Diseño más compacto y funcional
+- Similar a apps como Spotify, Nike, o apps bancarias modernas
+
+**Ve los cambios en:**
+https://lukto-winrate-webapp.vercel.app
+
+Borra el caché o abre en incógnito para ver la nueva UI. ¿Qué te parece? Si quieres ajustar algo (colores, tamaños, disposición), dime.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+pero coloca mas rango y no uses emojis usa algo mas profesional y divertido
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants:
+1. More "rango" (rank) - probably meaning more space/range in the layout, or more prominence
+2. No emojis - use something more professional and fun instead
+
+Let me check the current header to see what emojis might still be there and how to make it more spacious and professional.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to redesign the header to be more spacious (more "rango"), without emojis, and with a professional but fun aesthetic. Let me redesign it with:
+
+1. A hero section with the logo more prominent
+2. User stats card with their rank/XP visible
+3. Quick action buttons with proper icons
+4. More vertical space and breathing room
+5. A gradient or interesting visual elements for fun
+
+Let me redesign this completely.</details></think>
+
+---
+
+Voy a rediseñar el header con más espacio, sin emojis, y un estilo más profesional pero divertido:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 38, lines removed: 15
+
+```diff
+@@ -1453,38 +1453,61 @@
+        {/* Premium Header */}
+        &lt;header className="header-premium"&gt;
+-         {/* Top Bar */}
+-         &lt;div className="top-bar"&gt;
+-           &lt;div className="logo-mini"&gt;
+-             &lt;img src="/lukto-logo.png" alt="LUKTO" /&gt;
++         {/* Hero Section with Logo */}
++         &lt;div className="hero-section"&gt;
++           &lt;div className="hero-background"&gt;&lt;/div&gt;
++           &lt;div className="hero-content"&gt;
++             &lt;img src="/lukto-logo.png" alt="LUKTO" className="hero-logo" /&gt;
++             &lt;div className="hero-text"&gt;
++               &lt;h1 className="hero-title"&gt;LUKTO&lt;/h1&gt;
++               &lt;p className="hero-subtitle"&gt;Win Rate Tracker&lt;/p&gt;
++             &lt;/div&gt;
+            &lt;/div&gt;
+            
+-           &lt;div className="top-bar-actions"&gt;
++           {/* Quick Actions */}
++           &lt;div className="quick-actions"&gt;
+              {'Notification' in window &amp;&amp; (
+                &lt;button 
+-                 className={&#96;icon-btn ${notificationPermission === 'granted' ? 'active' : ''}&#96;}
++                 className={&#96;action-btn ${notificationPermission === 'granted' ? 'active' : ''}&#96;}
+                  onClick={requestNotificationPermission}
++                 aria-label="Notificaciones"
+                &gt;
+-                 &lt;svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"&gt;
+-                   &lt;path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/&gt;
++                 &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"&gt;
++                   &lt;path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/&gt;
++                   &lt;path d="M13.73 21a2 2 0 0 1-3.46 0"/&gt;
+                  &lt;/svg&gt;
+                &lt;/button&gt;
+              )}
+              &lt;button 
+-               className="icon-btn"
++               className="action-btn"
+                onClick={() =&gt; setDarkMode(!darkMode)}
++               aria-label={darkMode ? 'Modo claro' : 'Modo oscuro'}
+              &gt;
+                {darkMode ? (
+-                 &lt;svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"&gt;
+-                   &lt;path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/&gt;
++                 &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"&gt;
++                   &lt;circle cx="12" cy="12" r="5"/&gt;
++                   &lt;line x1="12" y1="1" x2="12" y2="3"/&gt;
++                   &lt;line x1="12" y1="21" x2="12" y2="23"/&gt;
++                   &lt;line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/&gt;
++                   &lt;line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/&gt;
++                   &lt;line x1="1" y1="12" x2="3" y2="12"/&gt;
++                   &lt;line x1="21" y1="12" x2="23" y2="12"/&gt;
++                   &lt;line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/&gt;
++                   &lt;line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/&gt;
+                  &lt;/svg&gt;
+                ) : (
+-                 &lt;svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"&gt;
+-                   &lt;path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/&gt;
++                 &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"&gt;
++                   &lt;path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/&gt;
+                  &lt;/svg&gt;
+                )}
+              &lt;/button&gt;
+-             {user ? (
++           &lt;/div&gt;
++         &lt;/div&gt;
++ 
++         {/* User Profile Card - Logged in */}
++         {user &amp;&amp; (
++           &lt;div className="profile-card"&gt;
++             &lt;div className="profile-card-left"&gt;
+                &lt;button 
+-                 className="user-avatar-btn"
++                 className="profile-avatar-btn"
+                  onClick={() =&gt; {
+                    if (userPlayer) {
+```
+
+**Chunk 2**
+Lines added: 48, lines removed: 30
+
+```diff
+@@ -1495,48 +1518,66 @@
+                &gt;
+                  &lt;img src={user.photoURL} alt="" /&gt;
++                 &lt;div className="avatar-ring"&gt;&lt;/div&gt;
+                &lt;/button&gt;
+-             ) : (
+-               &lt;button className="icon-btn login-btn" onClick={handleGoogleLogin}&gt;
+-                 &lt;svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"&gt;
+-                   &lt;path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/&gt;
+-                 &lt;/svg&gt;
+-               &lt;/button&gt;
+-             )}
+-           &lt;/div&gt;
+-         &lt;/div&gt;
+- 
+-         {/* User Welcome Card - only show if logged in */}
+-         {user &amp;&amp; (
+-           &lt;div className="welcome-card"&gt;
+-             &lt;div className="welcome-content"&gt;
+-               &lt;span className="welcome-greeting"&gt;Hola,&lt;/span&gt;
+-               &lt;span className="welcome-name"&gt;{user.displayName?.split(' ')[0]}&lt;/span&gt;
+-               {userPlayer &amp;&amp; (
+-                 &lt;span className="welcome-player"&gt;{getPlayerName(userPlayer)}&lt;/span&gt;
+-               )}
+-             &lt;/div&gt;
+-             &lt;div className="welcome-actions"&gt;
++               &lt;div className="profile-info"&gt;
++                 &lt;h3 className="profile-name"&gt;{user.displayName}&lt;/h3&gt;
++                 {userPlayer &amp;&amp; (
++                   &lt;div className="profile-player"&gt;
++                     &lt;span className="player-badge"&gt;{getPlayerName(userPlayer)}&lt;/span&gt;
++                     {(() =&gt; {
++                       const playerStats = stats.find(s =&gt; s.id === userPlayer)
++                       if (playerStats) {
++                         return (
++                           &lt;span className={&#96;rank-badge rank-${playerStats.rank?.toLowerCase()}&#96;}&gt;
++                             {playerStats.rank}
++                           &lt;/span&gt;
++                         )
++                       }
++                       return null
++                     })()}
++                   &lt;/div&gt;
++                 )}
++               &lt;/div&gt;
++             &lt;/div&gt;
++             &lt;div className="profile-card-right"&gt;
+                {isAdmin ? (
+-                 &lt;button className="chip-btn active" onClick={handleAdminLogout}&gt;
++                 &lt;button className="mode-btn admin-active" onClick={handleAdminLogout}&gt;
++                   &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"&gt;
++                     &lt;path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/&gt;
++                   &lt;/svg&gt;
+                    Admin
+                  &lt;/button&gt;
+                ) : (
+-                 &lt;button className="chip-btn" onClick={() =&gt; setShowLoginModal(true)}&gt;
++                 &lt;button className="mode-btn" onClick={() =&gt; setShowLoginModal(true)}&gt;
++                   &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"&gt;
++                     &lt;rect x="3" y="11" width="18" height="11" rx="2" ry="2"/&gt;
++                     &lt;path d="M7 11V7a5 5 0 0110 0v4"/&gt;
++                   &lt;/svg&gt;
+                    Admin
+                  &lt;/button&gt;
+                )}
+-               &lt;button className="chip-btn outline" onClick={handleLogout}&gt;
+-                 Salir
++               &lt;button className="logout-btn" onClick={handleLogout}&gt;
++                 &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"&gt;
++                   &lt;path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/&gt;
++                   &lt;polyline points="16,17 21,12 16,7"/&gt;
++                   &lt;line x1="21" y1="12" x2="9" y2="12"/&gt;
++                 &lt;/svg&gt;
+                &lt;/button&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          )}
+  
+-         {/* Login prompt if not logged in */}
++         {/* Login Card - Not logged in */}
+          {!user &amp;&amp; (
+-           &lt;div className="login-prompt"&gt;
+-             &lt;p&gt;Inicia sesión para calificar jugadores&lt;/p&gt;
+-             &lt;button className="google-btn" onClick={handleGoogleLogin}&gt;
+-               &lt;svg viewBox="0 0 24 24" width="18" height="18"&gt;
++           &lt;div className="login-card"&gt;
++             &lt;div className="login-card-content"&gt;
++               &lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="40" height="40" className="login-icon"&gt;
++                 &lt;path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/&gt;
++                 &lt;circle cx="12" cy="7" r="4"/&gt;
++               &lt;/svg&gt;
++               &lt;p className="login-text"&gt;Inicia sesión para calificar jugadores y ver tu perfil&lt;/p&gt;
++             &lt;/div&gt;
++             &lt;button className="google-signin-btn" onClick={handleGoogleLogin}&gt;
++               &lt;svg viewBox="0 0 24 24" width="20" height="20"&gt;
+                  &lt;path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/&gt;
+                  &lt;path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the CSS to style the new header design.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+Status: **loading**
 
 </details>
 
