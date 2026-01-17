@@ -38,47 +38,48 @@ const ProfileIcon = () => (
 export const BottomNav = ({ showPlayerProfile, selectedPlayerProfile, onShowProfile }) => {
   const { activeTab, setActiveTab, userPlayer } = useApp()
 
-  const handleTabClick = tab => {
-    if (onShowProfile) {
-      // Close profile modal when switching tabs
+  // Haptic feedback helper
+  const triggerHaptic = () => {
+    if (navigator.vibrate) {
+      navigator.vibrate(5)
     }
+  }
+
+  const handleTabClick = tab => {
+    triggerHaptic()
     setActiveTab(tab)
   }
 
+  const handleProfileClick = () => {
+    triggerHaptic()
+    if (onShowProfile && userPlayer) {
+      onShowProfile(userPlayer)
+    }
+  }
+
+  const tabs = [
+    { id: 'stats', icon: <RankingIcon />, label: 'Ranking' },
+    { id: 'ratings', icon: <StarIcon />, label: 'Rating' },
+    { id: 'matches', icon: <MatchesIcon />, label: 'Partidos' },
+    { id: 'analytics', icon: <AnalyticsIcon />, label: 'Análisis' },
+  ]
+
   return (
     <nav className="bottom-nav">
-      <button
-        className={`bottom-nav-item ${activeTab === 'stats' && !showPlayerProfile ? 'active' : ''}`}
-        onClick={() => handleTabClick('stats')}
-      >
-        <RankingIcon />
-        <span>Ranking</span>
-      </button>
-      <button
-        className={`bottom-nav-item ${activeTab === 'ratings' && !showPlayerProfile ? 'active' : ''}`}
-        onClick={() => handleTabClick('ratings')}
-      >
-        <StarIcon />
-        <span>Rating</span>
-      </button>
-      <button
-        className={`bottom-nav-item ${activeTab === 'matches' && !showPlayerProfile ? 'active' : ''}`}
-        onClick={() => handleTabClick('matches')}
-      >
-        <MatchesIcon />
-        <span>Partidos</span>
-      </button>
-      <button
-        className={`bottom-nav-item ${activeTab === 'analytics' && !showPlayerProfile ? 'active' : ''}`}
-        onClick={() => handleTabClick('analytics')}
-      >
-        <AnalyticsIcon />
-        <span>Análisis</span>
-      </button>
+      {tabs.map(tab => (
+        <button
+          key={tab.id}
+          className={`bottom-nav-item ${activeTab === tab.id && !showPlayerProfile ? 'active' : ''}`}
+          onClick={() => handleTabClick(tab.id)}
+        >
+          {tab.icon}
+          <span>{tab.label}</span>
+        </button>
+      ))}
       {userPlayer && (
         <button
           className={`bottom-nav-item ${showPlayerProfile && selectedPlayerProfile === userPlayer ? 'active' : ''}`}
-          onClick={() => onShowProfile && onShowProfile(userPlayer)}
+          onClick={handleProfileClick}
         >
           <ProfileIcon />
           <span>Perfil</span>

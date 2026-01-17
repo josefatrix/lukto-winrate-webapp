@@ -1,10 +1,10 @@
 /**
  * LUKTO Stats - Main App Component
- * Refactored version using context and modular components
+ * Premium version with Apple-style interactions
  */
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useApp, SUPER_ADMIN_EMAIL } from './contexts'
-import { useStats } from './hooks'
+import { useStats, useHaptic } from './hooks'
 import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs } from 'firebase/firestore'
 import { db } from './firebase'
 import confetti from 'canvas-confetti'
@@ -13,6 +13,7 @@ import confetti from 'canvas-confetti'
 import { Header, BottomNav } from './components/layout'
 import { StatsTab, MatchesTab, RatingsTab } from './components/tabs'
 import { AdminLoginModal, PendingUserModal } from './components/modals'
+import { FloatingActionButton, SkeletonPage } from './components/common'
 
 // ============ HELPER FUNCTIONS ============
 
@@ -935,27 +936,21 @@ function App() {
         requestNotificationPermission={requestNotificationPermission}
       />
 
-      {/* Time Filter Pills */}
+      {/* Time Filter Pills with Haptic */}
       {(activeTab === 'stats' || activeTab === 'ratings') && (
-        <div className="filter-pills">
-          <button
-            className={`pill ${timeFilter === 'all' ? 'active' : ''}`}
-            onClick={() => setTimeFilter('all')}
-          >
-            Todo
-          </button>
-          <button
-            className={`pill ${timeFilter === 'month' ? 'active' : ''}`}
-            onClick={() => setTimeFilter('month')}
-          >
-            Mes
-          </button>
-          <button
-            className={`pill ${timeFilter === 'week' ? 'active' : ''}`}
-            onClick={() => setTimeFilter('week')}
-          >
-            Semana
-          </button>
+        <div className="filter-pills animate-fade-in">
+          {['all', 'month', 'week'].map((filter) => (
+            <button
+              key={filter}
+              className={`pill btn-haptic ${timeFilter === filter ? 'active' : ''}`}
+              onClick={() => {
+                if (navigator.vibrate) navigator.vibrate(5)
+                setTimeFilter(filter)
+              }}
+            >
+              {filter === 'all' ? 'Todo' : filter === 'month' ? 'Mes' : 'Semana'}
+            </button>
+          ))}
         </div>
       )}
 
@@ -2068,15 +2063,46 @@ function App() {
       )}
 
       {/* Bottom Navigation */}
+      {/* Floating Action Button - Admin Only */}
+      {isAdmin && (
+        <FloatingActionButton
+          menuItems={[
+            { 
+              label: 'Nuevo Partido', 
+              icon: '⚽',
+              onClick: () => setActiveTab('new')
+            },
+            { 
+              label: 'Agregar Jugador', 
+              icon: '👤',
+              onClick: () => openAddEditPlayerModal()
+            },
+            { 
+              label: 'Ver Dashboard', 
+              icon: '📊',
+              onClick: () => setActiveTab('dashboard')
+            },
+          ]}
+          ariaLabel="Acciones rápidas"
+        />
+      )}
+
       <BottomNav
         showPlayerProfile={showPlayerProfile}
         selectedPlayerProfile={selectedPlayerProfile}
         onShowProfile={showProfile}
       />
 
-      {/* Toast Notification */}
+      {/* Premium Toast Notification */}
       {toast && (
-        <div className={`toast ${toast.type}`}>{toast.message}</div>
+        <div className="toast-premium">
+          <div className="toast-content">
+            <span className="toast-icon">
+              {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'ℹ'}
+            </span>
+            <span className="toast-message">{toast.message}</span>
+          </div>
+        </div>
       )}
     </div>
   )
