@@ -58757,17 +58757,695 @@ Abre en **modo incógnito**: **https://lukto-winrate-webapp.vercel.app**
 
 _**User (2026-01-16 17:53Z)**_
 
-tambien quiero control de admin para activar o desactivar que se puedan seguir colocando calificaciones
+tambien quiero control de admin para activar o desactivar que se puedan seguir colocando calificaciones en un partido determinado
 
 ---
 
 _**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+Cancelled
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "matchData|handleAddMatch" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 8 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const handleAddMatch = async () => \{` | L1455 |
+| `src/App.jsx` | `const matchData = \{` | L1461 |
+| `src/App.jsx` | `await updateDoc(doc(db, 'matches', editingMatchId), matchData)` | L1471 |
+| `src/App.jsx` | `matchDate: matchData.date` | L1474 |
+| `src/App.jsx` | `await setDoc(doc(db, 'matches', newMatchId), matchData)` | L1479 |
+| `src/App.jsx` | `matchDate: matchData.date,` | L1482 |
+| `src/App.jsx` | `venue: matchData.venue` | L1483 |
+| `src/App.jsx` | `onClick=\{handleAddMatch\}` | L3356 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -1464,5 +1464,6 @@
+        teamWhite: [...teamWhite],
+        teamBlack: [...teamBlack],
+-       winner
++       winner,
++       ratingsOpen: true // Por defecto, calificaciones abiertas
+      }
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+Ahora agregar función para toggle y la verificación al calificar:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "openRatingModal" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const openRatingModal = (match) => \{` | L1604 |
+| `src/App.jsx` | `onClick=\{() => openRatingModal(match)\}` | L2571 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 13, lines removed: undefined
+
+```diff
+@@ -1600,4 +1600,17 @@
+      }
+    }
++ 
++   // Toggle ratings open/closed for a match
++   const toggleMatchRatings = async (matchId, currentState) =&gt; {
++     try {
++       await updateDoc(doc(db, 'matches', matchId), {
++         ratingsOpen: !currentState
++       })
++       showToast('success', currentState ? 'Calificaciones cerradas' : 'Calificaciones abiertas')
++     } catch (error) {
++       console.error('Error toggling ratings:', error)
++       showToast('error', 'Error al cambiar estado')
++     }
++   }
+  
+    // Rating functions
+```
+
+**Chunk 2**
+Lines added: 6, lines removed: undefined
+
+```diff
+@@ -1607,4 +1620,10 @@
+        return
+      }
++     
++     // Check if ratings are closed for this match
++     if (match.ratingsOpen === false) {
++       showToast('error', 'Las calificaciones están cerradas para este partido')
++       return
++     }
+      
+      const allPlayers = [...match.teamWhite, ...match.teamBlack]
+```
+
+</details>
+
+</tool-use>
+
+---
+
+Ahora agregar el botón de toggle en la UI de partidos:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 19, lines removed: 7
+
+```diff
+@@ -2586,13 +2586,25 @@
+                        )}
+                        {user &amp;&amp; userPlayer &amp;&amp; (
+-                         &lt;button 
+-                           className="rate-match-btn"
+-                           onClick={() =&gt; openRatingModal(match)}
+-                         &gt;
+-                           Calificar
+-                         &lt;/button&gt;
+-                       )}
++                         {match.ratingsOpen !== false &amp;&amp; (
++                           &lt;button 
++                             className="rate-match-btn"
++                             onClick={() =&gt; openRatingModal(match)}
++                           &gt;
++                             Calificar
++                           &lt;/button&gt;
++                         )}
++                         {match.ratingsOpen === false &amp;&amp; !isAdmin &amp;&amp; (
++                           &lt;span className="ratings-closed-badge"&gt;Cerrado&lt;/span&gt;
++                         )}
++                       )}
+                        {isAdmin &amp;&amp; (
+                          &lt;&gt;
++                           &lt;button 
++                             className={&#96;toggle-ratings-btn ${match.ratingsOpen === false ? 'closed' : 'open'}&#96;}
++                             onClick={() =&gt; toggleMatchRatings(match.id, match.ratingsOpen !== false)}
++                             title={match.ratingsOpen === false ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
++                           &gt;
++                             {match.ratingsOpen === false ? '🔒' : '🔓'}
++                           &lt;/button&gt;
+                            &lt;button 
+                              className="edit-match-btn"
+```
+
+</details>
+
+</tool-use>
+
+---
+
+Ahora agregar los estilos:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\.rate-match-btn|\.edit-match-btn" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css" • 6 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/index.css` | `.rate-match-btn,` | L1221 |
+| `src/index.css` | `.edit-match-btn,` | L1222 |
+| `src/index.css` | `.rate-match-btn:hover \{` | L1235 |
+| `src/index.css` | `.edit-match-btn:hover \{` | L1241 |
+| `src/index.css` | `.rate-match-btn,` | L2548 |
+| `src/index.css` | `.edit-match-btn,` | L2549 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -1221,5 +1221,6 @@
+  .rate-match-btn,
+  .edit-match-btn,
+- .delete-match-btn {
++ .delete-match-btn,
++ .toggle-ratings-btn {
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+```
+
+**Chunk 2**
+Lines added: 32, lines removed: undefined
+
+```diff
+@@ -1248,4 +1249,36 @@
+    color: var(--accent-red);
+  }
++ 
++ /* Toggle Ratings Button */
++ .toggle-ratings-btn {
++   padding: 0.35rem 0.5rem;
++   font-size: 0.9rem;
++   line-height: 1;
++ }
++ 
++ .toggle-ratings-btn.open {
++   background: rgba(52, 199, 89, 0.15);
++   color: var(--accent-green);
++ }
++ 
++ .toggle-ratings-btn.closed {
++   background: rgba(255, 69, 58, 0.15);
++   color: var(--accent-red);
++ }
++ 
++ .toggle-ratings-btn:hover {
++   opacity: 0.8;
++ }
++ 
++ /* Ratings Closed Badge */
++ .ratings-closed-badge {
++   padding: 0.25rem 0.5rem;
++   border-radius: 4px;
++   font-size: 0.7rem;
++   font-weight: 600;
++   background: rgba(255, 69, 58, 0.15);
++   color: var(--accent-red);
++   text-transform: uppercase;
++ }
+  
+  /* Match Teams */
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Admin: toggle to open/close ratings per match" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Admin: toggle to open/close ratings per match" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 4 modules transformed.
+x Build failed in 29ms
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx:2588:30: ERROR: Expected "}" but found "."
+file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx:2588:30
+
+Expected "}" but found "."
+2586|                        )}
+2587|                        {user &amp;&amp; userPlayer &amp;&amp; (
+2588|                          {match.ratingsOpen !== false &amp;&amp; (
+   |                                ^
+2589|                            &lt;button 
+2590|                              className="rate-match-btn"
+
+    at failureErrorWithLog (/Users/joseescorcia/Documents/lukto-winrate-webapp/node_modules/esbuild/lib/main.js:1472:15)
+    at /Users/joseescorcia/Documents/lukto-winrate-webapp/node_modules/esbuild/lib/main.js:755:50
+    at responseCallbacks.&lt;computed&gt; (/Users/joseescorcia/Documents/lukto-winrate-webapp/node_modules/esbuild/lib/main.js:622:9)
+    at handleIncomingPacket (/Users/joseescorcia/Documents/lukto-winrate-webapp/node_modules/esbuild/lib/main.js:677:12)
+    at Socket.readFromStdout (/Users/joseescorcia/Documents/lukto-winrate-webapp/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+
+```
+</details>
+</tool-use>
+
+---
+
+Hay un error de sintaxis. Déjame arreglarlo:
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 10, lines removed: 12
+
+```diff
+@@ -2585,16 +2585,14 @@
+                          &lt;/button&gt;
+                        )}
+-                       {user &amp;&amp; userPlayer &amp;&amp; (
+-                         {match.ratingsOpen !== false &amp;&amp; (
+-                           &lt;button 
+-                             className="rate-match-btn"
+-                             onClick={() =&gt; openRatingModal(match)}
+-                           &gt;
+-                             Calificar
+-                           &lt;/button&gt;
+-                         )}
+-                         {match.ratingsOpen === false &amp;&amp; !isAdmin &amp;&amp; (
+-                           &lt;span className="ratings-closed-badge"&gt;Cerrado&lt;/span&gt;
+-                         )}
++                       {user &amp;&amp; userPlayer &amp;&amp; match.ratingsOpen !== false &amp;&amp; (
++                         &lt;button 
++                           className="rate-match-btn"
++                           onClick={() =&gt; openRatingModal(match)}
++                         &gt;
++                           Calificar
++                         &lt;/button&gt;
++                       )}
++                       {user &amp;&amp; userPlayer &amp;&amp; match.ratingsOpen === false &amp;&amp; !isAdmin &amp;&amp; (
++                         &lt;span className="ratings-closed-badge"&gt;Cerrado&lt;/span&gt;
+                        )}
+                        {isAdmin &amp;&amp; (
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Admin: toggle to open/close ratings per match" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Admin: toggle to open/close ratings per match" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 846 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.55 kB │ gzip:   0.71 kB
+dist/assets/index-D_P1NIwb.css     66.18 kB │ gzip:  11.24 kB
+dist/assets/index-BNXiRIgp.js   1,073.99 kB │ gzip: 283.43 kB
+✓ built in 1.33s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main f2a88ae] Admin: toggle to open/close ratings per match
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 7 files changed, 620 insertions(+), 209 deletions(-)
+ rename dist/assets/{index-C1X09WPd.js =&gt; index-BNXiRIgp.js} (66%)
+ delete mode 100644 dist/assets/index-CTk8QWIh.css
+ create mode 100644 dist/assets/index-D_P1NIwb.css
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/3.1MB)
+Uploading [=====---------------] (802.1KB/3.1MB)
+Uploading [==========----------] (1.5MB/3.1MB)
+Uploading [===============-----] (2.3MB/3.1MB)
+Uploading [====================] (3.1MB/3.1MB)
+https://lukto-winrate-webapp-e1gno7tr2-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/ArhKvTvnzuAzLnP4qxpLwp85ehZX [4s]
+Production: https://lukto-winrate-webapp-e1gno7tr2-josefatrixs-projects.vercel.app [4s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 31 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Building: added 406 packages in 8s
+Building: 113 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 846 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                     1.55 kB │ gzip:   0.71 kB
+Building: dist/assets/index-D_P1NIwb.css     66.18 kB │ gzip:  11.23 kB
+Building: dist/assets/index-BNXiRIgp.js   1,073.99 kB │ gzip: 284.47 kB
+Building: ✓ built in 4.42s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [14s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-e1gno7tr2-josefatrixs-projects.vercel.app [25s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [25s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-e1gno7tr2-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-e1gno7tr2-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+¡Listo! Ahora tienes control de calificaciones por partido:
+
+### Nueva funcionalidad:
+
+**Como Admin, en cada partido verás:**
+- 🔓 **Candado abierto verde** = Calificaciones abiertas (usuarios pueden calificar)
+- 🔒 **Candado cerrado rojo** = Calificaciones cerradas (nadie puede calificar)
+
+**Cómo funciona:**
+1. Ve a la sección **Partidos**
+2. En cada partido verás el botón de candado (solo admin)
+3. Haz clic para **abrir/cerrar** las calificaciones
+4. Los partidos nuevos se crean con calificaciones **abiertas por defecto**
+
+**Para los usuarios:**
+- Si las calificaciones están cerradas, verán un badge **"Cerrado"** en lugar del botón "Calificar"
+- Si intentan calificar un partido cerrado, recibirán un mensaje de error
+
+Pruébalo en **https://lukto-winrate-webapp.vercel.app**
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+el ranking general como deberia ser para elegir las posiciones?
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is asking about how the "Ranking General" should determine positions. They want to understand or perhaps configure the criteria for ranking players.
+
+Currently, looking at the app, the ranking is probably based on win rate. But there could be multiple criteria to consider:
+
+1. **Win Rate** - Percentage of wins
+2. **Rating Promedio** - Average player rating from other players
+3. **Number of wins** - Total victories
+4. **Number of games played** - More games = more reliable stats
+5. **MVPs** - Number of MVP awards
+6. **XP** - Experience points
+7. **Combined score** - A mix of multiple factors
+
+Let me ask the user what criteria they want to use for ranking, or explain the current system and offer options.</details></think>
+
+---
+
+Buena pregunta. Actualmente el **Ranking General** ordena por **Win Rate** (porcentaje de victorias). Pero hay varias opciones de cómo se podría ordenar:
+
+### Opciones de criterio de ranking:
+
+1. **Win Rate** (actual) - El que más % de victorias tiene
+2. **Rating Promedio** - El que mejor calificación promedio tiene de otros jugadores
+3. **Victorias Totales** - El que más partidos ha ganado
+4. **XP (Experiencia)** - Combinación de partidos jugados, victorias, MVPs, etc.
+5. **Combinado** - Fórmula que mezcle Win Rate + Rating + MVPs
+
+### ¿Cuál prefieres?
+
+Por ejemplo, un sistema **combinado** podría ser:
+```
+Puntuación = (Win Rate × 0.4) + (Rating Promedio × 10 × 0.3) + (MVPs × 5 × 0.2) + (Partidos × 0.1)
+```
+
+Esto daría peso a:
+- 40% Win Rate
+- 30% Rating de compañeros
+- 20% Cantidad de MVPs
+- 10% Partidos jugados
+
+**¿Quieres que implemente algún sistema específico o prefieres que se pueda elegir desde la configuración de admin?**
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+si esa formula que aplicaste
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants me to implement the combined ranking formula I suggested:
+
+Score = (Win Rate × 0.4) + (Rating Promedio × 10 × 0.3) + (MVPs × 5 × 0.2) + (Partidos × 0.1)
+
+I need to:
+1. Find the calculateStats function
+2. Add a new "score" field that calculates this combined formula
+3. Sort the ranking by this new score instead of just win rate
+
+Let me find the calculateStats function and update it.</details></think>
+
+---
+
+Voy a implementar la fórmula combinada para el ranking:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "const calculateStats|winRate:|avgRating" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 28 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `const calculateStats = () => \{` | L604 |
+| `src/App.jsx` | `winRate: s.played > 0 ? (s.wins / s.played) * 100 : 0,` | L665 |
+| `src/App.jsx` | `avgRating: calculatePlayerAvgRating(id)` | L666 |
+| `src/App.jsx` | `bestTeammate = \{ id, ...stats, winRate: (rate * 100).toFixed(0) \}` | L838 |
+| `src/App.jsx` | `worstRival = \{ id, ...stats, winRate: (rate * 100).toFixed(0) \}` | L851 |
+| `src/App.jsx` | `if (playerStats.avgRating) \{` | L872 |
+| `src/App.jsx` | `xp += Math.round(parseFloat(playerStats.avgRating) * 5)` | L873 |
+| `src/App.jsx` | `winRate: s.played > 0 ? (s.wins / s.played) * 100 : 0,` | L1032 |
+| `src/App.jsx` | `avgRating: calculatePlayerAvgRating(id)` | L1033 |
+| `src/App.jsx` | `// Calculate score for each player (wins * 3 + avgRating)` | L1082 |
+| `src/App.jsx` | `const avgRating = stats.ratingCount > 0 ? stats.totalRating / stats.ratingCount : 5` | L1091 |
+| `src/App.jsx` | `const score = (stats.wins * 3) + avgRating + (stats.played * 0.5)` | L1092 |
+| `src/App.jsx` | `avgRating: avgRating.toFixed(1),` | L1098 |
+| `src/App.jsx` | `winRate: ((stats.wins / stats.played) * 100).toFixed(0)` | L1099 |
+| `src/App.jsx` | `if (playerStats.avgRating) \{` | L1279 |
+| `src/App.jsx` | `const rating = parseFloat(playerStats.avgRating)` | L1280 |
+| `src/App.jsx` | `const avgRating = relevantRatings.length > 0` | L1328 |
+| `src/App.jsx` | `winRate: Math.round((wins / total) * 100),` | L1334 |
+| `src/App.jsx` | `rating: avgRating ? parseFloat(avgRating.toFixed(1)) : null,` | L1335 |
+| `src/App.jsx` | `avgRating: avg,` | L2428 |
+| `src/App.jsx` | `.sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating))` | L2435 |
+| `src/App.jsx` | `<span className=\{`rating-value $\{getRatingClass(parseFloat(player.avgRating))\}`\}>` | L2473 |
+| `src/App.jsx` | `\{player.avgRating\}` | L2474 |
+| `src/App.jsx` | `avgRating: avg.toFixed(1),` | L2559 |
+| `src/App.jsx` | `.sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating))` | L2565 |
+| `src/App.jsx` | `<span className="leaderboard-score">\{player.avgRating\}</span>` | L2670 |
+| `src/App.jsx` | `p.avgRating \|\| '-'` | L3000 |
+| `src/App.jsx` | `<span className="stat-number">\{playerStats?.avgRating \|\| '-'\}</span>` | L3976 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I can see the calculateStats function. I need to modify it to add a combined "score" field and sort by that instead of just winRate. Let me update the function.
+
+The formula is:
+Score = (Win Rate × 0.4) + (Rating Promedio × 10 × 0.3) + (MVPs × 5 × 0.2) + (Partidos × 0.1)
+
+I need to:1. Add the score calculation in the return statement
+2. Change the sort to use score instead of winRate</details></think>
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+
+
+---
+
+<think><details><summary>Thought Process</summary>
+Ah, there's a filter for `s.played > 0`. Let me use the correct string.</details></think>
+
+---
 
 <tool-use data-tool-type="write" data-tool-name="search_replace">
 
 <details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
 
 Status: **loading**
+
+```javascriptreact
+    return Object.entries(stats)
+      .filter(([_, s]) => s.played > 0)
+      .map(([id, s]) => {
+        const winRate = s.played > 0 ? (s.wins / s.played) * 100 : 0
+        const avgRating = calculatePlayerAvgRating(id)
+        const ratingValue = avgRating ? parseFloat(avgRating) : 5 // Default 5 si no hay ratings
+        
+        // Fórmula combinada para ranking:
+        // 40% Win Rate + 30% Rating (×10 para escalar) + 20% MVPs (×5) + 10% Partidos jugados
+        const rankingScore = (winRate * 0.4) + (ratingValue * 10 * 0.3) + (s.mvps * 5 * 0.2) + (s.played * 0.1)
+        
+        return {
+          id,
+          ...s,
+          winRate,
+          avgRating,
+          rankingScore: rankingScore.toFixed(1)
+        }
+      })
+      .sort((a, b) => parseFloat(b.rankingScore) - parseFloat(a.rankingScore) || b.wins - a.wins)
+  }
+
+  const calculatePlayerAvgRating = (playerId) => {
+    const playerRatings = ratings[playerId]
+    if (!playerRatings || playerRatings.length === 0) return null
+    const sum = playerRatings.reduce((acc, r) => acc + r.score, 0)
+    return (sum / playerRatings.length).toFixed(1)
+  }
+
+  const stats = calculateStats()
+```
 
 </details>
 

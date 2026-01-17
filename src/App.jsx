@@ -659,13 +659,24 @@ function App() {
 
     return Object.entries(stats)
       .filter(([_, s]) => s.played > 0)
-      .map(([id, s]) => ({
-        id,
-        ...s,
-        winRate: s.played > 0 ? (s.wins / s.played) * 100 : 0,
-        avgRating: calculatePlayerAvgRating(id)
-      }))
-      .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
+      .map(([id, s]) => {
+        const winRate = s.played > 0 ? (s.wins / s.played) * 100 : 0
+        const avgRating = calculatePlayerAvgRating(id)
+        const ratingValue = avgRating ? parseFloat(avgRating) : 5 // Default 5 si no hay ratings
+        
+        // Fórmula combinada para ranking:
+        // 40% Win Rate + 30% Rating (×10 para escalar) + 20% MVPs (×5) + 10% Partidos jugados
+        const rankingScore = (winRate * 0.4) + (ratingValue * 10 * 0.3) + (s.mvps * 5 * 0.2) + (s.played * 0.1)
+        
+        return {
+          id,
+          ...s,
+          winRate,
+          avgRating,
+          rankingScore: rankingScore.toFixed(1)
+        }
+      })
+      .sort((a, b) => parseFloat(b.rankingScore) - parseFloat(a.rankingScore) || b.wins - a.wins)
   }
 
   const calculatePlayerAvgRating = (playerId) => {
@@ -1026,13 +1037,23 @@ function App() {
 
     return Object.entries(statsMap)
       .filter(([_, s]) => s.played > 0)
-      .map(([id, s]) => ({
-        id,
-        ...s,
-        winRate: s.played > 0 ? (s.wins / s.played) * 100 : 0,
-        avgRating: calculatePlayerAvgRating(id)
-      }))
-      .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
+      .map(([id, s]) => {
+        const winRate = s.played > 0 ? (s.wins / s.played) * 100 : 0
+        const avgRating = calculatePlayerAvgRating(id)
+        const ratingValue = avgRating ? parseFloat(avgRating) : 5
+        
+        // Misma fórmula combinada para ranking
+        const rankingScore = (winRate * 0.4) + (ratingValue * 10 * 0.3) + (s.mvps * 5 * 0.2) + (s.played * 0.1)
+        
+        return {
+          id,
+          ...s,
+          winRate,
+          avgRating,
+          rankingScore: rankingScore.toFixed(1)
+        }
+      })
+      .sort((a, b) => parseFloat(b.rankingScore) - parseFloat(a.rankingScore) || b.wins - a.wins)
   }
 
   // Get player of period (week or month)
@@ -2092,6 +2113,7 @@ function App() {
                   <th>#</th>
                   <th>Jugador</th>
                   <th>Rango</th>
+                  <th>Score</th>
                   <th>Win Rate</th>
                   <th></th>
                   <th>V</th>
@@ -2134,6 +2156,9 @@ function App() {
                       <span className="rank-icon-cell" style={{ color: rank.color }} title={rank.name}>
                         {getRankIcon(rank.key, 20)}
                       </span>
+                    </td>
+                    <td>
+                      <span className="ranking-score">{player.rankingScore}</span>
                     </td>
                     <td>
                       <span className={`win-rate ${getWinRateClass(player.winRate)}`}>
@@ -2989,15 +3014,17 @@ function App() {
                 className="btn-secondary"
                 onClick={() => {
                   // Generate CSV for players stats
-                  const headers = ['Jugador', 'Partidos', 'Victorias', 'Derrotas', 'Win Rate', 'MVPs', 'Rating Promedio']
+                  const headers = ['Jugador', 'Score', 'Partidos', 'Victorias', 'Derrotas', 'Win Rate', 'MVPs', 'Rating Promedio', 'XP']
                   const rows = stats.map(p => [
                     p.name,
+                    p.rankingScore || 0,
                     p.played,
                     p.wins,
                     p.losses,
                     p.winRate.toFixed(1) + '%',
                     p.mvps || 0,
-                    p.avgRating || '-'
+                    p.avgRating || '-',
+                    calculateXP(p.id)
                   ])
                   
                   const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
