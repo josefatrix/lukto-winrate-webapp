@@ -17553,320 +17553,2913 @@ Voy a cambiar a un diseño estilo Apple - minimalista, negro con blanco y acento
 
 <details><summary>Tool use: **write** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/index.css</summary>
 
-Status: **loading**
+**Chunk 1**
+Lines added: 16, lines removed: 19
 
-```css
-:root {
-  --bg-primary: #000000;
-  --bg-secondary: #0a0a0a;
-  --bg-card: #111111;
-  --bg-card-hover: #1a1a1a;
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --accent-primary: #0071e3;
-  --accent-green: #30d158;
-  --accent-orange: #ff9f0a;
-  --accent-red: #ff453a;
-  --accent-purple: #bf5af2;
-  --accent-gray: #86868b;
-  --text-primary: #f5f5f7;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.4);
-  --border-color: rgba(255, 255, 255, 0.1);
-  --team-white: #f5f5f7;
-  --team-black: #1d1d1f;
-}
+```diff
+@@ -1,24 +1,21 @@
+  :root {
+-   --bg-primary: #0a0a0f;
+-   --bg-secondary: #12121a;
+-   --bg-card: rgba(255, 255, 255, 0.03);
+-   --bg-card-hover: rgba(255, 255, 255, 0.07);
+-   --glass-bg: rgba(255, 255, 255, 0.05);
+-   --glass-border: rgba(255, 255, 255, 0.1);
+-   --accent-gold: #f5a623;
+-   --accent-gold-dim: #d4920f;
+-   --accent-emerald: #00d9a5;
+-   --accent-purple: #a855f7;
+-   --accent-blue: #3b82f6;
+-   --accent-red: #ff4757;
+-   --accent-pink: #ff6b9d;
+-   --text-primary: #ffffff;
++   --bg-primary: #000000;
++   --bg-secondary: #0a0a0a;
++   --bg-card: #111111;
++   --bg-card-hover: #1a1a1a;
++   --glass-bg: rgba(255, 255, 255, 0.03);
++   --glass-border: rgba(255, 255, 255, 0.08);
++   --accent-primary: #0071e3;
++   --accent-green: #30d158;
++   --accent-orange: #ff9f0a;
++   --accent-red: #ff453a;
++   --accent-purple: #bf5af2;
++   --accent-gray: #86868b;
++   --text-primary: #f5f5f7;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.4);
+-   --border-color: rgba(255, 255, 255, 0.08);
+-   --team-white: #f8fafc;
+-   --team-black: #1e293b;
+-   --shadow-glow: 0 0 60px rgba(245, 166, 35, 0.15);
+-   --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
++   --border-color: rgba(255, 255, 255, 0.1);
++   --team-white: #f5f5f7;
++   --team-black: #1d1d1f;
+  }
+  
+```
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+**Chunk 2**
+Lines added: 3, lines removed: 17
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+```diff
+@@ -30,24 +27,10 @@
+  
+  body {
+-   font-family: 'Outfit', sans-serif;
++   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+-   overflow-x: hidden;
+- }
+- 
+- body::before {
+-   content: '';
+-   position: fixed;
+-   top: 0;
+-   left: 0;
+-   right: 0;
+-   bottom: 0;
+-   background: 
+-     radial-gradient(ellipse 80% 50% at 20% -20%, rgba(245, 166, 35, 0.15) 0%, transparent 50%),
+-     radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0, 217, 165, 0.1) 0%, transparent 50%),
+-     radial-gradient(ellipse 40% 30% at 50% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+-   pointer-events: none;
+-   z-index: -1;
++   -webkit-font-smoothing: antialiased;
++   -moz-osx-font-smoothing: grayscale;
+  }
+  
+```
 
-#root {
-  min-height: 100vh;
-}
+**Chunk 3**
+Lines added: 10, lines removed: 28
 
-.app-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
+```diff
+@@ -57,50 +40,32 @@
+  
+  .app-container {
+-   max-width: 1400px;
++   max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+- /* Glass Card Mixin Style */
+- .glass-card {
+-   background: var(--glass-bg);
+-   backdrop-filter: blur(20px);
+-   -webkit-backdrop-filter: blur(20px);
+-   border: 1px solid var(--glass-border);
+-   border-radius: 24px;
+-   box-shadow: var(--shadow-card);
+- }
+- 
+- /* Header Styles */
++ /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 3rem;
+-   padding: 3rem 2rem;
+-   position: relative;
++   padding: 3rem 0;
+  }
+  
+  .header h1 {
+-   font-family: 'Bebas Neue', sans-serif;
+-   font-size: 4.5rem;
+-   letter-spacing: 0.15em;
+-   background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-pink) 50%, var(--accent-purple) 100%);
++   font-size: 3.5rem;
++   font-weight: 700;
++   letter-spacing: -0.03em;
++   background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+-   animation: titleGlow 3s ease-in-out infinite;
+- }
+- 
+- @keyframes titleGlow {
+-   0%, 100% { filter: drop-shadow(0 0 20px rgba(245, 166, 35, 0.3)); }
+-   50% { filter: drop-shadow(0 0 40px rgba(245, 166, 35, 0.5)); }
+  }
+  
+  .subtitle {
+-   font-size: 0.9rem;
++   font-size: 1rem;
+    color: var(--text-muted);
+-   text-transform: uppercase;
+-   letter-spacing: 0.3em;
+-   font-weight: 300;
++   font-weight: 400;
++   letter-spacing: 0.02em;
+  }
+  
+```
 
-/* Header */
-.header {
-  text-align: center;
-  margin-bottom: 3rem;
-  padding: 3rem 0;
-}
+**Chunk 4**
+Lines added: 8, lines removed: 9
 
-.header h1 {
-  font-size: 3.5rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.6) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 0.5rem;
-}
+```diff
+@@ -114,27 +79,26 @@
+    align-items: center;
+    gap: 0.75rem;
+-   padding: 0.875rem 2rem;
+-   border-radius: 50px;
++   padding: 0.875rem 1.75rem;
++   border-radius: 980px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+-   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
++   transition: all 0.3s ease;
+    border: none;
+  }
+  
+  .auth-btn.google {
+-   background: rgba(255, 255, 255, 0.95);
+-   color: #333;
+-   box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
++   background: #fff;
++   color: #1d1d1f;
+  }
+  
+  .auth-btn.google:hover {
+-   transform: translateY(-3px) scale(1.02);
+-   box-shadow: 0 8px 30px rgba(255, 255, 255, 0.3);
++   transform: scale(1.02);
++   box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+  }
+  
+  .auth-btn.logout {
+    background: transparent;
+-   border: 1px solid var(--glass-border);
++   border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+```
 
-.subtitle {
-  font-size: 1rem;
-  color: var(--text-muted);
-  font-weight: 400;
-  letter-spacing: 0.02em;
-}
+**Chunk 5**
+Lines added: 10, lines removed: 16
 
-/* Auth Section */
-.auth-section {
-  margin-top: 2rem;
-}
+```diff
+@@ -143,38 +107,32 @@
+  
+  .auth-btn.logout:hover {
+-   background: rgba(255, 71, 87, 0.1);
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+  }
+  
+  .user-info {
+-   display: flex;
++   display: inline-flex;
+    align-items: center;
+-   justify-content: center;
+    gap: 1rem;
+-   flex-wrap: wrap;
+-   background: var(--glass-bg);
+-   backdrop-filter: blur(20px);
+-   padding: 1rem 2rem;
+-   border-radius: 50px;
+-   border: 1px solid var(--glass-border);
+-   display: inline-flex;
++   background: var(--bg-card);
++   padding: 0.75rem 1.5rem;
++   border-radius: 980px;
++   border: 1px solid var(--border-color);
+  }
+  
+  .user-avatar {
+-   width: 40px;
+-   height: 40px;
++   width: 36px;
++   height: 36px;
+    border-radius: 50%;
+-   border: 2px solid var(--accent-gold);
+-   box-shadow: 0 0 20px rgba(245, 166, 35, 0.3);
++   border: 2px solid var(--border-color);
+  }
+  
+  .user-name {
+-   font-weight: 600;
++   font-weight: 500;
+    color: var(--text-primary);
+  }
+  
+  .linked-player {
+-   color: var(--accent-emerald);
++   color: var(--accent-green);
+    font-size: 0.9rem;
+  }
+```
 
-.auth-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1.75rem;
-  border-radius: 980px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-}
+**Chunk 6**
+Lines added: 10, lines removed: 19
 
-.auth-btn.google {
-  background: #fff;
-  color: #1d1d1f;
-}
+```diff
+@@ -186,33 +144,24 @@
+  
+  .admin-btn {
+-   padding: 0.75rem 1.75rem;
+-   border-radius: 50px;
++   padding: 0.75rem 1.5rem;
++   border-radius: 980px;
+    font-size: 0.9rem;
+-   font-weight: 600;
++   font-weight: 500;
+    cursor: pointer;
+-   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+-   border: 1px solid var(--glass-border);
+-   background: var(--glass-bg);
+-   backdrop-filter: blur(10px);
++   transition: all 0.3s ease;
++   border: 1px solid var(--border-color);
++   background: transparent;
+    color: var(--text-secondary);
+  }
+  
+  .admin-btn:hover {
+-   background: rgba(245, 166, 35, 0.1);
+-   border-color: var(--accent-gold);
+-   color: var(--accent-gold);
+-   transform: translateY(-2px);
++   border-color: var(--text-primary);
++   color: var(--text-primary);
+  }
+  
+  .admin-btn.active {
+-   background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-pink) 100%);
+-   border: none;
++   background: #fff;
++   border-color: #fff;
+    color: #000;
+-   box-shadow: 0 4px 20px rgba(245, 166, 35, 0.4);
+- }
+- 
+- .admin-btn.active:hover {
+-   transform: translateY(-2px) scale(1.02);
+-   box-shadow: 0 8px 30px rgba(245, 166, 35, 0.5);
+  }
+  
+```
 
-.auth-btn.google:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
-}
+**Chunk 7**
+Lines added: 7, lines removed: 8
 
-.auth-btn.logout {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
-}
+```diff
+@@ -221,16 +170,15 @@
+    display: flex;
+    justify-content: center;
+-   gap: 0.5rem;
+-   margin-bottom: 2.5rem;
++   gap: 0.25rem;
++   margin-bottom: 2rem;
++   background: var(--bg-card);
++   padding: 0.375rem;
++   border-radius: 12px;
++   border: 1px solid var(--border-color);
+    flex-wrap: wrap;
+-   background: var(--glass-bg);
+-   backdrop-filter: blur(20px);
+-   padding: 0.75rem;
+-   border-radius: 20px;
+-   border: 1px solid var(--glass-border);
+  }
+  
+  .nav-tab {
+-   padding: 0.875rem 1.5rem;
++   padding: 0.75rem 1.25rem;
+    background: transparent;
+    border: none;
+```
 
-.auth-btn.logout:hover {
-  border-color: var(--accent-red);
-  color: var(--accent-red);
-}
+**Chunk 8**
+Lines added: 4, lines removed: 24
 
-.user-info {
-  display: inline-flex;
-  align-items: center;
-  gap: 1rem;
-  background: var(--bg-card);
-  padding: 0.75rem 1.5rem;
-  border-radius: 980px;
-  border: 1px solid var(--border-color);
-}
+```diff
+@@ -239,36 +187,16 @@
+    font-weight: 500;
+    cursor: pointer;
+-   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+-   border-radius: 12px;
+-   position: relative;
+-   overflow: hidden;
+- }
+- 
+- .nav-tab::before {
+-   content: '';
+-   position: absolute;
+-   top: 0;
+-   left: 0;
+-   right: 0;
+-   bottom: 0;
+-   background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-emerald) 100%);
+-   opacity: 0;
+-   transition: opacity 0.3s ease;
+-   border-radius: 12px;
+-   z-index: -1;
++   transition: all 0.2s ease;
++   border-radius: 8px;
+  }
+  
+  .nav-tab:hover {
+    color: var(--text-primary);
+-   transform: translateY(-2px);
++   background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .nav-tab.active {
++   background: #fff;
+    color: #000;
+-   font-weight: 600;
+- }
+- 
+- .nav-tab.active::before {
+-   opacity: 1;
+  }
+  
+```
 
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 2px solid var(--border-color);
-}
+**Chunk 9**
+Lines added: 15, lines removed: 31
 
-.user-name {
-  font-weight: 500;
-  color: var(--text-primary);
-}
+```diff
+@@ -277,52 +205,36 @@
+    color: white;
+    font-size: 0.7rem;
+-   padding: 0.2rem 0.5rem;
+-   border-radius: 50px;
++   padding: 0.15rem 0.5rem;
++   border-radius: 100px;
+    margin-left: 0.5rem;
+-   animation: pulse 2s infinite;
+- }
+- 
+- @keyframes pulse {
+-   0%, 100% { transform: scale(1); }
+-   50% { transform: scale(1.1); }
+  }
+  
+  /* Stats Section */
+  .stats-section {
+-   background: var(--glass-bg);
+-   backdrop-filter: blur(20px);
+-   border: 1px solid var(--glass-border);
+-   border-radius: 24px;
++   background: var(--bg-card);
++   border: 1px solid var(--border-color);
++   border-radius: 20px;
+    padding: 2rem;
+-   margin-bottom: 2rem;
+-   animation: fadeInUp 0.6s ease-out;
++   margin-bottom: 1.5rem;
++   animation: fadeIn 0.4s ease;
+  }
+  
+- @keyframes fadeInUp {
+-   from {
+-     opacity: 0;
+-     transform: translateY(30px);
+-   }
+-   to {
+-     opacity: 1;
+-     transform: translateY(0);
+-   }
++ @keyframes fadeIn {
++   from { opacity: 0; transform: translateY(10px); }
++   to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .section-title {
+-   font-family: 'Bebas Neue', sans-serif;
+-   font-size: 1.8rem;
+-   letter-spacing: 0.1em;
++   font-size: 1.5rem;
++   font-weight: 600;
++   letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+-   background: linear-gradient(90deg, var(--accent-gold), var(--text-primary));
+-   -webkit-background-clip: text;
+-   -webkit-text-fill-color: transparent;
+-   background-clip: text;
++   color: var(--text-primary);
+  }
+  
+  .section-subtitle {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+-   font-size: 0.9rem;
++   font-size: 0.95rem;
+  }
+  
+```
 
-.linked-player {
-  color: var(--accent-green);
-  font-size: 0.9rem;
-}
+**Chunk 10**
+Lines added: 45, lines removed: 72
 
-/* Admin Toggle */
-.admin-toggle {
-  margin-top: 1.5rem;
-}
+```diff
+@@ -337,139 +249,112 @@
+  .stats-table {
+    width: 100%;
+-   border-collapse: separate;
+-   border-spacing: 0 0.5rem;
++   border-collapse: collapse;
+  }
+  
+  .stats-table thead th {
+    text-align: left;
+-   padding: 1rem;
++   padding: 1rem 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+-   letter-spacing: 0.1em;
++   letter-spacing: 0.05em;
++   border-bottom: 1px solid var(--border-color);
+  }
+  
+  .stats-table tbody tr {
+-   background: var(--bg-card);
+-   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+-   border-radius: 16px;
++   transition: background 0.2s ease;
++   border-bottom: 1px solid var(--border-color);
++ }
++ 
++ .stats-table tbody tr:last-child {
++   border-bottom: none;
+  }
+  
+  .stats-table tbody tr:hover {
+-   background: var(--bg-card-hover);
+-   transform: translateX(8px) scale(1.01);
+-   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
++   background: rgba(255, 255, 255, 0.03);
+  }
+  
+  .stats-table td {
+-   padding: 1.25rem 1rem;
+- }
+- 
+- .stats-table td:first-child {
+-   border-radius: 16px 0 0 16px;
+- }
+- 
+- .stats-table td:last-child {
+-   border-radius: 0 16px 16px 0;
++   padding: 1rem 0.75rem;
+  }
+  
+- /* Rank Styles */
++ /* Rank */
+  .rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+-   width: 36px;
+-   height: 36px;
+-   border-radius: 12px;
+-   font-weight: 700;
+-   font-size: 0.9rem;
++   width: 32px;
++   height: 32px;
++   border-radius: 8px;
++   font-weight: 600;
++   font-size: 0.85rem;
+    background: var(--bg-secondary);
+-   border: 1px solid var(--border-color);
+-   transition: all 0.3s ease;
+  }
+  
+  .rank-1 {
+-   background: linear-gradient(135deg, #ffd700, #ffaa00);
++   background: linear-gradient(135deg, #ffd60a, #ffb800);
+    color: #000;
+-   box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+  }
+  
+  .rank-2 {
+-   background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
++   background: linear-gradient(135deg, #d1d1d6, #a1a1a6);
+    color: #000;
+-   box-shadow: 0 0 15px rgba(192, 192, 192, 0.3);
+  }
+  
+  .rank-3 {
+    background: linear-gradient(135deg, #cd7f32, #a86428);
+    color: #fff;
+-   box-shadow: 0 0 15px rgba(205, 127, 50, 0.3);
+  }
+  
+- /* Player Name Cell */
++ /* Player Name */
+  .player-name {
+    display: flex;
+    align-items: center;
+-   gap: 1rem;
++   gap: 0.75rem;
+  }
+  
+  .player-avatar {
+-   width: 44px;
+-   height: 44px;
+-   border-radius: 14px;
+-   background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
++   width: 40px;
++   height: 40px;
++   border-radius: 10px;
++   background: linear-gradient(135deg, #1d1d1f, #2d2d2f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+-   font-weight: 700;
+-   font-size: 0.9rem;
+-   color: white;
+-   box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+-   transition: all 0.3s ease;
++   font-weight: 600;
++   font-size: 0.85rem;
++   color: var(--text-primary);
++   border: 1px solid var(--border-color);
+  }
+  
+  .player-avatar.large {
+-   width: 70px;
+-   height: 70px;
+-   font-size: 1.4rem;
+-   border-radius: 20px;
++   width: 60px;
++   height: 60px;
++   font-size: 1.2rem;
++   border-radius: 14px;
+  }
+  
+  .player-avatar.small {
+-   width: 32px;
+-   height: 32px;
+-   font-size: 0.75rem;
+-   border-radius: 10px;
++   width: 28px;
++   height: 28px;
++   font-size: 0.7rem;
++   border-radius: 6px;
+  }
+  
+  /* Win Rate */
+  .win-rate {
+-   font-weight: 700;
+-   font-size: 1.1rem;
+-   padding: 0.4rem 0.8rem;
+-   border-radius: 8px;
+-   display: inline-block;
++   font-weight: 600;
++   font-size: 1rem;
+  }
+  
+- .win-rate.high {
+-   color: var(--accent-emerald);
+-   background: rgba(0, 217, 165, 0.1);
+- }
+- 
+- .win-rate.medium {
+-   color: var(--accent-gold);
+-   background: rgba(245, 166, 35, 0.1);
+- }
+- 
+- .win-rate.low {
+-   color: var(--accent-red);
+-   background: rgba(255, 71, 87, 0.1);
+- }
++ .win-rate.high { color: var(--accent-green); }
++ .win-rate.medium { color: var(--accent-orange); }
++ .win-rate.low { color: var(--accent-red); }
+  
+  /* Win Rate Bar */
+  .winrate-bar-container {
+-   width: 120px;
+-   height: 8px;
++   width: 100px;
++   height: 6px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+```
 
-.admin-btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: 980px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid var(--border-color);
-  background: transparent;
-  color: var(--text-secondary);
-}
+**Chunk 11**
+Lines added: 44, lines removed: 97
 
-.admin-btn:hover {
-  border-color: var(--text-primary);
-  color: var(--text-primary);
-}
+```diff
+@@ -480,149 +365,96 @@
+    height: 100%;
+    border-radius: 10px;
+-   transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+-   position: relative;
+-   overflow: hidden;
+- }
+- 
+- .winrate-bar::after {
+-   content: '';
+-   position: absolute;
+-   top: 0;
+-   left: -100%;
+-   width: 100%;
+-   height: 100%;
+-   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+-   animation: shimmer 2s infinite;
+- }
+- 
+- @keyframes shimmer {
+-   100% { left: 100%; }
++   transition: width 0.8s ease;
+  }
+  
+- .winrate-bar.high {
+-   background: linear-gradient(90deg, var(--accent-emerald), #00ff88);
+- }
+- 
+- .winrate-bar.medium {
+-   background: linear-gradient(90deg, var(--accent-gold), #ffcc00);
+- }
+- 
+- .winrate-bar.low {
+-   background: linear-gradient(90deg, var(--accent-red), #ff6b6b);
+- }
++ .winrate-bar.high { background: var(--accent-green); }
++ .winrate-bar.medium { background: var(--accent-orange); }
++ .winrate-bar.low { background: var(--accent-red); }
+  
+  /* Stat Values */
+  .stat-value {
+-   font-weight: 600;
+-   font-size: 1rem;
++   font-weight: 500;
++   font-size: 0.95rem;
+  }
+  
+- .stat-value.wins {
+-   color: var(--accent-emerald);
+- }
+- 
+- .stat-value.losses {
+-   color: var(--accent-red);
+- }
++ .stat-value.wins { color: var(--accent-green); }
++ .stat-value.losses { color: var(--accent-red); }
+  
+  /* Rating Value */
+  .rating-value {
+-   font-weight: 700;
+-   padding: 0.3rem 0.6rem;
+-   border-radius: 6px;
++   font-weight: 600;
+  }
+  
+- .rating-value.high {
+-   color: var(--accent-emerald);
+-   background: rgba(0, 217, 165, 0.15);
+- }
+- 
+- .rating-value.medium {
+-   color: var(--accent-gold);
+-   background: rgba(245, 166, 35, 0.15);
+- }
+- 
+- .rating-value.low {
+-   color: var(--accent-red);
+-   background: rgba(255, 71, 87, 0.15);
+- }
++ .rating-value.high { color: var(--accent-green); }
++ .rating-value.medium { color: var(--accent-orange); }
++ .rating-value.low { color: var(--accent-red); }
+  
+- .no-rating {
+-   color: var(--text-muted);
+- }
++ .no-rating { color: var(--text-muted); }
+  
+- /* Ratings Grid */
++ /* Ratings Grid - Now Table Style */
+  .ratings-grid {
+-   display: grid;
+-   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+-   gap: 1.5rem;
++   display: flex;
++   flex-direction: column;
++   gap: 0;
+  }
+  
+  .rating-card {
+-   background: var(--bg-card);
+-   border: 1px solid var(--glass-border);
+-   border-radius: 20px;
+-   padding: 1.75rem;
+-   text-align: center;
+-   position: relative;
+-   overflow: hidden;
+-   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
++   display: flex;
++   align-items: center;
++   gap: 1rem;
++   padding: 1rem;
++   border-bottom: 1px solid var(--border-color);
++   transition: background 0.2s ease;
+  }
+  
+- .rating-card::before {
+-   content: '';
+-   position: absolute;
+-   top: 0;
+-   left: 0;
+-   right: 0;
+-   height: 3px;
+-   background: linear-gradient(90deg, var(--accent-gold), var(--accent-emerald));
++ .rating-card:last-child {
++   border-bottom: none;
+  }
+  
+  .rating-card:hover {
+-   transform: translateY(-8px);
+-   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+-   border-color: var(--accent-gold);
++   background: rgba(255, 255, 255, 0.03);
+  }
+  
+  .rating-rank {
+-   position: absolute;
+-   top: 1rem;
+-   right: 1rem;
+-   font-size: 0.8rem;
++   font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
++   width: 40px;
+  }
+  
+  .rating-card h3 {
+-   margin: 1rem 0 0.5rem;
+-   font-size: 1.1rem;
++   flex: 1;
++   font-size: 1rem;
++   font-weight: 500;
+  }
+  
+  .big-rating {
+-   font-size: 2rem;
++   font-size: 1.25rem;
+    font-weight: 700;
+-   margin: 0.5rem 0;
+  }
++ 
++ .big-rating.high { color: var(--accent-green); }
++ .big-rating.medium { color: var(--accent-orange); }
++ .big-rating.low { color: var(--accent-red); }
+  
+  .rating-votes {
+    font-size: 0.85rem;
+    color: var(--text-muted);
++   min-width: 100px;
++   text-align: right;
+  }
+  
+  /* Match Card */
+  .match-card {
+-   background: var(--bg-card);
+-   border: 1px solid var(--glass-border);
+-   border-radius: 20px;
++   background: var(--bg-secondary);
++   border: 1px solid var(--border-color);
++   border-radius: 16px;
+    padding: 1.5rem;
+-   margin-bottom: 1.5rem;
+-   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
++   margin-bottom: 1rem;
++   transition: all 0.2s ease;
+  }
+  
+  .match-card:hover {
+-   transform: translateY(-4px);
+-   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+-   border-color: rgba(255, 255, 255, 0.15);
++   border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+```
 
-.admin-btn.active {
-  background: #fff;
-  border-color: #fff;
-  color: #000;
-}
+**Chunk 12**
+Lines added: 1, lines removed: 1
 
-/* Navigation Tabs */
-.nav-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 0.25rem;
-  margin-bottom: 2rem;
-  background: var(--bg-card);
-  padding: 0.375rem;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  flex-wrap: wrap;
-}
+```diff
+@@ -631,5 +463,5 @@
+    justify-content: space-between;
+    align-items: flex-start;
+-   margin-bottom: 1.25rem;
++   margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+```
 
-.nav-tab {
-  padding: 0.75rem 1.25rem;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-radius: 8px;
-}
+**Chunk 13**
+Lines added: 1, lines removed: 2
 
-.nav-tab:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
-}
+```diff
+@@ -638,7 +470,6 @@
+  .match-date {
+    font-weight: 600;
+-   color: var(--accent-gold);
++   color: var(--text-primary);
+    text-transform: capitalize;
+-   font-size: 1rem;
+  }
+  
+```
 
-.nav-tab.active {
-  background: #fff;
-  color: #000;
-}
+**Chunk 14**
+Lines added: 11, lines removed: 12
 
-.badge {
-  background: var(--accent-red);
-  color: white;
-  font-size: 0.7rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 100px;
-  margin-left: 0.5rem;
-}
+```diff
+@@ -658,28 +489,27 @@
+  .delete-match-btn {
+    padding: 0.5rem 1rem;
+-   border-radius: 10px;
++   border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+-   transition: all 0.3s ease;
+-   border: 1px solid var(--glass-border);
+-   background: var(--glass-bg);
++   transition: all 0.2s ease;
++   border: 1px solid var(--border-color);
++   background: transparent;
+    color: var(--text-secondary);
+  }
+  
+  .rate-match-btn:hover {
+-   background: rgba(245, 166, 35, 0.2);
+-   border-color: var(--accent-gold);
+-   color: var(--accent-gold);
+-   transform: translateY(-2px);
++   background: var(--accent-primary);
++   border-color: var(--accent-primary);
++   color: #fff;
+  }
+  
+  .edit-match-btn:hover {
+-   background: rgba(59, 130, 246, 0.2);
+-   border-color: var(--accent-blue);
+-   color: var(--accent-blue);
++   background: rgba(255, 255, 255, 0.1);
++   border-color: var(--text-primary);
++   color: var(--text-primary);
+  }
+  
+  .delete-match-btn:hover {
+-   background: rgba(255, 71, 87, 0.2);
++   background: rgba(255, 69, 58, 0.1);
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+```
 
-/* Stats Section */
-.stats-section {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 2rem;
-  margin-bottom: 1.5rem;
-  animation: fadeIn 0.4s ease;
-}
+**Chunk 15**
+Lines added: 19, lines removed: 34
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+```diff
+@@ -690,72 +520,57 @@
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+-   gap: 1.5rem;
++   gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .match-team {
+-   background: var(--bg-secondary);
+-   border-radius: 16px;
+-   padding: 1.25rem;
++   background: var(--bg-card);
++   border-radius: 12px;
++   padding: 1rem;
+    border: 1px solid transparent;
+-   transition: all 0.3s ease;
+  }
+  
+  .match-team.winner {
+-   border-color: var(--accent-gold);
+-   box-shadow: 0 0 30px rgba(245, 166, 35, 0.15);
++   border-color: var(--accent-green);
+  }
+  
+  .match-team-header {
+    display: flex;
+    align-items: center;
+-   gap: 0.75rem;
++   gap: 0.5rem;
+    font-weight: 600;
+-   margin-bottom: 1rem;
+-   font-size: 0.95rem;
++   margin-bottom: 0.75rem;
++   font-size: 0.9rem;
+  }
+  
+  .team-badge {
+-   width: 16px;
+-   height: 16px;
++   width: 12px;
++   height: 12px;
+    border-radius: 50%;
+-   border: 2px solid var(--border-color);
+  }
+  
+- .team-badge.white {
+-   background: var(--team-white);
+- }
+- 
+- .team-badge.black {
+-   background: var(--team-black);
+- }
++ .team-badge.white { background: var(--team-white); }
++ .team-badge.black { background: var(--team-black); border: 1px solid var(--border-color); }
+  
+  .match-team-players {
+    display: flex;
+    flex-wrap: wrap;
+-   gap: 0.5rem;
++   gap: 0.375rem;
+  }
+  
+  .match-player-tag {
+-   background: var(--glass-bg);
+-   padding: 0.4rem 0.75rem;
+-   border-radius: 8px;
+-   font-size: 0.85rem;
++   background: var(--bg-secondary);
++   padding: 0.375rem 0.625rem;
++   border-radius: 6px;
++   font-size: 0.8rem;
+    color: var(--text-secondary);
+-   border: 1px solid var(--border-color);
+-   transition: all 0.2s ease;
+- }
+- 
+- .match-player-tag:hover {
+-   background: var(--bg-card-hover);
+-   transform: scale(1.05);
+  }
+  
+  .vs-badge {
+    display: flex;
+    align-items: center;
+-   font-weight: 700;
++   font-weight: 600;
+    color: var(--text-muted);
+-   font-size: 1.2rem;
++   font-size: 0.9rem;
+  }
+  
+```
 
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-bottom: 1.5rem;
-  color: var(--text-primary);
-}
+**Chunk 16**
+Lines added: 2, lines removed: 2
 
-.section-subtitle {
-  color: var(--text-muted);
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
-}
+```diff
+@@ -769,6 +584,6 @@
+  .form-row {
+    display: grid;
+-   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+-   gap: 1.5rem;
++   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
++   gap: 1rem;
+  }
+  
+```
 
-.subsection-title {
-  font-size: 1.1rem;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-  font-weight: 600;
-}
+**Chunk 17**
+Lines added: 23, lines removed: 25
 
-/* Stats Table */
-.stats-table {
-  width: 100%;
-  border-collapse: collapse;
-}
+```diff
+@@ -787,68 +602,66 @@
+  .form-group input,
+  .form-group select {
+-   padding: 1rem 1.25rem;
++   padding: 0.875rem 1rem;
+    background: var(--bg-secondary);
+-   border: 1px solid var(--glass-border);
+-   border-radius: 14px;
++   border: 1px solid var(--border-color);
++   border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 1rem;
+-   transition: all 0.3s ease;
++   transition: border-color 0.2s ease;
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+-   border-color: var(--accent-gold);
+-   box-shadow: 0 0 20px rgba(245, 166, 35, 0.2);
++   border-color: var(--accent-primary);
+  }
+  
+  /* Team Selection */
+  .team-section {
+    background: var(--bg-secondary);
+-   border-radius: 20px;
+-   padding: 1.5rem;
+-   border: 1px solid var(--glass-border);
++   border-radius: 14px;
++   padding: 1.25rem;
++   border: 1px solid var(--border-color);
+  }
+  
+  .team-header {
+    display: flex;
+    align-items: center;
+-   gap: 0.75rem;
+-   margin-bottom: 1.25rem;
++   gap: 0.5rem;
++   margin-bottom: 1rem;
+  }
+  
+  .team-title {
+    font-weight: 600;
+-   font-size: 0.95rem;
++   font-size: 0.9rem;
+  }
+  
+  .player-select-grid {
+    display: flex;
+    flex-wrap: wrap;
+-   gap: 0.5rem;
++   gap: 0.375rem;
+  }
+  
+  .player-chip {
+-   padding: 0.6rem 1rem;
+-   background: var(--glass-bg);
+-   border: 1px solid var(--glass-border);
+-   border-radius: 10px;
++   padding: 0.5rem 0.875rem;
++   background: var(--bg-card);
++   border: 1px solid var(--border-color);
++   border-radius: 8px;
+    color: var(--text-secondary);
+-   font-size: 0.9rem;
++   font-size: 0.85rem;
+    cursor: pointer;
+-   transition: all 0.3s ease;
++   transition: all 0.2s ease;
+  }
+  
+  .player-chip:hover:not(.disabled) {
+-   background: var(--bg-card-hover);
+-   transform: translateY(-2px);
++   border-color: var(--text-primary);
++   color: var(--text-primary);
+  }
+  
+  .player-chip.selected {
+-   background: linear-gradient(135deg, var(--accent-gold), var(--accent-emerald));
++   background: #fff;
+    color: #000;
+-   border-color: transparent;
+-   font-weight: 600;
+-   box-shadow: 0 4px 15px rgba(245, 166, 35, 0.3);
++   border-color: #fff;
++   font-weight: 500;
+  }
+  
+```
 
-.stats-table thead th {
-  text-align: left;
-  padding: 1rem 0.75rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--border-color);
-}
+**Chunk 18**
+Lines added: 29, lines removed: 33
 
-.stats-table tbody tr {
-  transition: background 0.2s ease;
-  border-bottom: 1px solid var(--border-color);
-}
+```diff
+@@ -868,79 +681,75 @@
+    display: flex;
+    align-items: center;
+-   gap: 0.75rem;
+-   padding: 1rem 2rem;
++   gap: 0.5rem;
++   padding: 0.875rem 1.5rem;
+    background: var(--bg-secondary);
+-   border: 2px solid var(--glass-border);
+-   border-radius: 14px;
++   border: 1px solid var(--border-color);
++   border-radius: 10px;
+    color: var(--text-secondary);
+-   font-weight: 600;
++   font-weight: 500;
+    cursor: pointer;
+-   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
++   transition: all 0.2s ease;
+  }
+  
+  .winner-btn:hover {
+-   transform: translateY(-3px);
+-   border-color: var(--accent-gold);
++   border-color: var(--text-primary);
++   color: var(--text-primary);
+  }
+  
+  .winner-btn.selected {
+-   background: linear-gradient(135deg, var(--accent-gold), var(--accent-emerald));
+-   border-color: transparent;
++   background: #fff;
++   border-color: #fff;
+    color: #000;
+-   box-shadow: 0 8px 30px rgba(245, 166, 35, 0.4);
+  }
+  
+  /* Buttons */
+  .submit-btn {
+-   padding: 1rem 2.5rem;
+-   background: linear-gradient(135deg, var(--accent-gold), var(--accent-emerald));
++   padding: 0.875rem 2rem;
++   background: #fff;
+    border: none;
+-   border-radius: 14px;
++   border-radius: 980px;
+    color: #000;
+-   font-weight: 700;
+-   font-size: 1rem;
++   font-weight: 600;
++   font-size: 0.95rem;
+    cursor: pointer;
+-   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+-   text-transform: uppercase;
+-   letter-spacing: 0.05em;
++   transition: all 0.2s ease;
+  }
+  
+  .submit-btn:hover:not(:disabled) {
+-   transform: translateY(-3px) scale(1.02);
+-   box-shadow: 0 10px 30px rgba(245, 166, 35, 0.4);
++   transform: scale(1.02);
++   box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+  }
+  
+  .submit-btn:disabled {
+-   opacity: 0.5;
++   opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .cancel-btn {
+-   padding: 1rem 2rem;
++   padding: 0.875rem 1.5rem;
+    background: transparent;
+-   border: 1px solid var(--glass-border);
+-   border-radius: 14px;
++   border: 1px solid var(--border-color);
++   border-radius: 980px;
+    color: var(--text-secondary);
+-   font-weight: 600;
++   font-weight: 500;
+    cursor: pointer;
+-   transition: all 0.3s ease;
++   transition: all 0.2s ease;
+  }
+  
+  .cancel-btn:hover {
+-   background: rgba(255, 71, 87, 0.1);
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+  }
+  
+  .delete-btn {
+-   padding: 0.75rem 1.5rem;
+-   background: rgba(255, 71, 87, 0.1);
++   padding: 0.625rem 1.25rem;
++   background: transparent;
+    border: 1px solid var(--accent-red);
+-   border-radius: 10px;
++   border-radius: 8px;
+    color: var(--accent-red);
+-   font-weight: 600;
++   font-weight: 500;
+    cursor: pointer;
+-   transition: all 0.3s ease;
++   transition: all 0.2s ease;
+  }
+  
+```
 
-.stats-table tbody tr:last-child {
-  border-bottom: none;
-}
+**Chunk 19**
+Lines added: 9, lines removed: 29
 
-.stats-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
+```diff
+@@ -960,41 +769,21 @@
+  .players-grid {
+    display: grid;
+-   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+-   gap: 1.25rem;
++   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
++   gap: 1rem;
+  }
+  
+  .player-card {
+    display: flex;
+    align-items: center;
+-   gap: 1rem;
+-   background: var(--bg-card);
+-   border: 1px solid var(--glass-border);
+-   border-radius: 18px;
+-   padding: 1.25rem;
+-   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+-   position: relative;
+-   overflow: hidden;
+- }
+- 
+- .player-card::before {
+-   content: '';
+-   position: absolute;
+-   top: 0;
+-   left: 0;
+-   right: 0;
+-   bottom: 0;
+-   background: linear-gradient(135deg, transparent 0%, rgba(245, 166, 35, 0.05) 100%);
+-   opacity: 0;
+-   transition: opacity 0.3s ease;
++   gap: 0.75rem;
++   background: var(--bg-secondary);
++   border: 1px solid var(--border-color);
++   border-radius: 14px;
++   padding: 1rem;
++   transition: all 0.2s ease;
+  }
+  
+  .player-card:hover {
+-   transform: translateY(-5px) translateX(5px);
+-   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+-   border-color: var(--accent-gold);
+- }
+- 
+- .player-card:hover::before {
+-   opacity: 1;
++   border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+```
 
-.stats-table td {
-  padding: 1rem 0.75rem;
-}
+**Chunk 20**
+Lines added: 16, lines removed: 26
 
-/* Rank */
-.rank {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  background: var(--bg-secondary);
-}
+```diff
+@@ -1004,54 +793,44 @@
+  
+  .player-card-info h3 {
+-   font-size: 1.1rem;
+-   margin-bottom: 0.25rem;
++   font-size: 1rem;
++   font-weight: 500;
++   margin-bottom: 0.125rem;
+  }
+  
+  .aliases {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+-   font-style: italic;
+  }
+  
+  .player-card-actions {
+    display: flex;
+-   gap: 0.5rem;
++   gap: 0.375rem;
+  }
+  
+  .edit-player-btn,
+  .delete-player-btn {
+-   width: 38px;
+-   height: 38px;
+-   border-radius: 12px;
+-   border: none;
++   width: 34px;
++   height: 34px;
++   border-radius: 8px;
++   border: 1px solid var(--border-color);
++   background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+-   font-size: 1rem;
+-   transition: all 0.3s ease;
+- }
+- 
+- .edit-player-btn {
+-   background: rgba(245, 166, 35, 0.15);
+-   color: var(--accent-gold);
++   font-size: 0.9rem;
++   transition: all 0.2s ease;
++   color: var(--text-muted);
+  }
+  
+  .edit-player-btn:hover {
+-   background: var(--accent-gold);
+-   color: #000;
+-   transform: scale(1.1);
++   border-color: var(--accent-primary);
++   color: var(--accent-primary);
+  }
+  
+- .delete-player-btn {
+-   background: rgba(255, 71, 87, 0.15);
++ .delete-player-btn:hover {
++   border-color: var(--accent-red);
+    color: var(--accent-red);
+  }
+- 
+- .delete-player-btn:hover {
+-   background: var(--accent-red);
+-   color: white;
+-   transform: scale(1.1);
+- }
+  
+  .add-player-card {
+```
 
-.rank-1 {
-  background: linear-gradient(135deg, #ffd60a, #ffb800);
-  color: #000;
-}
+**Chunk 21**
+Lines added: 6, lines removed: 8
 
-.rank-2 {
-  background: linear-gradient(135deg, #d1d1d6, #a1a1a6);
-  color: #000;
-}
+```diff
+@@ -1060,19 +839,17 @@
+    align-items: center;
+    justify-content: center;
+-   gap: 0.75rem;
++   gap: 0.5rem;
+    background: transparent;
+-   border: 2px dashed var(--glass-border);
+-   border-radius: 18px;
++   border: 1px dashed var(--border-color);
++   border-radius: 14px;
+    padding: 2rem;
+    cursor: pointer;
+-   transition: all 0.3s ease;
++   transition: all 0.2s ease;
+    color: var(--text-muted);
+-   min-height: 120px;
+  }
+  
+  .add-player-card:hover {
+-   border-color: var(--accent-gold);
+-   color: var(--accent-gold);
+-   background: rgba(245, 166, 35, 0.05);
++   border-color: var(--text-primary);
++   color: var(--text-primary);
+  }
+  
+```
 
-.rank-3 {
-  background: linear-gradient(135deg, #cd7f32, #a86428
+**Chunk 22**
+Lines added: 11, lines removed: 23
+
+```diff
+@@ -1085,44 +862,32 @@
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+-   backdrop-filter: blur(10px);
++   backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+-   animation: fadeIn 0.3s ease;
+- }
+- 
+- @keyframes fadeIn {
+-   from { opacity: 0; }
+-   to { opacity: 1; }
++   animation: fadeIn 0.2s ease;
+  }
+  
+  .modal {
+-   background: var(--bg-secondary);
+-   border: 1px solid var(--glass-border);
+-   border-radius: 24px;
++   background: var(--bg-card);
++   border: 1px solid var(--border-color);
++   border-radius: 20px;
+    padding: 2rem;
+-   max-width: 500px;
++   max-width: 480px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+-   animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+-   box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
++   animation: modalIn 0.3s ease;
+  }
+  
+- @keyframes modalSlideIn {
+-   from {
+-     opacity: 0;
+-     transform: translateY(30px) scale(0.95);
+-   }
+-   to {
+-     opacity: 1;
+-     transform: translateY(0) scale(1);
+-   }
++ @keyframes modalIn {
++   from { opacity: 0; transform: scale(0.95); }
++   to { opacity: 1; transform: scale(1); }
+  }
+  
+  .modal.rating-modal {
+-   max-width: 600px;
++   max-width: 560px;
+  }
+  
+```
+
+**Chunk 23**
+Lines added: 9, lines removed: 12
+
+```diff
+@@ -1135,21 +900,18 @@
+  
+  .modal-header h2 {
+-   font-size: 1.4rem;
+-   background: linear-gradient(90deg, var(--accent-gold), var(--accent-emerald));
+-   -webkit-background-clip: text;
+-   -webkit-text-fill-color: transparent;
+-   background-clip: text;
++   font-size: 1.25rem;
++   font-weight: 600;
+  }
+  
+  .modal-close {
+-   width: 40px;
+-   height: 40px;
+-   border-radius: 12px;
+-   background: var(--glass-bg);
+-   border: 1px solid var(--glass-border);
++   width: 36px;
++   height: 36px;
++   border-radius: 50%;
++   background: var(--bg-secondary);
++   border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+-   font-size: 1.5rem;
++   font-size: 1.25rem;
+    cursor: pointer;
+-   transition: all 0.3s ease;
++   transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+```
+
+**Chunk 24**
+Lines added: undefined, lines removed: 2
+
+```diff
+@@ -1158,8 +920,6 @@
+  
+  .modal-close:hover {
+-   background: rgba(255, 71, 87, 0.2);
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+-   transform: rotate(90deg);
+  }
+  
+```
+
+**Chunk 25**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1172,5 +932,5 @@
+  .modal-actions {
+    display: flex;
+-   gap: 1rem;
++   gap: 0.75rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+```
+
+**Chunk 26**
+Lines added: 2, lines removed: 3
+
+```diff
+@@ -1181,8 +941,7 @@
+    display: flex;
+    flex-direction: column;
+-   gap: 1rem;
+-   max-height: 400px;
++   gap: 0.5rem;
++   max-height: 350px;
+    overflow-y: auto;
+-   padding-right: 0.5rem;
+  }
+  
+```
+
+**Chunk 27**
+Lines added: 5, lines removed: 10
+
+```diff
+@@ -1192,19 +951,14 @@
+    align-items: center;
+    gap: 1rem;
+-   padding: 1rem;
+-   background: var(--bg-card);
+-   border-radius: 14px;
+-   border: 1px solid var(--glass-border);
+-   transition: all 0.3s ease;
+- }
+- 
+- .rating-item:hover {
+-   border-color: var(--accent-gold);
++   padding: 0.875rem;
++   background: var(--bg-secondary);
++   border-radius: 10px;
++   border: 1px solid var(--border-color);
+  }
+  
+  .rating-player {
+    display: flex;
+    align-items: center;
+-   gap: 0.75rem;
++   gap: 0.625rem;
+    flex: 1;
+  }
+```
+
+**Chunk 28**
+Lines added: 12, lines removed: 14
+
+```diff
+@@ -1216,27 +970,25 @@
+  
+  .star-btn {
+-   width: 32px;
+-   height: 32px;
+-   border-radius: 8px;
+-   border: 1px solid var(--glass-border);
+-   background: var(--bg-secondary);
++   width: 28px;
++   height: 28px;
++   border-radius: 6px;
++   border: 1px solid var(--border-color);
++   background: var(--bg-card);
+    color: var(--text-muted);
+-   font-size: 0.85rem;
+-   font-weight: 600;
++   font-size: 0.8rem;
++   font-weight: 500;
+    cursor: pointer;
+-   transition: all 0.2s ease;
++   transition: all 0.15s ease;
+  }
+  
+  .star-btn:hover {
+-   border-color: var(--accent-gold);
+-   color: var(--accent-gold);
+-   transform: scale(1.1);
++   border-color: var(--accent-primary);
++   color: var(--accent-primary);
+  }
+  
+  .star-btn.active {
+-   background: linear-gradient(135deg, var(--accent-gold), var(--accent-emerald));
+-   border-color: transparent;
++   background: #fff;
++   border-color: #fff;
+    color: #000;
+-   box-shadow: 0 2px 10px rgba(245, 166, 35, 0.4);
+  }
+  
+```
+
+**Chunk 29**
+Lines added: 3, lines removed: 4
+
+```diff
+@@ -1248,10 +1000,9 @@
+  
+  .pending-avatar {
+-   width: 80px;
+-   height: 80px;
++   width: 72px;
++   height: 72px;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+-   border: 3px solid var(--accent-gold);
+-   box-shadow: 0 0 30px rgba(245, 166, 35, 0.3);
++   border: 2px solid var(--border-color);
+  }
+  
+```
+
+**Chunk 30**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1262,5 +1013,5 @@
+  
+  .pending-hint {
+-   color: var(--accent-emerald);
++   color: var(--accent-green);
+    margin-top: 1rem;
+  }
+```
+
+**Chunk 31**
+Lines added: 14, lines removed: 21
+
+```diff
+@@ -1270,49 +1021,42 @@
+    display: flex;
+    flex-direction: column;
+-   gap: 0.75rem;
++   gap: 0.5rem;
+  }
+  
+  .user-link-card {
+    display: flex;
+    align-items: center;
+-   gap: 1rem;
+-   padding: 1rem 1.25rem;
+-   background: var(--bg-card);
+-   border-radius: 16px;
+-   border: 1px solid var(--glass-border);
+-   transition: all 0.3s ease;
+- }
+- 
+- .user-link-card:hover {
+-   border-color: var(--accent-gold);
++   gap: 0.75rem;
++   padding: 0.875rem 1rem;
++   background: var(--bg-secondary);
++   border-radius: 12px;
++   border: 1px solid var(--border-color);
+  }
+  
+  .user-link-card.pending {
+-   border-color: var(--accent-gold);
+-   background: rgba(245, 166, 35, 0.05);
++   border-color: var(--accent-orange);
+  }
+  
+  .user-link-card.linked {
+-   border-color: var(--accent-emerald);
+-   background: rgba(0, 217, 165, 0.05);
++   border-color: var(--accent-green);
+  }
+  
+  .user-link-info {
+    display: flex;
+    align-items: center;
+-   gap: 0.75rem;
++   gap: 0.625rem;
+    flex: 1;
+  }
+  
+  .user-link-avatar {
+-   width: 44px;
+-   height: 44px;
+-   border-radius: 12px;
++   width: 40px;
++   height: 40px;
++   border-radius: 10px;
+    object-fit: cover;
+  }
+  
+  .user-link-name {
+-   font-weight: 600;
+-   font-size: 0.95rem;
++   font-weight: 500;
++   font-size: 0.9rem;
+  }
+  
+```
+
+**Chunk 32**
+Lines added: 17, lines removed: 25
+
+```diff
+@@ -1323,46 +1067,38 @@
+  
+  .user-link-player {
+-   color: var(--accent-emerald);
++   color: var(--accent-green);
+    font-weight: 500;
+- }
+- 
+- .user-link-action {
+-   flex-shrink: 0;
++   font-size: 0.9rem;
+  }
+  
+  .player-select-dropdown {
+-   padding: 0.6rem 1rem;
+-   background: var(--bg-secondary);
+-   border: 1px solid var(--glass-border);
+-   border-radius: 10px;
++   padding: 0.5rem 0.875rem;
++   background: var(--bg-card);
++   border: 1px solid var(--border-color);
++   border-radius: 8px;
+    color: var(--text-primary);
+-   font-size: 0.9rem;
++   font-size: 0.85rem;
+    cursor: pointer;
+-   transition: all 0.3s ease;
+  }
+  
+  .player-select-dropdown:focus {
+    outline: none;
+-   border-color: var(--accent-gold);
++   border-color: var(--accent-primary);
+  }
+  
+  .unlink-btn {
+-   width: 32px;
+-   height: 32px;
+-   border-radius: 10px;
+-   border: none;
+-   background: rgba(255, 71, 87, 0.15);
+-   color: var(--accent-red);
++   width: 28px;
++   height: 28px;
++   border-radius: 6px;
++   border: 1px solid var(--border-color);
++   background: transparent;
++   color: var(--text-muted);
+    cursor: pointer;
+-   transition: all 0.3s ease;
+-   display: flex;
+-   align-items: center;
+-   justify-content: center;
++   transition: all 0.2s ease;
+  }
+  
+  .unlink-btn:hover {
+-   background: var(--accent-red);
+-   color: white;
+-   transform: scale(1.1);
++   border-color: var(--accent-red);
++   color: var(--accent-red);
+  }
+  
+```
+
+**Chunk 33**
+Lines added: 16, lines removed: 20
+
+```diff
+@@ -1371,51 +1107,47 @@
+    margin-top: 2rem;
+    padding-top: 2rem;
+-   border-top: 1px solid var(--glass-border);
++   border-top: 1px solid var(--border-color);
+  }
+  
+  .add-admin-form {
+    display: flex;
+-   gap: 0.75rem;
+-   margin: 1.25rem 0;
++   gap: 0.5rem;
++   margin: 1rem 0;
+  }
+  
+  .admin-email-input {
+    flex: 1;
+-   padding: 0.875rem 1.25rem;
++   padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+-   border: 1px solid var(--glass-border);
+-   border-radius: 12px;
++   border: 1px solid var(--border-color);
++   border-radius: 10px;
+    color: var(--text-primary);
+-   font-size: 1rem;
+-   transition: all 0.3s ease;
++   font-size: 0.95rem;
+  }
+  
+  .admin-email-input:focus {
+    outline: none;
+-   border-color: var(--accent-gold);
+-   box-shadow: 0 0 20px rgba(245, 166, 35, 0.15);
++   border-color: var(--accent-primary);
+  }
+  
+  .add-admin-btn {
+-   padding: 0.875rem 1.75rem;
+-   background: linear-gradient(135deg, var(--accent-emerald), var(--accent-blue));
+-   color: white;
++   padding: 0.75rem 1.25rem;
++   background: #fff;
++   color: #000;
+    border: none;
+-   border-radius: 12px;
++   border-radius: 10px;
+    cursor: pointer;
+-   font-weight: 600;
+-   transition: all 0.3s ease;
+-   white-space: nowrap;
++   font-weight: 500;
++   transition: all 0.2s ease;
+  }
+  
+  .add-admin-btn:hover {
+-   transform: translateY(-2px);
+-   box-shadow: 0 8px 25px rgba(0, 217, 165, 0.3);
++   transform: scale(1.02);
+  }
+  
+  .admin-list {
+    display: flex;
+    flex-direction: column;
+-   gap: 0.5rem;
++   gap: 0.375rem;
+  }
+  
+```
+
+**Chunk 34**
+Lines added: 25, lines removed: 42
+
+```diff
+@@ -1424,64 +1156,47 @@
+    justify-content: space-between;
+    align-items: center;
+-   padding: 1rem 1.25rem;
+-   background: var(--bg-card);
+-   border-radius: 14px;
+-   border: 1px solid var(--glass-border);
+-   transition: all 0.3s ease;
+- }
+- 
+- .admin-item:hover {
+-   border-color: var(--accent-purple);
++   padding: 0.875rem 1rem;
++   background: var(--bg-secondary);
++   border-radius: 10px;
++   border: 1px solid var(--border-color);
+  }
+  
+  .admin-item.super {
+-   background: linear-gradient(135deg, rgba(245, 166, 35, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+-   border-color: var(--accent-gold);
++   border-color: var(--accent-orange);
+  }
+  
+  .admin-badge {
+-   background: linear-gradient(135deg, var(--accent-gold), var(--accent-pink));
+-   color: #000;
+-   padding: 0.35rem 0.9rem;
+-   border-radius: 20px;
+-   font-size: 0.75rem;
+-   font-weight: 700;
++   background: linear-gradient(135deg, var(--accent-orange), var(--accent-red));
++   color: #fff;
++   padding: 0.25rem 0.75rem;
++   border-radius: 100px;
++   font-size: 0.7rem;
++   font-weight: 600;
+    text-transform: uppercase;
+-   letter-spacing: 0.05em;
+  }
+  
+  .remove-admin-btn {
+-   background: rgba(255, 71, 87, 0.15);
+-   color: var(--accent-red);
+-   border: none;
+-   width: 32px;
+-   height: 32px;
+-   border-radius: 10px;
++   width: 28px;
++   height: 28px;
++   border-radius: 6px;
++   border: 1px solid var(--border-color);
++   background: transparent;
++   color: var(--text-muted);
+    cursor: pointer;
+-   display: flex;
+-   align-items: center;
+-   justify-content: center;
+-   font-size: 0.9rem;
+-   transition: all 0.3s ease;
++   transition: all 0.2s ease;
+  }
+  
+  .remove-admin-btn:hover {
+-   background: var(--accent-red);
+-   color: white;
+-   transform: scale(1.1);
++   border-color: var(--accent-red);
++   color: var(--accent-red);
+  }
+  
+  /* All Ratings View */
+  .match-ratings-card {
+-   background: var(--bg-card);
+-   border-radius: 20px;
+-   padding: 1.5rem;
+-   margin-bottom: 1.5rem;
+-   border: 1px solid var(--glass-border);
+-   transition: all 0.3s ease;
+- }
+- 
+- .match-ratings-card:hover {
+-   border-color: var(--accent-gold);
++   background: var(--bg-secondary);
++   border-radius: 16px;
++   padding: 1.25rem;
++   margin-bottom: 1rem;
++   border: 1px solid var(--border-color);
+  }
+  
+```
+
+**Chunk 35**
+Lines added: 16, lines removed: 16
+
+```diff
+@@ -1490,35 +1205,35 @@
+    justify-content: space-between;
+    align-items: center;
+-   margin-bottom: 1.25rem;
+-   padding-bottom: 1rem;
+-   border-bottom: 1px solid var(--glass-border);
++   margin-bottom: 1rem;
++   padding-bottom: 0.875rem;
++   border-bottom: 1px solid var(--border-color);
+  }
+  
+  .match-ratings-header h3 {
+-   color: var(--accent-gold);
+-   font-size: 1.1rem;
++   color: var(--text-primary);
++   font-size: 1rem;
++   font-weight: 600;
+    text-transform: capitalize;
+  }
+  
+  .match-venue-tag {
+-   background: var(--glass-bg);
+-   padding: 0.35rem 0.9rem;
+-   border-radius: 20px;
+-   font-size: 0.8rem;
+-   color: var(--text-secondary);
+-   border: 1px solid var(--glass-border);
++   background: var(--bg-card);
++   padding: 0.25rem 0.625rem;
++   border-radius: 6px;
++   font-size: 0.75rem;
++   color: var(--text-muted);
+  }
+  
+  .ratings-by-rater {
+    display: flex;
+    flex-direction: column;
+-   gap: 1rem;
++   gap: 0.75rem;
+  }
+  
+  .rater-section {
+-   background: var(--bg-secondary);
+-   border-radius: 14px;
+-   padding: 1.25rem;
+-   border: 1px solid var(--glass-border);
++   background: var(--bg-card);
++   border-radius: 10px;
++   padding: 1rem;
++   border: 1px solid var(--border-color);
+  }
+  
+```
+
+**Chunk 36**
+Lines added: 4, lines removed: 4
+
+```diff
+@@ -1527,16 +1242,16 @@
+    flex-wrap: wrap;
+    align-items: center;
+-   gap: 0.35rem;
+-   margin-bottom: 1rem;
++   gap: 0.25rem;
++   margin-bottom: 0.75rem;
+  }
+  
+  .rater-name {
+    font-weight: 600;
+-   color: var(--accent-emerald);
++   color: var(--accent-primary);
+  }
+  
+  .rater-email {
+    color: var(--text-muted);
+-   font-size: 0.85rem;
++   font-size: 0.8rem;
+  }
+  
+```
+
+**Chunk 37**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -1547,6 +1262,6 @@
+  .rater-ratings {
+    display: grid;
+-   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+-   gap: 0.5rem;
++   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
++   gap: 0.375rem;
+  }
+  
+```
+
+**Chunk 38**
+Lines added: 56, lines removed: 29
+
+```diff
+@@ -1555,65 +1270,92 @@
+    justify-content: space-between;
+    align-items: center;
+-   background: var(--bg-card);
+-   padding: 0.6rem 0.9rem;
+-   border-radius: 10px;
+-   border: 1px solid var(--glass-border);
+-   transition: all 0.2s ease;
+- }
+- 
+- .rating-detail:hover {
+-   border-color: var(--accent-gold);
+-   transform: translateY(-2px);
++   background: var(--bg-secondary);
++   padding: 0.5rem 0.75rem;
++   border-radius: 6px;
+  }
+  
+  .rated-player {
+-   font-size: 0.85rem;
++   font-size: 0.8rem;
+    color: var(--text-primary);
+  }
+  
+  .rating-score {
+-   font-weight: 700;
+-   font-size: 0.85rem;
++   font-weight: 600;
++   font-size: 0.8rem;
+  }
+  
+- .rating-score.high {
+-   color: var(--accent-emerald);
+- }
+- 
+- .rating-score.medium {
+-   color: var(--accent-gold);
+- }
+- 
+- .rating-score.low {
+-   color: var(--accent-red);
+- }
++ .rating-score.high { color: var(--accent-green); }
++ .rating-score.medium { color: var(--accent-orange); }
++ .rating-score.low { color: var(--accent-red); }
+  
+  .no-ratings-yet {
+    text-align: center;
++   padding: 1.25rem;
++   color: var(--text-muted);
++ }
++ 
++ /* Match Average */
++ .match-average {
++   display: flex;
++   justify-content: flex-end;
++   align-items: center;
++   gap: 0.5rem;
++   margin-top: 0.75rem;
++   padding-top: 0.75rem;
++   border-top: 1px solid var(--border-color);
++ }
++ 
++ .match-average-label {
++   font-size: 0.85rem;
++   color: var(--text-muted);
++ }
++ 
++ .match-average-value {
++   font-weight: 700;
++   font-size: 1rem;
++ }
++ 
++ /* Total Average */
++ .total-average-section {
++   background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
++   border: 1px solid var(--border-color);
++   border-radius: 14px;
+    padding: 1.5rem;
++   margin-top: 1.5rem;
++   text-align: center;
++ }
++ 
++ .total-average-label {
++   font-size: 0.9rem;
+    color: var(--text-muted);
+-   font-style: italic;
++   margin-bottom: 0.5rem;
++ }
++ 
++ .total-average-value {
++   font-size: 2.5rem;
++   font-weight: 700;
+  }
+  
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+-   padding: 4rem 2rem;
++   padding: 3rem 2rem;
+    color: var(--text-muted);
+  }
+  
+  .empty-state .icon {
+-   font-size: 4rem;
++   font-size: 3rem;
+    margin-bottom: 1rem;
+-   opacity: 0.5;
++   opacity: 0.4;
+  }
+  
+  .empty-state h3 {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
++   font-weight: 500;
+  }
+  
+  .empty-state.small {
+-   padding: 2rem;
++   padding: 1.5rem;
+  }
+  
+```
+
+**Chunk 39**
+Lines added: 3, lines removed: 3
+
+```diff
+@@ -1625,11 +1367,11 @@
+  }
+  
+- /* Pending Users Section */
++ /* Sections */
+  .pending-users-section {
+-   margin-bottom: 2rem;
++   margin-bottom: 1.5rem;
+  }
+  
+  .linked-users-section {
+-   margin-top: 1.5rem;
++   margin-top: 1.25rem;
+  }
+  
+```
+
+**Chunk 40**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -1641,5 +1383,5 @@
+    
+    .header h1 {
+-     font-size: 3rem;
++     font-size: 2.5rem;
+    }
+    
+```
+
+**Chunk 41**
+Lines added: undefined, lines removed: 1
+
+```diff
+@@ -1650,5 +1392,4 @@
+    .match-teams {
+      grid-template-columns: 1fr;
+-     gap: 1rem;
+    }
+    
+```
+
+**Chunk 42**
+Lines added: 3, lines removed: 8
+
+```diff
+@@ -1657,17 +1398,12 @@
+      padding: 0.5rem;
+    }
+-   
+-   .stats-table {
+-     font-size: 0.85rem;
+-   }
+    
+    .nav-tabs {
+-     flex-wrap: wrap;
+-     padding: 0.5rem;
+-     gap: 0.25rem;
++     gap: 0.125rem;
++     padding: 0.25rem;
+    }
+    
+    .nav-tab {
+-     padding: 0.75rem 1rem;
++     padding: 0.625rem 0.875rem;
+      font-size: 0.8rem;
+    }
+```
+
+**Chunk 43**
+Lines added: 8, lines removed: 5
+
+```diff
+@@ -1680,19 +1416,22 @@
+      flex-direction: column;
+    }
++   
++   .rating-stars {
++     flex-wrap: wrap;
++   }
+  }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+-   width: 8px;
+-   height: 8px;
++   width: 6px;
++   height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+-   background: var(--bg-secondary);
+-   border-radius: 10px;
++   background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+-   background: var(--glass-border);
++   background: var(--border-color);
+    border-radius: 10px;
+  }
+```
+
+**Chunk 44**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -1704,6 +1443,6 @@
+  /* Selection */
+  ::selection {
+-   background: var(--accent-gold);
+-   color: #000;
++   background: var(--accent-primary);
++   color: #fff;
+  }
+  
 ```
 
 </details>
 
 </tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the App.jsx to change the ratings section from cards to a table format, and add the match averages and total average.</details></think>
+
+---
+
+Ahora modifico la sección de calificaciones para que sea una tabla con promedios:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "activeTab === 'ratings'" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `className=\{`nav-tab $\{activeTab === 'ratings' ? 'active' : ''\}`\}` | L756 |
+| `src/App.jsx` | `\{activeTab === 'ratings' && (` | L869 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the ratings section to be a table. Let me read a bit more of the App.jsx to understand the structure better and then make the modification.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 40, lines removed: 20
+
+```diff
+@@ -881,24 +881,44 @@
+            
+            {stats.filter(p =&gt; p.avgRating).length &gt; 0 ? (
+-             &lt;div className="ratings-grid"&gt;
+-               {stats
+-                 .filter(p =&gt; p.avgRating)
+-                 .sort((a, b) =&gt; parseFloat(b.avgRating) - parseFloat(a.avgRating))
+-                 .map((player, index) =&gt; (
+-                   &lt;div key={player.id} className="rating-card"&gt;
+-                     &lt;div className="rating-rank"&gt;#{index + 1}&lt;/div&gt;
+-                     &lt;div className="player-avatar large"&gt;
+-                       {getInitials(player.name)}
+-                     &lt;/div&gt;
+-                     &lt;h3&gt;{player.name}&lt;/h3&gt;
+-                     &lt;div className={&#96;big-rating ${getRatingClass(parseFloat(player.avgRating))}&#96;}&gt;
+-                       ⭐ {player.avgRating}
+-                     &lt;/div&gt;
+-                     &lt;div className="rating-votes"&gt;
+-                       {ratings[player.id]?.length || 0} calificaciones
+-                     &lt;/div&gt;
+-                   &lt;/div&gt;
+-                 ))}
+-             &lt;/div&gt;
++             &lt;table className="stats-table"&gt;
++               &lt;thead&gt;
++                 &lt;tr&gt;
++                   &lt;th&gt;#&lt;/th&gt;
++                   &lt;th&gt;Jugador&lt;/th&gt;
++                   &lt;th&gt;Calificación&lt;/th&gt;
++                   &lt;th&gt;Total Votos&lt;/th&gt;
++                 &lt;/tr&gt;
++               &lt;/thead&gt;
++               &lt;tbody&gt;
++                 {stats
++                   .filter(p =&gt; p.avgRating)
++                   .sort((a, b) =&gt; parseFloat(b.avgRating) - parseFloat(a.avgRating))
++                   .map((player, index) =&gt; (
++                     &lt;tr key={player.id}&gt;
++                       &lt;td&gt;
++                         &lt;span className={&#96;rank ${index &lt; 3 ? &#96;rank-${index + 1}&#96; : ''}&#96;}&gt;
++                           {index + 1}
++                         &lt;/span&gt;
++                       &lt;/td&gt;
++                       &lt;td&gt;
++                         &lt;div className="player-name"&gt;
++                           &lt;div className="player-avatar"&gt;
++                             {getInitials(player.name)}
++                           &lt;/div&gt;
++                           &lt;span&gt;{player.name}&lt;/span&gt;
++                         &lt;/div&gt;
++                       &lt;/td&gt;
++                       &lt;td&gt;
++                         &lt;span className={&#96;rating-value ${getRatingClass(parseFloat(player.avgRating))}&#96;}&gt;
++                           ⭐ {player.avgRating}
++                         &lt;/span&gt;
++                       &lt;/td&gt;
++                       &lt;td&gt;
++                         &lt;span className="stat-value"&gt;{ratings[player.id]?.length || 0}&lt;/span&gt;
++                       &lt;/td&gt;
++                     &lt;/tr&gt;
++                   ))}
++               &lt;/tbody&gt;
++             &lt;/table&gt;
+            ) : (
+              &lt;div className="empty-state"&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the "allRatings" section to show the average per match and total average. Let me find that section first.</details></think>
+
+---
+
+Ahora actualizo la sección de "Ver Calificaciones" para mostrar promedio por partido y promedio total:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "activeTab === 'allRatings'" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `className=\{`nav-tab $\{activeTab === 'allRatings' ? 'active' : ''\}`\}` | L788 |
+| `src/App.jsx` | `\{activeTab === 'allRatings' && isAdmin && (` | L1294 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the allRatings section to include match averages and a total average. Let me do that.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 127, lines removed: 79
+
+```diff
+@@ -1299,83 +1299,131 @@
+            &lt;/p&gt;
+            
+-           {matches.length &gt; 0 ? (
+-             [...matches].reverse().map(match =&gt; {
+-               // Get all ratings for this match
+-               const matchRatings = []
+-               Object.entries(ratings).forEach(([playerId, playerRatings]) =&gt; {
+-                 playerRatings.forEach(rating =&gt; {
+-                   if (rating.matchId === match.id) {
+-                     // Find the email of the rater from userLinks
+-                     const raterLink = Object.entries(userLinks).find(([uid, data]) =&gt; data.playerId === rating.ratedBy)
+-                     const raterEmail = raterLink ? (raterLink[1].userEmail || raterLink[1].odedByEmail) : 'Email no encontrado'
+-                     const raterDisplayName = raterLink ? (raterLink[1].userName || raterLink[1].odedByName) : getPlayerName(rating.ratedBy)
+-                     
+-                     matchRatings.push({
+-                       ...rating,
+-                       ratedPlayerName: getPlayerName(playerId),
+-                       raterName: getPlayerName(rating.ratedBy),
+-                       raterEmail: raterEmail,
+-                       raterDisplayName: raterDisplayName
+-                     })
+-                   }
+-                 })
+-               })
+-               
+-               // Group by rater
+-               const ratingsByRater = {}
+-               matchRatings.forEach(r =&gt; {
+-                 if (!ratingsByRater[r.ratedBy]) {
+-                   ratingsByRater[r.ratedBy] = {
+-                     raterName: r.raterName,
+-                     raterEmail: r.raterEmail,
+-                     raterDisplayName: r.raterDisplayName,
+-                     ratings: []
+-                   }
+-                 }
+-                 ratingsByRater[r.ratedBy].ratings.push(r)
+-               })
+-               
+-               return (
+-                 &lt;div key={match.id} className="match-ratings-card"&gt;
+-                   &lt;div className="match-ratings-header"&gt;
+-                     &lt;h3&gt;{formatDate(match.date)}&lt;/h3&gt;
+-                     &lt;span className="match-venue-tag"&gt;{match.venue}&lt;/span&gt;
+-                   &lt;/div&gt;
+-                   
+-                   {Object.keys(ratingsByRater).length &gt; 0 ? (
+-                     &lt;div className="ratings-by-rater"&gt;
+-                       {Object.entries(ratingsByRater).map(([raterId, data]) =&gt; (
+-                         &lt;div key={raterId} className="rater-section"&gt;
+-                           &lt;div className="rater-header"&gt;
+-                             &lt;span className="rater-name"&gt;📝 {data.raterDisplayName || data.raterName}&lt;/span&gt;
+-                             &lt;span className="rater-email"&gt;({data.raterEmail})&lt;/span&gt;
+-                             &lt;span className="rater-action"&gt; calificó:&lt;/span&gt;
+-                           &lt;/div&gt;
+-                           &lt;div className="rater-ratings"&gt;
+-                             {data.ratings.map((r, idx) =&gt; (
+-                               &lt;div key={idx} className="rating-detail"&gt;
+-                                 &lt;span className="rated-player"&gt;{r.ratedPlayerName}&lt;/span&gt;
+-                                 &lt;span className={&#96;rating-score ${getRatingClass(r.score)}&#96;}&gt;
+-                                   ⭐ {r.score}
+-                                 &lt;/span&gt;
+-                               &lt;/div&gt;
+-                             ))}
+-                           &lt;/div&gt;
+-                         &lt;/div&gt;
+-                       ))}
+-                     &lt;/div&gt;
+-                   ) : (
+-                     &lt;div className="no-ratings-yet"&gt;
+-                       &lt;p&gt;Nadie ha calificado este partido aún&lt;/p&gt;
+-                     &lt;/div&gt;
+-                   )}
+-                 &lt;/div&gt;
+-               )
+-             })
+-           ) : (
+-             &lt;div className="empty-state"&gt;
+-               &lt;p&gt;No hay partidos registrados&lt;/p&gt;
+-             &lt;/div&gt;
+-           )}
++           {(() =&gt; {
++             // Calculate total average across all ratings
++             let allScores = []
++             Object.values(ratings).forEach(playerRatings =&gt; {
++               playerRatings.forEach(r =&gt; allScores.push(r.score))
++             })
++             const totalAverage = allScores.length &gt; 0 
++               ? (allScores.reduce((a, b) =&gt; a + b, 0) / allScores.length).toFixed(2)
++               : null
++             
++             return matches.length &gt; 0 ? (
++               &lt;&gt;
++                 {[...matches].reverse().map(match =&gt; {
++                   // Get all ratings for this match
++                   const matchRatings = []
++                   Object.entries(ratings).forEach(([playerId, playerRatings]) =&gt; {
++                     playerRatings.forEach(rating =&gt; {
++                       if (rating.matchId === match.id) {
++                         // Find the email of the rater from userLinks
++                         const raterLink = Object.entries(userLinks).find(([uid, data]) =&gt; data.playerId === rating.ratedBy)
++                         const raterEmail = raterLink ? (raterLink[1].userEmail || raterLink[1].odedByEmail) : 'Email no encontrado'
++                         const raterDisplayName = raterLink ? (raterLink[1].userName || raterLink[1].odedByName) : getPlayerName(rating.ratedBy)
++                         
++                         matchRatings.push({
++                           ...rating,
++                           ratedPlayerName: getPlayerName(playerId),
++                           raterName: getPlayerName(rating.ratedBy),
++                           raterEmail: raterEmail,
++                           raterDisplayName: raterDisplayName
++                         })
++                       }
++                     })
++                   })
++                   
++                   // Calculate match average
++                   const matchAvg = matchRatings.length &gt; 0 
++                     ? (matchRatings.reduce((a, r) =&gt; a + r.score, 0) / matchRatings.length).toFixed(2)
++                     : null
++                   
++                   // Group by rater
++                   const ratingsByRater = {}
++                   matchRatings.forEach(r =&gt; {
++                     if (!ratingsByRater[r.ratedBy]) {
++                       ratingsByRater[r.ratedBy] = {
++                         raterName: r.raterName,
++                         raterEmail: r.raterEmail,
++                         raterDisplayName: r.raterDisplayName,
++                         ratings: []
++                       }
++                     }
++                     ratingsByRater[r.ratedBy].ratings.push(r)
++                   })
++                   
++                   return (
++                     &lt;div key={match.id} className="match-ratings-card"&gt;
++                       &lt;div className="match-ratings-header"&gt;
++                         &lt;h3&gt;{formatDate(match.date)}&lt;/h3&gt;
++                         &lt;span className="match-venue-tag"&gt;{match.venue}&lt;/span&gt;
++                       &lt;/div&gt;
++                       
++                       {Object.keys(ratingsByRater).length &gt; 0 ? (
++                         &lt;&gt;
++                           &lt;table className="stats-table"&gt;
++                             &lt;thead&gt;
++                               &lt;tr&gt;
++                                 &lt;th&gt;Calificador&lt;/th&gt;
++                                 &lt;th&gt;Email&lt;/th&gt;
++                                 &lt;th&gt;Jugador&lt;/th&gt;
++                                 &lt;th&gt;Nota&lt;/th&gt;
++                               &lt;/tr&gt;
++                             &lt;/thead&gt;
++                             &lt;tbody&gt;
++                               {Object.entries(ratingsByRater).flatMap(([raterId, data]) =&gt; 
++                                 data.ratings.map((r, idx) =&gt; (
++                                   &lt;tr key={&#96;${raterId}-${idx}&#96;}&gt;
++                                     {idx === 0 &amp;&amp; (
++                                       &lt;&gt;
++                                         &lt;td rowSpan={data.ratings.length}&gt;
++                                           &lt;span className="rater-name"&gt;{data.raterDisplayName || data.raterName}&lt;/span&gt;
++                                         &lt;/td&gt;
++                                         &lt;td rowSpan={data.ratings.length}&gt;
++                                           &lt;span className="rater-email"&gt;{data.raterEmail}&lt;/span&gt;
++                                         &lt;/td&gt;
++                                       &lt;/&gt;
++                                     )}
++                                     &lt;td&gt;{r.ratedPlayerName}&lt;/td&gt;
++                                     &lt;td&gt;
++                                       &lt;span className={&#96;rating-value ${getRatingClass(r.score)}&#96;}&gt;
++                                         ⭐ {r.score}
++                                       &lt;/span&gt;
++                                     &lt;/td&gt;
++                                   &lt;/tr&gt;
++                                 ))
++                               )}
++                             &lt;/tbody&gt;
++                           &lt;/table&gt;
++                           &lt;div className="match-average"&gt;
++                             &lt;span className="match-average-label"&gt;Promedio del partido:&lt;/span&gt;
++                             &lt;span className={&#96;match-average-value ${getRatingClass(parseFloat(matchAvg))}&#96;}&gt;
++                               ⭐ {matchAvg}
++                             &lt;/span&gt;
++                           &lt;/div&gt;
++                         &lt;/&gt;
++                       ) : (
++                         &lt;div className="no-ratings-yet"&gt;
++                           &lt;p&gt;Nadie ha calificado este partido aún&lt;/p&gt;
++                         &lt;/div&gt;
++                       )}
++                     &lt;/div&gt;
++                   )
++                 })}
++                 
++                 {totalAverage &amp;&amp; (
++                   &lt;div className="total-average-section"&gt;
++                     &lt;div className="total-average-label"&gt;Promedio Total de Todas las Calificaciones&lt;/div&gt;
++                     &lt;div className={&#96;total-average-value ${getRatingClass(parseFloat(totalAverage))}&#96;}&gt;
++                       ⭐ {totalAverage}
++                     &lt;/div&gt;
++                   &lt;/div&gt;
++                 )}
++               &lt;/&gt;
++             ) : (
++               &lt;div className="empty-state"&gt;
++                 &lt;p&gt;No hay partidos registrados&lt;/p&gt;
++               &lt;/div&gt;
++             )
++           })()}
+          &lt;/section&gt;
+        )}
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me check for linter errors and then deploy the changes.</details></think>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx`
+
+Lint results
+
+Lint errors for `src/App.jsx`
+
+
+| Message | Range | Severity |
+|-------|-------|----------|
+| 'getDocs' is declared but its value is never read. | 9:3-9:10 | DIAGNOSTIC_SEVERITY_HINT |
+| 'query' is declared but its value is never read. | 11:3-11:8 | DIAGNOSTIC_SEVERITY_HINT |
+| 'where' is declared but its value is never read. | 12:3-12:8 | DIAGNOSTIC_SEVERITY_HINT |
+| 'showLinkPlayerModal' is declared but its value is never read. | 79:10-79:29 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleLinkPlayer' is declared but its value is never read. | 290:9-290:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'playerId' is declared but its value is never read. | 290:29-290:37 | DIAGNOSTIC_SEVERITY_HINT |
+| 'handleEditPlayer' is declared but its value is never read. | 572:9-572:25 | DIAGNOSTIC_SEVERITY_HINT |
+| 'uid' is declared but its value is never read. | 1320:76-1320:79 | DIAGNOSTIC_SEVERITY_HINT |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Great, no linter errors. Now let me deploy the changes to Vercel.</details></think>
+
+---
+
+Ahora hago deploy de los cambios:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Apple-style UI: black/white theme, ratings table with averages" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Apple-style UI: black/white theme, ratings table with averages" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 48 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.75 kB │ gzip:   0.43 kB
+dist/assets/index-C-sY769d.css   20.26 kB │ gzip:   3.93 kB
+dist/assets/index-DLyPTzKD.js   630.72 kB │ gzip: 162.29 kB
+✓ built in 691ms
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main f116ad3] Apple-style UI: black/white theme, ratings table with averages
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 7 files changed, 4460 insertions(+), 1840 deletions(-)
+ delete mode 100644 dist/assets/index-BjZ57PlU.css
+ create mode 100644 dist/assets/index-C-sY769d.css
+ rename dist/assets/{index-CwKUhP8N.js =&gt; index-DLyPTzKD.js} (61%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/1.2MB)
+Uploading [=====---------------] (325.1KB/1.2MB)
+Uploading [==========----------] (629.1KB/1.2MB)
+Uploading [===============-----] (941.2KB/1.2MB)
+Uploading [====================] (1.2MB/1.2MB)
+https://lukto-winrate-webapp-6ves7ieav-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/2vUZYU8e91G96iQQfBjucwTjoJEC [7s]
+Production: https://lukto-winrate-webapp-6ves7ieav-josefatrixs-projects.vercel.app [7s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 48 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                   0.75 kB │ gzip:   0.43 kB
+Building: dist/assets/index-C-sY769d.css   20.26 kB │ gzip:   3.94 kB
+Building: dist/assets/index-DLyPTzKD.js   630.72 kB │ gzip: 162.87 kB
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: ✓ built in 2.56s
+Building: Build Completed in /vercel/output [9s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-6ves7ieav-josefatrixs-projects.vercel.app [22s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [22s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-6ves7ieav-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-6ves7ieav-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The deployment is complete. Now let me summarize what was changed for the user.</details></think>
+
+---
+
+✅ **¡Listo!** Los cambios están desplegados:
+
+**Cambios realizados:**
+
+1. **Nuevo tema estilo Apple** - Diseño minimalista con:
+   - Fondo negro puro (#000)
+   - Texto blanco con jerarquía clara
+   - Acentos en azul Apple (#0071e3)
+   - Bordes sutiles y sombras mínimas
+   - Botones redondeados tipo "pill" como iOS
+
+2. **Ranking de Calificaciones en tabla** - Ya no son tarjetas, ahora es una tabla limpia con:
+   - Posición (#)
+   - Jugador con avatar
+   - Calificación
+   - Total de votos
+
+3. **Ver Calificaciones mejorado** (admin) - Ahora muestra:
+   - Tabla por cada partido con calificador, email, jugador y nota
+   - **Promedio del partido** al final de cada partido
+   - **Promedio total** de todas las calificaciones al final
+
+Refresca la página con **Ctrl+Shift+R** (o **Cmd+Shift+R** en Mac):
+👉 **https://lukto-winrate-webapp.vercel.app**
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+pero no se ve cuanto sacó en cada partido. hagamos que al hacer click sobre un jugador se expanda un menu mostrando cuanto saco en cada partido
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
 
 ---
 

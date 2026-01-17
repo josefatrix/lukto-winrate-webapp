@@ -95,6 +95,7 @@ function App() {
   const [showRatingModal, setShowRatingModal] = useState(false)
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [currentRatings, setCurrentRatings] = useState({})
+  const [expandedPlayer, setExpandedPlayer] = useState(null)
   
   // Match form state
   const [matchDate, setMatchDate] = useState('')
@@ -872,54 +873,107 @@ function App() {
           <p className="section-subtitle">
             {user ? (
               userPlayer ? 
-                'Califica a tus compañeros después de cada partido' :
+                'Toca un jugador para ver sus calificaciones por partido' :
                 'Vincula tu cuenta con un jugador para calificar'
             ) : (
-              'Inicia sesión con Google para calificar jugadores'
+              'Toca un jugador para ver el desglose por partido'
             )}
           </p>
           
           {stats.filter(p => p.avgRating).length > 0 ? (
-            <table className="stats-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Jugador</th>
-                  <th>Calificación</th>
-                  <th>Total Votos</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats
-                  .filter(p => p.avgRating)
-                  .sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating))
-                  .map((player, index) => (
-                    <tr key={player.id}>
-                      <td>
+            <div className="ratings-accordion">
+              {stats
+                .filter(p => p.avgRating)
+                .sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating))
+                .map((player, index) => {
+                  const playerRatings = ratings[player.id] || []
+                  const isExpanded = expandedPlayer === player.id
+                  
+                  // Group ratings by match
+                  const ratingsByMatch = {}
+                  playerRatings.forEach(r => {
+                    if (!ratingsByMatch[r.matchId]) {
+                      const match = matches.find(m => m.id === r.matchId)
+                      ratingsByMatch[r.matchId] = {
+                        match,
+                        ratings: []
+                      }
+                    }
+                    ratingsByMatch[r.matchId].ratings.push(r)
+                  })
+                  
+                  return (
+                    <div key={player.id} className={`accordion-item ${isExpanded ? 'expanded' : ''}`}>
+                      <div 
+                        className="accordion-header"
+                        onClick={() => setExpandedPlayer(isExpanded ? null : player.id)}
+                      >
                         <span className={`rank ${index < 3 ? `rank-${index + 1}` : ''}`}>
                           {index + 1}
                         </span>
-                      </td>
-                      <td>
-                        <div className="player-name">
-                          <div className="player-avatar">
-                            {getInitials(player.name)}
-                          </div>
-                          <span>{player.name}</span>
+                        <div className="player-avatar">
+                          {getInitials(player.name)}
                         </div>
-                      </td>
-                      <td>
+                        <span className="accordion-player-name">{player.name}</span>
                         <span className={`rating-value ${getRatingClass(parseFloat(player.avgRating))}`}>
                           ⭐ {player.avgRating}
                         </span>
-                      </td>
-                      <td>
-                        <span className="stat-value">{ratings[player.id]?.length || 0}</span>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+                        <span className="stat-value votes-count">{playerRatings.length} votos</span>
+                        <span className={`expand-icon ${isExpanded ? 'rotated' : ''}`}>▼</span>
+                      </div>
+                      
+                      {isExpanded && (
+                        <div className="accordion-content">
+                          {Object.entries(ratingsByMatch).length > 0 ? (
+                            <table className="match-ratings-table">
+                              <thead>
+                                <tr>
+                                  <th>Partido</th>
+                                  <th>Promedio</th>
+                                  <th>Votos</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {Object.entries(ratingsByMatch)
+                                  .sort((a, b) => new Date(b[1].match?.date || 0) - new Date(a[1].match?.date || 0))
+                                  .map(([matchId, data]) => {
+                                    const matchAvg = data.ratings.length > 0
+                                      ? (data.ratings.reduce((sum, r) => sum + r.score, 0) / data.ratings.length).toFixed(1)
+                                      : '-'
+                                    return (
+                                      <tr key={matchId}>
+                                        <td>
+                                          <div className="match-info-cell">
+                                            <span className="match-date-small">
+                                              {data.match ? formatDate(data.match.date) : 'Partido eliminado'}
+                                            </span>
+                                            {data.match && (
+                                              <span className="match-venue-small">{data.match.venue}</span>
+                                            )}
+                                          </div>
+                                        </td>
+                                        <td>
+                                          <span className={`rating-value ${getRatingClass(parseFloat(matchAvg))}`}>
+                                            ⭐ {matchAvg}
+                                          </span>
+                                        </td>
+                                        <td>
+                                          <span className="stat-value">{data.ratings.length}</span>
+                                        </td>
+                                      </tr>
+                                    )
+                                  })}
+                              </tbody>
+                            </table>
+                          ) : (
+                            <p className="no-data-text">Sin calificaciones detalladas</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+            </div>
           ) : (
             <div className="empty-state">
               <div className="icon">⭐</div>
