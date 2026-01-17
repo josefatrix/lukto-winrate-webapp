@@ -96,6 +96,7 @@ function App() {
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [currentRatings, setCurrentRatings] = useState({})
   const [expandedPlayer, setExpandedPlayer] = useState(null)
+  const [linkingUser, setLinkingUser] = useState(null) // Track which user is being linked
   
   // Match form state
   const [matchDate, setMatchDate] = useState('')
@@ -315,15 +316,24 @@ function App() {
       return
     }
     
+    // Prevent double-clicks
+    if (linkingUser === userId) {
+      return
+    }
+    
+    setLinkingUser(userId)
+    
     try {
       console.log('Vinculando usuario:', userId, 'con jugador:', playerId)
       const linkRef = doc(db, 'userLinks', userId)
       await setDoc(linkRef, { playerId }, { merge: true })
       console.log('Usuario vinculado exitosamente')
-      alert('✅ Usuario vinculado correctamente')
+      // Don't show alert - the UI will update automatically via onSnapshot
     } catch (error) {
       console.error('Error linking user:', error)
       alert('Error al vincular usuario: ' + error.message)
+    } finally {
+      setLinkingUser(null)
     }
   }
 
@@ -1248,7 +1258,7 @@ function App() {
               <h3 className="subsection-title">⏳ Usuarios Pendientes ({pendingUsers.length})</h3>
               <div className="user-links-list">
                 {pendingUsers.map(pending => (
-                  <div key={pending.odedBy} className="user-link-card pending">
+                  <div key={pending.odedBy} className={`user-link-card pending ${linkingUser === pending.odedBy ? 'linking' : ''}`}>
                     <div className="user-link-info">
                       <img src={pending.userPhoto || pending.odedByPhoto} alt="" className="user-link-avatar" />
                       <div>
@@ -1257,22 +1267,27 @@ function App() {
                       </div>
                     </div>
                     <div className="user-link-action">
-                      <select 
-                        className="player-select-dropdown"
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            adminLinkUserToPlayer(pending.odedBy, e.target.value)
-                          }
-                        }}
-                        defaultValue=""
-                      >
-                        <option value="">Selecciona jugador...</option>
-                        {players.map(player => (
-                          <option key={player.id} value={player.id}>
-                            {player.name}
-                          </option>
-                        ))}
-                      </select>
+                      {linkingUser === pending.odedBy ? (
+                        <span className="linking-text">Vinculando...</span>
+                      ) : (
+                        <select 
+                          className="player-select-dropdown"
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              adminLinkUserToPlayer(pending.odedBy, e.target.value)
+                              e.target.value = '' // Reset select
+                            }
+                          }}
+                          defaultValue=""
+                        >
+                          <option value="">Selecciona jugador...</option>
+                          {players.map(player => (
+                            <option key={player.id} value={player.id}>
+                              {player.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                   </div>
                 ))}
