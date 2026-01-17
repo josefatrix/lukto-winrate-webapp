@@ -24147,3 +24147,550 @@ Now I need to create the PendingUserCard component with a proper ref. Let me add
 
 ---
 
+Ahora creo el componente con un ref para el select:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "^function App\(\)" in "/Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `src/App.jsx` | `function App() \{` | L66 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me add the PendingUserCard component before the App function:</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /Users/joseescorcia/Documents/lukto-winrate-webapp/src/App.jsx</summary>
+
+**Chunk 1**
+Lines added: 58, lines removed: undefined
+
+```diff
+@@ -63,4 +63,62 @@
+    }
+  ]
++ 
++ // Component for pending user with proper ref handling
++ function PendingUserCard({ pending, players, linkingUser, onLink }) {
++   const [selectedPlayer, setSelectedPlayer] = useState('')
++   
++   const handleLink = () =&gt; {
++     console.log('=== CLICK EN BOTÓN VERDE ===')
++     console.log('selectedPlayer:', selectedPlayer)
++     console.log('pending.odedBy:', pending.odedBy)
++     
++     if (selectedPlayer &amp;&amp; selectedPlayer !== '') {
++       onLink(pending.odedBy, selectedPlayer)
++     } else {
++       alert('Selecciona un jugador primero')
++     }
++   }
++   
++   return (
++     &lt;div className={&#96;user-link-card pending ${linkingUser === pending.odedBy ? 'linking' : ''}&#96;}&gt;
++       &lt;div className="user-link-info"&gt;
++         &lt;img src={pending.userPhoto || pending.odedByPhoto} alt="" className="user-link-avatar" /&gt;
++         &lt;div&gt;
++           &lt;div className="user-link-name"&gt;{pending.userName || pending.odedByName}&lt;/div&gt;
++           &lt;div className="user-link-email"&gt;{pending.userEmail || pending.odedByEmail}&lt;/div&gt;
++         &lt;/div&gt;
++       &lt;/div&gt;
++       &lt;div className="user-link-action"&gt;
++         {linkingUser === pending.odedBy ? (
++           &lt;span className="linking-text"&gt;Vinculando...&lt;/span&gt;
++         ) : (
++           &lt;&gt;
++             &lt;select 
++               className="player-select-dropdown"
++               value={selectedPlayer}
++               onChange={(e) =&gt; {
++                 console.log('Select cambió a:', e.target.value)
++                 setSelectedPlayer(e.target.value)
++               }}
++             &gt;
++               &lt;option value=""&gt;Selecciona...&lt;/option&gt;
++               {players.map(player =&gt; (
++                 &lt;option key={player.id} value={player.id}&gt;
++                   {player.name}
++                 &lt;/option&gt;
++               ))}
++             &lt;/select&gt;
++             &lt;button
++               className="link-btn"
++               onClick={handleLink}
++             &gt;
++               ✓
++             &lt;/button&gt;
++           &lt;/&gt;
++         )}
++       &lt;/div&gt;
++     &lt;/div&gt;
++   )
++ }
+  
+  function App() {
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me check for lint errors and deploy:</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix: Use separate component with useState for pending users" && npx vercel --prod --yes --force</summary>
+
+```bash
+cd /Users/joseescorcia/Documents/lukto-winrate-webapp && npm run build && git add . && git commit -m "Fix: Use separate component with useState for pending users" && npx vercel --prod --yes --force
+```
+
+```
+
+&gt; lukto-winrate@0.0.1 build
+&gt; vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 48 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.75 kB │ gzip:   0.43 kB
+dist/assets/index-DO0CQmMC.css   22.66 kB │ gzip:   4.31 kB
+dist/assets/index-DqujpL6o.js   633.92 kB │ gzip: 163.34 kB
+✓ built in 2.10s
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[main 5c755f7] Fix: Use separate component with useState for pending users
+ Committer: Jose Escorcia &lt;joseescorcia@MacBook-Pro-de-Jose.local&gt;
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 4 files changed, 744 insertions(+), 126 deletions(-)
+ rename dist/assets/{index-DKScR5bg.js =&gt; index-DqujpL6o.js} (90%)
+Vercel CLI 50.4.5
+Retrieving project…
+Deploying josefatrixs-projects/lukto-winrate-webapp
+Uploading [--------------------] (0.0B/1.4MB)
+Uploading [=====---------------] (367.2KB/1.4MB)
+Uploading [==========----------] (719.2KB/1.4MB)
+Uploading [===============-----] (1.0MB/1.4MB)
+Uploading [====================] (1.4MB/1.4MB)
+https://lukto-winrate-webapp-6rtixmg2i-josefatrixs-projects.vercel.appInspect: https://vercel.com/josefatrixs-projects/lukto-winrate-webapp/2cMKUtgFTwoy2BADtqYuHCnStDMU [3s]
+Production: https://lukto-winrate-webapp-6rtixmg2i-josefatrixs-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Portland, USA (West) – pdx1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Skipping build cache, deployment was triggered without cache.
+Building: Downloading 15 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.4.4
+Building: Installing dependencies...
+Building: added 153 packages in 6s
+Building: 10 packages are looking for funding
+Building: run &#96;npm fund&#96; for details
+Building: Running "npm run build"
+Building: &gt; lukto-winrate@0.0.1 build
+Building: &gt; vite build
+Building: vite v5.4.21 building for production...
+Building: transforming...
+Building: ✓ 48 modules transformed.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                   0.75 kB │ gzip:   0.43 kB
+Building: dist/assets/index-DO0CQmMC.css   22.66 kB │ gzip:   4.32 kB
+Building: dist/assets/index-DqujpL6o.js   633.92 kB │ gzip: 163.93 kB
+Building: ✓ built in 2.58s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [9s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://lukto-winrate-webapp-6rtixmg2i-josefatrixs-projects.vercel.app [18s]
+Completing...
+Aliased: https://lukto-winrate-webapp.vercel.app [18s]
+
+Common next commands:
+- &#96;vercel inspect lukto-winrate-webapp-6rtixmg2i-josefatrixs-projects.vercel.app --logs&#96;
+- &#96;vercel redeploy lukto-winrate-webapp-6rtixmg2i-josefatrixs-projects.vercel.app&#96;
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Done. Now the component has its own useState for tracking the selected player, which should be much more reliable.</details></think>
+
+---
+
+✅ **¡Listo!** Ahora el componente tiene su propio estado React.
+
+**Prueba así:**
+1. Refresca: **Cmd+Shift+R**
+2. Abre la consola (F12)
+3. Selecciona "Manuno" (G-sus) del dropdown - verás en consola: `Select cambió a: 2`
+4. Click en **✓** - verás en consola: `=== CLICK EN BOTÓN VERDE ===`
+
+Si ves esos mensajes en la consola, sabremos exactamente dónde está el problema.
+
+👉 **https://lukto-winrate-webapp.vercel.app**
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+    console.log("Doc:", J, "| playerId:", Z.playerId, "| type:", typeof Z.playerId),
+                Z.playerId && Z.playerId !== "" && Z.playerId !== null ? ($[J] = {
+                    ...Z,
+                    odedBy: J
+                },
+                console.log("  -> Vinculado")) : (W.push({
+                    ...Z,
+                    odedBy: J
+                }),
+                console.log("  -> Pendiente"))
+            }
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is showing me the minified/compiled JavaScript code from the browser. This looks like the production build of the app. This is not very useful for debugging - the user should be testing the app and showing me what happens in the console when they try to link a user.
+
+Let me ask them to actually test the linking functionality and show me the console output.</details></think>
+
+---
+
+Ese es el código compilado del navegador. Necesito que pruebes la funcionalidad:
+
+1. **Refresca la página** (Cmd+Shift+R)
+2. **Abre la consola** (F12 → Console)
+3. **Selecciona un jugador** del dropdown para Jesus Vasquez
+4. **Click en el botón verde ✓**
+
+**Dime qué mensajes aparecen en la consola después de hacer click.** Debería mostrar algo como:
+
+```
+Select cambió a: 2
+=== CLICK EN BOTÓN VERDE ===
+selectedPlayer: 2
+pending.odedBy: kf3rfNm...
+```
+
+¿Aparecen esos mensajes? ¿O no aparece nada?
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+  -> Pendiente
+index-DqujpL6o.js:3164 === UserLinks snapshot update ===
+index-DqujpL6o.js:3164 Total docs: 7
+index-DqujpL6o.js:3164 Doc: 0gyXBKxKKzRoVaDyEvTjkr4WUuI2 | playerId: 1768616815649 | type: string
+index-DqujpL6o.js:3164   -> Vinculado
+index-DqujpL6o.js:3164 Doc: FjfoUtbrTIXWfdSMqNMy4LizzrB3 | playerId: 1 | type: string
+index-DqujpL6o.js:3164   -> Vinculado
+index-DqujpL6o.js:3164 Doc: LLYb98iZ0zNgUtWk0Hz9nx3UGj33 | playerId: 7 | type: string
+index-DqujpL6o.js:3164   -> Vinculado
+index-DqujpL6o.js:3164 Doc: MSeVTFQTvIhQHxkuQPgTxfUNol23 | playerId: 13 | type: string
+index-DqujpL6o.js:3164   -> Vinculado
+index-DqujpL6o.js:3164 Doc: RJFXKhIeaPMImTbCOEBcwkKgEB83 | playerId: 1768614299052 | type: string
+index-DqujpL6o.js:3164   -> Vinculado
+index-DqujpL6o.js:3164 Doc: ZSLN7IK4IqMt7RiCjnqX1kwl5ee2 | playerId: 4 | type: string
+index-DqujpL6o.js:3164   -> Vinculado
+index-DqujpL6o.js:3164 Doc: kf3rfNmRRxMtnVQ3Y5iRt7YKF2e2 | playerId: null | type: object
+index-DqujpL6o.js:3164   -> Pendiente
+index-DqujpL6o.js:3164 === UserLinks snapshot update ===
+index-DqujpL6o.js:3164 Total docs: 7
+index-DqujpL6o.js:3164 Doc: 0gyXBKxKKzRoVaDyEvTjkr4WUuI2 | playerId: 1768616815649 | type: string
+index-DqujpL6o.js:3164   -> Vinculado
+index-DqujpL6o.js:3164 Doc: FjfoUtbrTIXWfdSMqNMy4LizzrB3 | playerId: 1 | type: string
+index-DqujpL6o.js:3164   -> Vinculado
+index-DqujpL6o.js:3164 Doc: LLYb98iZ0zNgUtWk0Hz9nx3UGj33 | playerId: 7 | type: string
+index-DqujpL6o.js:3164   -> Vinculado
+index-DqujpL6o.js:3164 Doc: MSeVTFQTvIhQHxkuQPgTxfUNol23 | playerId: 13 | type: string
+index-DqujpL6o.js:3164   -> Vinculado
+index-DqujpL6o.js:3164 Doc: RJFXKhIeaPMImTbCOEBcwkKgEB83 | playerId: 1768614299052 | type: string
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+I see the console output. The key issue is still that user `kf3rfNmRRxMtnVQ3Y5iRt7YKF2e2` has `playerId: null` and is showing as "Pendiente".
+
+But I don't see the logs from clicking the button or selecting from the dropdown. The user needs to actually try to link the user and show me what appears when they:
+1. Select a player from the dropdown (should show "Select cambió a: X")
+2. Click the green button (should show "=== CLICK EN BOTÓN VERDE ===")
+
+Let me ask them to specifically do that action and show me those logs.</details></think>
+
+---
+
+Bien, veo que la página carga correctamente. Pero ahora necesito ver qué pasa cuando **intentas vincular**:
+
+1. **Selecciona "G-sus" o cualquier jugador** del dropdown para Jesus Vasquez
+2. **Click en el botón verde ✓**
+
+¿Qué mensajes **nuevos** aparecen en la consola? Debería aparecer:
+- `Select cambió a: 2`
+- `=== CLICK EN BOTÓN VERDE ===`
+
+¿Aparecen esos mensajes después de hacer click? ¿O la consola no muestra nada nuevo?
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+solo pasa si selecciono manuno
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user is saying it only happens when they select "Manuno" (G-sus). This is strange - let me think about what could be different about that specific player.
+
+Looking at the initial players:
+```javascript
+{ id: '2', name: 'G-sus', aliases: ['Manuno'] },
+```
+
+So "Manuno" is actually an alias for "G-sus" which has id '2'. 
+
+Wait, the user said "solo pasa si selecciono manuno" - does that mean:
+1. The button only works when selecting Manuno?
+2. Or the problem only happens when selecting Manuno?
+
+I need to clarify. But more importantly, I should ask them to show me the console output when they click the button after selecting Manuno.
+
+Actually, let me think about this differently. If the dropdown and button are working for other players but not Manuno, there might be something special about that player's ID.
+
+But wait - the console should still show the logs regardless of which player is selected. If they're not seeing "Select cambió a:" and "=== CLICK EN BOTÓN VERDE ===" in the console, then the React components aren't working at all.
+
+Let me ask them to show me the full console output after they select a player and click the button.</details></think>
+
+---
+
+¿Qué quieres decir con "solo pasa si selecciono manuno"?
+
+1. ¿El **problema solo ocurre** con Manuno?
+2. ¿O solo **funciona** con Manuno?
+
+Por favor, haz esto y copia **todo** lo que aparece en la consola:
+
+1. Selecciona **Manuno** del dropdown
+2. Click en **✓**
+3. Copia los mensajes que aparecen en la consola
+
+Quiero ver si aparecen estos mensajes:
+```
+Select cambió a: 2
+=== CLICK EN BOTÓN VERDE ===
+```
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+ osea el unico jugador que no le puedo asignar un correo es manuno
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+Ah, now I understand! The user is saying that Manuno (G-sus) is the only player they CAN'T assign an email to. All other players work fine, but when they select Manuno specifically, it doesn't work.
+
+Let me think about what could be different about Manuno. Looking at the initial data:
+```javascript
+{ id: '2', name: 'G-sus', aliases: ['Manuno'] },
+```
+
+The ID is '2'. But wait - looking at the console output from before, I see that several users are already linked to players with numeric IDs like '1', '4', '7', '13', etc. So the ID format shouldn't be the issue.
+
+Actually, looking more carefully at the console:
+```
+Doc: FjfoUtbrTIXWfdSMqNMy4LizzrB3 | playerId: 1 | type: string
+```
+
+Player ID '1' is working fine (that's Colombia Pana). So '2' (G-sus/Manuno) should also work.
+
+Let me check if maybe G-sus is already linked to someone. Looking at the console output, I don't see anyone linked to playerId '2'. So that's not the issue.
+
+Actually, wait - let me check the admin linking function. Maybe there's an issue with how we're checking if the player exists.
+
+Oh! I think I might see the issue. In the adminLinkUserToPlayer function, we check:
+```javascript
+const playerToLink = players.find(p => p.id === playerId)
+```
+
+And the playerId from the dropdown is always a string. But what if the player's ID in the players array is stored differently?
+
+Actually no, all the initial players have string IDs like '1', '2', etc.
+
+Let me think... The user said "solo pasa si selecciono manuno" - which means "it only happens if I select manuno". This implies that when selecting Manuno specifically, something goes wrong.
+
+
+The most likely explanation is that player with id '2' doesn't actually exist in the Firebase players collection anymore—it may have been deleted or never synced properly. I should add logging to verify which players are available when the linking fails, checking if the player ID exists in the collection before attempting the assignment.</details></think>
+
+---
+
+¡Entiendo! G-sus/Manuno (ID: '2') es el único que no funciona.
+
+Cuando seleccionas Manuno y le das al botón verde, ¿te aparece una alerta que dice **"Error: Jugador no encontrado"**?
+
+Si es así, significa que G-sus fue borrado de la lista de jugadores en Firebase.
+
+**Solución:** Ve a la pestaña **👥 Jugadores** y verifica si "G-sus" aparece en la lista. Si no aparece, agrégalo de nuevo.
+
+¿Puedes confirmar si G-sus/Manuno aparece en la lista de jugadores?
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+g-sus lo edite en la pagina y le coloque manuno
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+Ah, now I understand! The user edited "G-sus" and renamed it to "Manuno" in the app. But the edit might not have saved properly to Firebase - this is the same issue from before where edits weren't being reflected in Firebase.
+
+So when the user tries to link someone to "Manuno", the player might still have the old data in Firebase or the ID might have changed.
+
+Let me check - when a player is edited, the `handleAddPlayer` function is called with `editingPlayerId` set. This should use `updateDoc` to update the player. But if that's not working, the player's data in Firebase might be inconsistent.
+
+Also, when the user renamed G-sus to Manuno, the ID stayed the same ('2'), but if the edit didn't save to Firebase, the player in Firebase might still be called "G-sus" while the local state shows "Manuno".
+
+Actually, the real issue might be that when we look for the player by ID, it's not finding it because the players array might have been reloaded from Firebase with the old name.
+
+Let me ask the user to check the console for the "Available players" log when they try to link to Manuno. This will show us what players the app can see and what their IDs are.
+
+Actually, the simpler solution is to just have them check the Players tab and confirm that Manuno/G-sus appears there, and what the player's exact name is.
+
+But first, let me explain the likely issue: when they edited G-sus to Manuno, the edit might not have saved to Firebase (the issue we discussed earlier). So the app is showing the local/cached version, but Firebase still has the old data or no data.
+
+Let me also remind them that we added logging to the handleAddPlayer function earlier. If they edited a player, there should be logs in the console showing "Editando jugador:" and "Jugador actualizado exitosamente" or an error.</details></think>
+
+---
+
+¡Ahí está el problema! Cuando editaste "G-sus" a "Manuno", probablemente **no se guardó en Firebase** (el problema que mencionaste antes).
+
+Vamos a verificar:
+
+1. Ve a la pestaña **👥 Jugadores**
+2. Busca el jugador "Manuno" y haz click en **✏️ (editar)**
+3. Sin cambiar nada, haz click en **GUARDAR CAMBIOS**
+4. Mira la consola - debería mostrar:
+   - `Editando jugador: [ID]`
+   - `Jugador actualizado exitosamente`
+
+**Si ves un error en la consola**, significa que las ediciones no se están guardando en Firebase.
+
+También puedes intentar esto:
+1. **Borra** el jugador "Manuno" (botón 🗑️)
+2. **Crea uno nuevo** llamado "Manuno" con alias "G-sus"
+
+Esto creará un jugador nuevo con un ID válido en Firebase.
+
+---
+
+_**User (2026-01-16 17:53Z)**_
+
+si, ya hice eso y sigue sin funcionar
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user said they already tried that and it still doesn't work. Let me think about what's happening:
+
+1. They edited G-sus to Manuno - but edits may not be saving to Firebase
+2. They tried to re-save and create a new player - still doesn't work
+
+The issue seems to be that the player with ID '2' (the original G-sus) might be in a bad state in Firebase, or the linking function is specifically failing for that player ID.
+
+Let me add more specific debugging. When the user clicks the green button to link with Manuno, I want to see:
+1. What player ID is being selected
+2. What players are available in the players array
+3. Whether the player is found or not
+
+Actually, I should just directly look at this from a different angle. The user is trying to link Jesus Vasquez to Manuno. The issue could be:
+
+1. The player "Manuno" doesn't exist in Firebase (even after creating it)
+2. The player exists but with a different ID than what's in the dropdown
+3. There's something wrong with the specific linking for this user
+
+Let me add a button that just shows all the player IDs in an alert, so the user can verify what players the app sees.
+
+Actually, let me just have the user show me the console output when they:
+1. Select Manuno from the dropdown
+2. Click the green button
+
+If my logging is working, it should show exactly what's happening.
+
+Wait - the user mentioned earlier that when they select Manuno and click the button, "nothing happens". But with my new component that uses useState, there should definitely be console logs. Unless... the component isn't rendering properly or the logs are being filtered out.
+
+Let me ask them to clear the console, then do the action, and show me EVERYTHING that appears.</details></think>
+
+---
+
+OK, vamos a debuggear esto directamente. Por favor haz esto exactamente:
+
+1. **Limpia la consola** (click derecho en la consola → "Clear console" o Ctrl+L)
+2. **Selecciona "Manuno"** del dropdown para Jesus Vasquez
+3. **Click en el botón verde ✓**
+4. **Copia y pega TODO** lo que aparece en la consola aquí
+
+Necesito ver si aparecen estos mensajes:
+```
+Select cambió a: [algún número]
+=== CLICK EN BOTÓN VERDE ===
+selectedPlayer: [algún número]
+```
+
+Si **no aparece nada**, entonces el componente no está funcionando. Si aparece algo, sabré exactamente dónde está el problema.
+
+---
+

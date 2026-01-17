@@ -68,10 +68,7 @@ function PendingUserCard({ pending, players, linkingUser, onLink }) {
   const [selectedPlayer, setSelectedPlayer] = useState('')
   
   const handleLink = () => {
-    console.log('=== CLICK EN BOTÓN VERDE ===')
-    console.log('selectedPlayer:', selectedPlayer)
-    console.log('pending.odedBy:', pending.odedBy)
-    
+    console.log('👆 Click vincular:', selectedPlayer)
     if (selectedPlayer && selectedPlayer !== '') {
       onLink(pending.odedBy, selectedPlayer)
     } else {
@@ -96,10 +93,7 @@ function PendingUserCard({ pending, players, linkingUser, onLink }) {
             <select 
               className="player-select-dropdown"
               value={selectedPlayer}
-              onChange={(e) => {
-                console.log('Select cambió a:', e.target.value)
-                setSelectedPlayer(e.target.value)
-              }}
+              onChange={(e) => setSelectedPlayer(e.target.value)}
             >
               <option value="">Selecciona...</option>
               {players.map(player => (
@@ -217,23 +211,16 @@ function App() {
       const links = {}
       const pending = []
       
-      console.log('=== UserLinks snapshot update ===')
-      console.log('Total docs:', snapshot.docs.length)
-      
       snapshot.docs.forEach(docSnap => {
         const data = docSnap.data()
         const docId = docSnap.id
         
-        console.log('Doc:', docId, '| playerId:', data.playerId, '| type:', typeof data.playerId)
-        
         // Check if playerId exists and is not null/undefined/empty
         if (data.playerId && data.playerId !== '' && data.playerId !== null) {
           links[docId] = { ...data, odedBy: docId }
-          console.log('  -> Vinculado')
         } else {
           // User is pending (registered but not linked)
           pending.push({ ...data, odedBy: docId })
-          console.log('  -> Pendiente')
         }
       })
       
@@ -379,69 +366,48 @@ function App() {
 
   // Admin function to link a user to a player
   const adminLinkUserToPlayer = async (userId, playerId) => {
-    console.log('=== adminLinkUserToPlayer llamado ===')
-    console.log('userId:', userId, '| playerId:', playerId, '| tipo playerId:', typeof playerId)
+    console.log('🔗 Vinculando:', { userId, playerId })
     
     if (!isAdmin) {
       alert('No tienes permisos de admin')
       return
     }
     
-    // Validate inputs strictly
-    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
-      console.error('Invalid userId:', userId)
-      alert('Error: ID de usuario inválido')
+    if (!userId || !playerId || playerId === '') {
+      alert('Error: Datos inválidos')
       return
     }
     
-    if (!playerId || typeof playerId !== 'string' || playerId.trim() === '') {
-      console.error('Invalid playerId:', playerId)
-      alert('Error: ID de jugador inválido')
-      return
-    }
+    if (linkingUser === userId) return
     
-    // Prevent double-clicks
-    if (linkingUser === userId) {
-      console.log('Already linking this user, ignoring')
-      return
-    }
-    
-    // Find the player to verify it exists
+    // Find the player
     const playerToLink = players.find(p => p.id === playerId)
     if (!playerToLink) {
-      console.error('Player not found:', playerId, 'Available players:', players.map(p => p.id))
-      alert('Error: Jugador no encontrado')
+      console.log('Jugadores disponibles:', players.map(p => ({ id: p.id, name: p.name })))
+      alert('Error: Jugador "' + playerId + '" no encontrado. Revisa la consola.')
       return
     }
     
     setLinkingUser(userId)
     
     try {
-      console.log('Vinculando usuario:', userId, 'con jugador:', playerId, '(' + playerToLink.name + ')')
       const linkRef = doc(db, 'userLinks', userId)
-      
-      // Get current user data
       const currentData = pendingUsers.find(u => u.odedBy === userId) || {}
-      
-      // Remove odedBy and any existing playerId from currentData
       const { odedBy: _1, playerId: _2, ...cleanData } = currentData
       
       const dataToSave = {
         ...cleanData,
-        playerId: String(playerId), // Ensure it's a string
+        playerId: String(playerId),
         linkedAt: new Date().toISOString()
       }
       
-      console.log('Guardando en Firebase:', JSON.stringify(dataToSave))
-      
-      // Delete first to clear any corrupted data, then create fresh
       await deleteDoc(linkRef)
       await setDoc(linkRef, dataToSave)
       
-      console.log('✅ Usuario vinculado exitosamente a', playerToLink.name)
+      console.log('✅ Vinculado a', playerToLink.name)
     } catch (error) {
-      console.error('❌ Error linking user:', error)
-      alert('Error al vincular usuario: ' + error.message)
+      console.error('❌ Error:', error)
+      alert('Error: ' + error.message)
     } finally {
       setLinkingUser(null)
     }
@@ -668,21 +634,17 @@ function App() {
     
     try {
       if (editingPlayerId) {
-        // Editar jugador existente
-        console.log('Editando jugador:', editingPlayerId, playerData)
         await updateDoc(doc(db, 'players', editingPlayerId), playerData)
-        console.log('Jugador actualizado exitosamente')
+        console.log('✅ Jugador actualizado')
       } else {
-        // Crear nuevo jugador
         const newPlayerId = Date.now().toString()
-        console.log('Creando jugador:', newPlayerId, playerData)
         await setDoc(doc(db, 'players', newPlayerId), playerData)
-        console.log('Jugador creado exitosamente')
+        console.log('✅ Jugador creado:', newPlayerId)
       }
       closePlayerModal()
     } catch (error) {
-      console.error('Error guardando jugador:', error)
-      alert('Error al guardar jugador: ' + error.message)
+      console.error('❌ Error:', error)
+      alert('Error al guardar: ' + error.message)
     }
   }
 
