@@ -1167,12 +1167,6 @@ function App() {
       <Header
         onShowLoginModal={() => setShowLoginModal(true)}
         onAdminLogout={handleAdminLogout}
-        onShowProfile={showProfile}
-        calculateXP={calculateXP}
-        getRank={getRank}
-        getRankIcon={getRankIcon}
-        notificationPermission={notificationPermission}
-        requestNotificationPermission={requestNotificationPermission}
       />
 
       {/* Time Filter Pills with Haptic */}

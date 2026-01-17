@@ -74,9 +74,17 @@
   background: var(--bg-primary);
 }
 
-[data-theme="light"] .header-premium {
-  background: var(--bg-secondary);
+[data-theme="light"] .header-minimal {
+  background: rgba(255, 255, 255, 0.9);
   border-bottom: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .header-btn {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .header-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
 }
 
 [data-theme="light"] .bottom-nav {
@@ -797,85 +805,58 @@ body {
 }
 
 /* ============================================
-   Premium Header - Glassmorphism
+   MINIMAL HEADER - Clean & Modern
    ============================================ */
-.header-premium {
-  padding: 0.5rem;
-  margin-bottom: 0.25rem;
+.header-minimal {
+  padding: 0.75rem 1rem;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-/* Hero Section - Floating Clean */
-.hero-section {
+.header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.25rem 0;
-  margin-bottom: 0.5rem;
-  background: transparent;
-  border: none;
 }
 
-.hero-section:hover {
-  /* no hover effect */
-}
-
-.hero-background {
-  display: none;
-}
-
-.hero-content {
+.header-brand {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.hero-logo {
-  width: 32px;
-  height: 32px;
+.brand-logo {
+  width: 28px;
+  height: 28px;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
-.hero-logo:hover {
-  opacity: 0.9;
-}
-
-.hero-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.hero-title {
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+.brand-name {
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--text-primary);
-  line-height: 1.2;
-  margin: 0;
+  letter-spacing: -0.02em;
 }
 
-.hero-subtitle {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-  font-weight: 400;
-  margin: 0;
-}
-
-/* Quick Actions - Clean */
-.quick-actions {
+.header-actions {
   display: flex;
-  gap: 0.75rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.action-btn {
-  width: auto;
-  height: auto;
-  padding: 0.35rem;
-  border-radius: 50%;
+.header-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   border: none;
-  background: transparent;
-  color: var(--text-muted);
+  background: var(--bg-glass);
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -883,93 +864,116 @@ body {
   transition: all 0.2s ease;
 }
 
-.action-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
-.action-btn:hover {
+.header-btn:hover {
+  background: var(--bg-glass-hover);
   color: var(--text-primary);
 }
 
-.action-btn:active {
-  transform: scale(0.9);
+.header-btn:active {
+  transform: scale(0.95);
 }
 
-.action-btn.active {
-  color: var(--accent-green);
+.header-btn.admin-active {
+  background: var(--accent-green);
+  color: #000;
 }
 
-/* Profile Section - Floating Clean */
-.profile-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.35rem 0;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--separator);
-  border-radius: 0;
-  margin-bottom: 0.5rem;
+.header-btn.admin-active:hover {
+  background: var(--accent-green);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.profile-card:hover {
-  /* no hover effect */
-}
-
-.profile-card-left {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.profile-avatar-btn {
-  position: relative;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+.header-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   border: none;
   background: none;
   padding: 0;
   cursor: pointer;
   overflow: hidden;
+  transition: all 0.2s ease;
 }
 
-.profile-avatar-btn img {
+.header-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
-.profile-avatar-btn:hover img {
-  opacity: 0.9;
+.header-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.avatar-ring {
-  display: none;
+.header-avatar:active {
+  transform: scale(0.95);
 }
 
-.profile-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.profile-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  line-height: 1.2;
-}
-
-.profile-player {
+.header-login {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 10px;
+  border: none;
+  background: #fff;
+  color: #333;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+.header-login:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.header-login:active {
+  transform: scale(0.98);
+}
+
+/* Welcome Line */
+.header-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.welcome-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.welcome-text strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.welcome-player {
+  color: var(--accent-green);
+  font-weight: 500;
+}
+
+.admin-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.25rem 0.5rem;
+  background: var(--accent-green);
+  color: #000;
+  border-radius: 6px;
+}
+
+/* Keep old rank badge styles for tables */
 .player-badge {
   font-size: 0.7rem;
   color: var(--accent-green);
