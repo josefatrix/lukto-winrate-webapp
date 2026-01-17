@@ -2536,6 +2536,190 @@ body {
   transform: scale(0.95);
 }
 
+/* Probability Section */
+.probability-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--bg-glass);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.probability-header {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.probability-bar-container {
+  margin-bottom: 8px;
+}
+
+.probability-bar {
+  display: flex;
+  height: 40px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+
+.probability-fill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  transition: width 0.5s var(--ease-out-expo);
+}
+
+.probability-fill.white {
+  background: linear-gradient(90deg, #e0e0e0, #bdbdbd);
+  color: #333;
+}
+
+.probability-fill.black {
+  background: linear-gradient(90deg, #424242, #212121);
+}
+
+.probability-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Stats Comparison */
+.stats-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg-glass);
+  border-radius: 10px;
+}
+
+.comparison-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-value {
+  width: 50px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.stat-value.white {
+  background: rgba(224, 224, 224, 0.2);
+  color: var(--text-primary);
+}
+
+.stat-value.black {
+  background: rgba(33, 33, 33, 0.3);
+  color: var(--text-primary);
+}
+
+.stat-name {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Favorite Badge */
+.favorite-badge {
+  text-align: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.favorite-badge.white {
+  background: linear-gradient(135deg, rgba(224, 224, 224, 0.2), rgba(189, 189, 189, 0.1));
+  border: 1px solid rgba(224, 224, 224, 0.3);
+  color: var(--text-primary);
+}
+
+.favorite-badge.black {
+  background: linear-gradient(135deg, rgba(66, 66, 66, 0.2), rgba(33, 33, 33, 0.1));
+  border: 1px solid rgba(66, 66, 66, 0.3);
+  color: var(--text-primary);
+}
+
+/* Prediction Divider */
+.prediction-divider {
+  text-align: center;
+  margin: 20px 0 16px;
+  position: relative;
+}
+
+.prediction-divider::before,
+.prediction-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.prediction-divider::before {
+  left: 0;
+}
+
+.prediction-divider::after {
+  right: 0;
+}
+
+.prediction-divider span {
+  background: var(--bg-card);
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Team Header with Probability */
+.team-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.team-probability {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent-green);
+}
+
+.prediction-team.white .team-probability {
+  color: #757575;
+}
+
+.prediction-team.black .team-probability {
+  color: #333;
+}
+
+.prediction-team.selected .team-probability {
+  color: var(--accent-green);
+}
+
 /* Pending User Modal */
 .pending-modal {
   text-align: center;

@@ -724,6 +724,65 @@ function App() {
 
   // ============ PREDICTION HANDLERS ============
   
+  // Calculate team win probability based on stats
+  const calculateTeamProbability = (match) => {
+    if (!match || !stats.length) return { white: 50, black: 50 }
+    
+    const getTeamStats = (teamIds) => {
+      const teamStats = teamIds?.map(pid => stats.find(s => s.id === pid)).filter(Boolean) || []
+      if (teamStats.length === 0) return { avgWinRate: 50, avgRating: 5, avgMvps: 0, recentForm: 50 }
+      
+      const avgWinRate = teamStats.reduce((s, p) => s + (p.winRate || 50), 0) / teamStats.length
+      const avgRating = teamStats.reduce((s, p) => s + (parseFloat(p.avgRating) || 5), 0) / teamStats.length
+      const avgMvps = teamStats.reduce((s, p) => s + (p.mvps || 0), 0) / teamStats.length
+      
+      // Calculate recent form (last 5 games win rate)
+      const recentWins = teamStats.reduce((total, player) => {
+        const playerMatches = matches.filter(m => 
+          m.winner && (m.teamWhite?.includes(player.id) || m.teamBlack?.includes(player.id))
+        ).slice(-5)
+        const wins = playerMatches.filter(m => {
+          const inWhite = m.teamWhite?.includes(player.id)
+          return (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
+        }).length
+        return total + (playerMatches.length > 0 ? (wins / playerMatches.length) * 100 : 50)
+      }, 0) / teamStats.length
+      
+      return { avgWinRate, avgRating, avgMvps, recentForm: recentWins }
+    }
+    
+    const whiteStats = getTeamStats(match.teamWhite)
+    const blackStats = getTeamStats(match.teamBlack)
+    
+    // Weighted score calculation
+    // Win Rate: 35%, Rating: 30%, MVPs: 15%, Recent Form: 20%
+    const calculateScore = (s) => {
+      return (s.avgWinRate * 0.35) + 
+             (s.avgRating * 3 * 0.30) + // Rating 1-10 scaled to ~30
+             (Math.min(s.avgMvps, 5) * 6 * 0.15) + // MVPs capped at 5, scaled
+             (s.recentForm * 0.20)
+    }
+    
+    const whiteScore = calculateScore(whiteStats)
+    const blackScore = calculateScore(blackStats)
+    const totalScore = whiteScore + blackScore
+    
+    // Convert to percentages
+    let whitePct = totalScore > 0 ? Math.round((whiteScore / totalScore) * 100) : 50
+    let blackPct = 100 - whitePct
+    
+    // Ensure minimum 15% and maximum 85% (never 100% sure)
+    whitePct = Math.max(15, Math.min(85, whitePct))
+    blackPct = 100 - whitePct
+    
+    return { 
+      white: whitePct, 
+      black: blackPct,
+      whiteStats,
+      blackStats
+    }
+  }
+  
   const openPredictionModal = (match) => {
     if (!user || !userPlayer) {
       showToast('error', 'Debes iniciar sesión para predecir')
@@ -2264,69 +2323,139 @@ function App() {
       )}
 
       {/* Prediction Modal */}
-      {showPredictionModal && predictionMatch && (
-        <div className="modal-overlay" onClick={closePredictionModal}>
-          <div className="modal prediction-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>¿Quién ganará?</h3>
-              <button className="modal-close" onClick={closePredictionModal}>×</button>
-            </div>
-            
-            <div className="prediction-match-info">
-              <span className="prediction-date">
-                {new Date(predictionMatch.date + 'T12:00:00').toLocaleDateString('es-ES', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long'
-                })}
-              </span>
-              <span className="prediction-venue">{predictionMatch.venue}</span>
-            </div>
+      {showPredictionModal && predictionMatch && (() => {
+        const probability = calculateTeamProbability(predictionMatch)
+        const favorite = probability.white > probability.black ? 'white' : probability.black > probability.white ? 'black' : 'tie'
+        
+        return (
+          <div className="modal-overlay" onClick={closePredictionModal}>
+            <div className="modal prediction-modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Predicción del Partido</h3>
+                <button className="modal-close" onClick={closePredictionModal}>×</button>
+              </div>
+              
+              <div className="prediction-match-info">
+                <span className="prediction-date">
+                  {new Date(predictionMatch.date + 'T12:00:00').toLocaleDateString('es-ES', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long'
+                  })}
+                </span>
+                <span className="prediction-venue">{predictionMatch.venue}</span>
+              </div>
 
-            <div className="prediction-teams">
-              <button 
-                className={`prediction-team white ${selectedPrediction === 'white' ? 'selected' : ''}`}
-                onClick={() => setSelectedPrediction('white')}
-              >
-                <div className="team-indicator">⬜</div>
-                <div className="team-label">Equipo Blanco</div>
-                <div className="team-players">
-                  {predictionMatch.teamWhite?.map(pid => (
-                    <span key={pid} className="team-player-name">{getPlayerName(pid)}</span>
-                  ))}
+              {/* AI Probability Bar */}
+              <div className="probability-section">
+                <div className="probability-header">
+                  <span>📊 Probabilidad según estadísticas</span>
                 </div>
-                {selectedPrediction === 'white' && <div className="selected-check">✓</div>}
-              </button>
-
-              <div className="prediction-vs">VS</div>
-
-              <button 
-                className={`prediction-team black ${selectedPrediction === 'black' ? 'selected' : ''}`}
-                onClick={() => setSelectedPrediction('black')}
-              >
-                <div className="team-indicator">⬛</div>
-                <div className="team-label">Equipo Negro</div>
-                <div className="team-players">
-                  {predictionMatch.teamBlack?.map(pid => (
-                    <span key={pid} className="team-player-name">{getPlayerName(pid)}</span>
-                  ))}
+                <div className="probability-bar-container">
+                  <div className="probability-bar">
+                    <div 
+                      className="probability-fill white" 
+                      style={{ width: `${probability.white}%` }}
+                    >
+                      {probability.white}%
+                    </div>
+                    <div 
+                      className="probability-fill black" 
+                      style={{ width: `${probability.black}%` }}
+                    >
+                      {probability.black}%
+                    </div>
+                  </div>
                 </div>
-                {selectedPrediction === 'black' && <div className="selected-check">✓</div>}
-              </button>
-            </div>
+                <div className="probability-labels">
+                  <span>⬜ Blanco</span>
+                  <span>⬛ Negro</span>
+                </div>
+              </div>
 
-            <div className="modal-actions">
-              <button 
-                className="submit-btn"
-                onClick={submitPrediction}
-                disabled={!selectedPrediction}
-              >
-                {selectedPrediction ? 'Confirmar Predicción' : 'Selecciona un equipo'}
-              </button>
+              {/* Team Stats Comparison */}
+              <div className="stats-comparison">
+                <div className="comparison-row">
+                  <span className="stat-value white">{probability.whiteStats.avgWinRate.toFixed(0)}%</span>
+                  <span className="stat-name">Win Rate</span>
+                  <span className="stat-value black">{probability.blackStats.avgWinRate.toFixed(0)}%</span>
+                </div>
+                <div className="comparison-row">
+                  <span className="stat-value white">{probability.whiteStats.avgRating.toFixed(1)}</span>
+                  <span className="stat-name">Rating</span>
+                  <span className="stat-value black">{probability.blackStats.avgRating.toFixed(1)}</span>
+                </div>
+                <div className="comparison-row">
+                  <span className="stat-value white">{probability.whiteStats.recentForm.toFixed(0)}%</span>
+                  <span className="stat-name">Forma Reciente</span>
+                  <span className="stat-value black">{probability.blackStats.recentForm.toFixed(0)}%</span>
+                </div>
+              </div>
+
+              {/* Favorite Badge */}
+              {favorite !== 'tie' && (
+                <div className={`favorite-badge ${favorite}`}>
+                  🎯 Favorito: Equipo {favorite === 'white' ? 'Blanco' : 'Negro'} ({favorite === 'white' ? probability.white : probability.black}%)
+                </div>
+              )}
+
+              <div className="prediction-divider">
+                <span>¿Cuál es tu predicción?</span>
+              </div>
+
+              <div className="prediction-teams">
+                <button 
+                  className={`prediction-team white ${selectedPrediction === 'white' ? 'selected' : ''}`}
+                  onClick={() => setSelectedPrediction('white')}
+                >
+                  <div className="team-header">
+                    <div className="team-indicator">⬜</div>
+                    <div className="team-probability">{probability.white}%</div>
+                  </div>
+                  <div className="team-label">Equipo Blanco</div>
+                  <div className="team-players">
+                    {predictionMatch.teamWhite?.map(pid => (
+                      <span key={pid} className="team-player-name">{getPlayerName(pid)}</span>
+                    ))}
+                  </div>
+                  {selectedPrediction === 'white' && <div className="selected-check">✓</div>}
+                </button>
+
+                <div className="prediction-vs">VS</div>
+
+                <button 
+                  className={`prediction-team black ${selectedPrediction === 'black' ? 'selected' : ''}`}
+                  onClick={() => setSelectedPrediction('black')}
+                >
+                  <div className="team-header">
+                    <div className="team-indicator">⬛</div>
+                    <div className="team-probability">{probability.black}%</div>
+                  </div>
+                  <div className="team-label">Equipo Negro</div>
+                  <div className="team-players">
+                    {predictionMatch.teamBlack?.map(pid => (
+                      <span key={pid} className="team-player-name">{getPlayerName(pid)}</span>
+                    ))}
+                  </div>
+                  {selectedPrediction === 'black' && <div className="selected-check">✓</div>}
+                </button>
+              </div>
+
+              <div className="modal-actions">
+                <button 
+                  className="submit-btn"
+                  onClick={submitPrediction}
+                  disabled={!selectedPrediction}
+                >
+                  {selectedPrediction 
+                    ? `Confirmar: Equipo ${selectedPrediction === 'white' ? 'Blanco' : 'Negro'}` 
+                    : 'Selecciona un equipo'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Bottom Navigation */}
       {/* Floating Action Button - Admin Only */}
