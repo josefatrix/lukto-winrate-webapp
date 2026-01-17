@@ -3242,41 +3242,57 @@ function App() {
             <div className="suspicious-list">
               {(() => {
                 // Find users who rate consistently low
-                const userAverages = {}
+                // ratedBy is a playerId, so we need to find the user linked to that player
+                const playerAverages = {}
                 Object.values(ratings).forEach(playerRatings => {
                   playerRatings.forEach(r => {
-                    if (!userAverages[r.odedBy]) {
-                      userAverages[r.odedBy] = { total: 0, count: 0 }
+                    const raterPlayerId = r.ratedBy
+                    if (raterPlayerId) {
+                      if (!playerAverages[raterPlayerId]) {
+                        playerAverages[raterPlayerId] = { total: 0, count: 0 }
+                      }
+                      playerAverages[raterPlayerId].total += r.score
+                      playerAverages[raterPlayerId].count++
                     }
-                    userAverages[r.odedBy].total += r.score
-                    userAverages[r.odedBy].count++
                   })
                 })
                 
-                const suspicious = Object.entries(userAverages)
-                  .filter(([_, data]) => data.count >= 5 && (data.total / data.count) < 5)
-                  .map(([odedBy, data]) => ({
-                    odedBy,
-                    avg: (data.total / data.count).toFixed(1),
-                    count: data.count
-                  }))
+                const suspicious = Object.entries(playerAverages)
+                  .filter(([_, data]) => data.count >= 3 && (data.total / data.count) < 5)
+                  .map(([playerId, data]) => {
+                    // Find user linked to this player
+                    const linkedUser = Object.values(userLinks).find(u => u.playerId === playerId)
+                    const playerData = players.find(p => p.id === playerId)
+                    return {
+                      playerId,
+                      playerName: playerData?.name || 'Jugador',
+                      userName: linkedUser?.userName,
+                      userPhoto: linkedUser?.userPhoto,
+                      avg: (data.total / data.count).toFixed(1),
+                      count: data.count
+                    }
+                  })
                 
                 if (suspicious.length === 0) {
                   return <p className="no-data">No se detectaron patrones sospechosos</p>
                 }
                 
-                return suspicious.map(s => {
-                  const userData = userLinks[s.odedBy]
-                  return (
-                    <div key={s.odedBy} className="suspicious-item">
-                      <img src={userData?.userPhoto} alt="" className="suspicious-avatar" />
-                      <div className="suspicious-info">
-                        <span className="suspicious-name">{userData?.userName || 'Usuario'}</span>
-                        <span className="suspicious-stats">Promedio: {s.avg} ({s.count} votos)</span>
+                return suspicious.map(s => (
+                  <div key={s.playerId} className="suspicious-item">
+                    {s.userPhoto ? (
+                      <img src={s.userPhoto} alt="" className="suspicious-avatar" />
+                    ) : (
+                      <div className="suspicious-avatar-placeholder">
+                        {s.playerName.charAt(0)}
                       </div>
+                    )}
+                    <div className="suspicious-info">
+                      <span className="suspicious-name">{s.playerName}</span>
+                      {s.userName && <span className="suspicious-user">({s.userName})</span>}
+                      <span className="suspicious-stats">Promedio dado: {s.avg} ({s.count} votos)</span>
                     </div>
-                  )
-                })
+                  </div>
+                ))
               })()}
             </div>
           </div>

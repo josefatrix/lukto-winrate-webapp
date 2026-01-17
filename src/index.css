@@ -4634,8 +4634,29 @@ body {
   object-fit: cover;
 }
 
+.suspicious-avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #059669);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
 .suspicious-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.suspicious-user {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 .suspicious-name {
