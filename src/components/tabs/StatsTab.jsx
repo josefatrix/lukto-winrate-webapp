@@ -153,7 +153,7 @@ export const StatsTab = ({
                   </td>
                   <td>
                     <span className={`win-rate ${getWinRateClass(player.winRate)}`}>
-                      {player.winRate.toFixed(0)}%
+                      {typeof player.winRate === 'number' ? player.winRate.toFixed(0) : player.winRate || 0}%
                     </span>
                   </td>
                   <td>

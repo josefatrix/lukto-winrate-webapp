@@ -974,7 +974,7 @@ function App() {
                 const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
                 return {
                   date: m.date,
-                  avgScore: avgScore.toFixed(1),
+                  avgScore: typeof avgScore === 'number' ? avgScore.toFixed(1) : '0.0',
                   won,
                   venue: m.venue
                 }
@@ -1004,10 +1004,10 @@ function App() {
               .map(([id, s]) => ({
                 id,
                 name: getPlayerName(id),
-                winRate: ((s.wins / s.games) * 100).toFixed(0),
+                winRate: s.games > 0 ? Math.round((s.wins / s.games) * 100) : 0,
                 games: s.games
               }))
-              .sort((a, b) => b.winRate - a.winRate)
+              .sort((a, b) => Number(b.winRate) - Number(a.winRate))
 
             const bestTeammate = teammateRankings[0]
             const worstTeammate = teammateRankings[teammateRankings.length - 1]
@@ -1656,7 +1656,9 @@ function App() {
                 <button className="export-btn" onClick={() => {
                   let csv = 'Jugador,Partidos,Victorias,Derrotas,Win Rate,Rating,MVPs\n'
                   stats.forEach(s => {
-                    csv += `${s.name},${s.played},${s.wins},${s.losses},${s.winRate.toFixed(1)}%,${s.avgRating?.toFixed(1) || '-'},${s.mvps}\n`
+                    const wr = typeof s.winRate === 'number' ? s.winRate.toFixed(1) : s.winRate || 0
+                    const ar = typeof s.avgRating === 'number' ? s.avgRating.toFixed(1) : (s.avgRating || '-')
+                    csv += `${s.name},${s.played},${s.wins},${s.losses},${wr}%,${ar},${s.mvps}\n`
                   })
                   const blob = new Blob([csv], { type: 'text/csv' })
                   const url = URL.createObjectURL(blob)

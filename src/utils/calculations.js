@@ -8,10 +8,11 @@ import { RANKING_WEIGHTS, XP_VALUES, RANK_THRESHOLDS } from '../constants/config
  * Calculate player's average rating from all their ratings
  */
 export const calculatePlayerAvgRating = (playerId, ratings) => {
-  const playerRatings = ratings[playerId]
+  const playerRatings = ratings?.[playerId]
   if (!playerRatings || playerRatings.length === 0) return null
-  const sum = playerRatings.reduce((acc, r) => acc + r.score, 0)
-  return (sum / playerRatings.length).toFixed(1)
+  const sum = playerRatings.reduce((acc, r) => acc + (typeof r.score === 'number' ? r.score : 0), 0)
+  const avg = sum / playerRatings.length
+  return typeof avg === 'number' && !isNaN(avg) ? avg.toFixed(1) : null
 }
 
 /**
@@ -36,7 +37,8 @@ export const calculateRankingScore = (stats, avgRating) => {
   // 1 game = 0.50, 2 = 0.65, 3 = 0.80, 4 = 0.90, 5+ = 1.0
   const confidenceFactor = Math.min(1, 0.35 + (Math.log(played + 1) / Math.log(6)))
   
-  return (baseScore * confidenceFactor).toFixed(1)
+  const result = baseScore * confidenceFactor
+  return typeof result === 'number' && !isNaN(result) ? result.toFixed(1) : '0.0'
 }
 
 /**

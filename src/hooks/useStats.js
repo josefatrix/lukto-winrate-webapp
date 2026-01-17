@@ -82,9 +82,9 @@ export const useStats = () => {
         return {
           id,
           ...s,
-          winRate,
+          winRate: typeof winRate === 'number' && !isNaN(winRate) ? winRate : 0,
           avgRating,
-          rankingScore: rankingScore.toFixed(1),
+          rankingScore: typeof rankingScore === 'number' && !isNaN(rankingScore) ? rankingScore.toFixed(1) : '0.0',
         }
       })
       .sort(
@@ -185,9 +185,9 @@ export const useStats = () => {
         return {
           id,
           ...s,
-          winRate,
+          winRate: typeof winRate === 'number' && !isNaN(winRate) ? winRate : 0,
           avgRating,
-          rankingScore: rankingScore.toFixed(1),
+          rankingScore: typeof rankingScore === 'number' && !isNaN(rankingScore) ? rankingScore.toFixed(1) : '0.0',
         }
       })
       .sort(
@@ -249,11 +249,12 @@ export const useStats = () => {
         const score = pStats.wins * 3 + avgRating + pStats.played * 0.5
         if (score > bestScore) {
           bestScore = score
+          const wr = pStats.played > 0 ? Math.round((pStats.wins / pStats.played) * 100) : 0
           bestPlayer = {
             id: playerId,
             ...pStats,
-            avgRating: avgRating.toFixed(1),
-            winRate: ((pStats.wins / pStats.played) * 100).toFixed(0),
+            avgRating: typeof avgRating === 'number' ? avgRating.toFixed(1) : '5.0',
+            winRate: wr,
           }
         }
       }
