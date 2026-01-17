@@ -69,24 +69,37 @@ export const AppProvider = ({ children }) => {
   // Refs
   const confettiTriggered = useRef({})
 
-  // Register user as pending when they log in
+  // Register user as pending when they log in (only if not already registered)
   const registerPendingUser = async currentUser => {
     if (!currentUser) return
 
     try {
       const linkRef = doc(db, 'userLinks', currentUser.uid)
-      await setDoc(
-        linkRef,
-        {
+      const linkDoc = await getDoc(linkRef)
+      
+      // Only register if user doesn't exist yet
+      if (!linkDoc.exists()) {
+        await setDoc(linkRef, {
           userName: currentUser.displayName,
           userEmail: currentUser.email,
           userPhoto: currentUser.photoURL,
           playerId: null,
           registeredAt: new Date().toISOString(),
-        },
-        { merge: true }
-      )
-      console.log('Usuario registrado:', currentUser.email)
+        })
+        console.log('Nuevo usuario registrado:', currentUser.email)
+      } else {
+        // Update user info but keep playerId intact
+        await setDoc(
+          linkRef,
+          {
+            userName: currentUser.displayName,
+            userEmail: currentUser.email,
+            userPhoto: currentUser.photoURL,
+          },
+          { merge: true }
+        )
+        console.log('Usuario existente actualizado:', currentUser.email)
+      }
     } catch (error) {
       console.error('Error registering user:', error)
     }
