@@ -405,6 +405,11 @@ function App() {
       await setDoc(linkRef, dataToSave)
       
       console.log('✅ Vinculado a', playerToLink.name)
+      
+      // Force refresh after 1 second
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
     } catch (error) {
       console.error('❌ Error:', error)
       alert('Error: ' + error.message)
