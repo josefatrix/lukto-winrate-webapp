@@ -7775,6 +7775,69 @@ body {
   background: rgba(239, 68, 68, 0.15);
 }
 
+/* Current Streak Banner */
+.current-streak-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  animation: pulseSubtle 2s ease-in-out infinite;
+}
+
+.current-streak-banner.win {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.current-streak-banner.loss {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.01); }
+}
+
+.csb-icon {
+  flex-shrink: 0;
+}
+
+.csb-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.csb-count {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.current-streak-banner.win .csb-count { color: var(--accent-green); }
+.current-streak-banner.loss .csb-count { color: var(--accent-red); }
+
+.csb-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.csb-badge {
+  font-size: 1.5rem;
+  animation: bounce 0.6s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
 /* Records Row V2 */
 .records-row-v2 {
   display: grid;
@@ -7974,6 +8037,207 @@ body {
 .rc-games {
   font-size: 10px;
   color: var(--text-muted);
+}
+
+/* ============================================
+   PREDICTIONS HISTORY
+   ============================================ */
+.predictions-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.pred-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+.pred-stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.pred-stat-value.good { color: var(--accent-green); }
+.pred-stat-value.bad { color: var(--accent-red); }
+
+.pred-stat-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.predictions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prediction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--card-bg);
+  border-radius: 10px;
+  border-left: 3px solid var(--border-subtle);
+  transition: all 0.2s ease;
+}
+
+.prediction-item.correct { border-left-color: var(--accent-green); background: rgba(34, 197, 94, 0.05); }
+.prediction-item.wrong { border-left-color: var(--accent-red); background: rgba(239, 68, 68, 0.05); }
+.prediction-item.pending { border-left-color: var(--accent-gold); background: rgba(245, 158, 11, 0.05); }
+
+.pred-match-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pred-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.pred-teams {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pred-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pred-choice {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+
+.pred-xp {
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-width: 55px;
+  text-align: right;
+}
+
+.prediction-item.correct .pred-xp { color: var(--accent-green); }
+.prediction-item.wrong .pred-xp { color: var(--accent-red); }
+.prediction-item.pending .pred-xp { color: var(--accent-gold); }
+
+.pred-status {
+  display: flex;
+  align-items: center;
+}
+
+.pred-status svg {
+  display: block;
+}
+
+.predictions-more {
+  text-align: center;
+  padding: 12px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ============================================
+   PERIOD SUMMARY (Week/Month)
+   ============================================ */
+.period-summary-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.period-card {
+  background: linear-gradient(135deg, var(--card-bg), var(--bg-tertiary));
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s ease;
+}
+
+.period-card:hover {
+  transform: translateY(-2px);
+}
+
+.period-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.period-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.period-main {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.period-wr {
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.period-wr.good {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--accent-green);
+}
+
+.period-wr.bad {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+}
+
+.period-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.period-details span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* ============================================

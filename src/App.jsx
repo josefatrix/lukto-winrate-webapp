@@ -13,7 +13,7 @@ import confetti from 'canvas-confetti'
 import { Header, BottomNav } from './components/layout'
 import { StatsTab, MatchesTab, RatingsTab } from './components/tabs'
 import { AdminLoginModal, PendingUserModal } from './components/modals'
-import { FloatingActionButton, SkeletonPage, Onboarding, useOnboarding, EmptyState, AnimatedCounter, PendingRatingsNotification } from './components/common'
+import { FloatingActionButton, SkeletonPage, SkeletonTable, SkeletonMatchesList, Onboarding, useOnboarding, EmptyState, AnimatedCounter, PendingRatingsNotification } from './components/common'
 
 // ============ HELPER FUNCTIONS ============
 
@@ -304,6 +304,8 @@ function PlayerProfileModal({
   ).sort((a, b) => new Date(b.date) - new Date(a.date)) || []
   
   let bestWinStreak = 0, worstLossStreak = 0, tempWinStreak = 0, tempLossStreak = 0
+  let currentStreak = { type: 'none', count: 0 }
+  let firstResult = true
   
   for (const m of playerMatches) {
     const inWhite = m.teamWhite?.includes(playerId)
@@ -313,10 +315,16 @@ function PlayerProfileModal({
       tempWinStreak++
       tempLossStreak = 0
       if (tempWinStreak > bestWinStreak) bestWinStreak = tempWinStreak
+      // Track current streak (first matches in the sorted list are most recent)
+      if (firstResult) { currentStreak = { type: 'win', count: 1 }; firstResult = false }
+      else if (currentStreak.type === 'win') currentStreak.count++
     } else {
       tempLossStreak++
       tempWinStreak = 0
       if (tempLossStreak > worstLossStreak) worstLossStreak = tempLossStreak
+      // Track current streak
+      if (firstResult) { currentStreak = { type: 'loss', count: 1 }; firstResult = false }
+      else if (currentStreak.type === 'loss') currentStreak.count++
     }
   }
 
@@ -546,9 +554,29 @@ function PlayerProfileModal({
           </div>
         </div>
 
-        {/* Records */}
+        {/* Current Streak & Records */}
         <div className="profile-section-v2">
-          <h4 className="ps-title">Récords</h4>
+          <h4 className="ps-title">Rachas y Récords</h4>
+          
+          {/* Current Streak Banner */}
+          {currentStreak.count > 0 && (
+            <div className={`current-streak-banner ${currentStreak.type}`}>
+              <span className="csb-icon">
+                {currentStreak.type === 'win' 
+                  ? <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#22c55e"/></svg>
+                  : <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#ef4444" strokeWidth="2"/><path d="M8 8l8 8M16 8l-8 8" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/></svg>
+                }
+              </span>
+              <div className="csb-content">
+                <span className="csb-count">{currentStreak.count} {currentStreak.type === 'win' ? 'victorias' : 'derrotas'}</span>
+                <span className="csb-label">Racha actual</span>
+              </div>
+              {currentStreak.count >= 3 && currentStreak.type === 'win' && (
+                <span className="csb-badge">🔥</span>
+              )}
+            </div>
+          )}
+          
           <div className="records-row-v2">
             <div className="record-v2">
               <span className="record-v2-icon win">{ProfileIcons.medal}</span>
@@ -738,6 +766,214 @@ function PlayerProfileModal({
                     <span className="rc-name">{worstRival.name}</span>
                     <span className="rc-stat bad">{worstRival.againstWR}% WR vs</span>
                     <span className="rc-games">{worstRival.againstGames} enfrentamientos</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Predictions History */}
+        {(() => {
+          // Find user ID for this player
+          const userId = userLinks 
+            ? Object.entries(userLinks).find(([uid, linkData]) => linkData?.playerId === playerId)?.[0]
+            : null
+          
+          if (!userId) return null
+          
+          // Get all predictions for this user
+          const userPredictions = Object.entries(predictions)
+            .filter(([key, value]) => key.startsWith(userId + '_') || value?.odedBy === userId)
+            .map(([key, pred]) => {
+              const matchId = pred?.matchId || key.split('_')[1]
+              const match = matches.find(m => m.id === matchId)
+              return { ...pred, matchId, match }
+            })
+            .filter(p => p.match)
+            .sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0))
+          
+          if (userPredictions.length === 0) return null
+          
+          // Calculate stats
+          const resolved = userPredictions.filter(p => p.match?.winner)
+          const correct = resolved.filter(p => p.prediction === p.match.winner)
+          const accuracy = resolved.length > 0 ? Math.round((correct.length / resolved.length) * 100) : 0
+          const totalXpWon = correct.reduce((sum, p) => sum + (p.potentialWin || 0), 0)
+          const totalXpLost = resolved.filter(p => p.prediction !== p.match.winner)
+            .reduce((sum, p) => sum + (p.xpBet || 0), 0)
+          
+          return (
+            <div className="profile-section-v2">
+              <h4 className="ps-title">Historial de Predicciones</h4>
+              
+              {/* Summary Stats */}
+              <div className="predictions-summary">
+                <div className="pred-stat">
+                  <span className="pred-stat-value">{resolved.length}</span>
+                  <span className="pred-stat-label">Predicciones</span>
+                </div>
+                <div className="pred-stat">
+                  <span className="pred-stat-value good">{correct.length}</span>
+                  <span className="pred-stat-label">Acertadas</span>
+                </div>
+                <div className="pred-stat">
+                  <span className={`pred-stat-value ${accuracy >= 50 ? 'good' : 'bad'}`}>{accuracy}%</span>
+                  <span className="pred-stat-label">Precisión</span>
+                </div>
+                <div className="pred-stat">
+                  <span className={`pred-stat-value ${totalXpWon - totalXpLost >= 0 ? 'good' : 'bad'}`}>
+                    {totalXpWon - totalXpLost >= 0 ? '+' : ''}{totalXpWon - totalXpLost}
+                  </span>
+                  <span className="pred-stat-label">XP Neto</span>
+                </div>
+              </div>
+              
+              {/* Predictions List */}
+              <div className="predictions-list">
+                {userPredictions.slice(0, 5).map((pred, idx) => {
+                  const isCorrect = pred.match?.winner && pred.prediction === pred.match.winner
+                  const isResolved = !!pred.match?.winner
+                  const predictedTeam = pred.prediction === 'white' ? 'Blanco' : 'Negro'
+                  
+                  return (
+                    <div key={idx} className={`prediction-item ${isResolved ? (isCorrect ? 'correct' : 'wrong') : 'pending'}`}>
+                      <div className="pred-match-info">
+                        <span className="pred-date">
+                          {new Date(pred.match.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                        </span>
+                        <span className="pred-teams">
+                          {pred.match.teamWhite?.slice(0, 2).map(id => getPlayerName(id)?.split(' ')[0]).join(', ')} vs {pred.match.teamBlack?.slice(0, 2).map(id => getPlayerName(id)?.split(' ')[0]).join(', ')}
+                        </span>
+                      </div>
+                      <div className="pred-result">
+                        <span className="pred-choice">Eq. {predictedTeam}</span>
+                        <span className="pred-xp">
+                          {isResolved 
+                            ? (isCorrect ? `+${pred.potentialWin || 0}` : `-${pred.xpBet || 0}`)
+                            : `${pred.xpBet || 0}`
+                          } XP
+                        </span>
+                        <span className="pred-status">
+                          {isResolved 
+                            ? (isCorrect 
+                              ? <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#22c55e"/><path d="M5 8l2 2 4-4" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              : <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ef4444"/><path d="M5.5 5.5l5 5m0-5l-5 5" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+                            )
+                            : <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#f59e0b"/><circle cx="8" cy="8" r="2" fill="white"/></svg>
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              
+              {userPredictions.length > 5 && (
+                <div className="predictions-more">
+                  +{userPredictions.length - 5} predicciones más
+                </div>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* Period Summary (Week/Month) */}
+        {(() => {
+          const now = new Date()
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+          
+          // Weekly stats
+          const weekMatches = matches.filter(m => {
+            const played = m.teamWhite?.includes(playerId) || m.teamBlack?.includes(playerId)
+            return played && new Date(m.date) >= weekAgo
+          })
+          
+          // Monthly stats
+          const monthMatches = matches.filter(m => {
+            const played = m.teamWhite?.includes(playerId) || m.teamBlack?.includes(playerId)
+            const mDate = new Date(m.date)
+            return played && mDate >= monthStart
+          })
+          
+          const calcPeriodStats = (periodMatches) => {
+            let wins = 0, losses = 0, mvps = 0, totalRating = 0, ratingCount = 0
+            
+            periodMatches.forEach(m => {
+              const inWhite = m.teamWhite?.includes(playerId)
+              if (m.winner) {
+                if ((inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')) wins++
+                else losses++
+              }
+              
+              // Check MVP
+              const allPlayers = [...(m.teamWhite || []), ...(m.teamBlack || [])]
+              let mvpId = null, mvpRating = -1
+              allPlayers.forEach(pid => {
+                const pRatings = (ratings[pid] || []).filter(r => r.matchId === m.id)
+                if (pRatings.length > 0) {
+                  const avg = pRatings.reduce((s, r) => s + r.score, 0) / pRatings.length
+                  if (avg > mvpRating) { mvpRating = avg; mvpId = pid }
+                }
+              })
+              if (mvpId === playerId) mvps++
+              
+              // Rating
+              const myRatings = (ratings[playerId] || []).filter(r => r.matchId === m.id)
+              if (myRatings.length > 0) {
+                totalRating += myRatings.reduce((s, r) => s + r.score, 0) / myRatings.length
+                ratingCount++
+              }
+            })
+            
+            const played = periodMatches.length
+            const winRate = played > 0 ? Math.round((wins / played) * 100) : 0
+            const avgRating = ratingCount > 0 ? (totalRating / ratingCount).toFixed(1) : null
+            
+            return { played, wins, losses, mvps, winRate, avgRating }
+          }
+          
+          const weekStats = calcPeriodStats(weekMatches)
+          const monthStats = calcPeriodStats(monthMatches)
+          
+          if (weekStats.played === 0 && monthStats.played === 0) return null
+          
+          const periodNames = {
+            week: 'Esta Semana',
+            month: new Date().toLocaleDateString('es-ES', { month: 'long' })
+          }
+          
+          return (
+            <div className="profile-section-v2">
+              <h4 className="ps-title">Resumen del Período</h4>
+              <div className="period-summary-tabs">
+                {weekStats.played > 0 && (
+                  <div className="period-card">
+                    <span className="period-label">{periodNames.week}</span>
+                    <div className="period-stats">
+                      <span className="period-main">{weekStats.wins}V - {weekStats.losses}D</span>
+                      <span className={`period-wr ${weekStats.winRate >= 50 ? 'good' : 'bad'}`}>{weekStats.winRate}%</span>
+                    </div>
+                    <div className="period-details">
+                      {weekStats.avgRating && <span>⭐ {weekStats.avgRating}</span>}
+                      {weekStats.mvps > 0 && <span>🏆 {weekStats.mvps} MVP</span>}
+                      <span>📊 {weekStats.played} partidos</span>
+                    </div>
+                  </div>
+                )}
+                {monthStats.played > 0 && (
+                  <div className="period-card">
+                    <span className="period-label">{periodNames.month}</span>
+                    <div className="period-stats">
+                      <span className="period-main">{monthStats.wins}V - {monthStats.losses}D</span>
+                      <span className={`period-wr ${monthStats.winRate >= 50 ? 'good' : 'bad'}`}>{monthStats.winRate}%</span>
+                    </div>
+                    <div className="period-details">
+                      {monthStats.avgRating && <span>⭐ {monthStats.avgRating}</span>}
+                      {monthStats.mvps > 0 && <span>🏆 {monthStats.mvps} MVP</span>}
+                      <span>📊 {monthStats.played} partidos</span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1644,19 +1880,30 @@ function App() {
         />
       )}
 
-      {/* Loading State */}
+      {/* Loading State - Stats */}
       {activeTab === 'stats' && !dataLoaded && (
         <section className="stats-section">
           <h2 className="section-title">Ranking de Jugadores</h2>
-          <div className="skeleton-container">
-            {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="skeleton-row">
-                <div className="skeleton skeleton-avatar"></div>
-                <div className="skeleton skeleton-text"></div>
-                <div className="skeleton skeleton-bar"></div>
-              </div>
-            ))}
-          </div>
+          <p className="section-subtitle">Cargando estadísticas...</p>
+          <SkeletonTable rows={8} />
+        </section>
+      )}
+
+      {/* Loading State - Matches */}
+      {activeTab === 'matches' && !dataLoaded && (
+        <section className="stats-section">
+          <h2 className="section-title">Partidos</h2>
+          <p className="section-subtitle">Cargando partidos...</p>
+          <SkeletonMatchesList count={4} />
+        </section>
+      )}
+
+      {/* Loading State - Ratings */}
+      {activeTab === 'ratings' && !dataLoaded && (
+        <section className="stats-section">
+          <h2 className="section-title">Calificaciones</h2>
+          <p className="section-subtitle">Cargando calificaciones...</p>
+          <SkeletonTable rows={6} />
         </section>
       )}
 
