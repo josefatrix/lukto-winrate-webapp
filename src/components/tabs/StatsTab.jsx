@@ -5,6 +5,7 @@
 
 import { useState, useMemo } from 'react'
 import { useApp } from '../../contexts'
+import { EmptyState } from '../common'
 
 export const StatsTab = ({
   stats,
@@ -365,15 +366,15 @@ export const StatsTab = ({
           </tbody>
         </table>
       ) : (
-        <div className="empty-state">
-          <div className="icon">—</div>
-          <h3>Sin estadísticas</h3>
-          <p>
-            {timeFilter !== 'all'
+        <EmptyState
+          type="noStats"
+          title="Sin estadísticas"
+          description={
+            timeFilter !== 'all'
               ? 'No hay partidos en este período'
-              : 'Agrega partidos para ver las estadísticas'}
-          </p>
-        </div>
+              : 'Agrega partidos para ver las estadísticas'
+          }
+        />
       )}
     </section>
   )
