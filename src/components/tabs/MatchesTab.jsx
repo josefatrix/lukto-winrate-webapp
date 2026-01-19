@@ -4,6 +4,7 @@
  */
 
 import { useApp } from '../../contexts'
+import { EmptyState } from '../common'
 
 export const MatchesTab = ({
   onOpenRatingModal,
@@ -192,11 +193,11 @@ export const MatchesTab = ({
           )
         })
       ) : (
-        <div className="empty-state">
-          <div className="icon">—</div>
-          <h3>Sin partidos</h3>
-          <p>Agrega tu primer partido</p>
-        </div>
+        <EmptyState
+          type="noMatches"
+          title="Sin partidos"
+          description="Agrega tu primer partido para comenzar"
+        />
       )}
     </section>
   )
