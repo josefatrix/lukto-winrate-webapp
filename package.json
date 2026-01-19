@@ -22,6 +22,10 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist node_modules/.vite",
     "prepare": "echo 'Ready for development'",
+    "test:build": "npm run lint:check && npm run build",
+    "test:local": "npm run build && npm run preview",
+    "deploy:preview": "npm run test:build && npx vercel",
+    "deploy:prod": "npm run test:build && npx vercel --prod",
     "release:patch": "npm version patch && git push origin main --tags",
     "release:minor": "npm version minor && git push origin main --tags",
     "release:major": "npm version major && git push origin main --tags"

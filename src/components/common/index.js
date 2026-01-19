@@ -28,4 +28,5 @@ export { Sparkline, TrendIndicator } from './Sparkline'
 export { AvatarStatus } from './AvatarStatus'
 export { Onboarding, useOnboarding } from './Onboarding'
 export { ComparisonBar, StatComparison } from './ComparisonBar'
+export { PendingRatingsNotification, PendingRatingsBadge } from './PendingRatingsNotification'
 

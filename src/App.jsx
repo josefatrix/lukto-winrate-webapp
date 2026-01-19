@@ -13,7 +13,7 @@ import confetti from 'canvas-confetti'
 import { Header, BottomNav } from './components/layout'
 import { StatsTab, MatchesTab, RatingsTab } from './components/tabs'
 import { AdminLoginModal, PendingUserModal } from './components/modals'
-import { FloatingActionButton, SkeletonPage, Onboarding, useOnboarding, EmptyState, AnimatedCounter } from './components/common'
+import { FloatingActionButton, SkeletonPage, Onboarding, useOnboarding, EmptyState, AnimatedCounter, PendingRatingsNotification } from './components/common'
 
 // ============ HELPER FUNCTIONS ============
 
@@ -1636,6 +1636,14 @@ function App() {
         </nav>
       )}
 
+      {/* Pending Ratings & Predictions Notification */}
+      {(activeTab === 'stats' || activeTab === 'matches' || activeTab === 'ratings') && (
+        <PendingRatingsNotification 
+          onOpenRatingModal={openRatingModal} 
+          onOpenPrediction={openPredictionModal}
+        />
+      )}
+
       {/* Loading State */}
       {activeTab === 'stats' && !dataLoaded && (
         <section className="stats-section">
@@ -2948,14 +2956,20 @@ function App() {
                         {getPlayerPhoto(playerId) ? (
                           <img
                             src={getPlayerPhoto(playerId)}
-                            alt=""
-                            className="player-avatar-img small"
+                            alt={getPlayerName(playerId)}
+                            className="player-avatar-img"
+                            onError={(e) => {
+                              e.target.style.display = 'none'
+                              e.target.nextSibling && (e.target.nextSibling.style.display = 'flex')
+                            }}
                           />
-                        ) : (
-                          <div className="player-avatar small">
-                            {getInitials(getPlayerName(playerId))}
-                          </div>
-                        )}
+                        ) : null}
+                        <div 
+                          className="player-avatar" 
+                          style={{ display: getPlayerPhoto(playerId) ? 'none' : 'flex' }}
+                        >
+                          {getInitials(getPlayerName(playerId))}
+                        </div>
                         <span>{getPlayerName(playerId)}</span>
                       </div>
                       <div className="rating-stars">

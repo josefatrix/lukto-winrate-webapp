@@ -5,8 +5,11 @@
 import { useMemo } from 'react'
 import { useApp } from '../contexts'
 
+// Prediction bonus for correct predictions
+const PREDICTION_BONUS = 0.2
+
 export const useStats = () => {
-  const { players, matches, ratings, timeFilter } = useApp()
+  const { players, matches, ratings, predictions, userLinks, timeFilter } = useApp()
 
   // Calculate base stats for each player
   const stats = useMemo(() => {
@@ -272,13 +275,33 @@ export const useStats = () => {
   }
 }
 
-// Helper function
+// Helper function - Calculate player average rating (without prediction bonus - bonus is per-match only)
 const calculatePlayerAvgRating = (playerId, ratings) => {
   const playerRatings = ratings?.[playerId]
   if (!playerRatings || playerRatings.length === 0) return null
+  
   const sum = playerRatings.reduce((acc, r) => acc + (typeof r.score === 'number' ? r.score : 0), 0)
   const avg = sum / playerRatings.length
   return typeof avg === 'number' && !isNaN(avg) ? avg.toFixed(1) : null
+}
+
+// Helper function - Check if player correctly predicted a specific match
+export const getMatchPredictionBonus = (playerId, matchId, predictions, userLinks) => {
+  if (!predictions || !userLinks || !matchId) return 0
+  
+  // Find the user ID linked to this player
+  const userId = Object.entries(userLinks).find(([uid, data]) => data?.playerId === playerId)?.[0]
+  if (!userId) return 0
+  
+  const userPrediction = predictions[matchId]?.[userId]
+  return userPrediction ? PREDICTION_BONUS : 0
+}
+
+// Helper function - Check if prediction was correct for a match
+export const isPredictionCorrect = (userId, matchId, matchWinner, predictions) => {
+  if (!predictions || !userId || !matchId || !matchWinner) return false
+  const userPrediction = predictions[matchId]?.[userId]
+  return userPrediction?.prediction === matchWinner
 }
 
 export default useStats

@@ -4,6 +4,7 @@
  */
 
 import { useApp } from '../../contexts'
+import { PendingRatingsBadge } from '../common'
 
 const RankingIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor">
@@ -72,7 +73,10 @@ export const BottomNav = ({ showPlayerProfile, selectedPlayerProfile, onShowProf
           className={`bottom-nav-item ${activeTab === tab.id && !showPlayerProfile ? 'active' : ''}`}
           onClick={() => handleTabClick(tab.id)}
         >
-          {tab.icon}
+          <span className="nav-icon-wrapper">
+            {tab.icon}
+            {tab.id === 'matches' && <PendingRatingsBadge />}
+          </span>
           <span>{tab.label}</span>
         </button>
       ))}

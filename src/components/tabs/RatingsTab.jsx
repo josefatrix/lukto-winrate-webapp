@@ -5,9 +5,13 @@
 import React, { useState } from 'react'
 import { useApp } from '../../contexts'
 import { EmptyState } from '../common'
+import { isPredictionCorrect } from '../../hooks/useStats'
+
+// Prediction bonus constant
+const PREDICTION_BONUS = 0.2
 
 export const RatingsTab = ({ getRatingClass }) => {
-  const { players, matches, ratings, user, userPlayer, timeFilter, getPlayerPhoto, getInitials } =
+  const { players, matches, ratings, predictions, userLinks, user, userPlayer, timeFilter, getPlayerPhoto, getInitials } =
     useApp()
 
   const [expandedPlayer, setExpandedPlayer] = useState(null)
@@ -140,11 +144,27 @@ export const RatingsTab = ({ getRatingClass }) => {
                             )
                             .map(([matchId, data]) => {
                               let matchAvg = '-'
+                              let baseAvg = 0
+                              
+                              // Find user ID for this player to check prediction
+                              const playerId = player.id
+                              const userId = userLinks 
+                                ? Object.entries(userLinks).find(([uid, linkData]) => linkData?.playerId === playerId)?.[0]
+                                : null
+                              
+                              // Check if prediction was correct
+                              const predictionCorrect = userId && data.match?.winner
+                                ? isPredictionCorrect(userId, matchId, data.match.winner, predictions)
+                                : false
+                              
                               if (data.ratings.length > 0) {
                                 const sum = data.ratings.reduce((acc, r) => acc + (typeof r.score === 'number' ? r.score : 0), 0)
-                                const avg = sum / data.ratings.length
-                                matchAvg = typeof avg === 'number' && !isNaN(avg) ? avg.toFixed(1) : '-'
+                                baseAvg = sum / data.ratings.length
+                                // Add prediction bonus if correct
+                                const finalAvg = predictionCorrect ? baseAvg + PREDICTION_BONUS : baseAvg
+                                matchAvg = typeof finalAvg === 'number' && !isNaN(finalAvg) ? finalAvg.toFixed(1) : '-'
                               }
+                              
                               return (
                                 <tr key={matchId}>
                                   <td>
@@ -164,6 +184,14 @@ export const RatingsTab = ({ getRatingClass }) => {
                                       className={`rating-value ${getRatingClass(parseFloat(matchAvg))}`}
                                     >
                                       {matchAvg}
+                                      {predictionCorrect && (
+                                        <span className="prediction-bonus-badge" title={`+${PREDICTION_BONUS} por predicción correcta`}>
+                                          <svg width="12" height="12" viewBox="0 0 12 12">
+                                            <circle cx="6" cy="6" r="5" fill="#a855f7" />
+                                            <path d="M4 6l1.5 1.5 3-3" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                          </svg>
+                                        </span>
+                                      )}
                                     </span>
                                   </td>
                                   <td>
