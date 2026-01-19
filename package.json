@@ -1,10 +1,18 @@
 {
   "name": "lukto-winrate",
-  "version": "0.0.1",
+  "version": "1.5.0",
   "private": true,
   "type": "module",
+  "description": "App para trackear estadísticas de partidos y calificaciones de jugadores",
+  "author": "José Escorcia",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/josefatrix/lukto-winrate-webapp.git"
+  },
   "scripts": {
     "dev": "vite",
+    "dev:host": "vite --host",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext .js,.jsx --fix",
@@ -13,7 +21,10 @@
     "format:check": "prettier --check \"src/**/*.{js,jsx,css}\"",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist node_modules/.vite",
-    "prepare": "echo 'Ready for development'"
+    "prepare": "echo 'Ready for development'",
+    "release:patch": "npm version patch && git push origin main --tags",
+    "release:minor": "npm version minor && git push origin main --tags",
+    "release:major": "npm version major && git push origin main --tags"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.2",
