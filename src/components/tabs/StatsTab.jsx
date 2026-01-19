@@ -275,14 +275,14 @@ export const StatsTab = ({
               <th onClick={() => handleSort('name')} className="sortable">
                 Jugador <SortIcon column="name" />
               </th>
-              <th>Rango</th>
+              <th className="rank-col"></th>
               <th onClick={() => handleSort('rankingScore')} className="sortable">
                 Score <SortIcon column="rankingScore" />
               </th>
               <th onClick={() => handleSort('winRate')} className="sortable">
                 WR <SortIcon column="winRate" />
               </th>
-              <th></th>
+              <th className="bar-col"></th>
               <th onClick={() => handleSort('wins')} className="sortable">
                 V <SortIcon column="wins" />
               </th>

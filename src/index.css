@@ -1550,17 +1550,36 @@ body {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  table-layout: auto;
+}
+
+/* Specific column widths */
+.stats-table .rank-col {
+  width: 30px;
+  padding: 0.5rem 0.25rem !important;
+}
+
+.stats-table .bar-col {
+  width: 40px;
+  padding: 0.5rem 0.25rem !important;
 }
 
 .stats-table thead th {
-  text-align: left;
+  text-align: center;
   padding: 0.875rem 0.5rem;
   color: var(--text-muted);
   font-weight: 600;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   border-bottom: 1px solid var(--separator);
+  white-space: nowrap;
+}
+
+/* First two columns (# and Player name) should be left-aligned */
+.stats-table thead th:first-child,
+.stats-table thead th:nth-child(2) {
+  text-align: left;
 }
 
 .stats-table thead th.sortable {
@@ -1676,6 +1695,34 @@ body {
   .sort-chips-scroll {
     width: 100%;
   }
+  
+  /* Hide rank icon column on small screens */
+  .stats-table thead th:nth-child(3),
+  .stats-table tbody td:nth-child(3) {
+    display: none;
+  }
+  
+  /* Hide player number column on very small screens */
+  .stats-table thead th:first-child,
+  .stats-table tbody td:first-child {
+    display: none;
+  }
+  
+  /* Reduce padding in cells */
+  .stats-table thead th,
+  .stats-table td {
+    padding: 0.5rem 0.3rem;
+    font-size: 0.7rem;
+  }
+  
+  .ranking-score {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .winrate-bar-container {
+    width: 35px;
+  }
 }
 
 .stats-table tbody tr {
@@ -1706,6 +1753,13 @@ body {
   padding: 0.875rem 0.5rem;
   vertical-align: middle;
   border-bottom: 1px solid var(--separator);
+  text-align: center;
+}
+
+/* First two columns (# and Player name) should be left-aligned */
+.stats-table td:first-child,
+.stats-table td:nth-child(2) {
+  text-align: left;
 }
 
 .stats-table tbody tr:last-child td {
