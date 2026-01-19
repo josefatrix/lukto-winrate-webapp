@@ -4,7 +4,6 @@
  */
 import React, { useState } from 'react'
 import { useApp } from '../../contexts'
-import { EmptyState } from '../common'
 
 export const RatingsTab = ({ getRatingClass }) => {
   const { players, matches, ratings, user, userPlayer, timeFilter, getPlayerPhoto, getInitials } =
@@ -184,15 +183,15 @@ export const RatingsTab = ({ getRatingClass }) => {
           })}
         </div>
       ) : (
-        <EmptyState
-          type="noStats"
-          title="Sin calificaciones"
-          description={
-            timeFilter !== 'all'
+        <div className="empty-state">
+          <div className="icon">—</div>
+          <h3>Sin calificaciones</h3>
+          <p>
+            {timeFilter !== 'all'
               ? 'No hay calificaciones en este período'
-              : 'Ve a la pestaña de Partidos y califica a tus compañeros'
-          }
-        />
+              : 'Ve a la pestaña de Partidos y califica a tus compañeros'}
+          </p>
+        </div>
       )}
     </section>
   )

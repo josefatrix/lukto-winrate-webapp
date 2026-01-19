@@ -13,7 +13,7 @@ import confetti from 'canvas-confetti'
 import { Header, BottomNav } from './components/layout'
 import { StatsTab, MatchesTab, RatingsTab } from './components/tabs'
 import { AdminLoginModal, PendingUserModal } from './components/modals'
-import { FloatingActionButton, SkeletonPage, Onboarding, useOnboarding, EmptyState, AnimatedCounter } from './components/common'
+import { FloatingActionButton, SkeletonPage } from './components/common'
 
 // ============ HELPER FUNCTIONS ============
 
@@ -933,9 +933,6 @@ function App() {
   // Stats hook
   const { stats, filteredStats, getPlayerOfMonth, getPlayerOfWeek } = useStats()
 
-  // Onboarding hook
-  const { showOnboarding, completeOnboarding } = useOnboarding()
-
   // Local state
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showRatingModal, setShowRatingModal] = useState(false)
@@ -1560,16 +1557,7 @@ function App() {
   // ============ RENDER ============
 
   return (
-    <>
-      {/* Onboarding for new users */}
-      {showOnboarding && (
-        <Onboarding 
-          onComplete={completeOnboarding} 
-          onSkip={completeOnboarding} 
-        />
-      )}
-
-      <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
+    <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
       {/* Header */}
       <Header
         onShowLoginModal={() => setShowLoginModal(true)}
@@ -3199,7 +3187,6 @@ function App() {
         </div>
       )}
     </div>
-    </>
   )
 }
 
