@@ -1251,6 +1251,8 @@ function App() {
   const [predictionMatch, setPredictionMatch] = useState(null)
   const [selectedPrediction, setSelectedPrediction] = useState(null)
   const [coinBet, setCoinBet] = useState(10) // LukCoins to bet on prediction
+  const [showMatchXpModal, setShowMatchXpModal] = useState(false)
+  const [matchXpData, setMatchXpData] = useState(null)
 
   // Notifications
   const [notificationPermission, setNotificationPermission] = useState(() => {
@@ -1611,6 +1613,56 @@ function App() {
     } catch (error) {
       console.error('Error saving LukCoins purchase:', error)
       showToast('error', 'No se pudo completar la compra')
+    }
+  }
+
+  useEffect(() => {
+    if (!user || !userPlayer || !dataLoaded) return
+    const link = userLinks?.[user.uid]
+    const shownMap = link?.xpMatchShown || {}
+    const eligibleMatches = matches
+      .filter(m => m.winner && (m.teamWhite?.includes(userPlayer) || m.teamBlack?.includes(userPlayer)))
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+
+    const nextMatch = eligibleMatches.find(m => !shownMap[m.id])
+    if (!nextMatch) return
+
+    const baseXp = getMatchXP(userPlayer, nextMatch)
+    let bonusXp = 0
+    if (link?.xpBoostAppliedMatchId === nextMatch.id && link?.xpBoostAppliedMultiplier > 1) {
+      bonusXp = baseXp * (link.xpBoostAppliedMultiplier - 1)
+    }
+
+    setMatchXpData({
+      match: nextMatch,
+      baseXp,
+      bonusXp,
+      totalXp: baseXp + bonusXp,
+      multiplier: link?.xpBoostAppliedMultiplier || 1,
+    })
+    setShowMatchXpModal(true)
+  }, [user, userPlayer, dataLoaded, matches, ratings, userLinks])
+
+  const closeMatchXpModal = async () => {
+    setShowMatchXpModal(false)
+    if (!user || !matchXpData?.match?.id) return
+    try {
+      const currentShown = userLinks?.[user.uid]?.xpMatchShown || {}
+      await setDoc(
+        doc(db, 'userLinks', user.uid),
+        {
+          xpMatchShown: {
+            ...currentShown,
+            [matchXpData.match.id]: true,
+          },
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      )
+    } catch (error) {
+      console.error('Error saving XP modal state:', error)
+    } finally {
+      setMatchXpData(null)
     }
   }
 
@@ -3467,6 +3519,39 @@ function App() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {showMatchXpModal && matchXpData && (
+        <div className="modal-overlay" onClick={closeMatchXpModal}>
+          <div className="modal xp-reward-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>XP del Partido</h2>
+              <button className="modal-close" onClick={closeMatchXpModal}>×</button>
+            </div>
+            <p className="modal-subtitle">
+              {formatDate(matchXpData.match.date)} - {matchXpData.match.venue || 'LUKTO'}
+            </p>
+            <div className="xp-reward-summary">
+              <div className="xp-reward-row">
+                <span>XP base</span>
+                <strong>+{matchXpData.baseXp}</strong>
+              </div>
+              {matchXpData.bonusXp > 0 && (
+                <div className="xp-reward-row bonus">
+                  <span>Bonus x{matchXpData.multiplier}</span>
+                  <strong>+{matchXpData.bonusXp}</strong>
+                </div>
+              )}
+              <div className="xp-reward-total">
+                <span>Total</span>
+                <strong>+{matchXpData.totalXp} XP</strong>
+              </div>
+            </div>
+            <button className="submit-btn" onClick={closeMatchXpModal}>
+              OK
+            </button>
           </div>
         </div>
       )}
