@@ -91,10 +91,11 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
 
   return (
     <section className="stats-section store-section">
-      <div className="store-header">
-        <div>
-          <h2 className="section-title">Lukto Store</h2>
-          <p className="section-subtitle">Cosméticos y mejoras con LukCoins</p>
+      <div className="store-hero">
+        <div className="store-hero-text">
+          <span className="store-tag">Drop 01</span>
+          <h2 className="store-title">Lukto Store</h2>
+          <p className="store-tagline">Ponte el estilo que mete presión</p>
         </div>
         <div className="store-balance">
           <span className="store-balance-label">Saldo</span>
