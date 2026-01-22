@@ -8128,6 +8128,32 @@ body {
   background: linear-gradient(120deg, rgba(147, 51, 234, 0.85), rgba(14, 165, 233, 0.85), rgba(34, 197, 94, 0.8));
 }
 
+.store-xp-preview {
+  margin-top: 6px;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-family: Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(120deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.store-xp-preview.xp2 {
+  background: linear-gradient(120deg, rgba(34, 197, 94, 0.85), rgba(15, 118, 110, 0.85));
+}
+
+.store-xp-preview.xp3 {
+  background: linear-gradient(120deg, rgba(59, 130, 246, 0.85), rgba(30, 64, 175, 0.85));
+}
+
+.store-xp-preview.xp4 {
+  background: linear-gradient(120deg, rgba(147, 51, 234, 0.85), rgba(88, 28, 135, 0.85));
+}
+
 .store-name-preview {
   font-size: 13px;
   font-weight: 700;

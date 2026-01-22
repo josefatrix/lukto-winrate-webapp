@@ -1287,6 +1287,13 @@ function App() {
     if (playerStats.avgRating) {
       xp += Math.round(parseFloat(playerStats.avgRating) * 5)
     }
+    const linkedUserId = Object.entries(userLinks || {}).find(
+      ([, linkData]) => linkData?.playerId === playerId
+    )?.[0]
+    const xpMultiplier = linkedUserId
+      ? Math.max(1, userLinks?.[linkedUserId]?.xpMultiplier || userLinks?.[linkedUserId]?.cosmetics?.xpMultiplier || 1)
+      : 1
+    xp = xp * xpMultiplier
     return xp
   }
 
@@ -1543,6 +1550,7 @@ function App() {
         {
           lukcoinsSpent: newSpent,
           cosmetics: newCosmetics,
+          xpMultiplier: newCosmetics.xpMultiplier || currentLink.xpMultiplier || 1,
           updatedAt: new Date().toISOString(),
         },
         { merge: true }

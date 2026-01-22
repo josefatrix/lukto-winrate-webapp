@@ -87,6 +87,30 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
       cosmeticsUpdate: { banner: 'legend' },
       preview: 'banner-legend',
     },
+    {
+      id: 'xp2',
+      title: 'XP x2',
+      description: 'Duplica tu XP total (boost permanente).',
+      price: 200,
+      cosmeticsUpdate: { xpMultiplier: 2 },
+      preview: 'xp2',
+    },
+    {
+      id: 'xp3',
+      title: 'XP x3',
+      description: 'Triplica tu XP total (boost permanente).',
+      price: 350,
+      cosmeticsUpdate: { xpMultiplier: 3 },
+      preview: 'xp3',
+    },
+    {
+      id: 'xp4',
+      title: 'XP x4',
+      description: 'Cuadruplica tu XP total (boost permanente).',
+      price: 600,
+      cosmeticsUpdate: { xpMultiplier: 4 },
+      preview: 'xp4',
+    },
   ]
 
   if (!user) {
@@ -138,7 +162,10 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
             (item.id === 'bannerMonda' && cosmetics.banner === 'monda') ||
             (item.id === 'bannerJuego' && cosmetics.banner === 'hayjuego') ||
             (item.id === 'bannerAmamar' && cosmetics.banner === 'amamar') ||
-            (item.id === 'bannerLegend' && cosmetics.banner === 'legend')
+            (item.id === 'bannerLegend' && cosmetics.banner === 'legend') ||
+            (item.id === 'xp2' && (cosmetics.xpMultiplier || 1) >= 2) ||
+            (item.id === 'xp3' && (cosmetics.xpMultiplier || 1) >= 3) ||
+            (item.id === 'xp4' && (cosmetics.xpMultiplier || 1) >= 4)
 
           return (
             <div key={item.id} className={`store-card ${owned ? 'owned' : ''}`}>
@@ -157,6 +184,11 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
               {item.preview?.startsWith('banner-') && (
                 <div className={`store-banner-preview ${item.preview}`}>
                   <span>{item.title.replace('Banner ', '')}</span>
+                </div>
+              )}
+              {item.preview?.startsWith('xp') && (
+                <div className={`store-xp-preview ${item.preview}`}>
+                  <span>{item.title}</span>
                 </div>
               )}
               <div className="store-info">
