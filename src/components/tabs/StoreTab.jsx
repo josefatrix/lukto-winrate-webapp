@@ -32,12 +32,12 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
       preview: 'glow',
     },
     {
-      id: 'frameJunior',
-      title: 'Marco Junior',
-      description: 'Marco de escudo estilo Junior para tu avatar.',
+      id: 'bannerJunior',
+      title: 'Banner Junior',
+      description: 'Banner de perfil inspirado en el escudo Junior.',
       price: 120,
-      cosmeticsUpdate: { avatarFrame: 'junior' },
-      preview: 'frame-junior',
+      cosmeticsUpdate: { banner: 'junior' },
+      preview: 'banner-junior',
     },
   ]
 
@@ -83,13 +83,13 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
           const owned =
             (item.id === 'goldName' && cosmetics.goldName) ||
             (item.id === 'avatarGlow' && cosmetics.avatarGlow) ||
-            (item.id === 'frameJunior' && cosmetics.avatarFrame === 'junior')
+            (item.id === 'bannerJunior' && cosmetics.banner === 'junior')
 
           return (
             <div key={item.id} className={`store-card ${owned ? 'owned' : ''}`}>
               <div className="store-preview">
                 <div
-                  className={`store-avatar-preview ${item.preview === 'glow' ? 'glow' : ''} ${item.preview === 'frame-junior' ? 'frame-junior' : ''}`}
+                  className={`store-avatar-preview ${item.preview === 'glow' ? 'glow' : ''}`}
                 >
                   <AvatarImage src={getPlayerPhoto(userPlayer)} name={getPlayerName(userPlayer)} />
                 </div>
@@ -99,6 +99,11 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
                   </span>
                 </div>
               </div>
+              {item.preview === 'banner-junior' && (
+                <div className="store-banner-preview banner-junior">
+                  <span>Banner Junior</span>
+                </div>
+              )}
               <div className="store-info">
                 <h3>{item.title}</h3>
                 <p>{item.description}</p>

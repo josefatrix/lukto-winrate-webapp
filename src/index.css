@@ -7649,26 +7649,25 @@ body {
   color: transparent;
 }
 
-.frame-junior::before {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  background: conic-gradient(from 220deg, #0b3d91, #ef4444, #f8d34d, #0b3d91);
-  z-index: 0;
-  pointer-events: none;
+.profile-hero-v2 {
+  position: relative;
+  overflow: hidden;
 }
 
-.frame-junior::after {
+.profile-hero-v2::before {
   content: '';
   position: absolute;
-  width: 26px;
-  height: 30px;
-  right: -6px;
-  bottom: -6px;
-  background: url('/store/junior-shield.svg') no-repeat center/contain;
-  z-index: 2;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.profile-hero-v2.banner-junior::before {
+  opacity: 1;
+  background:
+    linear-gradient(120deg, rgba(11, 61, 145, 0.28), rgba(239, 68, 68, 0.22)),
+    url('/store/junior-shield.svg') no-repeat right -20px bottom -20px/120px;
 }
 
 .ph-name {
@@ -7951,11 +7950,20 @@ body {
   box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4), 0 8px 20px rgba(245, 158, 11, 0.25);
 }
 
-.store-avatar-preview.frame-junior::after {
-  width: 20px;
-  height: 24px;
-  right: -5px;
-  bottom: -5px;
+.store-banner-preview {
+  margin-top: 6px;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
+.store-banner-preview.banner-junior {
+  background:
+    linear-gradient(120deg, rgba(11, 61, 145, 0.8), rgba(239, 68, 68, 0.8)),
+    url('/store/junior-shield.svg') no-repeat right 6px center/28px;
 }
 
 .store-name-preview {

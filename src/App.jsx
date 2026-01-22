@@ -324,7 +324,7 @@ function PlayerProfileModal({
   const photo = getPlayerPhoto ? getPlayerPhoto(playerId) : null
   const linkedUserId = Object.entries(userLinks || {}).find(([, data]) => data?.playerId === playerId)?.[0]
   const cosmetics = linkedUserId ? userLinks?.[linkedUserId]?.cosmetics : null
-  const avatarFrame = cosmetics?.avatarFrame || null
+  const banner = cosmetics?.banner || null
   
   // Calculate all stats averages for comparison
   const ratingSamples = stats?.filter(p => p.avgRating) || []
@@ -493,10 +493,8 @@ function PlayerProfileModal({
         </div>
         
         {/* Clean Hero Header */}
-        <div className="profile-hero-v2">
-          <div
-            className={`ph-avatar ${cosmetics?.avatarGlow ? 'glow' : ''} ${avatarFrame ? `frame-${avatarFrame}` : ''}`}
-          >
+        <div className={`profile-hero-v2 ${banner ? `banner-${banner}` : ''}`}>
+          <div className={`ph-avatar ${cosmetics?.avatarGlow ? 'glow' : ''}`}>
             <AvatarImage src={photo} name={player.name} />
           </div>
           <h2 className={`ph-name ${cosmetics?.goldName ? 'gold' : ''}`}>{player.name}</h2>
