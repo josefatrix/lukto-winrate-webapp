@@ -7666,8 +7666,8 @@ body {
 .profile-hero-v2.banner-junior::before {
   opacity: 1;
   background:
-    linear-gradient(120deg, rgba(11, 61, 145, 0.28), rgba(239, 68, 68, 0.22)),
-    url('/store/junior-shield.svg') no-repeat right -20px bottom -20px/120px;
+    linear-gradient(120deg, rgba(11, 61, 145, 0.3), rgba(239, 68, 68, 0.24)),
+    url('/store/junior-shield.svg') no-repeat right -6px bottom -6px/150px;
 }
 
 .profile-hero-v2.banner-monda::before {
