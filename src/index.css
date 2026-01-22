@@ -7652,10 +7652,23 @@ body {
 .frame-junior::before {
   content: '';
   position: absolute;
-  inset: -10px;
-  background: url('/store/junior-shield.svg') no-repeat center/contain;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(from 220deg, #0b3d91, #ef4444, #f8d34d, #0b3d91);
   z-index: 0;
   pointer-events: none;
+}
+
+.frame-junior::after {
+  content: '';
+  position: absolute;
+  width: 26px;
+  height: 30px;
+  right: -6px;
+  bottom: -6px;
+  background: url('/store/junior-shield.svg') no-repeat center/contain;
+  z-index: 2;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
 }
 
 .ph-name {
@@ -7936,6 +7949,13 @@ body {
 
 .store-avatar-preview.glow {
   box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4), 0 8px 20px rgba(245, 158, 11, 0.25);
+}
+
+.store-avatar-preview.frame-junior::after {
+  width: 20px;
+  height: 24px;
+  right: -5px;
+  bottom: -5px;
 }
 
 .store-name-preview {
