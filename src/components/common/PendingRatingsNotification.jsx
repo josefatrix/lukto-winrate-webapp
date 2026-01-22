@@ -144,7 +144,7 @@ export const PendingRatingsNotification = ({
                 }
               </span>
               <span className="pending-ratings-subtitle">
-                Predice el ganador y gana XP
+                Predice el ganador y gana LukCoins
               </span>
             </div>
 
@@ -221,7 +221,7 @@ export const PendingRatingsNotification = ({
                 }
               </span>
               <span className="pending-ratings-subtitle">
-                Califica a tus compañeros para ganar XP
+                Califica a tus compañeros para ganar LukCoins
               </span>
             </div>
 
@@ -319,4 +319,3 @@ export const PendingRatingsBadge = ({ className = '' }) => {
 }
 
 export default PendingRatingsNotification
-

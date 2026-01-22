@@ -44,6 +44,7 @@ const GoogleIcon = () => (
 export const Header = ({
   onShowLoginModal,
   onAdminLogout,
+  lukCoins = 0,
 }) => {
   const {
     user,
@@ -128,7 +129,12 @@ export const Header = ({
             Hola, <strong>{user.displayName?.split(' ')[0]}</strong>
             {userPlayer && <span className="welcome-player"> • {getPlayerName(userPlayer)}</span>}
           </span>
-          {isAdmin && <span className="admin-badge">Admin</span>}
+          <div className="header-meta">
+            <span className="lukcoins-pill" title="LukCoins disponibles">
+              LC {lukCoins}
+            </span>
+            {isAdmin && <span className="admin-badge">Admin</span>}
+          </div>
         </div>
       )}
     </header>

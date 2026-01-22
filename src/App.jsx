@@ -39,6 +39,9 @@ const formatDate = dateStr => {
   })
 }
 
+const getPredictionBet = pred => pred?.lukCoinsBet ?? pred?.xpBet ?? 0
+const getPredictionWin = pred => pred?.lukCoinsWin ?? pred?.potentialWin ?? 0
+
 // ============ RANK SYSTEM ============
 
 const getRankIcon = (rank, size = 16) => {
@@ -823,9 +826,9 @@ function PlayerProfileModal({
           const resolved = userPredictions.filter(p => p.match?.winner)
           const correct = resolved.filter(p => p.prediction === p.match.winner)
           const accuracy = resolved.length > 0 ? Math.round((correct.length / resolved.length) * 100) : 0
-          const totalXpWon = correct.reduce((sum, p) => sum + (p.potentialWin || 0), 0)
-          const totalXpLost = resolved.filter(p => p.prediction !== p.match.winner)
-            .reduce((sum, p) => sum + (p.xpBet || 0), 0)
+          const totalCoinsWon = correct.reduce((sum, p) => sum + getPredictionWin(p), 0)
+          const totalCoinsLost = resolved.filter(p => p.prediction !== p.match.winner)
+            .reduce((sum, p) => sum + getPredictionBet(p), 0)
           
           return (
             <div className="profile-section-v2">
@@ -846,10 +849,10 @@ function PlayerProfileModal({
                   <span className="pred-stat-label">Precisión</span>
                 </div>
                 <div className="pred-stat">
-                  <span className={`pred-stat-value ${totalXpWon - totalXpLost >= 0 ? 'good' : 'bad'}`}>
-                    {totalXpWon - totalXpLost >= 0 ? '+' : ''}{totalXpWon - totalXpLost}
+                  <span className={`pred-stat-value ${totalCoinsWon - totalCoinsLost >= 0 ? 'good' : 'bad'}`}>
+                    {totalCoinsWon - totalCoinsLost >= 0 ? '+' : ''}{totalCoinsWon - totalCoinsLost}
                   </span>
-                  <span className="pred-stat-label">XP Neto</span>
+                  <span className="pred-stat-label">LukCoins Netos</span>
                 </div>
               </div>
               
@@ -859,6 +862,8 @@ function PlayerProfileModal({
                   const isCorrect = pred.match?.winner && pred.prediction === pred.match.winner
                   const isResolved = !!pred.match?.winner
                   const predictedTeam = pred.prediction === 'white' ? 'Blanco' : 'Negro'
+                  const bet = getPredictionBet(pred)
+                  const win = getPredictionWin(pred)
                   
                   return (
                     <div key={idx} className={`prediction-item ${isResolved ? (isCorrect ? 'correct' : 'wrong') : 'pending'}`}>
@@ -874,9 +879,9 @@ function PlayerProfileModal({
                         <span className="pred-choice">Eq. {predictedTeam}</span>
                         <span className="pred-xp">
                           {isResolved 
-                            ? (isCorrect ? `+${pred.potentialWin || 0}` : `-${pred.xpBet || 0}`)
-                            : `${pred.xpBet || 0}`
-                          } XP
+                            ? (isCorrect ? `+${win}` : `-${bet}`)
+                            : `${bet}`
+                          } LC
                         </span>
                         <span className="pred-status">
                           {isResolved 
@@ -1226,7 +1231,7 @@ function App() {
   const [showPredictionModal, setShowPredictionModal] = useState(false)
   const [predictionMatch, setPredictionMatch] = useState(null)
   const [selectedPrediction, setSelectedPrediction] = useState(null)
-  const [xpBet, setXpBet] = useState(10) // XP to bet on prediction
+  const [coinBet, setCoinBet] = useState(10) // LukCoins to bet on prediction
 
   // Notifications
   const [notificationPermission, setNotificationPermission] = useState(() => {
@@ -1263,6 +1268,35 @@ function App() {
     if (playerStats.avgRating) {
       xp += Math.round(parseFloat(playerStats.avgRating) * 5)
     }
+    return xp
+  }
+
+  const calculateLukCoins = playerId => {
+    const playerStats = stats.find(s => s.id === playerId)
+    if (!playerStats) return 0
+
+    const COIN_REWARDS = {
+      played: 5,
+      win: 8,
+      mvp: 12,
+      ratedMatch: 4,
+    }
+
+    let coins = 0
+    coins += playerStats.played * COIN_REWARDS.played
+    coins += playerStats.wins * COIN_REWARDS.win
+    coins += playerStats.mvps * COIN_REWARDS.mvp
+
+    const ratedMatches = new Set()
+    Object.values(ratings || {}).forEach(playerRatings => {
+      playerRatings.forEach(r => {
+        if (r.ratedBy === playerId && r.matchId) {
+          ratedMatches.add(r.matchId)
+        }
+      })
+    })
+    coins += ratedMatches.size * COIN_REWARDS.ratedMatch
+
     const userId = Object.entries(userLinks || {}).find(
       ([, linkData]) => linkData?.playerId === playerId
     )?.[0]
@@ -1271,12 +1305,21 @@ function App() {
         const pred = matchPreds?.[userId]
         if (!pred) return
         const match = matches.find(m => m.id === (pred.matchId || matchId))
-        if (!match?.winner) return
-        if (pred.prediction === match.winner) xp += pred.potentialWin || 0
-        else xp -= pred.xpBet || 0
+        const bet = getPredictionBet(pred)
+        const win = getPredictionWin(pred)
+
+        if (!match?.winner) {
+          coins -= bet
+          return
+        }
+
+        if (pred.prediction === match.winner) {
+          coins += bet + win
+        }
       })
     }
-    return xp
+
+    return Math.max(0, Math.round(coins))
   }
 
   // ============ HANDLERS ============
@@ -1459,6 +1502,7 @@ function App() {
     setShowPredictionModal(false)
     setPredictionMatch(null)
     setSelectedPrediction(null)
+    setCoinBet(10)
   }
 
   const submitPrediction = async () => {
@@ -1467,10 +1511,10 @@ function App() {
       return
     }
     
-    // Check if user has enough XP
-    const currentXP = userPlayer ? calculateXP(userPlayer) : 0
-    if (xpBet > currentXP) {
-      showToast('error', `No tienes suficiente XP (tienes ${currentXP})`)
+    // Check if user has enough LukCoins
+    const currentCoins = userPlayer ? calculateLukCoins(userPlayer) : 0
+    if (coinBet > currentCoins) {
+      showToast('error', `No tienes suficientes LukCoins (tienes ${currentCoins})`)
       return
     }
     
@@ -1478,19 +1522,21 @@ function App() {
       const predictionId = `${user.uid}_${predictionMatch.id}`
       const probability = calculateTeamProbability(predictionMatch)
       const winningOdds = selectedPrediction === 'white' ? probability.white : probability.black
-      const potentialWin = Math.round(xpBet * (100 / winningOdds - 1))
+      const potentialWin = Math.round(coinBet * (100 / winningOdds - 1))
       
       await setDoc(doc(db, 'predictions', predictionId), {
         odedBy: user.uid,
         matchId: predictionMatch.id,
         prediction: selectedPrediction,
-        xpBet: xpBet,
+        xpBet: coinBet,
         potentialWin: potentialWin,
+        lukCoinsBet: coinBet,
+        lukCoinsWin: potentialWin,
         probability: winningOdds,
         timestamp: new Date().toISOString(),
         resolved: false
       })
-      showToast('success', `¡Apostaste ${xpBet} XP al Equipo ${selectedPrediction === 'white' ? 'Blanco' : 'Negro'}!`)
+      showToast('success', `¡Apostaste ${coinBet} LukCoins al Equipo ${selectedPrediction === 'white' ? 'Blanco' : 'Negro'}!`)
       closePredictionModal()
     } catch (error) {
       console.error('Error saving prediction:', error)
@@ -1829,6 +1875,8 @@ function App() {
     setShowPlayerProfile(true)
   }
 
+  const lukCoins = userPlayer ? calculateLukCoins(userPlayer) : 0
+
   // ============ RENDER ============
 
   return (
@@ -1846,6 +1894,7 @@ function App() {
       <Header
         onShowLoginModal={() => setShowLoginModal(true)}
         onAdminLogout={handleAdminLogout}
+        lukCoins={lukCoins}
       />
 
       {/* Time Filter Pills with Haptic */}
@@ -3396,21 +3445,21 @@ function App() {
                 </button>
               </div>
 
-              {/* XP Betting */}
+              {/* LukCoins Betting */}
               <div className="xp-bet-section">
                 <div className="xp-bet-header">
-                  <span className="xp-bet-title">Apostar XP</span>
-                  <span className="xp-bet-balance">Tu XP: {userPlayer ? calculateXP(userPlayer) : 0}</span>
+                  <span className="xp-bet-title">Apostar LukCoins</span>
+                  <span className="xp-bet-balance">Tus LukCoins: {userPlayer ? calculateLukCoins(userPlayer) : 0}</span>
                 </div>
                 <div className="xp-bet-options">
                   {[5, 10, 25, 50].map(amount => (
                     <button
                       key={amount}
-                      className={`xp-bet-btn ${xpBet === amount ? 'selected' : ''}`}
-                      onClick={() => setXpBet(amount)}
-                      disabled={userPlayer && calculateXP(userPlayer) < amount}
+                      className={`xp-bet-btn ${coinBet === amount ? 'selected' : ''}`}
+                      onClick={() => setCoinBet(amount)}
+                      disabled={userPlayer && calculateLukCoins(userPlayer) < amount}
                     >
-                      {amount} XP
+                      {amount} LC
                     </button>
                   ))}
                 </div>
@@ -3418,7 +3467,7 @@ function App() {
                   {selectedPrediction && (
                     <span>
                       Posible ganancia: <strong className="potential-win">
-                        +{Math.round(xpBet * (100 / (selectedPrediction === 'white' ? probability.white : probability.black) - 1))} XP
+                        +{Math.round(coinBet * (100 / (selectedPrediction === 'white' ? probability.white : probability.black) - 1))} LC
                       </strong>
                     </span>
                   )}
@@ -3432,7 +3481,7 @@ function App() {
                   disabled={!selectedPrediction}
                 >
                   {selectedPrediction 
-                    ? `Apostar ${xpBet} XP al Equipo ${selectedPrediction === 'white' ? 'Blanco' : 'Negro'}` 
+                    ? `Apostar ${coinBet} LC al Equipo ${selectedPrediction === 'white' ? 'Blanco' : 'Negro'}` 
                     : 'Selecciona un equipo'}
                 </button>
               </div>

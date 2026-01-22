@@ -947,6 +947,12 @@ body {
   border-top: 1px solid var(--border-color);
 }
 
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .welcome-text {
   font-size: 0.85rem;
   color: var(--text-secondary);
@@ -971,6 +977,17 @@ body {
   background: var(--accent-green);
   color: #000;
   border-radius: 6px;
+}
+
+.lukcoins-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f8d34d, #f59e0b);
+  color: #1f1f1f;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* Keep old rank badge styles for tables */

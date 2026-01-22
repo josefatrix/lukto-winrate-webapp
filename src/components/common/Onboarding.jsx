@@ -80,7 +80,7 @@ const OnboardingSlides = [
   {
     id: 'predictions',
     title: 'Predicciones',
-    description: 'Apuesta XP en los resultados de los partidos y gana el doble si aciertas',
+    description: 'Apuesta LukCoins en los resultados de los partidos y gana el doble si aciertas',
     illustration: (
       <svg viewBox="0 0 200 200" fill="none" className="onboarding-illustration">
         <defs>
@@ -250,4 +250,3 @@ export const useOnboarding = () => {
 }
 
 export default Onboarding
-
