@@ -7613,6 +7613,10 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
+.ph-avatar.glow {
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4), 0 8px 24px rgba(245, 158, 11, 0.25);
+}
+
 .ph-avatar img {
   width: 100%;
   height: 100%;
@@ -7629,6 +7633,13 @@ body {
   color: white;
   font-size: 32px;
   font-weight: 700;
+}
+
+.ph-name.gold {
+  background: linear-gradient(135deg, #f8d34d, #f59e0b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .ph-name {
@@ -7740,6 +7751,84 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.8px;
   margin: 0 0 12px 0;
+}
+
+.lukcoins-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-color);
+  margin-bottom: 12px;
+}
+
+.lukcoins-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 700;
+}
+
+.lukcoins-value {
+  font-size: 14px;
+  font-weight: 800;
+  color: #f59e0b;
+}
+
+.lukcoins-shop {
+  display: grid;
+  gap: 10px;
+}
+
+.lukcoins-item {
+  text-align: left;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.lukcoins-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.lukcoins-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.lukcoins-item.owned {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+}
+
+.lc-item-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.lc-item-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.lc-item-price {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-green);
 }
 
 /* Badges Row */

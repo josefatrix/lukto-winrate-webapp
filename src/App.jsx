@@ -274,7 +274,11 @@ function PlayerProfileModal({
   getPlayerPhoto,
   getPlayerName,
   calculateXP,
-  getRank
+  getRank,
+  user,
+  userPlayer,
+  lukCoins = 0,
+  onSpendLukCoins,
 }) {
   const isVisible = !!show && !!playerId
 
@@ -322,6 +326,9 @@ function PlayerProfileModal({
   const rank = getRank ? getRank(xp) : { name: 'Bronce', color: '#CD7F32', key: 'bronce' }
   const playerRatings = ratings?.[playerId] || []
   const photo = getPlayerPhoto ? getPlayerPhoto(playerId) : null
+  const linkedUserId = Object.entries(userLinks || {}).find(([, data]) => data?.playerId === playerId)?.[0]
+  const cosmetics = linkedUserId ? userLinks?.[linkedUserId]?.cosmetics : null
+  const isOwnProfile = user && userPlayer && userPlayer === playerId
   
   // Calculate all stats averages for comparison
   const ratingSamples = stats?.filter(p => p.avgRating) || []
@@ -491,10 +498,10 @@ function PlayerProfileModal({
         
         {/* Clean Hero Header */}
         <div className="profile-hero-v2">
-          <div className="ph-avatar">
+          <div className={`ph-avatar ${cosmetics?.avatarGlow ? 'glow' : ''}`}>
             <AvatarImage src={photo} name={player.name} />
           </div>
-          <h2 className="ph-name">{player.name}</h2>
+          <h2 className={`ph-name ${cosmetics?.goldName ? 'gold' : ''}`}>{player.name}</h2>
           
           {/* Rank & XP Progress */}
           <div className="ph-rank-section">
@@ -519,6 +526,36 @@ function PlayerProfileModal({
           <div className="psr-item loss"><span className="psr-value">{playerStats.losses}</span><span className="psr-label">Derrotas</span></div>
           <div className="psr-item"><span className="psr-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span><span className="psr-label">Win Rate</span></div>
         </div>
+
+        {isOwnProfile && (
+          <div className="profile-section-v2">
+            <h4 className="ps-title">LukCoins</h4>
+            <div className="lukcoins-balance">
+              <span className="lukcoins-label">Saldo</span>
+              <span className="lukcoins-value">{lukCoins} LC</span>
+            </div>
+            <div className="lukcoins-shop">
+              <button
+                className={`lukcoins-item ${cosmetics?.goldName ? 'owned' : ''}`}
+                onClick={() => onSpendLukCoins?.(50, { goldName: true })}
+                disabled={cosmetics?.goldName || lukCoins < 50}
+              >
+                <span className="lc-item-title">Nombre Dorado</span>
+                <span className="lc-item-desc">Destaca tu nombre en el perfil</span>
+                <span className="lc-item-price">{cosmetics?.goldName ? 'Comprado' : '50 LC'}</span>
+              </button>
+              <button
+                className={`lukcoins-item ${cosmetics?.avatarGlow ? 'owned' : ''}`}
+                onClick={() => onSpendLukCoins?.(75, { avatarGlow: true })}
+                disabled={cosmetics?.avatarGlow || lukCoins < 75}
+              >
+                <span className="lc-item-title">Avatar Glow</span>
+                <span className="lc-item-desc">Brillo sutil en tu avatar</span>
+                <span className="lc-item-price">{cosmetics?.avatarGlow ? 'Comprado' : '75 LC'}</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Badges */}
         {badges.length > 0 && (
@@ -1317,6 +1354,8 @@ function App() {
           coins += bet + win
         }
       })
+      const spent = userLinks?.[userId]?.lukcoinsSpent || 0
+      coins -= spent
     }
 
     return Math.max(0, Math.round(coins))
@@ -1503,6 +1542,34 @@ function App() {
     setPredictionMatch(null)
     setSelectedPrediction(null)
     setCoinBet(10)
+  }
+
+  const spendLukCoins = async (amount, cosmeticsUpdate = {}) => {
+    if (!user || !userPlayer) return
+    const currentCoins = calculateLukCoins(userPlayer)
+    if (amount > currentCoins) {
+      showToast('error', 'No tienes suficientes LukCoins')
+      return
+    }
+    const currentLink = userLinks?.[user.uid] || {}
+    const newSpent = (currentLink.lukcoinsSpent || 0) + amount
+    const newCosmetics = { ...(currentLink.cosmetics || {}), ...cosmeticsUpdate }
+
+    try {
+      await setDoc(
+        doc(db, 'userLinks', user.uid),
+        {
+          lukcoinsSpent: newSpent,
+          cosmetics: newCosmetics,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      )
+      showToast('success', 'Compra realizada')
+    } catch (error) {
+      console.error('Error saving LukCoins purchase:', error)
+      showToast('error', 'No se pudo completar la compra')
+    }
   }
 
   const submitPrediction = async () => {
@@ -3216,6 +3283,10 @@ function App() {
         getPlayerName={getPlayerName}
         calculateXP={calculateXP}
         getRank={getRank}
+        user={user}
+        userPlayer={userPlayer}
+        lukCoins={lukCoins}
+        onSpendLukCoins={spendLukCoins}
       />
 
       {/* Player Add/Edit Modal */}
