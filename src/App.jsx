@@ -325,11 +325,13 @@ function PlayerProfileModal({
   const linkedUserId = Object.entries(userLinks || {}).find(([, data]) => data?.playerId === playerId)?.[0]
   const cosmetics = linkedUserId ? userLinks?.[linkedUserId]?.cosmetics : null
   const banner = cosmetics?.banner || null
+  const nameStyle = cosmetics?.nameStyle || null
   const bannerTextMap = {
     junior: 'Banner Junior',
     monda: 'Soy la monda',
     hayjuego: 'Hay juegooo',
     amamar: 'A mamar',
+    legend: 'Leyenda',
   }
   const bannerText = banner ? bannerTextMap[banner] : null
   
@@ -505,7 +507,12 @@ function PlayerProfileModal({
           <div className={`ph-avatar ${cosmetics?.avatarGlow ? 'glow' : ''}`}>
             <AvatarImage src={photo} name={player.name} />
           </div>
-          <h2 className={`ph-name ${cosmetics?.goldName ? 'gold' : ''}`}>{player.name}</h2>
+          <h2
+            className={`ph-name ${cosmetics?.goldName ? 'gold' : ''} ${nameStyle ? `name-${nameStyle}` : ''}`}
+            data-text={player.name}
+          >
+            {player.name}
+          </h2>
           
           {/* Rank & XP Progress */}
           <div className="ph-rank-section">

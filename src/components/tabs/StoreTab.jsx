@@ -24,6 +24,22 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
       preview: 'goldName',
     },
     {
+      id: 'nameNeon',
+      title: 'Nombre Neon',
+      description: 'Tu nombre con glow azul eléctrico.',
+      price: 80,
+      cosmeticsUpdate: { nameStyle: 'neon' },
+      preview: 'neon',
+    },
+    {
+      id: 'nameGlitch',
+      title: 'Nombre Glitch',
+      description: 'Texto con vibración digital.',
+      price: 110,
+      cosmeticsUpdate: { nameStyle: 'glitch' },
+      preview: 'glitch',
+    },
+    {
       id: 'avatarGlow',
       title: 'Avatar Glow',
       description: 'Brillo sutil alrededor de tu avatar.',
@@ -62,6 +78,14 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
       price: 110,
       cosmeticsUpdate: { banner: 'amamar' },
       preview: 'banner-amamar',
+    },
+    {
+      id: 'bannerLegend',
+      title: 'Banner Leyenda',
+      description: 'El más exclusivo: brillo aurora + corona.',
+      price: 220,
+      cosmeticsUpdate: { banner: 'legend' },
+      preview: 'banner-legend',
     },
   ]
 
@@ -107,11 +131,14 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
         {items.map(item => {
           const owned =
             (item.id === 'goldName' && cosmetics.goldName) ||
+            (item.id === 'nameNeon' && cosmetics.nameStyle === 'neon') ||
+            (item.id === 'nameGlitch' && cosmetics.nameStyle === 'glitch') ||
             (item.id === 'avatarGlow' && cosmetics.avatarGlow) ||
             (item.id === 'bannerJunior' && cosmetics.banner === 'junior') ||
             (item.id === 'bannerMonda' && cosmetics.banner === 'monda') ||
             (item.id === 'bannerJuego' && cosmetics.banner === 'hayjuego') ||
-            (item.id === 'bannerAmamar' && cosmetics.banner === 'amamar')
+            (item.id === 'bannerAmamar' && cosmetics.banner === 'amamar') ||
+            (item.id === 'bannerLegend' && cosmetics.banner === 'legend')
 
           return (
             <div key={item.id} className={`store-card ${owned ? 'owned' : ''}`}>
@@ -122,7 +149,7 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
                   <AvatarImage src={getPlayerPhoto(userPlayer)} name={getPlayerName(userPlayer)} />
                 </div>
                 <div className="store-name-preview">
-                  <span className={item.preview === 'goldName' ? 'gold' : ''}>
+                  <span className={item.preview === 'goldName' ? 'gold' : item.preview === 'neon' ? 'neon' : item.preview === 'glitch' ? 'glitch' : ''}>
                     {getPlayerName(userPlayer)}
                   </span>
                 </div>
