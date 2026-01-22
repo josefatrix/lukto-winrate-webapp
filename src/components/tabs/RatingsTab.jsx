@@ -4,14 +4,14 @@
  */
 import React, { useState } from 'react'
 import { useApp } from '../../contexts'
-import { EmptyState } from '../common'
+import { AvatarImage, EmptyState } from '../common'
 import { isPredictionCorrect } from '../../hooks/useStats'
 
 // Prediction bonus constant
 const PREDICTION_BONUS = 0.2
 
 export const RatingsTab = ({ getRatingClass }) => {
-  const { players, matches, ratings, predictions, userLinks, user, userPlayer, timeFilter, getPlayerPhoto, getInitials } =
+  const { players, matches, ratings, predictions, userLinks, user, userPlayer, timeFilter, getPlayerPhoto } =
     useApp()
 
   const [expandedPlayer, setExpandedPlayer] = useState(null)
@@ -112,11 +112,12 @@ export const RatingsTab = ({ getRatingClass }) => {
                   onClick={() => setExpandedPlayer(isExpanded ? null : player.id)}
                 >
                   <span className={`rank ${index < 3 ? `rank-${index + 1}` : ''}`}>{index + 1}</span>
-                  {getPlayerPhoto(player.id) ? (
-                    <img src={getPlayerPhoto(player.id)} alt="" className="player-avatar-img" />
-                  ) : (
-                    <div className="player-avatar">{getInitials(player.name)}</div>
-                  )}
+                  <AvatarImage
+                    src={getPlayerPhoto(player.id)}
+                    name={player.name}
+                    imgClassName="player-avatar-img"
+                    fallbackClassName="player-avatar"
+                  />
                   <span className="accordion-player-name">{player.name}</span>
                   <span className={`rating-value ${getRatingClass(parseFloat(player.avgRating))}`}>
                     {player.avgRating}
@@ -227,4 +228,3 @@ export const RatingsTab = ({ getRatingClass }) => {
 }
 
 export default RatingsTab
-

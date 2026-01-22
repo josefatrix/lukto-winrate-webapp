@@ -286,8 +286,9 @@ export const AppProvider = ({ children }) => {
           const preds = {}
           snapshot.docs.forEach(docSnap => {
             const data = docSnap.data()
+            if (!data?.matchId || !data?.odedBy) return
             if (!preds[data.matchId]) preds[data.matchId] = {}
-            preds[data.matchId][data.odedBy] = data.prediction
+            preds[data.matchId][data.odedBy] = { id: docSnap.id, ...data }
           })
           setPredictions(preds)
         },
@@ -390,7 +391,7 @@ export const AppProvider = ({ children }) => {
 
   const getPlayerPhoto = playerId => {
     const link = Object.values(userLinks).find(data => data.playerId === playerId)
-    return link?.userPhoto || null
+    return link?.userPhoto || link?.odedByPhoto || null
   }
 
   const getInitials = name => {
@@ -461,4 +462,3 @@ export const AppProvider = ({ children }) => {
 }
 
 export default AppContext
-

@@ -2,9 +2,10 @@
  * Featured Players Component
  * Shows Player of the Week and Player of the Month cards
  */
+import { AvatarImage } from '../common'
 
 
-const FeaturedCard = ({ type, player, stats, photo, getInitials }) => {
+const FeaturedCard = ({ type, player, stats, photo }) => {
   if (!player || !stats) return null
 
   const isWeek = type === 'week'
@@ -25,13 +26,12 @@ const FeaturedCard = ({ type, player, stats, photo, getInitials }) => {
         {isWeek ? 'Jugador de la Semana' : 'Jugador del Mes'}
       </div>
       <div className="featured-content">
-        {photo ? (
-          <img src={photo} alt="" className="featured-avatar" />
-        ) : (
-          <div className="featured-avatar-placeholder">
-            {getInitials(player.name || '')}
-          </div>
-        )}
+        <AvatarImage
+          src={photo}
+          name={player.name || ''}
+          imgClassName="featured-avatar"
+          fallbackClassName="featured-avatar-placeholder"
+        />
         <div className="featured-info">
           <h3>{player.name}</h3>
           <div className="featured-stats">
@@ -51,7 +51,6 @@ export const FeaturedPlayers = ({
   playerOfMonth,
   players,
   getPlayerPhoto,
-  getInitials,
 }) => {
   const potwPlayer = playerOfWeek ? players.find(p => p.id === playerOfWeek.id) : null
   const potmPlayer = playerOfMonth ? players.find(p => p.id === playerOfMonth.id) : null
@@ -65,18 +64,15 @@ export const FeaturedPlayers = ({
         player={potwPlayer}
         stats={playerOfWeek}
         photo={playerOfWeek ? getPlayerPhoto(playerOfWeek.id) : null}
-        getInitials={getInitials}
       />
       <FeaturedCard
         type="month"
         player={potmPlayer}
         stats={playerOfMonth}
         photo={playerOfMonth ? getPlayerPhoto(playerOfMonth.id) : null}
-        getInitials={getInitials}
       />
     </div>
   )
 }
 
 export default FeaturedPlayers
-

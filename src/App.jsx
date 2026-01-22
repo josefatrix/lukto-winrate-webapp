@@ -13,7 +13,7 @@ import confetti from 'canvas-confetti'
 import { Header, BottomNav } from './components/layout'
 import { StatsTab, MatchesTab, RatingsTab } from './components/tabs'
 import { AdminLoginModal, PendingUserModal } from './components/modals'
-import { FloatingActionButton, SkeletonPage, SkeletonTable, SkeletonMatchesList, Onboarding, useOnboarding, EmptyState, AnimatedCounter, PendingRatingsNotification } from './components/common'
+import { AvatarImage, FloatingActionButton, SkeletonPage, SkeletonTable, SkeletonMatchesList, Onboarding, useOnboarding, EmptyState, AnimatedCounter, PendingRatingsNotification } from './components/common'
 
 // ============ HELPER FUNCTIONS ============
 
@@ -266,12 +266,41 @@ function PlayerProfileModal({
   stats, 
   matches,
   ratings,
+  predictions = {},
+  userLinks = {},
   getPlayerPhoto,
   getPlayerName,
   calculateXP,
   getRank
 }) {
-  if (!show || !playerId) return null
+  const isVisible = !!show && !!playerId
+
+  // State for badge tooltip
+  const [selectedBadge, setSelectedBadge] = useState(null)
+
+  // State for share card
+  const [showShareCard, setShowShareCard] = useState(false)
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+  const shareCardRef = useRef(null)
+
+  useEffect(() => {
+    if (!show) return undefined
+    const originalOverflow = document.body.style.overflow
+    const originalPaddingRight = document.body.style.paddingRight
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth
+
+    document.body.style.overflow = 'hidden'
+    if (scrollBarWidth > 0) {
+      document.body.style.paddingRight = `${scrollBarWidth}px`
+    }
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.body.style.paddingRight = originalPaddingRight
+    }
+  }, [show])
+
+  if (!isVisible) return null
 
   const player = players?.find(p => p.id === playerId)
   if (!player) {
@@ -292,9 +321,11 @@ function PlayerProfileModal({
   const photo = getPlayerPhoto ? getPlayerPhoto(playerId) : null
   
   // Calculate all stats averages for comparison
+  const ratingSamples = stats?.filter(p => p.avgRating) || []
+  const ratingSampleCount = ratingSamples.length
   const avgStats = {
     winRate: stats?.length > 0 ? stats.reduce((s, p) => s + (p.winRate || 0), 0) / stats.length : 50,
-    rating: stats?.length > 0 ? stats.filter(p => p.avgRating).reduce((s, p) => s + parseFloat(p.avgRating || 5), 0) / stats.filter(p => p.avgRating).length : 5,
+    rating: ratingSampleCount > 0 ? ratingSamples.reduce((s, p) => s + parseFloat(p.avgRating || 5), 0) / ratingSampleCount : 5,
     mvps: stats?.length > 0 ? stats.reduce((s, p) => s + (p.mvps || 0), 0) / stats.length : 0
   }
   
@@ -377,9 +408,6 @@ function PlayerProfileModal({
   if (playerStats.wins >= 10) badges.push({ icon: 'check', name: '10 Victorias', color: '#22c55e', desc: 'Acumular 10 victorias totales' })
   if (playerStats.wins >= 25) badges.push({ icon: 'checkDouble', name: '25 Victorias', color: '#16a34a', desc: 'Acumular 25 victorias - ¡Impresionante!' })
   
-  // State for badge tooltip
-  const [selectedBadge, setSelectedBadge] = useState(null)
-
   // XP Progress calculation
   const RANK_THRESHOLDS = [0, 100, 250, 500, 850, 1300, 1900, 2600]
   const currentRankIndex = RANK_THRESHOLDS.findIndex((t, i) => xp < (RANK_THRESHOLDS[i + 1] || Infinity))
@@ -388,11 +416,6 @@ function PlayerProfileModal({
   const xpInCurrentRank = xp - currentThreshold
   const xpNeededForNext = nextThreshold - currentThreshold
   const xpProgress = Math.min(100, (xpInCurrentRank / xpNeededForNext) * 100)
-
-  // State for share card
-  const [showShareCard, setShowShareCard] = useState(false)
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
-  const shareCardRef = useRef(null)
 
   // Share function - now shows a shareable card
   const shareProfile = () => {
@@ -466,7 +489,7 @@ function PlayerProfileModal({
         {/* Clean Hero Header */}
         <div className="profile-hero-v2">
           <div className="ph-avatar">
-            {photo ? <img src={photo} alt="" /> : <span>{player.name?.charAt(0)}</span>}
+            <AvatarImage src={photo} name={player.name} />
           </div>
           <h2 className="ph-name">{player.name}</h2>
           
@@ -728,7 +751,7 @@ function PlayerProfileModal({
                   <div className="rival-card ally">
                     <span className="rc-label">Mejor Aliado</span>
                     <div className="rc-player">
-                      {bestAlly.photo ? <img src={bestAlly.photo} alt="" /> : <span>{bestAlly.name?.charAt(0)}</span>}
+                      <AvatarImage src={bestAlly.photo} name={bestAlly.name} />
                     </div>
                     <span className="rc-name">{bestAlly.name}</span>
                     <span className="rc-stat good">{bestAlly.togetherWR}% WR juntos</span>
@@ -739,7 +762,7 @@ function PlayerProfileModal({
                   <div className="rival-card ally-bad">
                     <span className="rc-label">Peor Aliado</span>
                     <div className="rc-player">
-                      {worstAlly.photo ? <img src={worstAlly.photo} alt="" /> : <span>{worstAlly.name?.charAt(0)}</span>}
+                      <AvatarImage src={worstAlly.photo} name={worstAlly.name} />
                     </div>
                     <span className="rc-name">{worstAlly.name}</span>
                     <span className="rc-stat bad">{worstAlly.togetherWR}% WR juntos</span>
@@ -750,7 +773,7 @@ function PlayerProfileModal({
                   <div className="rival-card rival">
                     <span className="rc-label">Víctima Favorita</span>
                     <div className="rc-player">
-                      {bestRival.photo ? <img src={bestRival.photo} alt="" /> : <span>{bestRival.name?.charAt(0)}</span>}
+                      <AvatarImage src={bestRival.photo} name={bestRival.name} />
                     </div>
                     <span className="rc-name">{bestRival.name}</span>
                     <span className="rc-stat good">{bestRival.againstWR}% WR vs</span>
@@ -761,7 +784,7 @@ function PlayerProfileModal({
                   <div className="rival-card nemesis">
                     <span className="rc-label">Tu Némesis</span>
                     <div className="rc-player">
-                      {worstRival.photo ? <img src={worstRival.photo} alt="" /> : <span>{worstRival.name?.charAt(0)}</span>}
+                      <AvatarImage src={worstRival.photo} name={worstRival.name} />
                     </div>
                     <span className="rc-name">{worstRival.name}</span>
                     <span className="rc-stat bad">{worstRival.againstWR}% WR vs</span>
@@ -784,12 +807,13 @@ function PlayerProfileModal({
           
           // Get all predictions for this user
           const userPredictions = Object.entries(predictions)
-            .filter(([key, value]) => key.startsWith(userId + '_') || value?.odedBy === userId)
-            .map(([key, pred]) => {
-              const matchId = pred?.matchId || key.split('_')[1]
-              const match = matches.find(m => m.id === matchId)
-              return { ...pred, matchId, match }
+            .map(([matchId, matchPreds]) => {
+              const pred = matchPreds?.[userId]
+              if (!pred) return null
+              const match = matches.find(m => m.id === (pred.matchId || matchId))
+              return { ...pred, matchId: pred.matchId || matchId, match }
             })
+            .filter(Boolean)
             .filter(p => p.match)
             .sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0))
           
@@ -994,7 +1018,7 @@ function PlayerProfileModal({
                 
                 <div className="sc-player">
                   <div className="sc-avatar" style={{ borderColor: rank.color }}>
-                    {photo ? <img src={photo} alt="" /> : <span>{player.name?.charAt(0)}</span>}
+                    <AvatarImage src={photo} name={player.name} />
                   </div>
                   <h2 className="sc-name">{player.name}</h2>
                   <div className="sc-rank" style={{ color: rank.color }}>
@@ -1160,7 +1184,6 @@ function App() {
     // Utils
     getPlayerName,
     getPlayerPhoto,
-    getInitials,
     logActivity,
     confettiTriggered,
     handleLogout,
@@ -1239,6 +1262,19 @@ function App() {
     xp += playerStats.mvps * 50
     if (playerStats.avgRating) {
       xp += Math.round(parseFloat(playerStats.avgRating) * 5)
+    }
+    const userId = Object.entries(userLinks || {}).find(
+      ([, linkData]) => linkData?.playerId === playerId
+    )?.[0]
+    if (userId) {
+      Object.entries(predictions || {}).forEach(([matchId, matchPreds]) => {
+        const pred = matchPreds?.[userId]
+        if (!pred) return
+        const match = matches.find(m => m.id === (pred.matchId || matchId))
+        if (!match?.winner) return
+        if (pred.prediction === match.winner) xp += pred.potentialWin || 0
+        else xp -= pred.xpBet || 0
+      })
     }
     return xp
   }
@@ -2010,11 +2046,12 @@ function App() {
                           <div className="team-players">
                             {duo.ids.map(id => (
                               <span key={id} className="team-player">
-                                {getPlayerPhoto(id) ? (
-                                  <img src={getPlayerPhoto(id)} alt="" className="team-avatar" />
-                                ) : (
-                                  <span className="team-avatar-ph">{getPlayerName(id)?.charAt(0)}</span>
-                                )}
+                                <AvatarImage
+                                  src={getPlayerPhoto(id)}
+                                  name={getPlayerName(id)}
+                                  imgClassName="team-avatar"
+                                  fallbackClassName="team-avatar-ph"
+                                />
                               </span>
                             ))}
                           </div>
@@ -2041,11 +2078,12 @@ function App() {
                           <div className="team-players">
                             {trio.ids.map(id => (
                               <span key={id} className="team-player">
-                                {getPlayerPhoto(id) ? (
-                                  <img src={getPlayerPhoto(id)} alt="" className="team-avatar" />
-                                ) : (
-                                  <span className="team-avatar-ph">{getPlayerName(id)?.charAt(0)}</span>
-                                )}
+                                <AvatarImage
+                                  src={getPlayerPhoto(id)}
+                                  name={getPlayerName(id)}
+                                  imgClassName="team-avatar"
+                                  fallbackClassName="team-avatar-ph"
+                                />
                               </span>
                             ))}
                           </div>
@@ -2149,11 +2187,7 @@ function App() {
                 <div className="h2h-stats-grid">
                   <div className="h2h-player">
                     <div className="h2h-avatar">
-                      {getPlayerPhoto(h2hPlayer1) ? (
-                        <img src={getPlayerPhoto(h2hPlayer1)} alt="" />
-                      ) : (
-                        <span>{p1.name?.charAt(0)}</span>
-                      )}
+                      <AvatarImage src={getPlayerPhoto(h2hPlayer1)} name={p1.name} />
                     </div>
                     <span className="h2h-name">{p1.name}</span>
                   </div>
@@ -2199,11 +2233,7 @@ function App() {
                   
                   <div className="h2h-player">
                     <div className="h2h-avatar">
-                      {getPlayerPhoto(h2hPlayer2) ? (
-                        <img src={getPlayerPhoto(h2hPlayer2)} alt="" />
-                      ) : (
-                        <span>{p2.name?.charAt(0)}</span>
-                      )}
+                      <AvatarImage src={getPlayerPhoto(h2hPlayer2)} name={p2.name} />
                     </div>
                     <span className="h2h-name">{p2.name}</span>
                   </div>
@@ -2296,11 +2326,12 @@ function App() {
                 {/* Player Summary Card */}
                 <div className="analytics-summary-card">
                   <div className="asc-header">
-                    {getPlayerPhoto(h2hPlayer1) ? (
-                      <img src={getPlayerPhoto(h2hPlayer1)} alt="" className="asc-avatar" />
-                    ) : (
-                      <div className="asc-avatar-placeholder">{getInitials(getPlayerName(h2hPlayer1))}</div>
-                    )}
+                    <AvatarImage
+                      src={getPlayerPhoto(h2hPlayer1)}
+                      name={getPlayerName(h2hPlayer1)}
+                      imgClassName="asc-avatar"
+                      fallbackClassName="asc-avatar-placeholder"
+                    />
                     <div className="asc-info">
                       <h3>{getPlayerName(h2hPlayer1)}</h3>
                       <div className="asc-rank" style={{ color: rank?.color || '#CD7F32' }}>
@@ -2602,11 +2633,12 @@ function App() {
           <div className="players-grid">
             {players.map(player => (
               <div key={player.id} className="player-card">
-                {getPlayerPhoto(player.id) ? (
-                  <img src={getPlayerPhoto(player.id)} alt="" className="player-avatar-img" />
-                ) : (
-                  <div className="player-avatar">{getInitials(player.name)}</div>
-                )}
+                <AvatarImage
+                  src={getPlayerPhoto(player.id)}
+                  name={player.name}
+                  imgClassName="player-avatar-img"
+                  fallbackClassName="player-avatar"
+                />
                 <div className="player-card-info">
                   <h3>{player.name}</h3>
                   {player.aliases && player.aliases.length > 0 && (
@@ -2751,10 +2783,11 @@ function App() {
                     return (
                       <div key={playerId} className="top-rater-item">
                         <span className="top-rater-pos">{idx + 1}</span>
-                        <img 
-                          src={userLink?.userPhoto || getPlayerPhoto(playerId)} 
-                          alt="" 
-                          className="top-rater-avatar"
+                        <AvatarImage
+                          src={userLink?.userPhoto || getPlayerPhoto(playerId)}
+                          name={getPlayerName(playerId)}
+                          imgClassName="top-rater-avatar"
+                          fallbackClassName="top-rater-avatar top-rater-avatar-fallback"
                         />
                         <span className="top-rater-name">{getPlayerName(playerId)}</span>
                         <span className="top-rater-count">{count} votos</span>
@@ -3128,6 +3161,8 @@ function App() {
         stats={stats}
         matches={matches}
         ratings={ratings}
+        predictions={predictions}
+        userLinks={userLinks}
         getPlayerPhoto={getPlayerPhoto}
         getPlayerName={getPlayerName}
         calculateXP={calculateXP}
@@ -3200,23 +3235,12 @@ function App() {
                   {getPlayersToRate(selectedMatch).map(playerId => (
                     <div key={playerId} className="rating-item">
                       <div className="rating-player">
-                        {getPlayerPhoto(playerId) ? (
-                          <img
-                            src={getPlayerPhoto(playerId)}
-                            alt={getPlayerName(playerId)}
-                            className="player-avatar-img"
-                            onError={(e) => {
-                              e.target.style.display = 'none'
-                              e.target.nextSibling && (e.target.nextSibling.style.display = 'flex')
-                            }}
-                          />
-                        ) : null}
-                        <div 
-                          className="player-avatar" 
-                          style={{ display: getPlayerPhoto(playerId) ? 'none' : 'flex' }}
-                        >
-                          {getInitials(getPlayerName(playerId))}
-                        </div>
+                        <AvatarImage
+                          src={getPlayerPhoto(playerId)}
+                          name={getPlayerName(playerId)}
+                          imgClassName="player-avatar-img"
+                          fallbackClassName="player-avatar"
+                        />
                         <span>{getPlayerName(playerId)}</span>
                       </div>
                       <div className="rating-stars">

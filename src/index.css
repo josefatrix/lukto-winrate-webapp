@@ -9809,6 +9809,16 @@ body {
   object-fit: cover;
 }
 
+.top-rater-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3a3a3c, #2c2c2e);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
 .top-rater-name {
   flex: 1;
   font-size: 0.85rem;

@@ -174,14 +174,15 @@ export const MatchesTab = ({
                 <div className="match-predictions">
                   <div className="predictions-title">Predicciones</div>
                   <div className="predictions-summary">
-                    {Object.entries(predictions[match.id]).map(([odedBy, prediction]) => {
-                      const predictionCorrect = match.winner === prediction
+                    {Object.entries(predictions[match.id]).map(([odedBy, predictionData]) => {
+                      const predictionValue = predictionData?.prediction
+                      const predictionCorrect = match.winner === predictionValue
                       return (
                         <span
                           key={odedBy}
                           className={`prediction-chip ${match.winner ? (predictionCorrect ? 'correct' : 'wrong') : ''}`}
                         >
-                          {prediction === 'white' ? '⬜' : '⬛'}
+                          {predictionValue === 'white' ? '⬜' : '⬛'}
                           {match.winner && (predictionCorrect ? ' ✓' : ' ✗')}
                         </span>
                       )
@@ -204,4 +205,3 @@ export const MatchesTab = ({
 }
 
 export default MatchesTab
-

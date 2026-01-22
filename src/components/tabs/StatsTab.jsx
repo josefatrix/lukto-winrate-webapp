@@ -5,7 +5,7 @@
 
 import { useState, useMemo } from 'react'
 import { useApp } from '../../contexts'
-import { EmptyState } from '../common'
+import { AvatarImage, EmptyState } from '../common'
 
 export const StatsTab = ({
   stats,
@@ -19,7 +19,7 @@ export const StatsTab = ({
   getRatingClass,
   announcements,
 }) => {
-  const { players, timeFilter, getPlayerPhoto, getInitials } = useApp()
+  const { players, timeFilter, getPlayerPhoto } = useApp()
   
   // Search and sort state
   const [searchQuery, setSearchQuery] = useState('')
@@ -166,13 +166,12 @@ export const StatsTab = ({
               Jugador de la Semana
             </div>
             <div className="featured-content">
-              {getPlayerPhoto(playerOfWeek.id) ? (
-                <img src={getPlayerPhoto(playerOfWeek.id)} alt="" className="featured-avatar" />
-              ) : (
-                <div className="featured-avatar-placeholder">
-                  {getInitials(potwPlayer?.name || '')}
-                </div>
-              )}
+              <AvatarImage
+                src={getPlayerPhoto(playerOfWeek.id)}
+                name={potwPlayer?.name || ''}
+                imgClassName="featured-avatar"
+                fallbackClassName="featured-avatar-placeholder"
+              />
               <div className="featured-info">
                 <h3>{potwPlayer?.name}</h3>
                 <div className="featured-stats">
@@ -196,13 +195,12 @@ export const StatsTab = ({
               Jugador del Mes
             </div>
             <div className="featured-content">
-              {getPlayerPhoto(playerOfMonth.id) ? (
-                <img src={getPlayerPhoto(playerOfMonth.id)} alt="" className="featured-avatar" />
-              ) : (
-                <div className="featured-avatar-placeholder">
-                  {getInitials(potmPlayer?.name || '')}
-                </div>
-              )}
+              <AvatarImage
+                src={getPlayerPhoto(playerOfMonth.id)}
+                name={potmPlayer?.name || ''}
+                imgClassName="featured-avatar"
+                fallbackClassName="featured-avatar-placeholder"
+              />
               <div className="featured-info">
                 <h3>{potmPlayer?.name}</h3>
                 <div className="featured-stats">
@@ -310,11 +308,12 @@ export const StatsTab = ({
                   </td>
                   <td>
                     <div className="player-name">
-                      {getPlayerPhoto(player.id) ? (
-                        <img src={getPlayerPhoto(player.id)} alt="" className="player-avatar-img" />
-                      ) : (
-                        <div className="player-avatar">{getInitials(player.name)}</div>
-                      )}
+                      <AvatarImage
+                        src={getPlayerPhoto(player.id)}
+                        name={player.name}
+                        imgClassName="player-avatar-img"
+                        fallbackClassName="player-avatar"
+                      />
                       {player.name}
                     </div>
                   </td>
@@ -381,4 +380,3 @@ export const StatsTab = ({
 }
 
 export default StatsTab
-

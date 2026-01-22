@@ -2,13 +2,13 @@
  * Stats Table Component
  * Displays player rankings with all statistics
  */
+import { AvatarImage } from '../common'
 
 
 export const StatsTable = ({
   stats,
   onPlayerClick,
   getPlayerPhoto,
-  getInitials,
   calculateXP,
   getRank,
   getRankIcon,
@@ -58,15 +58,12 @@ export const StatsTable = ({
               </td>
               <td>
                 <div className="player-name">
-                  {getPlayerPhoto(player.id) ? (
-                    <img
-                      src={getPlayerPhoto(player.id)}
-                      alt=""
-                      className="player-avatar-img"
-                    />
-                  ) : (
-                    <div className="player-avatar">{getInitials(player.name)}</div>
-                  )}
+                  <AvatarImage
+                    src={getPlayerPhoto(player.id)}
+                    name={player.name}
+                    imgClassName="player-avatar-img"
+                    fallbackClassName="player-avatar"
+                  />
                   {player.name}
                 </div>
               </td>
@@ -127,4 +124,3 @@ export const StatsTable = ({
 }
 
 export default StatsTable
-
