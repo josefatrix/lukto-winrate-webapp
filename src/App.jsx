@@ -1279,20 +1279,21 @@ function App() {
 
   const displayStats = timeFilter === 'all' ? stats : filteredStats
 
-  const getMatchXP = (playerId, match) => {
-    let matchXp = 10
-    if (!match?.id) return matchXp
+  const getMatchXpBreakdown = (playerId, match) => {
+    const base = { participation: 10, win: 0, rating: 0, mvp: 0, ratingAvg: null }
+    if (!match?.id) return { ...base, total: base.participation }
 
     const inWhite = match.teamWhite?.includes(playerId)
     const won = match.winner
       ? (inWhite && match.winner === 'white') || (!inWhite && match.winner === 'black')
       : false
-    if (won) matchXp += 25
+    base.win = won ? 25 : 0
 
     const playerRatings = (ratings?.[playerId] || []).filter(r => r.matchId === match.id)
     if (playerRatings.length > 0) {
       const avg = playerRatings.reduce((sum, r) => sum + r.score, 0) / playerRatings.length
-      matchXp += Math.round(avg * 5)
+      base.ratingAvg = avg
+      base.rating = Math.round(avg * 5)
     }
 
     // MVP: highest average rating in match
@@ -1309,10 +1310,13 @@ function App() {
         }
       }
     })
-    if (mvpId === playerId) matchXp += 50
+    base.mvp = mvpId === playerId ? 50 : 0
 
-    return matchXp
+    const total = base.participation + base.win + base.rating + base.mvp
+    return { ...base, total }
   }
+
+  const getMatchXP = (playerId, match) => getMatchXpBreakdown(playerId, match).total
 
   const calculateXP = playerId => {
     const playerMatches = matches
@@ -1627,7 +1631,8 @@ function App() {
     const nextMatch = eligibleMatches.find(m => !shownMap[m.id])
     if (!nextMatch) return
 
-    const baseXp = getMatchXP(userPlayer, nextMatch)
+    const breakdown = getMatchXpBreakdown(userPlayer, nextMatch)
+    const baseXp = breakdown.total
     let bonusXp = 0
     if (link?.xpBoostAppliedMatchId === nextMatch.id && link?.xpBoostAppliedMultiplier > 1) {
       bonusXp = baseXp * (link.xpBoostAppliedMultiplier - 1)
@@ -1639,6 +1644,7 @@ function App() {
       bonusXp,
       totalXp: baseXp + bonusXp,
       multiplier: link?.xpBoostAppliedMultiplier || 1,
+      breakdown,
     })
     setShowMatchXpModal(true)
   }, [user, userPlayer, dataLoaded, matches, ratings, userLinks])
@@ -3534,6 +3540,24 @@ function App() {
               {formatDate(matchXpData.match.date)} - {matchXpData.match.venue || 'LUKTO'}
             </p>
             <div className="xp-reward-summary">
+              <div className="xp-reward-row">
+                <span>Participación</span>
+                <strong>+{matchXpData.breakdown.participation}</strong>
+              </div>
+              <div className="xp-reward-row">
+                <span>Victoria</span>
+                <strong>+{matchXpData.breakdown.win}</strong>
+              </div>
+              <div className="xp-reward-row">
+                <span>
+                  Rating{matchXpData.breakdown.ratingAvg === null ? ' (sin calificaciones)' : ` (${matchXpData.breakdown.ratingAvg.toFixed(1)})`}
+                </span>
+                <strong>+{matchXpData.breakdown.rating}</strong>
+              </div>
+              <div className="xp-reward-row">
+                <span>MVP</span>
+                <strong>+{matchXpData.breakdown.mvp}</strong>
+              </div>
               <div className="xp-reward-row">
                 <span>XP base</span>
                 <strong>+{matchXpData.baseXp}</strong>
