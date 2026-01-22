@@ -2829,6 +2829,10 @@ body {
   transition: all 0.2s ease;
 }
 
+.prediction-chip.pending {
+  color: var(--text-secondary);
+}
+
 .prediction-chip.correct {
   background: rgba(16, 185, 129, 0.15);
   color: var(--accent-green);
@@ -2837,8 +2841,55 @@ body {
 .prediction-chip.wrong {
   background: rgba(239, 68, 68, 0.15);
   color: var(--accent-red);
-  text-decoration: line-through;
   opacity: 0.7;
+}
+
+.prediction-team {
+  font-size: 12px;
+}
+
+.prediction-result {
+  font-weight: 700;
+}
+
+.prediction-amount {
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.prediction-user-result {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.prediction-user-result .pur-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+}
+
+.prediction-user-result .pur-status {
+  font-weight: 700;
+}
+
+.prediction-user-result .pur-status.correct {
+  color: var(--accent-green);
+}
+
+.prediction-user-result .pur-status.wrong {
+  color: var(--accent-red);
+}
+
+.prediction-user-result .pur-status.pending {
+  color: var(--text-secondary);
 }
 
 .predict-btn {
@@ -5438,10 +5489,17 @@ body {
 }
 
 .prediction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: var(--bg-elevated);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   font-size: 0.8rem;
+}
+
+.prediction-chip.pending {
+  color: var(--text-secondary);
 }
 
 .prediction-chip.correct {
@@ -5452,6 +5510,54 @@ body {
 .prediction-chip.wrong {
   background: rgba(255, 59, 48, 0.2);
   color: var(--accent-red);
+}
+
+.prediction-team {
+  font-size: 0.8rem;
+}
+
+.prediction-result {
+  font-weight: 700;
+}
+
+.prediction-amount {
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.prediction-user-result {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+}
+
+.prediction-user-result .pur-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.4px;
+}
+
+.prediction-user-result .pur-status {
+  font-weight: 700;
+}
+
+.prediction-user-result .pur-status.correct {
+  color: var(--accent-green);
+}
+
+.prediction-user-result .pur-status.wrong {
+  color: var(--accent-red);
+}
+
+.prediction-user-result .pur-status.pending {
+  color: var(--text-secondary);
 }
 
 /* MVP confetti highlight */
