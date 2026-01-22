@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" role="img" aria-label="Junior shield">
+  <defs>
+    <linearGradient id="shieldBlue" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0b3d91"/>
+      <stop offset="1" stop-color="#0a2f6b"/>
+    </linearGradient>
+  </defs>
+  <path d="M100 8l78 26v74c0 52-34 95-78 120-44-25-78-68-78-120V34l78-26z" fill="url(#shieldBlue)" />
+  <path d="M100 20l68 22v66c0 44-27 81-68 103-41-22-68-59-68-103V42l68-22z" fill="#ffffff"/>
+  <path d="M100 30l58 19v58c0 38-22 68-58 88-36-20-58-50-58-88V49l58-19z" fill="#e11d48"/>
+  <path d="M100 38l50 16v50c0 32-18 58-50 75-32-17-50-43-50-75V54l50-16z" fill="#ffffff"/>
+  <g fill="#e11d48">
+    <rect x="66" y="54" width="12" height="120"/>
+    <rect x="94" y="54" width="12" height="120"/>
+    <rect x="122" y="54" width="12" height="120"/>
+  </g>
+  <rect x="42" y="46" width="116" height="42" rx="6" fill="#0b3d91"/>
+  <rect x="48" y="52" width="104" height="30" rx="4" fill="#ffffff"/>
+  <text x="100" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#0b3d91">
+    JUNIOR
+  </text>
+  <g fill="#ffffff">
+    <circle cx="64" cy="38" r="3"/>
+    <circle cx="84" cy="34" r="3"/>
+    <circle cx="104" cy="33" r="3"/>
+    <circle cx="124" cy="34" r="3"/>
+    <circle cx="144" cy="38" r="3"/>
+  </g>
+</svg>

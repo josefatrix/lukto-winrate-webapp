@@ -11,7 +11,7 @@ import confetti from 'canvas-confetti'
 
 // Import components
 import { Header, BottomNav } from './components/layout'
-import { StatsTab, MatchesTab, RatingsTab } from './components/tabs'
+import { StatsTab, MatchesTab, RatingsTab, StoreTab } from './components/tabs'
 import { AdminLoginModal, PendingUserModal } from './components/modals'
 import { AvatarImage, FloatingActionButton, SkeletonPage, SkeletonTable, SkeletonMatchesList, Onboarding, useOnboarding, EmptyState, AnimatedCounter, PendingRatingsNotification } from './components/common'
 
@@ -275,10 +275,6 @@ function PlayerProfileModal({
   getPlayerName,
   calculateXP,
   getRank,
-  user,
-  userPlayer,
-  lukCoins = 0,
-  onSpendLukCoins,
 }) {
   const isVisible = !!show && !!playerId
 
@@ -328,7 +324,7 @@ function PlayerProfileModal({
   const photo = getPlayerPhoto ? getPlayerPhoto(playerId) : null
   const linkedUserId = Object.entries(userLinks || {}).find(([, data]) => data?.playerId === playerId)?.[0]
   const cosmetics = linkedUserId ? userLinks?.[linkedUserId]?.cosmetics : null
-  const isOwnProfile = user && userPlayer && userPlayer === playerId
+  const avatarFrame = cosmetics?.avatarFrame || null
   
   // Calculate all stats averages for comparison
   const ratingSamples = stats?.filter(p => p.avgRating) || []
@@ -498,7 +494,9 @@ function PlayerProfileModal({
         
         {/* Clean Hero Header */}
         <div className="profile-hero-v2">
-          <div className={`ph-avatar ${cosmetics?.avatarGlow ? 'glow' : ''}`}>
+          <div
+            className={`ph-avatar ${cosmetics?.avatarGlow ? 'glow' : ''} ${avatarFrame ? `frame-${avatarFrame}` : ''}`}
+          >
             <AvatarImage src={photo} name={player.name} />
           </div>
           <h2 className={`ph-name ${cosmetics?.goldName ? 'gold' : ''}`}>{player.name}</h2>
@@ -527,35 +525,6 @@ function PlayerProfileModal({
           <div className="psr-item"><span className="psr-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span><span className="psr-label">Win Rate</span></div>
         </div>
 
-        {isOwnProfile && (
-          <div className="profile-section-v2">
-            <h4 className="ps-title">LukCoins</h4>
-            <div className="lukcoins-balance">
-              <span className="lukcoins-label">Saldo</span>
-              <span className="lukcoins-value">{lukCoins} LC</span>
-            </div>
-            <div className="lukcoins-shop">
-              <button
-                className={`lukcoins-item ${cosmetics?.goldName ? 'owned' : ''}`}
-                onClick={() => onSpendLukCoins?.(50, { goldName: true })}
-                disabled={cosmetics?.goldName || lukCoins < 50}
-              >
-                <span className="lc-item-title">Nombre Dorado</span>
-                <span className="lc-item-desc">Destaca tu nombre en el perfil</span>
-                <span className="lc-item-price">{cosmetics?.goldName ? 'Comprado' : '50 LC'}</span>
-              </button>
-              <button
-                className={`lukcoins-item ${cosmetics?.avatarGlow ? 'owned' : ''}`}
-                onClick={() => onSpendLukCoins?.(75, { avatarGlow: true })}
-                disabled={cosmetics?.avatarGlow || lukCoins < 75}
-              >
-                <span className="lc-item-title">Avatar Glow</span>
-                <span className="lc-item-desc">Brillo sutil en tu avatar</span>
-                <span className="lc-item-price">{cosmetics?.avatarGlow ? 'Comprado' : '75 LC'}</span>
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Badges */}
         {badges.length > 0 && (
@@ -2538,6 +2507,10 @@ function App() {
         </section>
       )}
 
+      {activeTab === 'store' && (
+        <StoreTab lukCoins={lukCoins} onSpendLukCoins={spendLukCoins} />
+      )}
+
       {/* Admin: Users Tab */}
       {activeTab === 'users' && isAdmin && (
         <section className="stats-section">
@@ -3283,10 +3256,6 @@ function App() {
         getPlayerName={getPlayerName}
         calculateXP={calculateXP}
         getRank={getRank}
-        user={user}
-        userPlayer={userPlayer}
-        lukCoins={lukCoins}
-        onSpendLukCoins={spendLukCoins}
       />
 
       {/* Player Add/Edit Modal */}

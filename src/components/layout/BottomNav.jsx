@@ -36,6 +36,12 @@ const ProfileIcon = () => (
   </svg>
 )
 
+const StoreIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M6 6h12l1.5 4H4.5L6 6zm0 6h12v8H6v-8zm2 2v4h2v-4H8zm6 0v4h2v-4h-2z" />
+  </svg>
+)
+
 export const BottomNav = ({ showPlayerProfile, selectedPlayerProfile, onShowProfile }) => {
   const { activeTab, setActiveTab, userPlayer } = useApp()
 
@@ -63,6 +69,7 @@ export const BottomNav = ({ showPlayerProfile, selectedPlayerProfile, onShowProf
     { id: 'ratings', icon: <StarIcon />, label: 'Rating' },
     { id: 'matches', icon: <MatchesIcon />, label: 'Partidos' },
     { id: 'analytics', icon: <AnalyticsIcon />, label: 'Análisis' },
+    { id: 'store', icon: <StoreIcon />, label: 'Store' },
   ]
 
   return (
@@ -94,4 +101,3 @@ export const BottomNav = ({ showPlayerProfile, selectedPlayerProfile, onShowProf
 }
 
 export default BottomNav
-
