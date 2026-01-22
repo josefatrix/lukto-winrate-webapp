@@ -1277,23 +1277,67 @@ function App() {
 
   const displayStats = timeFilter === 'all' ? stats : filteredStats
 
-  const calculateXP = playerId => {
-    const playerStats = stats.find(s => s.id === playerId)
-    if (!playerStats) return 0
-    let xp = 0
-    xp += playerStats.played * 10
-    xp += playerStats.wins * 25
-    xp += playerStats.mvps * 50
-    if (playerStats.avgRating) {
-      xp += Math.round(parseFloat(playerStats.avgRating) * 5)
+  const getMatchXP = (playerId, match) => {
+    let matchXp = 10
+    if (!match?.id) return matchXp
+
+    const inWhite = match.teamWhite?.includes(playerId)
+    const won = match.winner
+      ? (inWhite && match.winner === 'white') || (!inWhite && match.winner === 'black')
+      : false
+    if (won) matchXp += 25
+
+    const playerRatings = (ratings?.[playerId] || []).filter(r => r.matchId === match.id)
+    if (playerRatings.length > 0) {
+      const avg = playerRatings.reduce((sum, r) => sum + r.score, 0) / playerRatings.length
+      matchXp += Math.round(avg * 5)
     }
+
+    // MVP: highest average rating in match
+    const allPlayers = [...(match.teamWhite || []), ...(match.teamBlack || [])]
+    let mvpId = null
+    let mvpRating = -1
+    allPlayers.forEach(pid => {
+      const pRatings = (ratings?.[pid] || []).filter(r => r.matchId === match.id)
+      if (pRatings.length > 0) {
+        const avg = pRatings.reduce((sum, r) => sum + r.score, 0) / pRatings.length
+        if (avg > mvpRating) {
+          mvpRating = avg
+          mvpId = pid
+        }
+      }
+    })
+    if (mvpId === playerId) matchXp += 50
+
+    return matchXp
+  }
+
+  const calculateXP = playerId => {
+    const playerMatches = matches
+      .filter(m => m.teamWhite?.includes(playerId) || m.teamBlack?.includes(playerId))
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+
+    if (playerMatches.length === 0) return 0
+
+    let xp = 0
+    playerMatches.forEach(match => {
+      xp += getMatchXP(playerId, match)
+    })
+
     const linkedUserId = Object.entries(userLinks || {}).find(
       ([, linkData]) => linkData?.playerId === playerId
     )?.[0]
-    const xpMultiplier = linkedUserId
-      ? Math.max(1, userLinks?.[linkedUserId]?.xpMultiplier || userLinks?.[linkedUserId]?.cosmetics?.xpMultiplier || 1)
-      : 1
-    xp = xp * xpMultiplier
+    if (linkedUserId) {
+      const appliedMatchId = userLinks?.[linkedUserId]?.xpBoostAppliedMatchId
+      const appliedMultiplier = userLinks?.[linkedUserId]?.xpBoostAppliedMultiplier || 1
+      if (appliedMatchId && appliedMultiplier > 1) {
+        const match = matches.find(m => m.id === appliedMatchId)
+        if (match) {
+          xp += getMatchXP(playerId, match) * (appliedMultiplier - 1)
+        }
+      }
+    }
+
     return xp
   }
 
@@ -1533,7 +1577,7 @@ function App() {
     setCoinBet(10)
   }
 
-  const spendLukCoins = async (amount, cosmeticsUpdate = {}) => {
+  const spendLukCoins = async (amount, { cosmeticsUpdate = null, boostUpdate = null } = {}) => {
     if (!user || !userPlayer) return
     const currentCoins = calculateLukCoins(userPlayer)
     if (amount > currentCoins) {
@@ -1542,7 +1586,15 @@ function App() {
     }
     const currentLink = userLinks?.[user.uid] || {}
     const newSpent = (currentLink.lukcoinsSpent || 0) + amount
-    const newCosmetics = { ...(currentLink.cosmetics || {}), ...cosmeticsUpdate }
+    const newCosmetics = cosmeticsUpdate
+      ? { ...(currentLink.cosmetics || {}), ...cosmeticsUpdate }
+      : currentLink.cosmetics || {}
+    const nextBoost = boostUpdate
+      ? {
+          multiplier: boostUpdate.multiplier,
+          purchasedAt: new Date().toISOString(),
+        }
+      : currentLink.xpBoostPending || null
 
     try {
       await setDoc(
@@ -1550,7 +1602,7 @@ function App() {
         {
           lukcoinsSpent: newSpent,
           cosmetics: newCosmetics,
-          xpMultiplier: newCosmetics.xpMultiplier || currentLink.xpMultiplier || 1,
+          xpBoostPending: nextBoost,
           updatedAt: new Date().toISOString(),
         },
         { merge: true }
@@ -1561,6 +1613,38 @@ function App() {
       showToast('error', 'No se pudo completar la compra')
     }
   }
+
+  useEffect(() => {
+    if (!user || !userPlayer) return
+    const link = userLinks?.[user.uid]
+    if (!link?.xpBoostPending || link?.xpBoostAppliedMatchId) return
+
+    const purchasedAt = new Date(link.xpBoostPending.purchasedAt || 0)
+    const playerMatches = matches
+      .filter(m => m.teamWhite?.includes(userPlayer) || m.teamBlack?.includes(userPlayer))
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+
+    const nextMatch = playerMatches.find(m => new Date(m.date) >= purchasedAt)
+    if (!nextMatch) return
+
+    const applyBoost = async () => {
+      try {
+        await setDoc(
+          doc(db, 'userLinks', user.uid),
+          {
+            xpBoostAppliedMatchId: nextMatch.id,
+            xpBoostAppliedMultiplier: link.xpBoostPending.multiplier,
+            xpBoostPending: null,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        )
+      } catch (error) {
+        console.error('Error applying XP boost:', error)
+      }
+    }
+    applyBoost()
+  }, [user, userPlayer, userLinks, matches])
 
   const submitPrediction = async () => {
     if (!selectedPrediction || !predictionMatch || !user) {

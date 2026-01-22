@@ -13,6 +13,10 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
     if (!user?.uid) return {}
     return userLinks?.[user.uid]?.cosmetics || {}
   }, [user, userLinks])
+  const xpBoostPending = useMemo(() => {
+    if (!user?.uid) return null
+    return userLinks?.[user.uid]?.xpBoostPending || null
+  }, [user, userLinks])
 
   const items = [
     {
@@ -90,25 +94,25 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
     {
       id: 'xp2',
       title: 'XP x2',
-      description: 'Duplica tu XP total (boost permanente).',
+      description: 'Duplica el XP del proximo partido.',
       price: 200,
-      cosmeticsUpdate: { xpMultiplier: 2 },
+      boostUpdate: { multiplier: 2 },
       preview: 'xp2',
     },
     {
       id: 'xp3',
       title: 'XP x3',
-      description: 'Triplica tu XP total (boost permanente).',
+      description: 'Triplica el XP del proximo partido.',
       price: 350,
-      cosmeticsUpdate: { xpMultiplier: 3 },
+      boostUpdate: { multiplier: 3 },
       preview: 'xp3',
     },
     {
       id: 'xp4',
       title: 'XP x4',
-      description: 'Cuadruplica tu XP total (boost permanente).',
+      description: 'Cuadruplica el XP del proximo partido.',
       price: 600,
-      cosmeticsUpdate: { xpMultiplier: 4 },
+      boostUpdate: { multiplier: 4 },
       preview: 'xp4',
     },
   ]
@@ -163,9 +167,9 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
             (item.id === 'bannerJuego' && cosmetics.banner === 'hayjuego') ||
             (item.id === 'bannerAmamar' && cosmetics.banner === 'amamar') ||
             (item.id === 'bannerLegend' && cosmetics.banner === 'legend') ||
-            (item.id === 'xp2' && (cosmetics.xpMultiplier || 1) >= 2) ||
-            (item.id === 'xp3' && (cosmetics.xpMultiplier || 1) >= 3) ||
-            (item.id === 'xp4' && (cosmetics.xpMultiplier || 1) >= 4)
+            (item.id === 'xp2' && (xpBoostPending?.multiplier || 0) >= 2) ||
+            (item.id === 'xp3' && (xpBoostPending?.multiplier || 0) >= 3) ||
+            (item.id === 'xp4' && (xpBoostPending?.multiplier || 0) >= 4)
 
           return (
             <div key={item.id} className={`store-card ${owned ? 'owned' : ''}`}>
@@ -197,7 +201,14 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
               </div>
               <button
                 className="store-buy-btn"
-                onClick={() => onSpendLukCoins?.(item.price, item.cosmeticsUpdate)}
+                onClick={() =>
+                  onSpendLukCoins?.(
+                    item.price,
+                    item.cosmeticsUpdate
+                      ? { cosmeticsUpdate: item.cosmeticsUpdate }
+                      : { boostUpdate: item.boostUpdate }
+                  )
+                }
                 disabled={owned || lukCoins < item.price}
               >
                 {owned ? 'Comprado' : `${item.price} LC`}
