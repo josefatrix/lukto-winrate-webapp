@@ -7670,6 +7670,37 @@ body {
     url('/store/junior-shield.svg') no-repeat right -20px bottom -20px/120px;
 }
 
+.profile-hero-v2.banner-monda::before {
+  opacity: 1;
+  background: linear-gradient(120deg, rgba(245, 158, 11, 0.35), rgba(17, 24, 39, 0.5));
+}
+
+.profile-hero-v2.banner-hayjuego::before {
+  opacity: 1;
+  background: linear-gradient(120deg, rgba(16, 185, 129, 0.3), rgba(12, 74, 110, 0.5));
+}
+
+.profile-hero-v2.banner-amamar::before {
+  opacity: 1;
+  background: linear-gradient(120deg, rgba(239, 68, 68, 0.35), rgba(30, 41, 59, 0.55));
+}
+
+.profile-banner-text {
+  position: absolute;
+  top: 10px;
+  left: 16px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 2;
+}
+
 .ph-name {
   margin: 0 0 16px;
   font-size: 20px;
@@ -7964,6 +7995,18 @@ body {
   background:
     linear-gradient(120deg, rgba(11, 61, 145, 0.8), rgba(239, 68, 68, 0.8)),
     url('/store/junior-shield.svg') no-repeat right 6px center/28px;
+}
+
+.store-banner-preview.banner-monda {
+  background: linear-gradient(120deg, rgba(245, 158, 11, 0.85), rgba(17, 24, 39, 0.85));
+}
+
+.store-banner-preview.banner-hayjuego {
+  background: linear-gradient(120deg, rgba(16, 185, 129, 0.85), rgba(12, 74, 110, 0.85));
+}
+
+.store-banner-preview.banner-amamar {
+  background: linear-gradient(120deg, rgba(239, 68, 68, 0.85), rgba(30, 41, 59, 0.85));
 }
 
 .store-name-preview {

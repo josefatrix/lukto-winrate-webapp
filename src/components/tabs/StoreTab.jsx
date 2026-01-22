@@ -39,6 +39,30 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
       cosmeticsUpdate: { banner: 'junior' },
       preview: 'banner-junior',
     },
+    {
+      id: 'bannerMonda',
+      title: 'Banner “Soy la monda”',
+      description: 'Actitud total con un banner directo.',
+      price: 90,
+      cosmeticsUpdate: { banner: 'monda' },
+      preview: 'banner-monda',
+    },
+    {
+      id: 'bannerJuego',
+      title: 'Banner “Hay juegooo”',
+      description: 'Sello de partido pesado.',
+      price: 90,
+      cosmeticsUpdate: { banner: 'hayjuego' },
+      preview: 'banner-hayjuego',
+    },
+    {
+      id: 'bannerAmamar',
+      title: 'Banner “A mamar”',
+      description: 'Para los que llegan con hambre.',
+      price: 110,
+      cosmeticsUpdate: { banner: 'amamar' },
+      preview: 'banner-amamar',
+    },
   ]
 
   if (!user) {
@@ -83,7 +107,10 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
           const owned =
             (item.id === 'goldName' && cosmetics.goldName) ||
             (item.id === 'avatarGlow' && cosmetics.avatarGlow) ||
-            (item.id === 'bannerJunior' && cosmetics.banner === 'junior')
+            (item.id === 'bannerJunior' && cosmetics.banner === 'junior') ||
+            (item.id === 'bannerMonda' && cosmetics.banner === 'monda') ||
+            (item.id === 'bannerJuego' && cosmetics.banner === 'hayjuego') ||
+            (item.id === 'bannerAmamar' && cosmetics.banner === 'amamar')
 
           return (
             <div key={item.id} className={`store-card ${owned ? 'owned' : ''}`}>
@@ -99,9 +126,9 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
                   </span>
                 </div>
               </div>
-              {item.preview === 'banner-junior' && (
-                <div className="store-banner-preview banner-junior">
-                  <span>Banner Junior</span>
+              {item.preview?.startsWith('banner-') && (
+                <div className={`store-banner-preview ${item.preview}`}>
+                  <span>{item.title.replace('Banner ', '')}</span>
                 </div>
               )}
               <div className="store-info">

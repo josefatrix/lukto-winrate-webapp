@@ -325,6 +325,13 @@ function PlayerProfileModal({
   const linkedUserId = Object.entries(userLinks || {}).find(([, data]) => data?.playerId === playerId)?.[0]
   const cosmetics = linkedUserId ? userLinks?.[linkedUserId]?.cosmetics : null
   const banner = cosmetics?.banner || null
+  const bannerTextMap = {
+    junior: 'Banner Junior',
+    monda: 'Soy la monda',
+    hayjuego: 'Hay juegooo',
+    amamar: 'A mamar',
+  }
+  const bannerText = banner ? bannerTextMap[banner] : null
   
   // Calculate all stats averages for comparison
   const ratingSamples = stats?.filter(p => p.avgRating) || []
@@ -494,6 +501,7 @@ function PlayerProfileModal({
         
         {/* Clean Hero Header */}
         <div className={`profile-hero-v2 ${banner ? `banner-${banner}` : ''}`}>
+          {bannerText && <div className="profile-banner-text">{bannerText}</div>}
           <div className={`ph-avatar ${cosmetics?.avatarGlow ? 'glow' : ''}`}>
             <AvatarImage src={photo} name={player.name} />
           </div>
