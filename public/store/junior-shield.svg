@@ -1,29 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" role="img" aria-label="Junior shield">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 272" role="img" aria-label="Junior shield">
   <defs>
-    <linearGradient id="shieldBlue" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#0b3d91"/>
-      <stop offset="1" stop-color="#0a2f6b"/>
+    <linearGradient id="blueStroke" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#1e3a8a"/>
+      <stop offset="1" stop-color="#0f245c"/>
     </linearGradient>
   </defs>
-  <path d="M100 8l78 26v74c0 52-34 95-78 120-44-25-78-68-78-120V34l78-26z" fill="url(#shieldBlue)" />
-  <path d="M100 20l68 22v66c0 44-27 81-68 103-41-22-68-59-68-103V42l68-22z" fill="#ffffff"/>
-  <path d="M100 30l58 19v58c0 38-22 68-58 88-36-20-58-50-58-88V49l58-19z" fill="#e11d48"/>
-  <path d="M100 38l50 16v50c0 32-18 58-50 75-32-17-50-43-50-75V54l50-16z" fill="#ffffff"/>
-  <g fill="#e11d48">
-    <rect x="66" y="54" width="12" height="120"/>
-    <rect x="94" y="54" width="12" height="120"/>
-    <rect x="122" y="54" width="12" height="120"/>
+  <!-- Outer shield -->
+  <path d="M128 8l92 30v92c0 62-40 114-92 138-52-24-92-76-92-138V38l92-30z" fill="url(#blueStroke)"/>
+  <path d="M128 18l82 26v86c0 56-35 104-82 126-47-22-82-70-82-126V44l82-26z" fill="#ffffff"/>
+
+  <!-- Inner red field -->
+  <path d="M128 28l72 23v79c0 50-30 92-72 112-42-20-72-62-72-112V51l72-23z" fill="#c11b1b"/>
+
+  <!-- Top blue band -->
+  <path d="M56 56h144v40H56z" fill="#1e3a8a"/>
+
+  <!-- Stars -->
+  <g fill="#ffffff">
+    <path d="M64 68l3 6 6 .5-4.5 4 1.5 6-6-3.2-6 3.2 1.5-6-4.5-4 6-.5 3-6z"/>
+    <path d="M96 66l3 6 6 .5-4.5 4 1.5 6-6-3.2-6 3.2 1.5-6-4.5-4 6-.5 3-6z"/>
+    <path d="M128 64l3 6 6 .5-4.5 4 1.5 6-6-3.2-6 3.2 1.5-6-4.5-4 6-.5 3-6z"/>
+    <path d="M160 66l3 6 6 .5-4.5 4 1.5 6-6-3.2-6 3.2 1.5-6-4.5-4 6-.5 3-6z"/>
+    <path d="M192 68l3 6 6 .5-4.5 4 1.5 6-6-3.2-6 3.2 1.5-6-4.5-4 6-.5 3-6z"/>
   </g>
-  <rect x="42" y="46" width="116" height="42" rx="6" fill="#0b3d91"/>
-  <rect x="48" y="52" width="104" height="30" rx="4" fill="#ffffff"/>
-  <text x="100" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#0b3d91">
+
+  <!-- JUNIOR label -->
+  <rect x="66" y="94" width="124" height="38" rx="8" fill="#ffffff"/>
+  <text x="128" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#1e3a8a">
     JUNIOR
   </text>
+
+  <!-- White stripes -->
   <g fill="#ffffff">
-    <circle cx="64" cy="38" r="3"/>
-    <circle cx="84" cy="34" r="3"/>
-    <circle cx="104" cy="33" r="3"/>
-    <circle cx="124" cy="34" r="3"/>
-    <circle cx="144" cy="38" r="3"/>
+    <rect x="76" y="132" width="18" height="96"/>
+    <rect x="116" y="132" width="18" height="96"/>
+    <rect x="156" y="132" width="18" height="96"/>
   </g>
 </svg>
