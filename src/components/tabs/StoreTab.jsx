@@ -41,7 +41,7 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
     },
     {
       id: 'bannerMonda',
-      title: 'Banner “Soy la monda”',
+      title: 'Banner Soy la monda',
       description: 'Actitud total con un banner directo.',
       price: 90,
       cosmeticsUpdate: { banner: 'monda' },
@@ -49,7 +49,7 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
     },
     {
       id: 'bannerJuego',
-      title: 'Banner “Hay juegooo”',
+      title: 'Banner Hay juegooo',
       description: 'Sello de partido pesado.',
       price: 90,
       cosmeticsUpdate: { banner: 'hayjuego' },
@@ -57,7 +57,7 @@ export const StoreTab = ({ lukCoins = 0, onSpendLukCoins }) => {
     },
     {
       id: 'bannerAmamar',
-      title: 'Banner “A mamar”',
+      title: 'Banner A mamar',
       description: 'Para los que llegan con hambre.',
       price: 110,
       cosmeticsUpdate: { banner: 'amamar' },
