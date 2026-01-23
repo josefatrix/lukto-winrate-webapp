@@ -1628,7 +1628,13 @@ function App() {
       .filter(m => m.winner && (m.teamWhite?.includes(userPlayer) || m.teamBlack?.includes(userPlayer)))
       .sort((a, b) => new Date(b.date) - new Date(a.date))
 
-    const nextMatch = eligibleMatches.find(m => !shownMap[m.id])
+    const nextMatch = eligibleMatches.find(m => {
+      if (shownMap[m.id]) return false
+      const totalRatings = Object.values(ratings || {}).reduce((count, playerRatings) => {
+        return count + playerRatings.filter(r => r.matchId === m.id).length
+      }, 0)
+      return totalRatings >= 5
+    })
     if (!nextMatch) return
 
     const breakdown = getMatchXpBreakdown(userPlayer, nextMatch)
