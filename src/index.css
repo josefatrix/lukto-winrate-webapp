@@ -4887,6 +4887,11 @@ body {
   color: var(--text-muted);
 }
 
+.modal.weekly-history-modal {
+  align-self: flex-start;
+  margin-top: 1rem;
+}
+
 .xp-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent-green), var(--accent-gold));

@@ -267,7 +267,7 @@ export const StatsTab = ({
             setShowWeekHistory(false)
           }}
         >
-          <div className="modal" onClick={e => e.stopPropagation()}>
+          <div className="modal weekly-history-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Jugadores de Semanas Pasadas</h2>
               <button className="modal-close" onClick={() => setShowWeekHistory(false)}>×</button>
