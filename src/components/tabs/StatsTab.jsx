@@ -3,7 +3,7 @@
  * Shows ranking table and featured players
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useApp } from '../../contexts'
 import { AvatarImage, EmptyState } from '../common'
 
@@ -27,6 +27,7 @@ export const StatsTab = ({
   const [sortBy, setSortBy] = useState('rankingScore')
   const [sortDir, setSortDir] = useState('desc')
   const [showWeekHistory, setShowWeekHistory] = useState(false)
+  const lastWeekHistoryOpenAt = useRef(0)
 
   const potwPlayer = playerOfWeek ? players.find(p => p.id === playerOfWeek.id) : null
   const potmPlayer = playerOfMonth ? players.find(p => p.id === playerOfMonth.id) : null
@@ -180,10 +181,14 @@ export const StatsTab = ({
           className="featured-card week clickable"
           role="button"
           tabIndex={0}
-          onClick={() => setShowWeekHistory(true)}
+          onClick={() => {
+            lastWeekHistoryOpenAt.current = Date.now()
+            setShowWeekHistory(true)
+          }}
           onKeyDown={e => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
+              lastWeekHistoryOpenAt.current = Date.now()
               setShowWeekHistory(true)
             }
           }}
@@ -255,7 +260,13 @@ export const StatsTab = ({
       </div>
 
       {showWeekHistory && (
-        <div className="modal-overlay" onClick={() => setShowWeekHistory(false)}>
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            if (Date.now() - lastWeekHistoryOpenAt.current < 350) return
+            setShowWeekHistory(false)
+          }}
+        >
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Jugadores de Semanas Pasadas</h2>
