@@ -5,13 +5,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useApp, SUPER_ADMIN_EMAIL } from './contexts'
 import { useStats, useHaptic } from './hooks'
-import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs } from 'firebase/firestore'
+import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs, addDoc, deleteDoc } from 'firebase/firestore'
 import { db } from './firebase'
 import confetti from 'canvas-confetti'
 
 // Import components
 import { Header, BottomNav } from './components/layout'
-import { StatsTab, MatchesTab, RatingsTab, StoreTab } from './components/tabs'
+import { StatsTab, MatchesTab, RatingsTab } from './components/tabs'
 import { AdminLoginModal, PendingUserModal } from './components/modals'
 import { AvatarImage, FloatingActionButton, SkeletonPage, SkeletonTable, SkeletonMatchesList, Onboarding, useOnboarding, EmptyState, AnimatedCounter, PendingRatingsNotification } from './components/common'
 
@@ -285,6 +285,7 @@ function PlayerProfileModal({
   const [showShareCard, setShowShareCard] = useState(false)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const shareCardRef = useRef(null)
+  const profileCardRef = useRef(null)
 
   useEffect(() => {
     if (!show) return undefined
@@ -303,15 +304,25 @@ function PlayerProfileModal({
     }
   }, [show])
 
+  useEffect(() => {
+    if (!show) return
+    if (profileCardRef.current) {
+      profileCardRef.current.scrollTo({ top: 0, behavior: 'auto' })
+    }
+  }, [show, playerId])
+
   if (!isVisible) return null
 
   const player = players?.find(p => p.id === playerId)
   if (!player) {
     return (
       <div className="profile-overlay" onClick={onClose}>
-        <div className="profile-card" onClick={e => e.stopPropagation()}>
+        <div className="profile-card" ref={profileCardRef} onClick={e => e.stopPropagation()}>
           <button className="profile-close" onClick={onClose}>×</button>
           <p style={{ textAlign: 'center', padding: '40px', color: '#888' }}>Jugador no encontrado</p>
+          <div className="profile-footer-actions">
+            <button className="cancel-btn" onClick={onClose}>Cerrar</button>
+          </div>
         </div>
       </div>
     )
@@ -491,7 +502,7 @@ function PlayerProfileModal({
 
   return (
     <div className="profile-overlay" onClick={onClose}>
-      <div className="profile-card profile-card-v2" onClick={e => e.stopPropagation()}>
+      <div className="profile-card profile-card-v2" ref={profileCardRef} onClick={e => e.stopPropagation()}>
         <div className="profile-actions">
           <button className="profile-share" onClick={shareProfile} title="Compartir">
             <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
@@ -1029,6 +1040,10 @@ function PlayerProfileModal({
           )
         })()}
 
+        <div className="profile-footer-actions">
+          <button className="cancel-btn" onClick={onClose}>Cerrar perfil</button>
+        </div>
+
         {/* Share Card Modal */}
         {showShareCard && (
           <div className="share-card-overlay" onClick={() => setShowShareCard(false)}>
@@ -1495,6 +1510,11 @@ function App() {
     setEditingPlayerId(null)
     setNewPlayerName('')
     setNewPlayerAliases('')
+  }
+
+  const openAddEditPlayerModal = () => {
+    closePlayerModal()
+    setShowPlayerModal(true)
   }
 
   // ============ PREDICTION HANDLERS ============
@@ -2081,6 +2101,13 @@ function App() {
   }
 
   const lukCoins = userPlayer ? calculateLukCoins(userPlayer) : 0
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }, [activeTab])
 
   // ============ RENDER ============
 
@@ -2677,7 +2704,10 @@ function App() {
       )}
 
       {activeTab === 'store' && (
-        <StoreTab lukCoins={lukCoins} onSpendLukCoins={spendLukCoins} />
+        <section className="stats-section">
+          <h2 className="section-title">Tienda</h2>
+          <p className="section-subtitle">Próximamente</p>
+        </section>
       )}
 
       {/* Admin: Users Tab */}
@@ -3454,9 +3484,12 @@ function App() {
                 placeholder="Apodo1, Apodo2..."
               />
             </div>
-            <button className="submit-btn" onClick={handleAddPlayer}>
-              {editingPlayerId ? 'Guardar Cambios' : 'Crear Jugador'}
-            </button>
+            <div className="modal-actions">
+              <button className="cancel-btn" onClick={closePlayerModal}>Cancelar</button>
+              <button className="submit-btn" onClick={handleAddPlayer}>
+                {editingPlayerId ? 'Guardar Cambios' : 'Crear Jugador'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -3517,6 +3550,9 @@ function App() {
                 </div>
 
                 <div className="modal-actions">
+                  <button className="cancel-btn" onClick={closeRatingModal}>
+                    Cancelar
+                  </button>
                   <button
                     className="submit-btn"
                     onClick={submitRatings}
@@ -3735,6 +3771,9 @@ function App() {
               </div>
 
               <div className="modal-actions">
+                <button className="cancel-btn" onClick={closePredictionModal}>
+                  Cancelar
+                </button>
                 <button 
                   className="submit-btn"
                   onClick={submitPrediction}
