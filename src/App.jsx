@@ -1280,7 +1280,7 @@ function App() {
   } = useApp()
 
   // Stats hook
-  const { stats, filteredStats, getPlayerOfMonth, getPlayerOfWeek } = useStats()
+  const { stats, filteredStats, getPlayerOfMonth, getPlayerOfWeek, getWeeklyWinners } = useStats()
 
   // Onboarding hook
   const { showOnboarding, completeOnboarding } = useOnboarding()
@@ -2313,6 +2313,7 @@ function App() {
           getRankIcon={getRankIcon}
           getWinRateClass={getWinRateClass}
           getRatingClass={getRatingClass}
+          weeklyHistory={getWeeklyWinners(8)}
           announcements={announcements}
         />
       )}

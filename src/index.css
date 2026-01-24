@@ -4808,6 +4808,85 @@ body {
   overflow: hidden;
 }
 
+.featured-card.clickable {
+  cursor: pointer;
+}
+
+.featured-card.clickable:active {
+  transform: scale(0.98);
+}
+
+.weekly-history-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.weekly-history-item {
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  display: grid;
+  gap: 0.5rem;
+}
+
+.weekly-history-dates {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.weekly-history-winner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.weekly-history-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-color);
+}
+
+.weekly-history-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+}
+
+.weekly-history-info {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.weekly-history-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.weekly-history-stats {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.weekly-history-none,
+.weekly-history-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 .xp-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent-green), var(--accent-gold));

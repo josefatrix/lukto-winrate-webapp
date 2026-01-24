@@ -11,6 +11,7 @@ export const StatsTab = ({
   stats,
   playerOfWeek,
   playerOfMonth,
+  weeklyHistory = [],
   onPlayerClick,
   calculateXP,
   getRank,
@@ -25,9 +26,23 @@ export const StatsTab = ({
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('rankingScore')
   const [sortDir, setSortDir] = useState('desc')
+  const [showWeekHistory, setShowWeekHistory] = useState(false)
 
   const potwPlayer = playerOfWeek ? players.find(p => p.id === playerOfWeek.id) : null
   const potmPlayer = playerOfMonth ? players.find(p => p.id === playerOfMonth.id) : null
+  const pastWeeks = useMemo(() => {
+    if (!weeklyHistory?.length) return []
+    const startOfWeek = date => {
+      const d = new Date(date)
+      const day = d.getDay()
+      const diff = day === 0 ? -6 : 1 - day
+      d.setDate(d.getDate() + diff)
+      d.setHours(0, 0, 0, 0)
+      return d.getTime()
+    }
+    const thisWeekStart = startOfWeek(new Date())
+    return weeklyHistory.filter(entry => entry.weekStart.getTime() !== thisWeekStart)
+  }, [weeklyHistory])
 
   // Filter and sort stats
   const filteredStats = useMemo(() => {
@@ -158,7 +173,18 @@ export const StatsTab = ({
       <div className="featured-players">
         {/* Player of the Week */}
         {playerOfWeek && potwPlayer && (
-          <div className="featured-card week">
+          <div
+            className="featured-card week clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => setShowWeekHistory(true)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setShowWeekHistory(true)
+              }
+            }}
+          >
             <div className="featured-badge">
               <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
                 <path d="M7 2v11h3v9l7-12h-4l4-8z" />
@@ -214,6 +240,50 @@ export const StatsTab = ({
           </div>
         )}
       </div>
+
+      {showWeekHistory && (
+        <div className="modal-overlay" onClick={() => setShowWeekHistory(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Jugadores de Semanas Pasadas</h2>
+              <button className="modal-close" onClick={() => setShowWeekHistory(false)}>×</button>
+            </div>
+            <div className="weekly-history-list">
+              {pastWeeks.length === 0 ? (
+                <p className="weekly-history-empty">Aún no hay semanas pasadas con datos.</p>
+              ) : (
+                pastWeeks.map(entry => {
+                  const winner = entry.winner ? players.find(p => p.id === entry.winner.id) : null
+                  const dateLabel = `${entry.weekStart.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - ${entry.weekEnd.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`
+                  return (
+                    <div key={entry.weekStart.toISOString()} className="weekly-history-item">
+                      <div className="weekly-history-dates">{dateLabel}</div>
+                      {winner ? (
+                        <div className="weekly-history-winner">
+                          <AvatarImage
+                            src={getPlayerPhoto(entry.winner.id)}
+                            name={winner?.name || ''}
+                            imgClassName="weekly-history-avatar"
+                            fallbackClassName="weekly-history-avatar-placeholder"
+                          />
+                          <div className="weekly-history-info">
+                            <span className="weekly-history-name">{winner?.name}</span>
+                            <span className="weekly-history-stats">
+                              {entry.winner.wins}V {entry.winner.played - entry.winner.wins}D · {entry.winner.winRate}%
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="weekly-history-none">Sin datos suficientes</div>
+                      )}
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <h2 className="section-title">
         {timeFilter === 'all'

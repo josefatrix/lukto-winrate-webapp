@@ -198,22 +198,8 @@ export const useStats = () => {
       )
   }, [players, getFilteredMatches, ratings, timeFilter, stats])
 
-  // Player of the period (week/month)
-  const getPlayerOfPeriod = period => {
-    const now = new Date()
-    let periodMatches
-
-    if (period === 'week') {
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      periodMatches = matches.filter(m => new Date(m.date) >= weekAgo)
-    } else {
-      periodMatches = matches.filter(m => {
-        const d = new Date(m.date)
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-      })
-    }
-
-    if (periodMatches.length === 0) return null
+  const computePlayerOfMatches = (periodMatches, minGames) => {
+    if (!periodMatches || periodMatches.length === 0) return null
 
     const periodStats = {}
     periodMatches.forEach(match => {
@@ -244,8 +230,6 @@ export const useStats = () => {
     let bestPlayer = null
     let bestScore = -1
 
-    const minGames = period === 'week' ? 1 : 2
-
     Object.entries(periodStats).forEach(([playerId, pStats]) => {
       if (pStats.played >= minGames) {
         const avgRating = pStats.ratingCount > 0 ? pStats.totalRating / pStats.ratingCount : 5
@@ -266,12 +250,80 @@ export const useStats = () => {
     return bestPlayer
   }
 
+  const getPlayerOfWeek = () => {
+    const now = new Date()
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const periodMatches = matches.filter(m => new Date(m.date) >= weekAgo)
+    return computePlayerOfMatches(periodMatches, 1)
+  }
+
+  const getPlayerOfMonth = () => {
+    const now = new Date()
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    const isMonthClosed = now.getDate() === lastDayOfMonth
+
+    let targetMonth = now.getMonth()
+    let targetYear = now.getFullYear()
+    if (!isMonthClosed) {
+      targetMonth -= 1
+      if (targetMonth < 0) {
+        targetMonth = 11
+        targetYear -= 1
+      }
+    }
+
+    const start = new Date(targetYear, targetMonth, 1, 0, 0, 0, 0)
+    const end = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999)
+    const periodMatches = matches.filter(m => {
+      const d = new Date(m.date)
+      return d >= start && d <= end
+    })
+    return computePlayerOfMatches(periodMatches, 2)
+  }
+
+  const getWeeklyWinners = (limit = 8) => {
+    const startOfWeek = date => {
+      const d = new Date(date)
+      const day = d.getDay()
+      const diff = day === 0 ? -6 : 1 - day
+      d.setDate(d.getDate() + diff)
+      d.setHours(0, 0, 0, 0)
+      return d
+    }
+
+    const groups = new Map()
+    matches.forEach(match => {
+      const matchDate = new Date(match.date)
+      const weekStart = startOfWeek(matchDate)
+      const key = weekStart.toISOString().split('T')[0]
+      if (!groups.has(key)) groups.set(key, [])
+      groups.get(key).push(match)
+    })
+
+    const weeks = Array.from(groups.entries())
+      .map(([key, weekMatches]) => {
+        const weekStart = new Date(key)
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekEnd.getDate() + 6)
+        weekEnd.setHours(23, 59, 59, 999)
+        return {
+          weekStart,
+          weekEnd,
+          winner: computePlayerOfMatches(weekMatches, 1),
+        }
+      })
+      .sort((a, b) => b.weekStart - a.weekStart)
+
+    return weeks.slice(0, limit)
+  }
+
   return {
     stats,
     filteredStats,
     getFilteredMatches,
-    getPlayerOfMonth: () => getPlayerOfPeriod('month'),
-    getPlayerOfWeek: () => getPlayerOfPeriod('week'),
+    getPlayerOfMonth,
+    getPlayerOfWeek,
+    getWeeklyWinners,
   }
 }
 
@@ -305,4 +357,3 @@ export const isPredictionCorrect = (userId, matchId, matchWinner, predictions) =
 }
 
 export default useStats
-
