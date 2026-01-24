@@ -311,6 +311,29 @@ function PlayerProfileModal({
     }
   }, [show, playerId])
 
+  const getPoolTotals = matchId => {
+    const matchPreds = predictions?.[matchId] || {}
+    let totalWhite = 0
+    let totalBlack = 0
+    Object.values(matchPreds).forEach(pred => {
+      const bet = getPredictionBet(pred)
+      if (pred?.prediction === 'white') totalWhite += bet
+      if (pred?.prediction === 'black') totalBlack += bet
+    })
+    return { totalWhite, totalBlack }
+  }
+
+  const getPoolWin = (pred, match) => {
+    if (!match?.winner) return 0
+    if (pred?.prediction !== match.winner) return 0
+    const { totalWhite, totalBlack } = getPoolTotals(match.id)
+    const bet = getPredictionBet(pred)
+    const totalWinSide = match.winner === 'white' ? totalWhite : totalBlack
+    const totalLoseSide = match.winner === 'white' ? totalBlack : totalWhite
+    if (totalWinSide <= 0 || totalLoseSide <= 0) return 0
+    return Math.round((bet / totalWinSide) * totalLoseSide)
+  }
+
   if (!isVisible) return null
 
   const player = players?.find(p => p.id === playerId)
@@ -856,7 +879,7 @@ function PlayerProfileModal({
           const resolved = userPredictions.filter(p => p.match?.winner)
           const correct = resolved.filter(p => p.prediction === p.match.winner)
           const accuracy = resolved.length > 0 ? Math.round((correct.length / resolved.length) * 100) : 0
-          const totalCoinsWon = correct.reduce((sum, p) => sum + getPredictionWin(p), 0)
+          const totalCoinsWon = correct.reduce((sum, p) => sum + getPoolWin(p, p.match), 0)
           const totalCoinsLost = resolved.filter(p => p.prediction !== p.match.winner)
             .reduce((sum, p) => sum + getPredictionBet(p), 0)
           
@@ -893,7 +916,7 @@ function PlayerProfileModal({
                   const isResolved = !!pred.match?.winner
                   const predictedTeam = pred.prediction === 'white' ? 'Blanco' : 'Negro'
                   const bet = getPredictionBet(pred)
-                  const win = getPredictionWin(pred)
+                  const win = getPoolWin(pred, pred.match)
                   
                   return (
                     <div key={idx} className={`prediction-item ${isResolved ? (isCorrect ? 'correct' : 'wrong') : 'pending'}`}>
@@ -1362,6 +1385,27 @@ function App() {
     return xp
   }
 
+  const getPoolTotalsForMatch = matchId => {
+    const matchPreds = predictions?.[matchId] || {}
+    let totalWhite = 0
+    let totalBlack = 0
+    Object.values(matchPreds).forEach(pred => {
+      const bet = getPredictionBet(pred)
+      if (pred?.prediction === 'white') totalWhite += bet
+      if (pred?.prediction === 'black') totalBlack += bet
+    })
+    return { totalWhite, totalBlack }
+  }
+
+  const getPoolPotentialWin = (matchId, selectedTeam, bet) => {
+    if (!matchId || !selectedTeam || bet <= 0) return 0
+    const { totalWhite, totalBlack } = getPoolTotalsForMatch(matchId)
+    const totalWinSide = selectedTeam === 'white' ? totalWhite + bet : totalBlack + bet
+    const totalLoseSide = selectedTeam === 'white' ? totalBlack : totalWhite
+    if (totalWinSide <= 0 || totalLoseSide <= 0) return 0
+    return Math.round((bet / totalWinSide) * totalLoseSide)
+  }
+
   const calculateLukCoins = playerId => {
     const playerStats = stats.find(s => s.id === playerId)
     if (!playerStats) return 0
@@ -1397,7 +1441,6 @@ function App() {
         if (!pred) return
         const match = matches.find(m => m.id === (pred.matchId || matchId))
         const bet = getPredictionBet(pred)
-        const win = getPredictionWin(pred)
 
         if (!match?.winner) {
           coins -= bet
@@ -1405,7 +1448,13 @@ function App() {
         }
 
         if (pred.prediction === match.winner) {
-          coins += bet + win
+          const { totalWhite, totalBlack } = getPoolTotalsForMatch(match.id || matchId)
+          const totalWinSide = match.winner === 'white' ? totalWhite : totalBlack
+          const totalLoseSide = match.winner === 'white' ? totalBlack : totalWhite
+          const poolWin = totalWinSide > 0 && totalLoseSide > 0
+            ? Math.round((bet / totalWinSide) * totalLoseSide)
+            : 0
+          coins += bet + poolWin
         }
       })
       const spent = userLinks?.[userId]?.lukcoinsSpent || 0
@@ -1747,7 +1796,7 @@ function App() {
       const predictionId = `${user.uid}_${predictionMatch.id}`
       const probability = calculateTeamProbability(predictionMatch)
       const winningOdds = selectedPrediction === 'white' ? probability.white : probability.black
-      const potentialWin = Math.round(coinBet * (100 / winningOdds - 1))
+      const potentialWin = getPoolPotentialWin(predictionMatch.id, selectedPrediction, coinBet)
       
       await setDoc(doc(db, 'predictions', predictionId), {
         odedBy: user.uid,
@@ -3763,7 +3812,7 @@ function App() {
                   {selectedPrediction && (
                     <span>
                       Posible ganancia: <strong className="potential-win">
-                        +{Math.round(coinBet * (100 / (selectedPrediction === 'white' ? probability.white : probability.black) - 1))} LC
+                        +{getPoolPotentialWin(predictionMatch.id, selectedPrediction, coinBet)} LC
                       </strong>
                     </span>
                   )}
