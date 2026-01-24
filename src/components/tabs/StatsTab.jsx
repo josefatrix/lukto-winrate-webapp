@@ -30,19 +30,23 @@ export const StatsTab = ({
 
   const potwPlayer = playerOfWeek ? players.find(p => p.id === playerOfWeek.id) : null
   const potmPlayer = playerOfMonth ? players.find(p => p.id === playerOfMonth.id) : null
-  const pastWeeks = useMemo(() => {
+  const normalizedWeeklyHistory = useMemo(() => {
     if (!weeklyHistory?.length) return []
-    const startOfWeek = date => {
-      const d = new Date(date)
-      const day = d.getDay()
-      const diff = day === 0 ? -6 : 1 - day
-      d.setDate(d.getDate() + diff)
-      d.setHours(0, 0, 0, 0)
-      return d.getTime()
-    }
-    const thisWeekStart = startOfWeek(new Date())
-    return weeklyHistory.filter(entry => entry.weekStart.getTime() !== thisWeekStart)
+    return weeklyHistory.map(entry => ({
+      ...entry,
+      weekStart: new Date(entry.weekStart),
+      weekEnd: new Date(entry.weekEnd),
+    }))
   }, [weeklyHistory])
+
+  const currentWeekKey = useMemo(() => {
+    const d = new Date()
+    const day = d.getDay()
+    const diff = day === 0 ? -6 : 1 - day
+    d.setDate(d.getDate() + diff)
+    d.setHours(0, 0, 0, 0)
+    return d.toISOString().split('T')[0]
+  }, [])
 
   // Filter and sort stats
   const filteredStats = useMemo(() => {
@@ -172,44 +176,53 @@ export const StatsTab = ({
       {/* Player of Week / Month Cards */}
       <div className="featured-players">
         {/* Player of the Week */}
-        {playerOfWeek && potwPlayer && (
-          <div
-            className="featured-card week clickable"
-            role="button"
-            tabIndex={0}
-            onClick={() => setShowWeekHistory(true)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                setShowWeekHistory(true)
-              }
-            }}
-          >
-            <div className="featured-badge">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                <path d="M7 2v11h3v9l7-12h-4l4-8z" />
-              </svg>
-              Jugador de la Semana
-            </div>
-            <div className="featured-content">
-              <AvatarImage
-                src={getPlayerPhoto(playerOfWeek.id)}
-                name={potwPlayer?.name || ''}
-                imgClassName="featured-avatar"
-                fallbackClassName="featured-avatar-placeholder"
-              />
+        <div
+          className="featured-card week clickable"
+          role="button"
+          tabIndex={0}
+          onClick={() => setShowWeekHistory(true)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setShowWeekHistory(true)
+            }
+          }}
+        >
+          <div className="featured-badge">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+              <path d="M7 2v11h3v9l7-12h-4l4-8z" />
+            </svg>
+            Jugador de la Semana
+          </div>
+          <div className="featured-content">
+            {playerOfWeek && potwPlayer ? (
+              <>
+                <AvatarImage
+                  src={getPlayerPhoto(playerOfWeek.id)}
+                  name={potwPlayer?.name || ''}
+                  imgClassName="featured-avatar"
+                  fallbackClassName="featured-avatar-placeholder"
+                />
+                <div className="featured-info">
+                  <h3>{potwPlayer?.name}</h3>
+                  <div className="featured-stats">
+                    <span className="stat-item">
+                      {playerOfWeek.wins}V {playerOfWeek.played - playerOfWeek.wins}D
+                    </span>
+                    <span className="stat-item highlight">{playerOfWeek.winRate}%</span>
+                  </div>
+                </div>
+              </>
+            ) : (
               <div className="featured-info">
-                <h3>{potwPlayer?.name}</h3>
+                <h3>Sin datos esta semana</h3>
                 <div className="featured-stats">
-                  <span className="stat-item">
-                    {playerOfWeek.wins}V {playerOfWeek.played - playerOfWeek.wins}D
-                  </span>
-                  <span className="stat-item highlight">{playerOfWeek.winRate}%</span>
+                  <span className="stat-item">Toca para ver semanas pasadas</span>
                 </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Player of the Month */}
         {playerOfMonth && potmPlayer && (
@@ -249,15 +262,18 @@ export const StatsTab = ({
               <button className="modal-close" onClick={() => setShowWeekHistory(false)}>×</button>
             </div>
             <div className="weekly-history-list">
-              {pastWeeks.length === 0 ? (
+              {normalizedWeeklyHistory.length === 0 ? (
                 <p className="weekly-history-empty">Aún no hay semanas pasadas con datos.</p>
               ) : (
-                pastWeeks.map(entry => {
+                normalizedWeeklyHistory.map(entry => {
                   const winner = entry.winner ? players.find(p => p.id === entry.winner.id) : null
                   const dateLabel = `${entry.weekStart.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - ${entry.weekEnd.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`
+                  const isCurrentWeek = entry.weekStart.toISOString().split('T')[0] === currentWeekKey
                   return (
                     <div key={entry.weekStart.toISOString()} className="weekly-history-item">
-                      <div className="weekly-history-dates">{dateLabel}</div>
+                      <div className="weekly-history-dates">
+                        {dateLabel} {isCurrentWeek ? '· Semana actual' : ''}
+                      </div>
                       {winner ? (
                         <div className="weekly-history-winner">
                           <AvatarImage

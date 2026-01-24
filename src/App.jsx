@@ -1825,6 +1825,10 @@ function App() {
       const probability = calculateTeamProbability(predictionMatch)
       const winningOdds = selectedPrediction === 'white' ? probability.white : probability.black
       const potentialWin = getPoolPotentialWin(predictionMatch.id, selectedPrediction, coinBet)
+      const userLink = userLinks?.[user.uid]
+      const displayName = userLink?.userName || user?.displayName || user?.email?.split('@')[0] || 'Usuario'
+      const userEmail = userLink?.userEmail || user?.email || ''
+      const userPhoto = userLink?.userPhoto || user?.photoURL || ''
       
       await setDoc(doc(db, 'predictions', predictionId), {
         odedBy: user.uid,
@@ -1835,6 +1839,9 @@ function App() {
         lukCoinsBet: coinBet,
         lukCoinsWin: potentialWin,
         probability: winningOdds,
+        userName: displayName,
+        userEmail: userEmail,
+        userPhoto: userPhoto,
         timestamp: new Date().toISOString(),
         resolved: false
       })

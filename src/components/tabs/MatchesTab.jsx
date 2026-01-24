@@ -22,7 +22,7 @@ export const MatchesTab = ({
     userPlayer,
     isAdmin,
     getPlayerName,
-    getPlayerPhoto,
+    userLinks,
   } = useApp()
 
   const formatDate = dateStr => {
@@ -40,6 +40,16 @@ export const MatchesTab = ({
   const getPredictionStatus = (pred, matchWinner) => {
     if (!matchWinner) return 'pending'
     return pred?.prediction === matchWinner ? 'correct' : 'wrong'
+  }
+  const getPredictionUserName = (odedBy, predictionData) => {
+    const link = userLinks?.[odedBy]
+    if (link?.playerId) return getPlayerName(link.playerId)
+    if (link?.userName) return link.userName
+    if (link?.userEmail) return link.userEmail.split('@')[0]
+    if (predictionData?.userName) return predictionData.userName
+    if (predictionData?.userEmail) return predictionData.userEmail.split('@')[0]
+    if (odedBy) return odedBy.slice(0, 6)
+    return 'Usuario'
   }
 
   return (
@@ -180,50 +190,39 @@ export const MatchesTab = ({
               {predictions[match.id] && Object.keys(predictions[match.id]).length > 0 && (
                 <div className="match-predictions">
                   <div className="predictions-title">Predicciones</div>
-                  <div className="predictions-summary">
+                  <div className="predictions-grid">
                     {Object.entries(predictions[match.id]).map(([odedBy, predictionData]) => {
                       const predictionValue = predictionData?.prediction
                       const status = getPredictionStatus(predictionData, match.winner)
                       const bet = getPredictionBet(predictionData)
                       const win = getPredictionWin(predictionData)
+                      const isMe = user?.uid === odedBy
+                      const name = getPredictionUserName(odedBy, predictionData)
                       return (
-                        <span
+                        <div
                           key={odedBy}
-                          className={`prediction-chip ${status}`}
+                          className={`prediction-tile ${status}`}
                         >
-                          <span className="prediction-team">{predictionValue === 'white' ? '⬜' : '⬛'}</span>
-                          {status !== 'pending' && (
-                            <span className="prediction-result">{status === 'correct' ? '✓' : '✗'}</span>
-                          )}
-                          <span className="prediction-amount">
-                            {status === 'pending' ? `${bet} LC` : status === 'correct' ? `+${win} LC` : `-${bet} LC`}
-                          </span>
-                        </span>
+                          <div className="prediction-tile-header">
+                            <span className="prediction-name">{name}</span>
+                            {isMe && <span className="prediction-me">Tú</span>}
+                          </div>
+                          <div className="prediction-tile-body">
+                            <span className={`prediction-team-chip ${predictionValue}`}>
+                              {predictionValue === 'white' ? '⬜ Blanco' : '⬛ Negro'}
+                            </span>
+                            <span className="prediction-outcome">
+                              {status === 'pending'
+                                ? `Pendiente · ${bet} LC`
+                                : status === 'correct'
+                                  ? `Ganó +${win} LC`
+                                  : `Perdió -${bet} LC`}
+                            </span>
+                          </div>
+                        </div>
                       )
                     })}
                   </div>
-                  {user && predictions[match.id]?.[user.uid] && (
-                    <div className="prediction-user-result">
-                      {(() => {
-                        const pred = predictions[match.id][user.uid]
-                        const status = getPredictionStatus(pred, match.winner)
-                        const bet = getPredictionBet(pred)
-                        const win = getPredictionWin(pred)
-                        return (
-                          <>
-                            <span className="pur-label">Tu predicción</span>
-                            <span className={`pur-status ${status}`}>
-                              {status === 'pending'
-                                ? `Pendiente · ${bet} LC en juego`
-                                : status === 'correct'
-                                  ? `Ganaste +${win} LC`
-                                  : `Perdiste -${bet} LC`}
-                            </span>
-                          </>
-                        )
-                      })()}
-                    </div>
-                  )}
                 </div>
               )}
             </div>
