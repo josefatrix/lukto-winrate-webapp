@@ -94,17 +94,45 @@ const getRankIcon = (rank, size = 16) => {
 
 const getRank = xp => {
   if (xp >= 1500) return { name: 'Leyenda', key: 'leyenda', color: '#ff6b6b', tier: 7 }
-  if (xp >= 1000) return { name: 'Maestro', key: 'maestro', color: '#a855f7', tier: 6 }
-  if (xp >= 700) return { name: 'Diamante', key: 'diamante', color: '#00d4ff', tier: 5 }
-  if (xp >= 500) return { name: 'Platino', key: 'platino', color: '#22d3ee', tier: 4 }
-  if (xp >= 300) return { name: 'Oro', key: 'oro', color: '#ffd700', tier: 3 }
-  if (xp >= 150) return { name: 'Plata', key: 'plata', color: '#c0c0c0', tier: 2 }
-  if (xp >= 50) return { name: 'Bronce', key: 'bronce', color: '#cd7f32', tier: 1 }
+
+  if (xp >= 1334) return { name: 'Maestro I', key: 'maestro', color: '#a855f7', tier: 6 }
+  if (xp >= 1167) return { name: 'Maestro II', key: 'maestro', color: '#a855f7', tier: 6 }
+  if (xp >= 1000) return { name: 'Maestro III', key: 'maestro', color: '#a855f7', tier: 6 }
+
+  if (xp >= 900) return { name: 'Diamante I', key: 'diamante', color: '#00d4ff', tier: 5 }
+  if (xp >= 800) return { name: 'Diamante II', key: 'diamante', color: '#00d4ff', tier: 5 }
+  if (xp >= 700) return { name: 'Diamante III', key: 'diamante', color: '#00d4ff', tier: 5 }
+
+  if (xp >= 633) return { name: 'Platino I', key: 'platino', color: '#22d3ee', tier: 4 }
+  if (xp >= 567) return { name: 'Platino II', key: 'platino', color: '#22d3ee', tier: 4 }
+  if (xp >= 500) return { name: 'Platino III', key: 'platino', color: '#22d3ee', tier: 4 }
+
+  if (xp >= 433) return { name: 'Oro I', key: 'oro', color: '#ffd700', tier: 3 }
+  if (xp >= 367) return { name: 'Oro II', key: 'oro', color: '#ffd700', tier: 3 }
+  if (xp >= 300) return { name: 'Oro III', key: 'oro', color: '#ffd700', tier: 3 }
+
+  if (xp >= 250) return { name: 'Plata I', key: 'plata', color: '#c0c0c0', tier: 2 }
+  if (xp >= 200) return { name: 'Plata II', key: 'plata', color: '#c0c0c0', tier: 2 }
+  if (xp >= 150) return { name: 'Plata III', key: 'plata', color: '#c0c0c0', tier: 2 }
+
+  if (xp >= 117) return { name: 'Bronce I', key: 'bronce', color: '#cd7f32', tier: 1 }
+  if (xp >= 84) return { name: 'Bronce II', key: 'bronce', color: '#cd7f32', tier: 1 }
+  if (xp >= 50) return { name: 'Bronce III', key: 'bronce', color: '#cd7f32', tier: 1 }
+
   return { name: 'Sin rango', key: 'none', color: '#666', tier: 0 }
 }
 
 const getXPProgress = xp => {
-  const thresholds = [0, 50, 150, 300, 500]
+  const thresholds = [
+    0,
+    50, 84, 117,
+    150, 200, 250,
+    300, 367, 433,
+    500, 567, 633,
+    700, 800, 900,
+    1000, 1167, 1334,
+    1500,
+  ]
   for (let i = thresholds.length - 1; i >= 0; i--) {
     if (xp >= thresholds[i]) {
       const current = thresholds[i]
