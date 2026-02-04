@@ -58,6 +58,8 @@ export const calculateStreaks = (playerId, matches) => {
     const inBlack = match.teamBlack.includes(playerId)
     if (!inWhite && !inBlack) return
 
+    const decided = match.winner === 'white' || match.winner === 'black'
+    if (!decided) return
     const won = (inWhite && match.winner === 'white') || (inBlack && match.winner === 'black')
     
     if (won) {
@@ -100,7 +102,7 @@ export const calculateH2H = (player1Id, player2Id, matches) => {
     const p2White = match.teamWhite.includes(player2Id)
     const p2Black = match.teamBlack.includes(player2Id)
     
-    if (!match.winner) return
+    if (match.winner !== 'white' && match.winner !== 'black') return
     
     // Same team
     if ((p1White && p2White) || (p1Black && p2Black)) {
@@ -231,4 +233,3 @@ export const filterMatchesByPeriod = (matches, period) => {
     return true
   })
 }
-

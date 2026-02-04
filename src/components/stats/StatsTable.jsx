@@ -36,6 +36,7 @@ export const StatsTable = ({
           <th>Win Rate</th>
           <th></th>
           <th>V</th>
+          <th>E</th>
           <th>D</th>
           <th>MVP</th>
           <th>Rating</th>
@@ -94,6 +95,9 @@ export const StatsTable = ({
               </td>
               <td>
                 <span className="stat-value wins">{player.wins}</span>
+              </td>
+              <td>
+                <span className="stat-value ties">{player.ties || 0}</span>
               </td>
               <td>
                 <span className="stat-value losses">{player.losses}</span>

@@ -36,7 +36,7 @@ const FeaturedCard = ({ type, player, stats, photo }) => {
           <h3>{player.name}</h3>
           <div className="featured-stats">
             <span className="stat-item">
-              {stats.wins}V {stats.played - stats.wins}D
+              {stats.wins}V {stats.ties || 0}E {stats.losses || 0}D
             </span>
             <span className="stat-item highlight">{stats.winRate}%</span>
           </div>

@@ -352,7 +352,7 @@ function PlayerProfileModal({
   }
 
   const getPoolWin = (pred, match) => {
-    if (!match?.winner) return 0
+    if (!match?.winner || match.winner === 'tie') return 0
     if (pred?.prediction !== match.winner) return 0
     const { totalWhite, totalBlack } = getPoolTotals(match.id)
     const bet = getPredictionBet(pred)
@@ -417,6 +417,8 @@ function PlayerProfileModal({
   
   for (const m of playerMatches) {
     const inWhite = m.teamWhite?.includes(playerId)
+    const decided = m.winner === 'white' || m.winner === 'black'
+    if (!decided) continue
     const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
     
     if (won) {
@@ -596,6 +598,7 @@ function PlayerProfileModal({
         <div className="profile-stats-row">
           <div className="psr-item"><span className="psr-value">{playerStats.played}</span><span className="psr-label">Partidos</span></div>
           <div className="psr-item win"><span className="psr-value">{playerStats.wins}</span><span className="psr-label">Victorias</span></div>
+          <div className="psr-item tie"><span className="psr-value">{playerStats.ties || 0}</span><span className="psr-label">Empates</span></div>
           <div className="psr-item loss"><span className="psr-value">{playerStats.losses}</span><span className="psr-label">Derrotas</span></div>
           <div className="psr-item"><span className="psr-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span><span className="psr-label">Win Rate</span></div>
         </div>
@@ -721,7 +724,8 @@ function PlayerProfileModal({
               : null
             const inWhite = m.teamWhite?.includes(playerId)
             const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
-            return { date: m.date, rating: avgScore, won }
+            const result = m.winner === 'tie' ? 'tie' : won ? 'win' : 'loss'
+            return { date: m.date, rating: avgScore, result }
           }).filter(d => d.rating !== null)
 
           if (graphData.length < 2) return null
@@ -767,13 +771,14 @@ function PlayerProfileModal({
                       cx={p.x} 
                       cy={p.y} 
                       r="4" 
-                      className={`pg-point ${p.won ? 'win' : 'loss'}`}
+                      className={`pg-point ${p.result}`}
                     />
                   ))}
                 </svg>
                 <div className="pg-legend">
                   <span className="pg-legend-item"><span className="dot win"></span> Victoria</span>
                   <span className="pg-legend-item"><span className="dot loss"></span> Derrota</span>
+                  <span className="pg-legend-item"><span className="dot tie"></span> Empate</span>
                 </div>
               </div>
             </div>
@@ -904,7 +909,8 @@ function PlayerProfileModal({
           if (userPredictions.length === 0) return null
           
           // Calculate stats
-          const resolved = userPredictions.filter(p => p.match?.winner)
+          const resolved = userPredictions.filter(p => p.match?.winner && p.match.winner !== 'tie')
+          const voided = userPredictions.filter(p => p.match?.winner === 'tie')
           const correct = resolved.filter(p => p.prediction === p.match.winner)
           const accuracy = resolved.length > 0 ? Math.round((correct.length / resolved.length) * 100) : 0
           const totalCoinsWon = correct.reduce((sum, p) => sum + getPoolWin(p, p.match), 0)
@@ -921,6 +927,12 @@ function PlayerProfileModal({
                   <span className="pred-stat-value">{resolved.length}</span>
                   <span className="pred-stat-label">Predicciones</span>
                 </div>
+                {voided.length > 0 && (
+                  <div className="pred-stat">
+                    <span className="pred-stat-value">{voided.length}</span>
+                    <span className="pred-stat-label">Empates</span>
+                  </div>
+                )}
                 <div className="pred-stat">
                   <span className="pred-stat-value good">{correct.length}</span>
                   <span className="pred-stat-label">Acertadas</span>
@@ -940,14 +952,15 @@ function PlayerProfileModal({
               {/* Predictions List */}
               <div className="predictions-list">
                 {userPredictions.slice(0, 5).map((pred, idx) => {
-                  const isCorrect = pred.match?.winner && pred.prediction === pred.match.winner
-                  const isResolved = !!pred.match?.winner
+                  const isVoid = pred.match?.winner === 'tie'
+                  const isResolved = !!pred.match?.winner && !isVoid
+                  const isCorrect = isResolved && pred.prediction === pred.match.winner
                   const predictedTeam = pred.prediction === 'white' ? 'Blanco' : 'Negro'
                   const bet = getPredictionBet(pred)
                   const win = getPoolWin(pred, pred.match)
                   
                   return (
-                    <div key={idx} className={`prediction-item ${isResolved ? (isCorrect ? 'correct' : 'wrong') : 'pending'}`}>
+                    <div key={idx} className={`prediction-item ${isResolved ? (isCorrect ? 'correct' : 'wrong') : isVoid ? 'void' : 'pending'}`}>
                       <div className="pred-match-info">
                         <span className="pred-date">
                           {new Date(pred.match.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
@@ -959,18 +972,22 @@ function PlayerProfileModal({
                       <div className="pred-result">
                         <span className="pred-choice">Eq. {predictedTeam}</span>
                         <span className="pred-xp">
-                          {isResolved 
-                            ? (isCorrect ? `+${win}` : `-${bet}`)
-                            : `${bet}`
+                          {isVoid
+                            ? '0'
+                            : isResolved 
+                              ? (isCorrect ? `+${win}` : `-${bet}`)
+                              : `${bet}`
                           } LC
                         </span>
                         <span className="pred-status">
-                          {isResolved 
-                            ? (isCorrect 
-                              ? <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#22c55e"/><path d="M5 8l2 2 4-4" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                              : <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ef4444"/><path d="M5.5 5.5l5 5m0-5l-5 5" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
-                            )
-                            : <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#f59e0b"/><circle cx="8" cy="8" r="2" fill="white"/></svg>
+                          {isVoid
+                            ? <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#94a3b8"/><path d="M4 8h8" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+                            : isResolved 
+                              ? (isCorrect 
+                                ? <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#22c55e"/><path d="M5 8l2 2 4-4" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                : <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ef4444"/><path d="M5.5 5.5l5 5m0-5l-5 5" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+                              )
+                              : <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#f59e0b"/><circle cx="8" cy="8" r="2" fill="white"/></svg>
                           }
                         </span>
                       </div>
@@ -1008,13 +1025,16 @@ function PlayerProfileModal({
           })
           
           const calcPeriodStats = (periodMatches) => {
-            let wins = 0, losses = 0, mvps = 0, totalRating = 0, ratingCount = 0
+            let wins = 0, losses = 0, ties = 0, mvps = 0, totalRating = 0, ratingCount = 0
             
             periodMatches.forEach(m => {
               const inWhite = m.teamWhite?.includes(playerId)
-              if (m.winner) {
+              const decided = m.winner === 'white' || m.winner === 'black'
+              if (decided) {
                 if ((inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')) wins++
                 else losses++
+              } else if (m.winner === 'tie') {
+                ties++
               }
               
               // Check MVP
@@ -1038,10 +1058,10 @@ function PlayerProfileModal({
             })
             
             const played = periodMatches.length
-            const winRate = played > 0 ? Math.round((wins / played) * 100) : 0
+            const winRate = played > 0 ? Math.round(((wins + 0.5 * ties) / played) * 100) : 0
             const avgRating = ratingCount > 0 ? (totalRating / ratingCount).toFixed(1) : null
             
-            return { played, wins, losses, mvps, winRate, avgRating }
+            return { played, wins, losses, ties, mvps, winRate, avgRating }
           }
           
           const weekStats = calcPeriodStats(weekMatches)
@@ -1062,7 +1082,7 @@ function PlayerProfileModal({
                   <div className="period-card">
                     <span className="period-label">{periodNames.week}</span>
                     <div className="period-stats">
-                      <span className="period-main">{weekStats.wins}V - {weekStats.losses}D</span>
+                      <span className="period-main">{weekStats.wins}V - {weekStats.ties || 0}E - {weekStats.losses}D</span>
                       <span className={`period-wr ${weekStats.winRate >= 50 ? 'good' : 'bad'}`}>{weekStats.winRate}%</span>
                     </div>
                     <div className="period-details">
@@ -1076,7 +1096,7 @@ function PlayerProfileModal({
                   <div className="period-card">
                     <span className="period-label">{periodNames.month}</span>
                     <div className="period-stats">
-                      <span className="period-main">{monthStats.wins}V - {monthStats.losses}D</span>
+                      <span className="period-main">{monthStats.wins}V - {monthStats.ties || 0}E - {monthStats.losses}D</span>
                       <span className={`period-wr ${monthStats.winRate >= 50 ? 'good' : 'bad'}`}>{monthStats.winRate}%</span>
                     </div>
                     <div className="period-details">
@@ -1137,6 +1157,8 @@ function PlayerProfileModal({
 
                 <div className="sc-record">
                   <span className="sc-wins">{playerStats.wins || 0}V</span>
+                  <span className="sc-sep">-</span>
+                  <span className="sc-ties">{playerStats.ties || 0}E</span>
                   <span className="sc-sep">-</span>
                   <span className="sc-losses">{playerStats.losses || 0}D</span>
                 </div>
@@ -1299,6 +1321,9 @@ function App() {
   const [editingPlayerId, setEditingPlayerId] = useState(null)
   const [linkingUser, setLinkingUser] = useState(null)
   const [newAdminEmail, setNewAdminEmail] = useState('')
+  const [adminExportStart, setAdminExportStart] = useState('')
+  const [adminExportEnd, setAdminExportEnd] = useState('')
+  const [moderationUserId, setModerationUserId] = useState('')
 
   // Match form state
   const [matchDate, setMatchDate] = useState('')
@@ -1513,6 +1538,7 @@ function App() {
     try {
       const newList = [...adminEmails, newAdminEmail.trim().toLowerCase()]
       await setDoc(doc(db, 'settings', 'admins'), { emails: newList })
+      await logActivity('admin_add', { email: newAdminEmail.trim().toLowerCase() })
       setNewAdminEmail('')
       showToast('success', 'Admin agregado')
     } catch (error) {
@@ -1527,6 +1553,7 @@ function App() {
     try {
       const newList = adminEmails.filter(e => e !== email)
       await setDoc(doc(db, 'settings', 'admins'), { emails: newList })
+      await logActivity('admin_remove', { email })
       showToast('success', 'Admin removido')
     } catch (error) {
       console.error('Error removing admin:', error)
@@ -1546,11 +1573,14 @@ function App() {
     }
     try {
       if (editingPlayerId) {
+        const prevPlayer = players.find(p => p.id === editingPlayerId)
         await updateDoc(doc(db, 'players', editingPlayerId), playerData)
+        await logActivity('player_edit', { playerId: editingPlayerId, before: prevPlayer, after: playerData })
         showToast('success', 'Jugador actualizado')
       } else {
         const newPlayerId = Date.now().toString()
         await setDoc(doc(db, 'players', newPlayerId), playerData)
+        await logActivity('player_create', { playerId: newPlayerId, data: playerData })
         showToast('success', 'Jugador creado')
       }
       closePlayerModal()
@@ -1568,6 +1598,7 @@ function App() {
       const batch = writeBatch(db)
       batch.delete(doc(db, 'players', playerId))
       await batch.commit()
+      await logActivity('player_delete', { playerId, playerName })
       showToast('success', 'Jugador eliminado')
     } catch (error) {
       console.error('Error:', error)
@@ -1611,7 +1642,8 @@ function App() {
       // Calculate recent form (last 5 games win rate)
       const recentWins = teamStats.reduce((total, player) => {
         const playerMatches = matches.filter(m => 
-          m.winner && (m.teamWhite?.includes(player.id) || m.teamBlack?.includes(player.id))
+          (m.winner === 'white' || m.winner === 'black') &&
+          (m.teamWhite?.includes(player.id) || m.teamBlack?.includes(player.id))
         ).slice(-5)
         const wins = playerMatches.filter(m => {
           const inWhite = m.teamWhite?.includes(player.id)
@@ -1845,6 +1877,11 @@ function App() {
         timestamp: new Date().toISOString(),
         resolved: false
       })
+      await logActivity('prediction_create', {
+        matchId: predictionMatch.id,
+        prediction: selectedPrediction,
+        bet: coinBet
+      })
       showToast('success', `¡Apostaste ${coinBet} LukCoins al Equipo ${selectedPrediction === 'white' ? 'Blanco' : 'Negro'}!`)
       closePredictionModal()
     } catch (error) {
@@ -2020,8 +2057,9 @@ function App() {
     }
 
     if (editingMatchId) {
+      const prevMatch = matches.find(m => m.id === editingMatchId)
       await updateDoc(doc(db, 'matches', editingMatchId), matchData)
-      await logActivity('match_edit', { matchId: editingMatchId, matchDate: matchData.date })
+      await logActivity('match_edit', { matchId: editingMatchId, before: prevMatch, after: matchData })
     } else {
       const newMatchId = Date.now().toString()
       await setDoc(doc(db, 'matches', newMatchId), matchData)
@@ -2064,6 +2102,7 @@ function App() {
       return
 
     try {
+      const matchToDelete = matches.find(m => m.id === matchId)
       const batch = writeBatch(db)
       batch.delete(doc(db, 'matches', matchId))
 
@@ -2080,6 +2119,11 @@ function App() {
       })
 
       await batch.commit()
+      await logActivity('match_delete', {
+        matchId,
+        matchDate: matchToDelete?.date,
+        predictionsDeleted: predictionsSnapshot.docs.length
+      })
       showToast('success', 'Partido y calificaciones eliminados')
     } catch (error) {
       console.error('Error deleting match:', error)
@@ -2091,11 +2135,62 @@ function App() {
     try {
       const newState = !isCurrentlyOpen
       await updateDoc(doc(db, 'matches', matchId), { ratingsOpen: newState })
+      await logActivity('ratings_toggle', { matchId, open: newState })
       showToast('success', newState ? '✅ Calificaciones ABIERTAS' : '🔒 Calificaciones CERRADAS')
     } catch (error) {
       console.error('Error toggling ratings:', error)
       showToast('error', 'Error al cambiar estado')
     }
+  }
+
+  const blockUser = async userId => {
+    if (!userId) return
+    const newList = [...blockedUsers, userId]
+    await setDoc(doc(db, 'settings', 'blockedUsers'), { list: newList })
+    await logActivity('user_block', { userId })
+    showToast('success', 'Usuario bloqueado')
+  }
+
+  const unblockUser = async userId => {
+    if (!userId) return
+    const newList = blockedUsers.filter(id => id !== userId)
+    await setDoc(doc(db, 'settings', 'blockedUsers'), { list: newList })
+    await logActivity('user_unblock', { userId })
+    showToast('success', 'Usuario desbloqueado')
+  }
+
+  const removeUserPredictions = async userId => {
+    if (!userId) return
+    if (!confirm('¿Eliminar todas las predicciones de este usuario?')) return
+    const predsQuery = query(collection(db, 'predictions'), where('odedBy', '==', userId))
+    const snapshot = await getDocs(predsQuery)
+    if (snapshot.empty) {
+      showToast('info', 'No hay predicciones para borrar')
+      return
+    }
+    const batch = writeBatch(db)
+    snapshot.docs.forEach(docSnap => batch.delete(doc(db, 'predictions', docSnap.id)))
+    await batch.commit()
+    await logActivity('prediction_bulk_delete', { userId, count: snapshot.docs.length })
+    showToast('success', 'Predicciones eliminadas')
+  }
+
+  const unlinkUser = async userId => {
+    if (!userId) return
+    if (!confirm('¿Desvincular este usuario del jugador?')) return
+    const linkRef = doc(db, 'userLinks', userId)
+    await updateDoc(linkRef, { playerId: '' })
+    await logActivity('user_unlink', { userId })
+    showToast('success', 'Usuario desvinculado')
+  }
+
+  const getExportRange = () => {
+    const start = adminExportStart ? new Date(adminExportStart) : null
+    const end = adminExportEnd ? new Date(adminExportEnd) : null
+    if (end) {
+      end.setHours(23, 59, 59, 999)
+    }
+    return { start, end }
   }
 
   // Admin user linking
@@ -2155,6 +2250,7 @@ function App() {
       const batch = writeBatch(db)
       batch.delete(doc(db, 'userLinks', userId))
       await batch.commit()
+      await logActivity('user_delete', { userId, userName })
       showToast('success', 'Cuenta eliminada')
     } catch (error) {
       console.error('Error deleting user:', error)
@@ -2185,6 +2281,45 @@ function App() {
   }
 
   const lukCoins = userPlayer ? calculateLukCoins(userPlayer) : 0
+  const matchById = new Map(matches.map(m => [m.id, m]))
+  const ratingsList = Object.values(ratings || {}).flat()
+  const predictionsList = Object.values(predictions || {}).flatMap(matchPreds => Object.values(matchPreds || {}))
+
+  const isWithinDays = (dateValue, days) => {
+    if (!dateValue) return false
+    const d = new Date(dateValue)
+    if (Number.isNaN(d.getTime())) return false
+    const now = new Date()
+    return now.getTime() - d.getTime() <= days * 24 * 60 * 60 * 1000
+  }
+
+  const matchesLast7 = matches.filter(m => isWithinDays(m.date, 7))
+  const ratingsLast7 = ratingsList.filter(r => {
+    const match = matchById.get(r.matchId)
+    return match ? isWithinDays(match.date, 7) : isWithinDays(r.timestamp, 7)
+  })
+  const predictionsLast7 = predictionsList.filter(p => isWithinDays(p.timestamp, 7))
+
+  const activeUsersLast7 = new Set([
+    ...ratingsLast7.map(r => r.ratedBy),
+    ...predictionsLast7.map(p => p.odedBy),
+  ])
+
+  const alerts = []
+  const lowRatings = ratingsLast7.filter(r => r.score <= 2)
+  if (lowRatings.length >= 3) {
+    alerts.push({ level: 'warning', message: `Ratings muy bajos esta semana: ${lowRatings.length}` })
+  }
+  const highRatings = ratingsLast7.filter(r => r.score >= 9.5)
+  if (highRatings.length >= 5) {
+    alerts.push({ level: 'info', message: `Ratings muy altos esta semana: ${highRatings.length}` })
+  }
+  const predictionSpikes = matches
+    .map(m => ({ matchId: m.id, count: Object.keys(predictions?.[m.id] || {}).length }))
+    .filter(item => item.count >= 10)
+  predictionSpikes.slice(0, 3).forEach(spike => {
+    alerts.push({ level: 'warning', message: `Pico de predicciones en partido ${spike.matchId}: ${spike.count}` })
+  })
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -2231,45 +2366,28 @@ function App() {
         </div>
       )}
 
-      {/* Admin Tabs */}
+      {/* Admin Bar */}
       {isAdmin && (
-        <nav className="admin-tabs">
-          <button
-            className={`admin-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            Dashboard
-          </button>
-          <button
-            className={`admin-tab ${activeTab === 'new' ? 'active' : ''}`}
-            onClick={() => setActiveTab('new')}
-          >
-            + Partido
-          </button>
-          <button
-            className={`admin-tab ${activeTab === 'players' ? 'active' : ''}`}
-            onClick={() => setActiveTab('players')}
-          >
-            Jugadores
-          </button>
-          <button
-            className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`}
-            onClick={() => setActiveTab('users')}
-          >
-            Vincular {pendingUsers.length > 0 && <span className="badge">{pendingUsers.length}</span>}
-          </button>
-          <button
-            className={`admin-tab ${activeTab === 'tools' ? 'active' : ''}`}
-            onClick={() => setActiveTab('tools')}
-          >
-            Herramientas
-          </button>
-          <button
-            className={`admin-tab ${activeTab === 'allRatings' ? 'active' : ''}`}
-            onClick={() => setActiveTab('allRatings')}
-          >
-            Historial
-          </button>
+        <nav className="admin-bar">
+          <div className="admin-bar-scroll">
+            {[
+              { id: 'dashboard', label: 'Dashboard' },
+              { id: 'new', label: '+ Partido' },
+              { id: 'players', label: 'Jugadores' },
+              { id: 'users', label: 'Vincular', badge: pendingUsers.length },
+              { id: 'tools', label: 'Operaciones' },
+              { id: 'allRatings', label: 'Historial' },
+            ].map(item => (
+              <button
+                key={item.id}
+                className={`admin-bar-btn ${activeTab === item.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(item.id)}
+              >
+                <span>{item.label}</span>
+                {item.badge > 0 && <span className="admin-menu-badge">{item.badge}</span>}
+              </button>
+            ))}
+          </div>
         </nav>
       )}
 
@@ -2352,7 +2470,7 @@ function App() {
             const trioStats = {}
             
             matches.forEach(m => {
-              if (!m.winner) return
+              if (m.winner !== 'white' && m.winner !== 'black' && m.winner !== 'tie') return
               
               const processTeam = (team, won) => {
                 if (!team || team.length < 2) return
@@ -2361,9 +2479,10 @@ function App() {
                 for (let i = 0; i < team.length; i++) {
                   for (let j = i + 1; j < team.length; j++) {
                     const key = [team[i], team[j]].sort().join('_')
-                    if (!duoStats[key]) duoStats[key] = { ids: [team[i], team[j]], wins: 0, games: 0 }
+                    if (!duoStats[key]) duoStats[key] = { ids: [team[i], team[j]], wins: 0, ties: 0, games: 0 }
                     duoStats[key].games++
                     if (won) duoStats[key].wins++
+                    if (m.winner === 'tie') duoStats[key].ties++
                   }
                 }
                 
@@ -2373,9 +2492,10 @@ function App() {
                     for (let j = i + 1; j < team.length; j++) {
                       for (let k = j + 1; k < team.length; k++) {
                         const key = [team[i], team[j], team[k]].sort().join('_')
-                        if (!trioStats[key]) trioStats[key] = { ids: [team[i], team[j], team[k]], wins: 0, games: 0 }
+                        if (!trioStats[key]) trioStats[key] = { ids: [team[i], team[j], team[k]], wins: 0, ties: 0, games: 0 }
                         trioStats[key].games++
                         if (won) trioStats[key].wins++
+                        if (m.winner === 'tie') trioStats[key].ties++
                       }
                     }
                   }
@@ -2388,13 +2508,21 @@ function App() {
             
             const topDuos = Object.values(duoStats)
               .filter(d => d.games >= 2)
-              .map(d => ({ ...d, winRate: Math.round((d.wins / d.games) * 100) }))
+              .map(d => {
+                const decidedGames = d.games - (d.ties || 0)
+                const winRate = decidedGames > 0 ? Math.round((d.wins / decidedGames) * 100) : 0
+                return { ...d, winRate }
+              })
               .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
               .slice(0, 3)
             
             const topTrios = Object.values(trioStats)
               .filter(t => t.games >= 2)
-              .map(t => ({ ...t, winRate: Math.round((t.wins / t.games) * 100) }))
+              .map(t => {
+                const decidedGames = t.games - (t.ties || 0)
+                const winRate = decidedGames > 0 ? Math.round((t.wins / decidedGames) * 100) : 0
+                return { ...t, winRate }
+              })
               .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
               .slice(0, 3)
             
@@ -2426,7 +2554,7 @@ function App() {
                           </div>
                           <div className="team-record">
                             <span className="wr good">{duo.winRate}%</span>
-                            <span className="games">{duo.wins}V-{duo.games - duo.wins}D</span>
+                            <span className="games">{duo.wins}V-{duo.ties || 0}E-{duo.games - duo.wins - (duo.ties || 0)}D</span>
                           </div>
                         </div>
                       ))}
@@ -2458,7 +2586,7 @@ function App() {
                           </div>
                           <div className="team-record">
                             <span className="wr good">{trio.winRate}%</span>
-                            <span className="games">{trio.wins}V-{trio.games - trio.wins}D</span>
+                            <span className="games">{trio.wins}V-{trio.ties || 0}E-{trio.games - trio.wins - (trio.ties || 0)}D</span>
                           </div>
                         </div>
                       ))}
@@ -2525,23 +2653,37 @@ function App() {
               return (p1InWhite || p1InBlack) && (p2InWhite || p2InBlack)
             })
             
-            let sameTeamWins = 0, sameTeamGames = 0
-            let p1WinsAgainst = 0, p2WinsAgainst = 0, vsGames = 0
+            let sameTeamWins = 0, sameTeamTies = 0, sameTeamGames = 0
+            let p1WinsAgainst = 0, p2WinsAgainst = 0, vsTies = 0, vsGames = 0
             
             h2hMatches.forEach(m => {
               const p1InWhite = m.teamWhite?.includes(h2hPlayer1)
               const p2InWhite = m.teamWhite?.includes(h2hPlayer2)
               const sameTeam = p1InWhite === p2InWhite
+              const decided = m.winner === 'white' || m.winner === 'black'
+              const tied = m.winner === 'tie'
               
+              if (!decided && !tied) return
+
               if (sameTeam) {
                 sameTeamGames++
-                const won = (p1InWhite && m.winner === 'white') || (!p1InWhite && m.winner === 'black')
-                if (won) sameTeamWins++
+                if (tied) {
+                  sameTeamTies++
+                } else {
+                  const won = (p1InWhite && m.winner === 'white') || (!p1InWhite && m.winner === 'black')
+                  if (won) sameTeamWins++
+                }
               } else {
                 vsGames++
-                if (p1InWhite && m.winner === 'white') p1WinsAgainst++
-                else if (!p1InWhite && m.winner === 'black') p1WinsAgainst++
-                else if (m.winner) p2WinsAgainst++
+                if (tied) {
+                  vsTies++
+                } else if (p1InWhite && m.winner === 'white') {
+                  p1WinsAgainst++
+                } else if (!p1InWhite && m.winner === 'black') {
+                  p1WinsAgainst++
+                } else {
+                  p2WinsAgainst++
+                }
               }
             })
             
@@ -2613,15 +2755,15 @@ function App() {
                       {sameTeamGames > 0 && (
                         <div className="h2h-record-card together">
                           <span className="hrc-title">Juntos</span>
-                          <span className="hrc-value">{sameTeamWins}V - {sameTeamGames - sameTeamWins}D</span>
-                          <span className="hrc-percent">{Math.round((sameTeamWins / sameTeamGames) * 100)}% WR</span>
+                          <span className="hrc-value">{sameTeamWins}V - {sameTeamTies}E - {sameTeamGames - sameTeamWins - sameTeamTies}D</span>
+                          <span className="hrc-percent">{Math.round((sameTeamWins / Math.max(1, sameTeamGames - sameTeamTies)) * 100)}% WR</span>
                         </div>
                       )}
                       {vsGames > 0 && (
                         <div className="h2h-record-card versus">
                           <span className="hrc-title">Enfrentados</span>
                           <span className="hrc-value">{p1.name?.split(' ')[0]}: {p1WinsAgainst} | {p2.name?.split(' ')[0]}: {p2WinsAgainst}</span>
-                          <span className="hrc-percent">{vsGames} partidos</span>
+                          <span className="hrc-percent">{vsGames} partidos · {vsTies} Empates</span>
                         </div>
                       )}
                     </div>
@@ -2647,10 +2789,11 @@ function App() {
                   : 0
                 const inWhite = m.teamWhite?.includes(h2hPlayer1)
                 const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
+                const result = m.winner === 'tie' ? 'tie' : won ? 'win' : 'loss'
                 return {
                   date: m.date,
                   avgScore: typeof avgScore === 'number' ? avgScore.toFixed(1) : '0.0',
-                  won,
+                  result,
                   venue: m.venue
                 }
               })
@@ -2754,10 +2897,10 @@ function App() {
                   <div className="match-history-list">
                     {matchPerformance.length > 0 ? (
                       matchPerformance.slice(-10).reverse().map((m, idx) => (
-                        <div key={idx} className={`match-history-item ${m.won ? 'win' : 'loss'}`}>
+                        <div key={idx} className={`match-history-item ${m.result}`}>
                           <div className="mhi-left">
-                            <span className={`mhi-result ${m.won ? 'win' : 'loss'}`}>
-                              {m.won ? 'V' : 'D'}
+                            <span className={`mhi-result ${m.result}`}>
+                              {m.result === 'win' ? 'V' : m.result === 'tie' ? 'E' : 'D'}
                             </span>
                             <div className="mhi-info">
                               <span className="mhi-date">
@@ -2954,6 +3097,12 @@ function App() {
                   EQUIPO BLANCO
                 </button>
                 <button
+                  className={`winner-btn ${winner === 'tie' ? 'selected' : ''}`}
+                  onClick={() => setWinner(winner === 'tie' ? '' : 'tie')}
+                >
+                  🤝 EMPATE
+                </button>
+                <button
                   className={`winner-btn ${winner === 'black' ? 'selected' : ''}`}
                   onClick={() => setWinner(winner === 'black' ? '' : 'black')}
                 >
@@ -3078,6 +3227,54 @@ function App() {
             </div>
           </div>
 
+          {/* Ops Metrics */}
+          <div className="dashboard-ops-grid">
+            <div className="dash-stat-card">
+              <div className="dash-stat-icon">📅</div>
+              <div className="dash-stat-info">
+                <span className="dash-stat-value">{matchesLast7.length}</span>
+                <span className="dash-stat-label">Partidos (7 días)</span>
+              </div>
+            </div>
+            <div className="dash-stat-card">
+              <div className="dash-stat-icon">📝</div>
+              <div className="dash-stat-info">
+                <span className="dash-stat-value">{ratingsLast7.length}</span>
+                <span className="dash-stat-label">Ratings (7 días)</span>
+              </div>
+            </div>
+            <div className="dash-stat-card">
+              <div className="dash-stat-icon">💸</div>
+              <div className="dash-stat-info">
+                <span className="dash-stat-value">{predictionsLast7.length}</span>
+                <span className="dash-stat-label">Predicciones (7 días)</span>
+              </div>
+            </div>
+            <div className="dash-stat-card">
+              <div className="dash-stat-icon">✅</div>
+              <div className="dash-stat-info">
+                <span className="dash-stat-value">{activeUsersLast7.size}</span>
+                <span className="dash-stat-label">Usuarios activos</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Alerts */}
+          <div className="dashboard-alerts">
+            <h3 className="dash-section-title">Alertas Operativas</h3>
+            {alerts.length === 0 ? (
+              <p className="no-data-text">Sin alertas recientes</p>
+            ) : (
+              <div className="alert-list">
+                {alerts.map((alert, idx) => (
+                  <div key={idx} className={`alert-item ${alert.level}`}>
+                    <span>{alert.message}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Quick Actions */}
           <div className="dashboard-quick-actions">
             <h3 className="dash-section-title">Acciones Rápidas</h3>
@@ -3121,8 +3318,14 @@ function App() {
                       <span className="recent-match-teams">
                         {match.teamWhite.length} vs {match.teamBlack.length}
                       </span>
-                      <span className={`recent-match-winner ${match.winner}`}>
-                        {match.winner === 'white' ? 'Blanco' : 'Negro'}
+                      <span className={`recent-match-winner ${match.winner || 'pending'}`}>
+                        {match.winner === 'white'
+                          ? 'Blanco'
+                          : match.winner === 'black'
+                            ? 'Negro'
+                            : match.winner === 'tie'
+                              ? 'Empate'
+                              : 'Por jugar'}
                       </span>
                     </div>
                     <div className="recent-match-stats">
@@ -3170,13 +3373,29 @@ function App() {
               })()}
             </div>
           </div>
+
+          {/* Activity Logs */}
+          <div className="dashboard-activity">
+            <h3 className="dash-section-title">Actividad Reciente</h3>
+            <div className="activity-list">
+              {activityLogs.slice(0, 12).map(log => (
+                <div key={log.id} className="activity-item">
+                  <span className="activity-type">{log.type}</span>
+                  <span className="activity-meta">{log.userEmail || log.userName || 'Sistema'}</span>
+                  <span className="activity-time">
+                    {new Date(log.timestamp).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
       )}
 
       {/* Admin: Tools Tab */}
       {activeTab === 'tools' && isAdmin && (
         <section className="stats-section tools-section">
-          <h2 className="section-title">Herramientas de Admin</h2>
+          <h2 className="section-title">Operaciones y Moderación</h2>
 
           <div className="tools-grid">
             {/* Gestionar Admins */}
@@ -3205,13 +3424,52 @@ function App() {
               </div>
             </div>
 
-            {/* Bloquear Usuarios */}
+            {/* Moderación Rápida */}
             <div className="tool-card">
               <div className="tool-header">
-                <span className="tool-icon">🚫</span>
-                <h3 className="tool-title">Usuarios Bloqueados</h3>
+                <span className="tool-icon">🛡️</span>
+                <h3 className="tool-title">Moderación Rápida</h3>
               </div>
-              <p className="tool-desc">No pueden calificar</p>
+              <p className="tool-desc">Bloquear, desvincular o limpiar predicciones</p>
+              <div className="moderation-form">
+                <select
+                  className="block-user-select"
+                  value={moderationUserId}
+                  onChange={e => setModerationUserId(e.target.value)}
+                >
+                  <option value="">Seleccionar usuario...</option>
+                  {Object.entries(userLinks).map(([uid, data]) => (
+                    <option key={uid} value={uid}>{data.userName || data.userEmail}</option>
+                  ))}
+                </select>
+                <div className="moderation-actions">
+                  <button
+                    className="block-btn"
+                    onClick={() => {
+                      if (!moderationUserId) return
+                      if (blockedUsers.includes(moderationUserId)) {
+                        unblockUser(moderationUserId)
+                      } else {
+                        blockUser(moderationUserId)
+                      }
+                    }}
+                  >
+                    {blockedUsers.includes(moderationUserId) ? 'Desbloquear' : 'Bloquear'}
+                  </button>
+                  <button
+                    className="block-btn secondary"
+                    onClick={() => removeUserPredictions(moderationUserId)}
+                  >
+                    Borrar predicciones
+                  </button>
+                  <button
+                    className="block-btn secondary"
+                    onClick={() => unlinkUser(moderationUserId)}
+                  >
+                    Desvincular
+                  </button>
+                </div>
+              </div>
               {blockedUsers.length > 0 ? (
                 <div className="blocked-list">
                   {blockedUsers.map(userId => {
@@ -3219,10 +3477,7 @@ function App() {
                     return (
                       <div key={userId} className="blocked-item">
                         <span>{userLink?.userName || userLink?.userEmail || userId}</span>
-                        <button className="unblock-btn" onClick={async () => {
-                          const newList = blockedUsers.filter(id => id !== userId)
-                          await setDoc(doc(db, 'settings', 'blockedUsers'), { list: newList })
-                        }}>Desbloquear</button>
+                        <button className="unblock-btn" onClick={() => unblockUser(userId)}>Desbloquear</button>
                       </div>
                     )
                   })}
@@ -3230,26 +3485,6 @@ function App() {
               ) : (
                 <p className="no-data-text">Sin bloqueados</p>
               )}
-              <div className="block-user-form">
-                <select 
-                  className="block-user-select"
-                  onChange={async e => {
-                    if (e.target.value) {
-                      const newList = [...blockedUsers, e.target.value]
-                      await setDoc(doc(db, 'settings', 'blockedUsers'), { list: newList })
-                      e.target.value = ''
-                      showToast('success', 'Usuario bloqueado')
-                    }
-                  }}
-                >
-                  <option value="">Bloquear usuario...</option>
-                  {Object.entries(userLinks)
-                    .filter(([uid]) => !blockedUsers.includes(uid))
-                    .map(([uid, data]) => (
-                      <option key={uid} value={uid}>{data.userName || data.userEmail}</option>
-                    ))}
-                </select>
-              </div>
             </div>
 
             {/* Gestionar Partidos */}
@@ -3267,14 +3502,22 @@ function App() {
                     </span>
                     <button
                       className={`match-toggle-btn ${match.ratingsOpen !== false ? 'open' : 'closed'}`}
-                      onClick={async () => {
-                        const matchRef = doc(db, 'matches', match.id)
-                        await updateDoc(matchRef, { ratingsOpen: match.ratingsOpen === false })
-                        showToast('success', match.ratingsOpen === false ? 'Calificaciones abiertas' : 'Calificaciones cerradas')
-                      }}
+                      onClick={() => toggleMatchRatings(match.id, match.ratingsOpen !== false)}
                     >
                       {match.ratingsOpen !== false ? '🔓 Abierto' : '🔒 Cerrado'}
                     </button>
+                    {match.winner && (
+                      <button
+                        className="match-toggle-btn"
+                        onClick={async () => {
+                          await updateDoc(doc(db, 'matches', match.id), { winner: '' })
+                          await logActivity('match_reopen', { matchId: match.id })
+                          showToast('success', 'Ganador eliminado')
+                        }}
+                      >
+                        ↩︎ Quitar ganador
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -3293,13 +3536,13 @@ function App() {
                   if (e.target.value && confirm('¿Eliminar TODAS las calificaciones de este partido?')) {
                     const matchId = e.target.value
                     const batch = writeBatch(db)
-                    Object.values(ratings).flat()
-                      .filter(r => r.matchId === matchId)
-                      .forEach(r => {
-                        const ratingId = `${r.ratedBy}_${r.ratedPlayerId}_${matchId}`
-                        batch.delete(doc(db, 'ratings', ratingId))
-                      })
+                    const ratingsToDelete = Object.values(ratings).flat().filter(r => r.matchId === matchId)
+                    ratingsToDelete.forEach(r => {
+                      const ratingId = `${r.ratedBy}_${r.ratedPlayerId}_${matchId}`
+                      batch.delete(doc(db, 'ratings', ratingId))
+                    })
                     await batch.commit()
+                    await logActivity('ratings_bulk_delete', { matchId, count: ratingsToDelete.length })
                     showToast('success', 'Calificaciones eliminadas')
                     e.target.value = ''
                   }
@@ -3345,37 +3588,99 @@ function App() {
                 <span className="tool-icon">📥</span>
                 <h3 className="tool-title">Exportar Datos</h3>
               </div>
-              <p className="tool-desc">Descargar backup completo</p>
+              <p className="tool-desc">Exporta por rango de fechas</p>
+              <div className="export-range">
+                <label>
+                  <span>Desde</span>
+                  <input
+                    type="date"
+                    value={adminExportStart}
+                    onChange={e => setAdminExportStart(e.target.value)}
+                  />
+                </label>
+                <label>
+                  <span>Hasta</span>
+                  <input
+                    type="date"
+                    value={adminExportEnd}
+                    onChange={e => setAdminExportEnd(e.target.value)}
+                  />
+                </label>
+              </div>
               <div className="export-buttons">
-                <button className="export-btn" onClick={() => {
-                  const data = { players, matches, ratings, userLinks, exportedAt: new Date().toISOString() }
+                <button className="export-btn" onClick={async () => {
+                  const { start, end } = getExportRange()
+                  const filteredMatches = matches.filter(m => {
+                    const d = new Date(m.date)
+                    return (!start || d >= start) && (!end || d <= end)
+                  })
+                  const data = { players, matches: filteredMatches, userLinks, exportedAt: new Date().toISOString() }
                   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement('a')
                   a.href = url
-                  a.download = `lukto-backup-${new Date().toISOString().split('T')[0]}.json`
+                  a.download = `lukto-matches-${new Date().toISOString().split('T')[0]}.json`
                   a.click()
-                  showToast('success', 'Backup descargado')
+                  await logActivity('export', { type: 'matches', start: adminExportStart, end: adminExportEnd })
+                  showToast('success', 'Partidos exportados')
                 }}>
-                  JSON
+                  Partidos
                 </button>
-                <button className="export-btn" onClick={() => {
-                  let csv = 'Jugador,Partidos,Victorias,Derrotas,Win Rate,Rating,MVPs\n'
-                  stats.forEach(s => {
-                    const wr = typeof s.winRate === 'number' ? s.winRate.toFixed(1) : s.winRate || 0
-                    const ar = typeof s.avgRating === 'number' ? s.avgRating.toFixed(1) : (s.avgRating || '-')
-                    csv += `${s.name},${s.played},${s.wins},${s.losses},${wr}%,${ar},${s.mvps}\n`
+                <button className="export-btn" onClick={async () => {
+                  const { start, end } = getExportRange()
+                  const filteredRatings = ratingsList.filter(r => {
+                    const match = matchById.get(r.matchId)
+                    const d = match ? new Date(match.date) : new Date(r.timestamp)
+                    return (!start || d >= start) && (!end || d <= end)
                   })
-                  const blob = new Blob([csv], { type: 'text/csv' })
+                  const blob = new Blob([JSON.stringify(filteredRatings, null, 2)], { type: 'application/json' })
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement('a')
                   a.href = url
-                  a.download = `lukto-stats-${new Date().toISOString().split('T')[0]}.csv`
+                  a.download = `lukto-ratings-${new Date().toISOString().split('T')[0]}.json`
                   a.click()
-                  showToast('success', 'CSV descargado')
+                  await logActivity('export', { type: 'ratings', start: adminExportStart, end: adminExportEnd })
+                  showToast('success', 'Ratings exportados')
                 }}>
-                  CSV
+                  Ratings
                 </button>
+                <button className="export-btn" onClick={async () => {
+                  const { start, end } = getExportRange()
+                  const filteredPredictions = predictionsList.filter(p => {
+                    const d = p.timestamp ? new Date(p.timestamp) : new Date()
+                    return (!start || d >= start) && (!end || d <= end)
+                  })
+                  const blob = new Blob([JSON.stringify(filteredPredictions, null, 2)], { type: 'application/json' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `lukto-predictions-${new Date().toISOString().split('T')[0]}.json`
+                  a.click()
+                  await logActivity('export', { type: 'predictions', start: adminExportStart, end: adminExportEnd })
+                  showToast('success', 'Predicciones exportadas')
+                }}>
+                  Predicciones
+                </button>
+              </div>
+            </div>
+
+            {/* Logs de actividad */}
+            <div className="tool-card wide">
+              <div className="tool-header">
+                <span className="tool-icon">🧾</span>
+                <h3 className="tool-title">Logs de Actividad</h3>
+              </div>
+              <p className="tool-desc">Últimos eventos del sistema</p>
+              <div className="activity-list compact">
+                {activityLogs.slice(0, 20).map(log => (
+                  <div key={log.id} className="activity-item">
+                    <span className="activity-type">{log.type}</span>
+                    <span className="activity-meta">{log.userEmail || log.userName || 'Sistema'}</span>
+                    <span className="activity-time">
+                      {new Date(log.timestamp).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -3402,6 +3707,7 @@ function App() {
                     createdAt: new Date().toISOString(),
                     createdBy: user.email
                   })
+                  await logActivity('announcement_create', { message })
                   input.value = ''
                   showToast('success', 'Anuncio enviado')
                 }}>
@@ -3416,6 +3722,7 @@ function App() {
                       <span>{a.message}</span>
                       <button className="delete-announcement" onClick={async () => {
                         await deleteDoc(doc(db, 'announcements', a.id))
+                        await logActivity('announcement_delete', { id: a.id, message: a.message })
                         showToast('success', 'Anuncio eliminado')
                       }}>×</button>
                     </div>
@@ -3711,6 +4018,12 @@ function App() {
       {showPredictionModal && predictionMatch && (() => {
         const probability = calculateTeamProbability(predictionMatch)
         const favorite = probability.white > probability.black ? 'white' : probability.black > probability.white ? 'black' : 'tie'
+        const poolTotals = getPoolTotalsForMatch(predictionMatch.id)
+        const totalWhite = poolTotals.totalWhite
+        const totalBlack = poolTotals.totalBlack
+        const selectedPool = selectedPrediction === 'white' ? totalWhite + coinBet : selectedPrediction === 'black' ? totalBlack + coinBet : 0
+        const rivalPool = selectedPrediction === 'white' ? totalBlack : selectedPrediction === 'black' ? totalWhite : 0
+        const potentialWin = selectedPrediction ? getPoolPotentialWin(predictionMatch.id, selectedPrediction, coinBet) : 0
         
         return (
           <div className="modal-overlay" onClick={closePredictionModal}>
@@ -3832,6 +4145,16 @@ function App() {
                   <span className="xp-bet-title">Apostar LukCoins</span>
                   <span className="xp-bet-balance">Tus LukCoins: {userPlayer ? calculateLukCoins(userPlayer) : 0}</span>
                 </div>
+                <div className="pool-info">
+                  <div className="pool-row">
+                    <span>Pozo Blanco</span>
+                    <strong>{totalWhite} LC</strong>
+                  </div>
+                  <div className="pool-row">
+                    <span>Pozo Negro</span>
+                    <strong>{totalBlack} LC</strong>
+                  </div>
+                </div>
                 <div className="xp-bet-options">
                   {[5, 10, 25, 50].map(amount => (
                     <button
@@ -3847,12 +4170,18 @@ function App() {
                 <div className="xp-bet-potential">
                   {selectedPrediction && (
                     <span>
-                      Posible ganancia: <strong className="potential-win">
-                        +{getPoolPotentialWin(predictionMatch.id, selectedPrediction, coinBet)} LC
-                      </strong>
+                      Pozo rival: <strong>{rivalPool} LC</strong> ·
+                      Retorno estimado: <strong className="potential-win">
+                        +{potentialWin} LC
+                      </strong> · Total: <strong>{coinBet + potentialWin} LC</strong>
                     </span>
                   )}
                 </div>
+                {selectedPrediction && (
+                  <div className="pool-hint">
+                    Tu apuesta entra al pozo de tu equipo ({selectedPool} LC).
+                  </div>
+                )}
               </div>
 
               <div className="modal-actions">

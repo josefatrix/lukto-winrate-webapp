@@ -4,6 +4,7 @@
  */
 
 import { useApp } from '../../contexts'
+import { useState } from 'react'
 import { EmptyState } from '../common'
 
 export const MatchesTab = ({
@@ -24,6 +25,7 @@ export const MatchesTab = ({
     getPlayerName,
     userLinks,
   } = useApp()
+  const [expandedMatches, setExpandedMatches] = useState(new Set())
 
   const formatDate = dateStr => {
     const date = new Date(dateStr + 'T12:00:00')
@@ -39,6 +41,7 @@ export const MatchesTab = ({
   const getPredictionWin = pred => pred?.lukCoinsWin ?? pred?.potentialWin ?? 0
   const getPredictionStatus = (pred, matchWinner) => {
     if (!matchWinner) return 'pending'
+    if (matchWinner === 'tie') return 'void'
     return pred?.prediction === matchWinner ? 'correct' : 'wrong'
   }
   const getPredictionUserName = (odedBy, predictionData) => {
@@ -52,11 +55,24 @@ export const MatchesTab = ({
     return 'Usuario'
   }
 
+  const toggleDetails = (matchId) => {
+    setExpandedMatches(prev => {
+      const next = new Set(prev)
+      if (next.has(matchId)) {
+        next.delete(matchId)
+      } else {
+        next.add(matchId)
+      }
+      return next
+    })
+  }
+
   return (
     <section className="stats-section">
       <h2 className="section-title">Historial de Partidos</h2>
       {matches.length > 0 ? (
         [...matches].reverse().map(match => {
+          const isExpanded = expandedMatches.has(match.id)
           // Calculate top 3 rated players for this match
           const matchPlayerRatings = []
           const allMatchPlayers = [...match.teamWhite, ...match.teamBlack]
@@ -76,6 +92,9 @@ export const MatchesTab = ({
           const top3 = matchPlayerRatings
             .sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating))
             .slice(0, 3)
+          const predictionCount = predictions[match.id]
+            ? Object.keys(predictions[match.id]).length
+            : 0
 
           return (
             <div key={match.id} className="match-card">
@@ -83,6 +102,9 @@ export const MatchesTab = ({
                 <div>
                   <div className="match-date">{formatDate(match.date)}</div>
                   <div className="match-venue">{match.venue}</div>
+                  {match.winner === 'tie' && (
+                    <div className="match-result tie">Empate</div>
+                  )}
                 </div>
                 <div className="match-actions">
                   {user &&
@@ -96,6 +118,9 @@ export const MatchesTab = ({
                   {/* SIEMPRE mostrar badge si está cerrado */}
                   {match.ratingsOpen === false && (
                     <span className="ratings-closed-badge">🔒 CERRADO</span>
+                  )}
+                  {match.ratingsOpen !== false && (
+                    <span className="ratings-open-badge">🟢 ABIERTO</span>
                   )}
                   {/* Solo mostrar botón calificar si NO está cerrado */}
                   {user && userPlayer && match.ratingsOpen !== false && (
@@ -158,72 +183,89 @@ export const MatchesTab = ({
                 </div>
               </div>
 
-              {top3.length > 0 && (
-                <div className="match-leaderboard">
-                  <div className="leaderboard-title">Top del partido</div>
-                  <div className="leaderboard-items">
-                    {top3.map((player, idx) => {
-                      // Trigger confetti if current user is MVP
-                      if (idx === 0 && player.playerId === userPlayer) {
-                        setTimeout(() => triggerMVPConfetti(match.id, player.playerId), 500)
-                      }
-                      return (
-                        <div
-                          key={player.playerId}
-                          className={`leaderboard-item ${idx === 0 && player.playerId === userPlayer ? 'is-me' : ''}`}
-                        >
-                          <span
-                            className={`leaderboard-position ${idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'}`}
-                          >
-                            {idx + 1}
-                          </span>
-                          <span className="leaderboard-name">{player.name}</span>
-                          <span className="leaderboard-score">{player.avgRating}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+              <div className="match-summary-row">
+                {top3.length > 0 && <span className="match-summary-pill">Top: {top3.length}</span>}
+                {predictionCount > 0 && <span className="match-summary-pill">Predicciones: {predictionCount}</span>}
+                <button
+                  className="match-details-toggle"
+                  onClick={() => toggleDetails(match.id)}
+                >
+                  {isExpanded ? 'Ver menos' : 'Ver más'}
+                </button>
+              </div>
 
-              {/* Show predictions for this match */}
-              {predictions[match.id] && Object.keys(predictions[match.id]).length > 0 && (
-                <div className="match-predictions">
-                  <div className="predictions-title">Predicciones</div>
-                  <div className="predictions-grid">
-                    {Object.entries(predictions[match.id]).map(([odedBy, predictionData]) => {
-                      const predictionValue = predictionData?.prediction
-                      const status = getPredictionStatus(predictionData, match.winner)
-                      const bet = getPredictionBet(predictionData)
-                      const win = getPredictionWin(predictionData)
-                      const isMe = user?.uid === odedBy
-                      const name = getPredictionUserName(odedBy, predictionData)
-                      return (
-                        <div
-                          key={odedBy}
-                          className={`prediction-tile ${status}`}
-                        >
-                          <div className="prediction-tile-header">
-                            <span className="prediction-name">{name}</span>
-                            {isMe && <span className="prediction-me">Tú</span>}
-                          </div>
-                          <div className="prediction-tile-body">
-                            <span className={`prediction-team-chip ${predictionValue}`}>
-                              {predictionValue === 'white' ? '⬜ Blanco' : '⬛ Negro'}
-                            </span>
-                            <span className="prediction-outcome">
-                              {status === 'pending'
-                                ? `Pendiente · ${bet} LC`
-                                : status === 'correct'
-                                  ? `Ganó +${win} LC`
-                                  : `Perdió -${bet} LC`}
-                            </span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
+              {isExpanded && (
+                <>
+                  {top3.length > 0 && (
+                    <div className="match-leaderboard">
+                      <div className="leaderboard-title">Top del partido</div>
+                      <div className="leaderboard-items">
+                        {top3.map((player, idx) => {
+                          // Trigger confetti if current user is MVP
+                          if (idx === 0 && player.playerId === userPlayer) {
+                            setTimeout(() => triggerMVPConfetti(match.id, player.playerId), 500)
+                          }
+                          return (
+                            <div
+                              key={player.playerId}
+                              className={`leaderboard-item ${idx === 0 && player.playerId === userPlayer ? 'is-me' : ''}`}
+                            >
+                              <span
+                                className={`leaderboard-position ${idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'}`}
+                              >
+                                {idx + 1}
+                              </span>
+                              <span className="leaderboard-name">{player.name}</span>
+                              <span className="leaderboard-score">{player.avgRating}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show predictions for this match */}
+                  {predictions[match.id] && Object.keys(predictions[match.id]).length > 0 && (
+                    <div className="match-predictions">
+                      <div className="predictions-title">Predicciones</div>
+                      <div className="predictions-grid">
+                        {Object.entries(predictions[match.id]).map(([odedBy, predictionData]) => {
+                          const predictionValue = predictionData?.prediction
+                          const status = getPredictionStatus(predictionData, match.winner)
+                          const bet = getPredictionBet(predictionData)
+                          const win = getPredictionWin(predictionData)
+                          const isMe = user?.uid === odedBy
+                          const name = getPredictionUserName(odedBy, predictionData)
+                          return (
+                            <div
+                              key={odedBy}
+                              className={`prediction-tile ${status}`}
+                            >
+                              <div className="prediction-tile-header">
+                                <span className="prediction-name">{name}</span>
+                                {isMe && <span className="prediction-me">Tú</span>}
+                              </div>
+                              <div className="prediction-tile-body">
+                                <span className={`prediction-team-chip ${predictionValue}`}>
+                                  {predictionValue === 'white' ? '⬜ Blanco' : '⬛ Negro'}
+                                </span>
+                                <span className="prediction-outcome">
+                                  {status === 'pending'
+                                    ? `Pendiente · ${bet} LC`
+                                    : status === 'void'
+                                      ? 'Empate · Apuesta devuelta'
+                                      : status === 'correct'
+                                        ? `Ganó +${win} LC`
+                                        : `Perdió -${bet} LC`}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )

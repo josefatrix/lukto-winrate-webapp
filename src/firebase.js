@@ -45,6 +45,4 @@ try {
   // Fallback to standard Firestore if persistent cache fails (iOS private mode)
   console.log('Using standard Firestore (no offline cache)');
   db = getFirestore(app);
-}
-
-export { db };
+}export { db };

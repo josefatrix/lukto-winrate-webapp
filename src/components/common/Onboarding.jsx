@@ -26,8 +26,8 @@ const OnboardingSlides = [
   },
   {
     id: 'xp',
-    title: 'Sistema de XP',
-    description: 'Gana experiencia jugando partidos, siendo MVP y haciendo predicciones acertadas',
+    title: 'Juega, califica y sube',
+    description: 'Gana XP por partidos, MVPs y buenas calificaciones. Sube rangos y destaca en el ranking',
     illustration: (
       <svg viewBox="0 0 200 200" fill="none" className="onboarding-illustration">
         <defs>
@@ -51,36 +51,9 @@ const OnboardingSlides = [
     )
   },
   {
-    id: 'ranks',
-    title: 'Rangos Competitivos',
-    description: 'Sube de rango mientras acumulas XP: Bronce, Plata, Oro, Platino, Diamante, Maestro y Leyenda',
-    illustration: (
-      <svg viewBox="0 0 200 200" fill="none" className="onboarding-illustration">
-        {/* Rank badges */}
-        <circle cx="60" cy="70" r="25" fill="#cd7f32" fillOpacity="0.3" stroke="#cd7f32" strokeWidth="2" />
-        <text x="60" y="75" textAnchor="middle" fill="#cd7f32" fontSize="10" fontWeight="bold">B</text>
-        
-        <circle cx="100" cy="55" r="25" fill="#c0c0c0" fillOpacity="0.3" stroke="#c0c0c0" strokeWidth="2" />
-        <text x="100" y="60" textAnchor="middle" fill="#c0c0c0" fontSize="10" fontWeight="bold">S</text>
-        
-        <circle cx="140" cy="70" r="25" fill="#ffd700" fillOpacity="0.3" stroke="#ffd700" strokeWidth="2" />
-        <text x="140" y="75" textAnchor="middle" fill="#ffd700" fontSize="10" fontWeight="bold">O</text>
-        
-        <circle cx="70" cy="120" r="25" fill="#00d4ff" fillOpacity="0.3" stroke="#00d4ff" strokeWidth="2" />
-        <path d="M70 110 L75 120 L85 120 L77 127 L80 137 L70 130 L60 137 L63 127 L55 120 L65 120 Z" fill="#00d4ff" fillOpacity="0.8" />
-        
-        <circle cx="130" cy="120" r="25" fill="#a855f7" fillOpacity="0.3" stroke="#a855f7" strokeWidth="2" />
-        <path d="M130 105 L130 115 M120 110 L140 110 M123 117 L137 133 M137 117 L123 133" stroke="#a855f7" strokeWidth="2" strokeLinecap="round" />
-        
-        {/* Crown for legend */}
-        <path d="M90 155 L100 145 L110 155 L115 170 L85 170 Z" fill="#ff6b6b" fillOpacity="0.6" stroke="#ff6b6b" strokeWidth="2" />
-      </svg>
-    )
-  },
-  {
     id: 'predictions',
     title: 'Predicciones',
-    description: 'Apuesta LukCoins en los resultados de los partidos y gana el doble si aciertas',
+    description: 'Apuesta LukCoins en el pozo del rival y gana más mientras menos favorito sea tu equipo',
     illustration: (
       <svg viewBox="0 0 200 200" fill="none" className="onboarding-illustration">
         <defs>

@@ -212,7 +212,7 @@ export const StatsTab = ({
                   <h3>{potwPlayer?.name}</h3>
                   <div className="featured-stats">
                     <span className="stat-item">
-                      {playerOfWeek.wins}V {playerOfWeek.played - playerOfWeek.wins}D
+                      {playerOfWeek.wins}V {playerOfWeek.ties || 0}E {playerOfWeek.losses || 0}D
                     </span>
                     <span className="stat-item highlight">{playerOfWeek.winRate}%</span>
                   </div>
@@ -249,7 +249,7 @@ export const StatsTab = ({
                 <h3>{potmPlayer?.name}</h3>
                 <div className="featured-stats">
                   <span className="stat-item">
-                    {playerOfMonth.wins}V {playerOfMonth.played - playerOfMonth.wins}D
+                    {playerOfMonth.wins}V {playerOfMonth.ties || 0}E {playerOfMonth.losses || 0}D
                   </span>
                   <span className="stat-item highlight">{playerOfMonth.winRate}%</span>
                 </div>
@@ -296,7 +296,7 @@ export const StatsTab = ({
                           <div className="weekly-history-info">
                             <span className="weekly-history-name">{winner?.name}</span>
                             <span className="weekly-history-stats">
-                              {entry.winner.wins}V {entry.winner.played - entry.winner.wins}D · {entry.winner.winRate}%
+                              {entry.winner.wins}V {entry.winner.ties || 0}E {entry.winner.losses || 0}D · {entry.winner.winRate}%
                             </span>
                           </div>
                         </div>
@@ -382,6 +382,7 @@ export const StatsTab = ({
               <th onClick={() => handleSort('wins')} className="sortable">
                 V <SortIcon column="wins" />
               </th>
+              <th>E</th>
               <th>D</th>
               <th onClick={() => handleSort('mvps')} className="sortable">
                 MVP <SortIcon column="mvps" />
@@ -437,6 +438,9 @@ export const StatsTab = ({
                   </td>
                   <td>
                     <span className="stat-value wins">{player.wins}</span>
+                  </td>
+                  <td>
+                    <span className="stat-value ties">{player.ties || 0}</span>
                   </td>
                   <td>
                     <span className="stat-value losses">{player.losses}</span>

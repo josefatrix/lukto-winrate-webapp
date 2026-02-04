@@ -19,6 +19,7 @@ export const useStats = () => {
       statsMap[player.id] = {
         wins: 0,
         losses: 0,
+        ties: 0,
         played: 0,
         mvps: 0,
         name: player.name,
@@ -27,7 +28,10 @@ export const useStats = () => {
     })
 
     matches.forEach(match => {
-      const whiteWon = match.winner === 'white'
+      const winner = match.winner
+      const decided = winner === 'white' || winner === 'black'
+      const tied = winner === 'tie'
+      const whiteWon = winner === 'white'
       const allMatchPlayers = [...match.teamWhite, ...match.teamBlack]
 
       // Calculate MVP for this match (highest avg rating)
@@ -53,16 +57,24 @@ export const useStats = () => {
       match.teamWhite.forEach(playerId => {
         if (statsMap[playerId]) {
           statsMap[playerId].played++
-          if (whiteWon) statsMap[playerId].wins++
-          else statsMap[playerId].losses++
+          if (decided) {
+            if (whiteWon) statsMap[playerId].wins++
+            else statsMap[playerId].losses++
+          } else if (tied) {
+            statsMap[playerId].ties++
+          }
         }
       })
 
       match.teamBlack.forEach(playerId => {
         if (statsMap[playerId]) {
           statsMap[playerId].played++
-          if (!whiteWon) statsMap[playerId].wins++
-          else statsMap[playerId].losses++
+          if (decided) {
+            if (!whiteWon) statsMap[playerId].wins++
+            else statsMap[playerId].losses++
+          } else if (tied) {
+            statsMap[playerId].ties++
+          }
         }
       })
     })
@@ -70,7 +82,8 @@ export const useStats = () => {
     return Object.entries(statsMap)
       .filter(([_, s]) => s.played > 0)
       .map(([id, s]) => {
-        const winRate = s.played > 0 ? (s.wins / s.played) * 100 : 0
+        const playedGames = s.played || 0
+        const winRate = playedGames > 0 ? ((s.wins + 0.5 * (s.ties || 0)) / playedGames) * 100 : 0
         const avgRating = calculatePlayerAvgRating(id, ratings)
         const ratingValue = avgRating ? parseFloat(avgRating) : 5
 
@@ -123,6 +136,7 @@ export const useStats = () => {
       statsMap[player.id] = {
         wins: 0,
         losses: 0,
+        ties: 0,
         played: 0,
         mvps: 0,
         name: player.name,
@@ -131,7 +145,10 @@ export const useStats = () => {
     })
 
     getFilteredMatches.forEach(match => {
-      const whiteWon = match.winner === 'white'
+      const winner = match.winner
+      const decided = winner === 'white' || winner === 'black'
+      const tied = winner === 'tie'
+      const whiteWon = winner === 'white'
       const allMatchPlayers = [...match.teamWhite, ...match.teamBlack]
 
       let mvpId = null
@@ -156,16 +173,24 @@ export const useStats = () => {
       match.teamWhite.forEach(playerId => {
         if (statsMap[playerId]) {
           statsMap[playerId].played++
-          if (whiteWon) statsMap[playerId].wins++
-          else statsMap[playerId].losses++
+          if (decided) {
+            if (whiteWon) statsMap[playerId].wins++
+            else statsMap[playerId].losses++
+          } else if (tied) {
+            statsMap[playerId].ties++
+          }
         }
       })
 
       match.teamBlack.forEach(playerId => {
         if (statsMap[playerId]) {
           statsMap[playerId].played++
-          if (!whiteWon) statsMap[playerId].wins++
-          else statsMap[playerId].losses++
+          if (decided) {
+            if (!whiteWon) statsMap[playerId].wins++
+            else statsMap[playerId].losses++
+          } else if (tied) {
+            statsMap[playerId].ties++
+          }
         }
       })
     })
@@ -173,7 +198,8 @@ export const useStats = () => {
     return Object.entries(statsMap)
       .filter(([_, s]) => s.played > 0)
       .map(([id, s]) => {
-        const winRate = s.played > 0 ? (s.wins / s.played) * 100 : 0
+        const playedGames = s.played || 0
+        const winRate = playedGames > 0 ? ((s.wins + 0.5 * (s.ties || 0)) / playedGames) * 100 : 0
         const avgRating = calculatePlayerAvgRating(id, ratings)
         const ratingValue = avgRating ? parseFloat(avgRating) : 5
 
@@ -203,18 +229,26 @@ export const useStats = () => {
 
     const periodStats = {}
     periodMatches.forEach(match => {
-      const whiteWon = match.winner === 'white'
+      const winner = match.winner
+      const decided = winner === 'white' || winner === 'black'
+      const whiteWon = winner === 'white'
       const allPlayers = [...match.teamWhite, ...match.teamBlack]
 
       allPlayers.forEach(playerId => {
         if (!periodStats[playerId]) {
-          periodStats[playerId] = { wins: 0, played: 0, mvps: 0, totalRating: 0, ratingCount: 0 }
+          periodStats[playerId] = { wins: 0, losses: 0, ties: 0, played: 0, mvps: 0, totalRating: 0, ratingCount: 0 }
         }
         periodStats[playerId].played++
 
         const inWhite = match.teamWhite.includes(playerId)
-        if ((inWhite && whiteWon) || (!inWhite && !whiteWon)) {
-          periodStats[playerId].wins++
+        if (decided) {
+          if ((inWhite && whiteWon) || (!inWhite && !whiteWon)) {
+            periodStats[playerId].wins++
+          } else {
+            periodStats[playerId].losses = (periodStats[playerId].losses || 0) + 1
+          }
+        } else if (winner === 'tie') {
+          periodStats[playerId].ties = (periodStats[playerId].ties || 0) + 1
         }
 
         const playerRatings = ratings[playerId] || []
@@ -236,7 +270,10 @@ export const useStats = () => {
         const score = pStats.wins * 3 + avgRating + pStats.played * 0.5
         if (score > bestScore) {
           bestScore = score
-          const wr = pStats.played > 0 ? Math.round((pStats.wins / pStats.played) * 100) : 0
+          const playedGames = pStats.played || 0
+          const wr = playedGames > 0
+            ? Math.round(((pStats.wins + 0.5 * (pStats.ties || 0)) / playedGames) * 100)
+            : 0
           bestPlayer = {
             id: playerId,
             ...pStats,
