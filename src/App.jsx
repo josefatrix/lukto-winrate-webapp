@@ -2,7 +2,7 @@
  * LUKTO Stats - Main App Component
  * Premium version with Apple-style interactions
  */
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useApp, SUPER_ADMIN_EMAIL } from './contexts'
 import { useStats, useHaptic } from './hooks'
 import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs, addDoc, deleteDoc } from 'firebase/firestore'
@@ -299,6 +299,7 @@ function PlayerProfileModal({
   ratings,
   predictions = {},
   userLinks = {},
+  positionAnalytics,
   getPlayerPhoto,
   getPlayerName,
   calculateXP,
@@ -486,6 +487,37 @@ function PlayerProfileModal({
   // Special badges
   if (playerStats.wins >= 10) badges.push({ icon: 'check', name: '10 Victorias', color: '#22c55e', desc: 'Acumular 10 victorias totales' })
   if (playerStats.wins >= 25) badges.push({ icon: 'checkDouble', name: '25 Victorias', color: '#16a34a', desc: 'Acumular 25 victorias - ¡Impresionante!' })
+
+  // Position-based badges
+  const roleStats = positionAnalytics?.byPlayer?.[playerId] || {}
+  const roleNames = Object.keys(roleStats).filter(r => (roleStats[r]?.played || 0) > 0)
+  if (roleNames.length >= 3) {
+    badges.push({ icon: 'badge', name: 'Versátil', color: '#22d3ee', desc: 'Jugar 3 o más roles distintos' })
+  }
+  const roleWinRate = (entry) => {
+    if (!entry || !entry.played) return 0
+    return Math.round(((entry.wins + 0.5 * (entry.ties || 0)) / entry.played) * 100)
+  }
+  const roleAvgRating = (entry) => {
+    if (!entry || !entry.ratingCount) return null
+    return entry.ratingSum / entry.ratingCount
+  }
+  const portero = roleStats.Portero
+  if (portero?.played >= 5) {
+    badges.push({ icon: 'shield', name: 'Guardián', color: '#3b82f6', desc: 'Jugar 5+ partidos como Portero' })
+  }
+  const defensa = roleStats.Defensa
+  if (defensa?.played >= 5 && roleWinRate(defensa) >= 70) {
+    badges.push({ icon: 'shield', name: 'Muro', color: '#64748b', desc: '70%+ WR jugando en Defensa' })
+  }
+  const medio = roleStats.Medio
+  if (medio?.played >= 5 && (roleAvgRating(medio) || 0) >= 8) {
+    badges.push({ icon: 'target', name: 'Motor', color: '#0ea5e9', desc: 'Rating 8+ jugando en Medio' })
+  }
+  const delantero = roleStats.Delantero
+  if (delantero?.played >= 5 && (delantero.mvps || 0) >= 2) {
+    badges.push({ icon: 'fire', name: 'Killer', color: '#f97316', desc: '2+ MVPs jugando de Delantero' })
+  }
   
   // XP Progress calculation
   const RANK_THRESHOLDS = [0, 100, 250, 500, 850, 1300, 1900, 2600]
@@ -602,6 +634,48 @@ function PlayerProfileModal({
           <div className="psr-item loss"><span className="psr-value">{playerStats.losses}</span><span className="psr-label">Derrotas</span></div>
           <div className="psr-item"><span className="psr-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span><span className="psr-label">Win Rate</span></div>
         </div>
+
+        {(() => {
+          const roleStats = positionAnalytics.byPlayer?.[playerId] || {}
+          const roleEntries = Object.entries(roleStats)
+            .map(([role, data]) => ({
+              role,
+              ...data,
+              winRate: data.played > 0 ? Math.round(((data.wins + 0.5 * data.ties) / data.played) * 100) : 0,
+              avgRating: data.ratingCount > 0 ? (data.ratingSum / data.ratingCount).toFixed(1) : null,
+            }))
+            .sort((a, b) => b.played - a.played)
+
+          if (roleEntries.length === 0) return null
+
+          return (
+            <div className="profile-section-v2">
+              <h4 className="ps-title">Roles y Posiciones</h4>
+              <div className="roles-summary">
+                {roleEntries.map(entry => {
+                  const pct = Math.round((entry.played / playerStats.played) * 100)
+                  return (
+                    <div key={entry.role} className="role-chip">
+                      <span className="role-name">{entry.role}</span>
+                      <span className="role-pct">{pct}%</span>
+                      <span className="role-meta">{entry.played} partidos</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="roles-table">
+                {roleEntries.map(entry => (
+                  <div key={entry.role} className="role-row">
+                    <span className="role-label">{entry.role}</span>
+                    <span className="role-stats">{entry.wins}V - {entry.ties}E - {entry.losses}D</span>
+                    <span className="role-stats">{entry.winRate}% WR</span>
+                    <span className="role-stats">{entry.avgRating || '-'} ⭐</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
 
 
         {/* Badges */}
@@ -1327,11 +1401,38 @@ function App() {
 
   // Match form state
   const [matchDate, setMatchDate] = useState('')
+  const [matchTime, setMatchTime] = useState('')
   const [matchVenue, setMatchVenue] = useState('LUKTO')
   const [teamWhite, setTeamWhite] = useState([])
   const [teamBlack, setTeamBlack] = useState([])
+  const [matchPositions, setMatchPositions] = useState({})
   const [winner, setWinner] = useState('')
   const [editingMatchId, setEditingMatchId] = useState(null)
+
+  const POSITION_OPTIONS = [
+    { value: '', label: 'Sin posición' },
+    { value: 'portero', label: 'Portero' },
+    { value: 'cierre', label: 'Cierre / Defensa' },
+    { value: 'lateral_izq', label: 'Lateral Izq' },
+    { value: 'lateral_der', label: 'Lateral Der' },
+    { value: 'medio', label: 'Mediocampista' },
+    { value: 'pivote', label: 'Pivote' },
+    { value: 'delantero', label: 'Delantero' },
+  ]
+
+  const getPositionLabel = (value) => {
+    const found = POSITION_OPTIONS.find(opt => opt.value === value)
+    return found?.label || ''
+  }
+
+  const getPositionGroup = (value) => {
+    if (!value) return 'Sin posición'
+    if (value === 'portero') return 'Portero'
+    if (value === 'cierre' || value === 'lateral_izq' || value === 'lateral_der') return 'Defensa'
+    if (value === 'medio' || value === 'pivote') return 'Medio'
+    if (value === 'delantero') return 'Delantero'
+    return 'Otro'
+  }
 
   // Analytics state
   const [h2hPlayer1, setH2hPlayer1] = useState(null)
@@ -1369,6 +1470,173 @@ function App() {
   // ============ CALCULATED VALUES ============
 
   const displayStats = timeFilter === 'all' ? stats : filteredStats
+
+  const positionAnalytics = useMemo(() => {
+    const byPlayer = {}
+    const byPosition = {}
+
+    const getMatchMvpId = (match) => {
+      const allPlayers = [...(match.teamWhite || []), ...(match.teamBlack || [])]
+      let mvpId = null
+      let mvpRating = -1
+      allPlayers.forEach(pid => {
+        const pRatings = (ratings?.[pid] || []).filter(r => r.matchId === match.id)
+        if (pRatings.length > 0) {
+          const avg = pRatings.reduce((s, r) => s + r.score, 0) / pRatings.length
+          if (avg > mvpRating) {
+            mvpRating = avg
+            mvpId = pid
+          }
+        }
+      })
+      return mvpId
+    }
+
+    matches.forEach(match => {
+      const positions = match.positions || {}
+      const mvpId = getMatchMvpId(match)
+      const decided = match.winner === 'white' || match.winner === 'black'
+      const tied = match.winner === 'tie'
+
+      const allPlayers = [...(match.teamWhite || []), ...(match.teamBlack || [])]
+      allPlayers.forEach(playerId => {
+        const pos = positions[playerId] || ''
+        const group = getPositionGroup(pos)
+
+        if (!byPlayer[playerId]) {
+          byPlayer[playerId] = {}
+        }
+        if (!byPlayer[playerId][group]) {
+          byPlayer[playerId][group] = {
+            played: 0,
+            wins: 0,
+            losses: 0,
+            ties: 0,
+            mvps: 0,
+            ratingSum: 0,
+            ratingCount: 0,
+          }
+        }
+
+        const entry = byPlayer[playerId][group]
+        entry.played += 1
+        if (decided) {
+          const inWhite = match.teamWhite?.includes(playerId)
+          const won = (inWhite && match.winner === 'white') || (!inWhite && match.winner === 'black')
+          if (won) entry.wins += 1
+          else entry.losses += 1
+        } else if (tied) {
+          entry.ties += 1
+        }
+
+        if (mvpId === playerId) entry.mvps += 1
+
+        const myRatings = (ratings?.[playerId] || []).filter(r => r.matchId === match.id)
+        if (myRatings.length > 0) {
+          const avg = myRatings.reduce((s, r) => s + r.score, 0) / myRatings.length
+          entry.ratingSum += avg
+          entry.ratingCount += 1
+        }
+      })
+    })
+
+    Object.entries(byPlayer).forEach(([playerId, roles]) => {
+      Object.entries(roles).forEach(([group, entry]) => {
+        if (!byPosition[group]) byPosition[group] = []
+        const avgRating = entry.ratingCount > 0 ? entry.ratingSum / entry.ratingCount : null
+        const winRate = entry.played > 0
+          ? ((entry.wins + 0.5 * entry.ties) / entry.played) * 100
+          : 0
+        const score = (avgRating ? avgRating * 10 : 50) * 0.5 + winRate * 0.5
+        byPosition[group].push({
+          playerId,
+          played: entry.played,
+          wins: entry.wins,
+          losses: entry.losses,
+          ties: entry.ties,
+          mvps: entry.mvps,
+          avgRating: avgRating ? avgRating.toFixed(1) : null,
+          winRate: Math.round(winRate),
+          score,
+        })
+      })
+    })
+
+    Object.values(byPosition).forEach(list => {
+      list.sort((a, b) => b.score - a.score || b.winRate - a.winRate || b.played - a.played)
+    })
+
+    return { byPlayer, byPosition }
+  }, [matches, ratings])
+
+  const roleRatingRankings = useMemo(() => {
+    const rankings = {}
+    Object.entries(positionAnalytics.byPosition || {}).forEach(([role, list]) => {
+      rankings[role] = (list || [])
+        .filter(entry => entry.avgRating)
+        .sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating) || b.played - a.played)
+        .map(entry => ({
+          playerId: entry.playerId,
+          avgRating: entry.avgRating,
+          played: entry.played,
+          winRate: entry.winRate,
+        }))
+    })
+    return { rankings }
+  }, [positionAnalytics])
+
+  const historicalRecords = useMemo(() => {
+    const minGames = 5
+    const records = []
+    if (!stats || stats.length === 0) return records
+
+    const getLeaders = (items, getValue, filterFn = null) => {
+      const list = filterFn ? items.filter(filterFn) : items
+      if (!list.length) return null
+      const maxVal = Math.max(...list.map(getValue))
+      if (!isFinite(maxVal)) return null
+      const leaders = list.filter(item => getValue(item) === maxVal)
+      return { maxVal, leaders }
+    }
+
+    const mostWins = getLeaders(stats, s => s.wins || 0)
+    const mostMvps = getLeaders(stats, s => s.mvps || 0)
+    const mostPlayed = getLeaders(stats, s => s.played || 0)
+    const mostTies = getLeaders(stats, s => s.ties || 0)
+    const bestWinRate = getLeaders(
+      stats,
+      s => Math.round(s.winRate || 0),
+      s => (s.played || 0) >= minGames
+    )
+    const bestRating = getLeaders(
+      stats,
+      s => s.avgRating ? parseFloat(s.avgRating) : -Infinity,
+      s => s.avgRating && (s.played || 0) >= minGames
+    )
+
+    if (mostWins) records.push({ title: 'Más victorias', value: `${mostWins.maxVal} V`, playerIds: mostWins.leaders.map(l => l.id) })
+    if (mostMvps) records.push({ title: 'Más MVPs', value: `${mostMvps.maxVal} MVP`, playerIds: mostMvps.leaders.map(l => l.id) })
+    if (mostPlayed) records.push({ title: 'Más partidos', value: `${mostPlayed.maxVal} PJ`, playerIds: mostPlayed.leaders.map(l => l.id) })
+    if (mostTies) records.push({ title: 'Más empates', value: `${mostTies.maxVal} E`, playerIds: mostTies.leaders.map(l => l.id) })
+    if (bestWinRate) records.push({ title: 'Mejor Win Rate', value: `${bestWinRate.maxVal}%`, playerIds: bestWinRate.leaders.map(l => l.id) })
+    if (bestRating) records.push({ title: 'Mejor Rating', value: `${bestRating.maxVal.toFixed(1)} ⭐`, playerIds: bestRating.leaders.map(l => l.id) })
+
+    const roleRatingLeaders = Object.entries(roleRatingRankings.rankings || {}).map(([role, list]) => {
+      if (!list?.length) return null
+      const maxVal = Math.max(...list.map(l => parseFloat(l.avgRating)))
+      const leaders = list.filter(l => parseFloat(l.avgRating) === maxVal)
+      return { role, maxVal, leaders }
+    }).filter(Boolean)
+    roleRatingLeaders.forEach(entry => {
+      records.push({
+        title: `Top Rating ${entry.role}`,
+        value: `${entry.maxVal.toFixed(1)} ⭐`,
+        playerIds: entry.leaders.map(l => l.playerId),
+      })
+    })
+
+    return records
+  }, [stats, roleRatingRankings])
 
   const getMatchXpBreakdown = (playerId, match) => {
     const base = { participation: 10, win: 0, rating: 0, mvp: 0, ratingAvg: null }
@@ -1625,6 +1893,20 @@ function App() {
     setShowPlayerModal(true)
   }
 
+  const getMatchStartDate = (match) => {
+    if (!match?.date) return null
+    const timeValue = match.time || match.matchTime || match.startTime || '23:59'
+    const start = new Date(`${match.date}T${timeValue}:00`)
+    return isNaN(start) ? null : start
+  }
+
+  const canPredictMatch = (match) => {
+    const start = getMatchStartDate(match)
+    if (!start) return true
+    const cutoff = new Date(start.getTime() - 10 * 60 * 1000)
+    return new Date() < cutoff
+  }
+
   // ============ PREDICTION HANDLERS ============
   
   // Calculate team win probability based on stats
@@ -1694,6 +1976,10 @@ function App() {
     }
     if (match.winner) {
       showToast('error', 'Este partido ya terminó')
+      return
+    }
+    if (!canPredictMatch(match)) {
+      showToast('error', 'Predicciones cerradas (10 min antes del partido)')
       return
     }
     if (predictions[match.id]?.[user.uid]) {
@@ -1842,6 +2128,10 @@ function App() {
   const submitPrediction = async () => {
     if (!selectedPrediction || !predictionMatch || !user) {
       showToast('error', 'Selecciona un equipo')
+      return
+    }
+    if (!canPredictMatch(predictionMatch)) {
+      showToast('error', 'Predicciones cerradas (10 min antes del partido)')
       return
     }
     
@@ -2029,12 +2319,22 @@ function App() {
     if (team === 'white') {
       if (teamWhite.includes(playerId)) {
         setTeamWhite(teamWhite.filter(id => id !== playerId))
+        setMatchPositions(prev => {
+          const next = { ...prev }
+          delete next[playerId]
+          return next
+        })
       } else if (!teamBlack.includes(playerId)) {
         setTeamWhite([...teamWhite, playerId])
       }
     } else {
       if (teamBlack.includes(playerId)) {
         setTeamBlack(teamBlack.filter(id => id !== playerId))
+        setMatchPositions(prev => {
+          const next = { ...prev }
+          delete next[playerId]
+          return next
+        })
       } else if (!teamWhite.includes(playerId)) {
         setTeamBlack([...teamBlack, playerId])
       }
@@ -2049,9 +2349,11 @@ function App() {
 
     const matchData = {
       date: matchDate,
+      time: matchTime || '',
       venue: matchVenue,
       teamWhite: [...teamWhite],
       teamBlack: [...teamBlack],
+      positions: { ...matchPositions },
       winner,
       ratingsOpen: true,
     }
@@ -2076,18 +2378,22 @@ function App() {
 
   const resetMatchForm = () => {
     setMatchDate('')
+    setMatchTime('')
     setMatchVenue('LUKTO')
     setTeamWhite([])
     setTeamBlack([])
+    setMatchPositions({})
     setWinner('')
     setEditingMatchId(null)
   }
 
   const openEditMatch = match => {
     setMatchDate(match.date)
+    setMatchTime(match.time || '')
     setMatchVenue(match.venue)
     setTeamWhite([...match.teamWhite])
     setTeamBlack([...match.teamBlack])
+    setMatchPositions(match.positions || {})
     setWinner(match.winner)
     setEditingMatchId(match.id)
     setActiveTab('new')
@@ -2454,6 +2760,7 @@ function App() {
           onDeleteMatch={handleDeleteMatch}
           onToggleRatings={toggleMatchRatings}
           onOpenPrediction={openPredictionModal}
+          canPredictMatch={canPredictMatch}
           triggerMVPConfetti={triggerMVPConfetti}
         />
       )}
@@ -2596,6 +2903,59 @@ function App() {
               </div>
             )
           })()}
+
+          {/* Position Rankings */}
+          {(() => {
+            const roles = Object.keys(roleRatingRankings.rankings || {})
+              .filter(r => r !== 'Sin posición')
+              .sort((a, b) => a.localeCompare(b))
+            if (roles.length === 0) return null
+            return (
+              <div className="position-rankings">
+                <h3 className="position-title">Ranking por Rol/Posición</h3>
+                <div className="position-grid">
+                  {roles.map(role => {
+                    const top = roleRatingRankings.rankings[role]?.slice(0, 5) || []
+                    if (top.length === 0) return null
+                    return (
+                      <div key={role} className="position-card">
+                        <div className="position-card-title">{role}</div>
+                        {top.map((entry, idx) => (
+                          <div key={entry.playerId} className="position-card-row">
+                            <span className="position-rank">#{idx + 1}</span>
+                            <span className="position-name">{getPlayerName(entry.playerId)}</span>
+                            <span className="position-metrics">
+                              {entry.avgRating} ⭐ · {entry.played} PJ · {entry.winRate}% WR
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
+
+          {historicalRecords.length > 0 && (
+            <div className="position-rankings">
+              <h3 className="position-title">Récords Históricos</h3>
+              <div className="records-grid">
+                {historicalRecords.map((record, idx) => (
+                  <div key={`${record.title}-${idx}`} className="record-card">
+                    <div className="record-title">{record.title}</div>
+                    <div className="record-value">{record.value}</div>
+                    <div className="record-player">
+                      {(record.playerIds || [])
+                        .map(id => getPlayerName(id))
+                        .filter(Boolean)
+                        .join(', ')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
           {/* Player Selection */}
           <div className="analytics-selectors">
@@ -3031,6 +3391,14 @@ function App() {
                 />
               </div>
               <div className="form-group">
+                <label>Hora del Partido</label>
+                <input
+                  type="time"
+                  value={matchTime}
+                  onChange={e => setMatchTime(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
                 <label>Lugar / Evento</label>
                 <input
                   type="text"
@@ -3059,6 +3427,31 @@ function App() {
                     </button>
                   ))}
                 </div>
+                {teamWhite.length > 0 && (
+                  <div className="position-list">
+                    {teamWhite.map(playerId => (
+                      <div key={playerId} className="position-row">
+                        <span className="position-player">{getPlayerName(playerId)}</span>
+                        <select
+                          className="position-select"
+                          value={matchPositions[playerId] || ''}
+                          onChange={e =>
+                            setMatchPositions(prev => ({
+                              ...prev,
+                              [playerId]: e.target.value,
+                            }))
+                          }
+                        >
+                          {POSITION_OPTIONS.map(opt => (
+                            <option key={opt.value || 'none'} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="team-section team-black">
@@ -3078,6 +3471,31 @@ function App() {
                     </button>
                   ))}
                 </div>
+                {teamBlack.length > 0 && (
+                  <div className="position-list">
+                    {teamBlack.map(playerId => (
+                      <div key={playerId} className="position-row">
+                        <span className="position-player">{getPlayerName(playerId)}</span>
+                        <select
+                          className="position-select"
+                          value={matchPositions[playerId] || ''}
+                          onChange={e =>
+                            setMatchPositions(prev => ({
+                              ...prev,
+                              [playerId]: e.target.value,
+                            }))
+                          }
+                        >
+                          {POSITION_OPTIONS.map(opt => (
+                            <option key={opt.value || 'none'} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -3843,6 +4261,7 @@ function App() {
         ratings={ratings}
         predictions={predictions}
         userLinks={userLinks}
+        positionAnalytics={positionAnalytics}
         getPlayerPhoto={getPlayerPhoto}
         getPlayerName={getPlayerName}
         calculateXP={calculateXP}

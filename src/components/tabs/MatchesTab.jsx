@@ -13,6 +13,7 @@ export const MatchesTab = ({
   onDeleteMatch,
   onToggleRatings,
   onOpenPrediction,
+  canPredictMatch,
   triggerMVPConfetti,
 }) => {
   const {
@@ -37,6 +38,11 @@ export const MatchesTab = ({
     })
   }
 
+  const formatTime = timeStr => {
+    if (!timeStr) return ''
+    return timeStr
+  }
+
   const getPredictionBet = pred => pred?.lukCoinsBet ?? pred?.xpBet ?? 0
   const getPredictionWin = pred => pred?.lukCoinsWin ?? pred?.potentialWin ?? 0
   const getPredictionStatus = (pred, matchWinner) => {
@@ -53,6 +59,42 @@ export const MatchesTab = ({
     if (predictionData?.userEmail) return predictionData.userEmail.split('@')[0]
     if (odedBy) return odedBy.slice(0, 6)
     return 'Usuario'
+  }
+
+  const getPositionLabel = (value) => {
+    const map = {
+      portero: 'Portero',
+      cierre: 'Cierre / Defensa',
+      lateral_izq: 'Lateral Izq',
+      lateral_der: 'Lateral Der',
+      medio: 'Mediocampista',
+      pivote: 'Pivote',
+      delantero: 'Delantero',
+    }
+    return map[value] || ''
+  }
+
+  const getPositionGroup = (value) => {
+    if (!value) return 'Sin posición'
+    if (value === 'portero') return 'Portero'
+    if (value === 'cierre' || value === 'lateral_izq' || value === 'lateral_der') return 'Defensa'
+    if (value === 'medio' || value === 'pivote') return 'Medio'
+    if (value === 'delantero') return 'Delantero'
+    return 'Otro'
+  }
+
+  const getTeamFormationSummary = (teamIds, positions = {}) => {
+    const counts = {}
+    teamIds.forEach(id => {
+      const group = getPositionGroup(positions[id])
+      if (group === 'Sin posición') return
+      counts[group] = (counts[group] || 0) + 1
+    })
+    const ordered = ['Portero', 'Defensa', 'Medio', 'Delantero']
+    const parts = ordered
+      .filter(k => counts[k])
+      .map(k => `${k} ${counts[k]}`)
+    return parts.length > 0 ? parts.join(' · ') : 'Sin posiciones'
   }
 
   const toggleDetails = (matchId) => {
@@ -101,7 +143,10 @@ export const MatchesTab = ({
               <div className="match-header">
                 <div>
                   <div className="match-date">{formatDate(match.date)}</div>
-                  <div className="match-venue">{match.venue}</div>
+                  <div className="match-venue">
+                    {match.venue}
+                    {match.time && <span> · {formatTime(match.time)}</span>}
+                  </div>
                   {match.winner === 'tie' && (
                     <div className="match-result tie">Empate</div>
                   )}
@@ -110,7 +155,8 @@ export const MatchesTab = ({
                   {user &&
                     userPlayer &&
                     !predictions[match.id]?.[user.uid] &&
-                    !match.winner && (
+                    !match.winner &&
+                    (canPredictMatch ? canPredictMatch(match) : true) && (
                       <button className="predict-btn" onClick={() => onOpenPrediction(match)}>
                         Predecir
                       </button>
@@ -158,10 +204,18 @@ export const MatchesTab = ({
                     Equipo Blanco
                     {match.winner === 'white' && ' · Ganador'}
                   </div>
+                  <div className="match-formation">
+                    {getTeamFormationSummary(match.teamWhite, match.positions)}
+                  </div>
                   <div className="match-team-players">
                     {match.teamWhite.map(id => (
                       <span key={id} className="match-player-tag">
-                        {getPlayerName(id)}
+                        <span className="match-player-name">{getPlayerName(id)}</span>
+                        {match.positions?.[id] && (
+                          <span className="match-player-position">
+                            {getPositionLabel(match.positions[id])}
+                          </span>
+                        )}
                       </span>
                     ))}
                   </div>
@@ -173,10 +227,18 @@ export const MatchesTab = ({
                     Equipo Negro
                     {match.winner === 'black' && ' · Ganador'}
                   </div>
+                  <div className="match-formation">
+                    {getTeamFormationSummary(match.teamBlack, match.positions)}
+                  </div>
                   <div className="match-team-players">
                     {match.teamBlack.map(id => (
                       <span key={id} className="match-player-tag">
-                        {getPlayerName(id)}
+                        <span className="match-player-name">{getPlayerName(id)}</span>
+                        {match.positions?.[id] && (
+                          <span className="match-player-position">
+                            {getPositionLabel(match.positions[id])}
+                          </span>
+                        )}
                       </span>
                     ))}
                   </div>
