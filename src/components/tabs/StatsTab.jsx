@@ -3,15 +3,16 @@
  * Shows ranking table and featured players
  */
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useApp } from '../../contexts'
-import { AvatarImage, EmptyState } from '../common'
+import { AvatarImage, AppIcon, EmptyState } from '../common'
 
 export const StatsTab = ({
   stats,
   playerOfWeek,
   playerOfMonth,
   weeklyHistory = [],
+  monthlyHistory = [],
   onPlayerClick,
   calculateXP,
   getRank,
@@ -21,13 +22,26 @@ export const StatsTab = ({
   announcements,
 }) => {
   const { players, timeFilter, getPlayerPhoto } = useApp()
-  
-  // Search and sort state
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sortBy, setSortBy] = useState('rankingScore')
-  const [sortDir, setSortDir] = useState('desc')
+
+  // Sort state
+  const [sortBy, setSortBy] = useState(() => {
+    try {
+      return localStorage.getItem('lukto_stats_sortBy') || 'rankingScore'
+    } catch {
+      return 'rankingScore'
+    }
+  })
+  const [sortDir, setSortDir] = useState(() => {
+    try {
+      return localStorage.getItem('lukto_stats_sortDir') || 'desc'
+    } catch {
+      return 'desc'
+    }
+  })
   const [showWeekHistory, setShowWeekHistory] = useState(false)
   const lastWeekHistoryOpenAt = useRef(0)
+  const [showMonthHistory, setShowMonthHistory] = useState(false)
+  const lastMonthHistoryOpenAt = useRef(0)
 
   const potwPlayer = playerOfWeek ? players.find(p => p.id === playerOfWeek.id) : null
   const potmPlayer = playerOfMonth ? players.find(p => p.id === playerOfMonth.id) : null
@@ -49,16 +63,19 @@ export const StatsTab = ({
     return d.toISOString().split('T')[0]
   }, [])
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('lukto_stats_sortBy', sortBy)
+      localStorage.setItem('lukto_stats_sortDir', sortDir)
+    } catch {
+      /* Ignore */
+    }
+  }, [sortBy, sortDir])
+
   // Filter and sort stats
   const filteredStats = useMemo(() => {
     let result = [...stats]
-    
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter(p => p.name?.toLowerCase().includes(query))
-    }
-    
+
     // Sort
     result.sort((a, b) => {
       let aVal, bVal
@@ -99,7 +116,7 @@ export const StatsTab = ({
     })
     
     return result
-  }, [stats, searchQuery, sortBy, sortDir, calculateXP])
+  }, [stats, sortBy, sortDir, calculateXP])
 
   const handleSort = (column) => {
     if (sortBy === column) {
@@ -230,33 +247,57 @@ export const StatsTab = ({
         </div>
 
         {/* Player of the Month */}
-        {playerOfMonth && potmPlayer && (
-          <div className="featured-card month">
-            <div className="featured-badge">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" />
-              </svg>
-              Jugador del Mes
-            </div>
-            <div className="featured-content">
-              <AvatarImage
-                src={getPlayerPhoto(playerOfMonth.id)}
-                name={potmPlayer?.name || ''}
-                imgClassName="featured-avatar"
-                fallbackClassName="featured-avatar-placeholder"
-              />
+        <div
+          className="featured-card month clickable"
+          role="button"
+          tabIndex={0}
+          onClick={() => {
+            lastMonthHistoryOpenAt.current = Date.now()
+            setShowMonthHistory(true)
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              lastMonthHistoryOpenAt.current = Date.now()
+              setShowMonthHistory(true)
+            }
+          }}
+        >
+          <div className="featured-badge">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+              <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" />
+            </svg>
+            Jugador del Mes
+          </div>
+          <div className="featured-content">
+            {playerOfMonth && potmPlayer ? (
+              <>
+                <AvatarImage
+                  src={getPlayerPhoto(playerOfMonth.id)}
+                  name={potmPlayer?.name || ''}
+                  imgClassName="featured-avatar"
+                  fallbackClassName="featured-avatar-placeholder"
+                />
+                <div className="featured-info">
+                  <h3>{potmPlayer?.name}</h3>
+                  <div className="featured-stats">
+                    <span className="stat-item">
+                      {playerOfMonth.wins}V {playerOfMonth.ties || 0}E {playerOfMonth.losses || 0}D
+                    </span>
+                    <span className="stat-item highlight">{playerOfMonth.winRate}%</span>
+                  </div>
+                </div>
+              </>
+            ) : (
               <div className="featured-info">
-                <h3>{potmPlayer?.name}</h3>
+                <h3>Sin datos del mes</h3>
                 <div className="featured-stats">
-                  <span className="stat-item">
-                    {playerOfMonth.wins}V {playerOfMonth.ties || 0}E {playerOfMonth.losses || 0}D
-                  </span>
-                  <span className="stat-item highlight">{playerOfMonth.winRate}%</span>
+                  <span className="stat-item">Toca para ver el ranking mensual</span>
                 </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {showWeekHistory && (
@@ -312,6 +353,55 @@ export const StatsTab = ({
         </div>
       )}
 
+      {showMonthHistory && (
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            if (Date.now() - lastMonthHistoryOpenAt.current < 350) return
+            setShowMonthHistory(false)
+          }}
+        >
+          <div className="modal weekly-history-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Jugadores del Mes</h2>
+              <button className="modal-close" onClick={() => setShowMonthHistory(false)}>×</button>
+            </div>
+            <div className="weekly-history-list">
+              {monthlyHistory.length === 0 ? (
+                <p className="weekly-history-empty">Aún no hay meses con datos.</p>
+              ) : (
+                monthlyHistory.map(entry => {
+                  const winner = entry.winner ? players.find(p => p.id === entry.winner.id) : null
+                  return (
+                    <div key={entry.key} className="weekly-history-item">
+                      <div className="weekly-history-dates">{entry.monthLabel}</div>
+                      {winner ? (
+                        <div className="weekly-history-winner">
+                          <AvatarImage
+                            src={getPlayerPhoto(entry.winner.id)}
+                            name={winner.name}
+                            imgClassName="weekly-history-avatar"
+                            fallbackClassName="weekly-history-avatar-placeholder"
+                          />
+                          <div className="weekly-history-info">
+                            <span className="weekly-history-name">{winner.name}</span>
+                            <span className="weekly-history-stats">
+                              {entry.winner.wins}V {entry.winner.ties || 0}E {entry.winner.losses || 0}D · {entry.winner.winRate}%
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="weekly-history-none">Sin datos suficientes</div>
+                      )}
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <h2 className="section-title">
         {timeFilter === 'all'
           ? 'Ranking General'
@@ -319,24 +409,6 @@ export const StatsTab = ({
             ? 'Ranking del Mes'
             : 'Ranking de la Semana'}
       </h2>
-
-      {/* Search Bar */}
-      <div className="stats-search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="M21 21l-4.35-4.35"/>
-        </svg>
-        <input
-          type="text"
-          placeholder="Buscar jugador..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="search-input"
-        />
-        {searchQuery && (
-          <button className="search-clear" onClick={() => setSearchQuery('')}>×</button>
-        )}
-      </div>
 
       {/* Sort Chips */}
       <div className="sort-chips">
@@ -364,107 +436,159 @@ export const StatsTab = ({
       </div>
 
       {filteredStats.length > 0 ? (
-        <table className="stats-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th onClick={() => handleSort('name')} className="sortable">
+        <>
+          <div className="desktop-ranking-table">
+            <table className="stats-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+              <th onClick={() => handleSort('name')} className="sortable" title="Orden alfabético por nombre">
                 Jugador <SortIcon column="name" />
               </th>
               <th className="rank-col"></th>
-              <th onClick={() => handleSort('rankingScore')} className="sortable">
+              <th onClick={() => handleSort('rankingScore')} className="sortable" title="Score combinado entre win rate y rating">
                 Score <SortIcon column="rankingScore" />
               </th>
-              <th onClick={() => handleSort('winRate')} className="sortable">
+              <th onClick={() => handleSort('winRate')} className="sortable" title="Win Rate: (Victorias + 0.5*Empates) / Partidos">
                 WR <SortIcon column="winRate" />
               </th>
               <th className="bar-col"></th>
-              <th onClick={() => handleSort('wins')} className="sortable">
+              <th onClick={() => handleSort('wins')} className="sortable" title="Total de victorias">
                 V <SortIcon column="wins" />
               </th>
-              <th>E</th>
-              <th>D</th>
-              <th onClick={() => handleSort('mvps')} className="sortable">
+              <th title="Empates">E</th>
+              <th title="Derrotas">D</th>
+              <th onClick={() => handleSort('mvps')} className="sortable" title="Cantidad de MVPs">
                 MVP <SortIcon column="mvps" />
               </th>
-              <th onClick={() => handleSort('avgRating')} className="sortable">
+              <th onClick={() => handleSort('avgRating')} className="sortable" title="Promedio de calificaciones recibidas">
                 Rat <SortIcon column="avgRating" />
               </th>
-              <th onClick={() => handleSort('xp')} className="sortable">
+              <th onClick={() => handleSort('xp')} className="sortable" title="Experiencia acumulada">
                 XP <SortIcon column="xp" />
               </th>
-            </tr>
-          </thead>
-          <tbody>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStats.map((player, index) => {
+                  const xp = calculateXP(player.id)
+                  const rank = getRank(xp)
+                  return (
+                    <tr key={player.id} onClick={() => onPlayerClick(player.id)} className="clickable-row">
+                      <td>
+                        <span className={`rank rank-${index + 1}`}>{index + 1}</span>
+                      </td>
+                      <td>
+                        <div className="player-name">
+                          <AvatarImage
+                            src={getPlayerPhoto(player.id)}
+                            name={player.name}
+                            imgClassName="player-avatar-img"
+                            fallbackClassName="player-avatar"
+                          />
+                          {player.name}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="rank-icon-cell" style={{ color: rank.color }} title={rank.name}>
+                          {getRankIcon(rank.key, 20)}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="ranking-score">{player.rankingScore}</span>
+                      </td>
+                      <td>
+                        <span className={`win-rate ${getWinRateClass(player.winRate)}`}>
+                          {typeof player.winRate === 'number' ? player.winRate.toFixed(0) : player.winRate || 0}%
+                        </span>
+                      </td>
+                      <td>
+                        <div className="winrate-bar-container">
+                          <div
+                            className={`winrate-bar ${getWinRateClass(player.winRate)}`}
+                            style={{ width: `${player.winRate}%` }}
+                          />
+                        </div>
+                      </td>
+                      <td>
+                        <span className="stat-value wins">{player.wins}</span>
+                      </td>
+                      <td>
+                        <span className="stat-value ties">{player.ties || 0}</span>
+                      </td>
+                      <td>
+                        <span className="stat-value losses">{player.losses}</span>
+                      </td>
+                      <td>
+                        <span className={`mvp-count ${player.mvps > 0 ? 'has-mvps' : ''}`}>
+                          {player.mvps > 0 ? player.mvps : '-'}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`rating-value ${getRatingClass(player.avgRating ? parseFloat(player.avgRating) : 0)}`}
+                        >
+                          {player.avgRating || '-'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="xp-value">{xp}</span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mobile-ranking-list">
             {filteredStats.map((player, index) => {
               const xp = calculateXP(player.id)
               const rank = getRank(xp)
               return (
-                <tr key={player.id} onClick={() => onPlayerClick(player.id)} className="clickable-row">
-                  <td>
+                <article
+                  key={`mobile-${player.id}`}
+                  className="mobile-ranking-card"
+                  onClick={() => onPlayerClick(player.id)}
+                >
+                  <div className="mrc-header">
                     <span className={`rank rank-${index + 1}`}>{index + 1}</span>
-                  </td>
-                  <td>
-                    <div className="player-name">
-                      <AvatarImage
-                        src={getPlayerPhoto(player.id)}
-                        name={player.name}
-                        imgClassName="player-avatar-img"
-                        fallbackClassName="player-avatar"
-                      />
-                      {player.name}
+                    <AvatarImage
+                      src={getPlayerPhoto(player.id)}
+                      name={player.name}
+                      imgClassName="player-avatar-img"
+                      fallbackClassName="player-avatar"
+                    />
+                    <div className="mrc-player">
+                      <span className="mrc-name">{player.name}</span>
+                      <span className="mrc-rank" style={{ color: rank.color }}>
+                        {getRankIcon(rank.key, 14)} {rank.name}
+                      </span>
                     </div>
-                  </td>
-                  <td>
-                    <span className="rank-icon-cell" style={{ color: rank.color }} title={rank.name}>
-                      {getRankIcon(rank.key, 20)}
-                    </span>
-                  </td>
-                  <td>
                     <span className="ranking-score">{player.rankingScore}</span>
-                  </td>
-                  <td>
-                    <span className={`win-rate ${getWinRateClass(player.winRate)}`}>
-                      {typeof player.winRate === 'number' ? player.winRate.toFixed(0) : player.winRate || 0}%
+                  </div>
+                  <div className="mrc-stats">
+                    <span className="mrc-chip">
+                      <AppIcon name="target" size={12} /> {Math.round(player.winRate || 0)}% WR
                     </span>
-                  </td>
-                  <td>
-                    <div className="winrate-bar-container">
-                      <div
-                        className={`winrate-bar ${getWinRateClass(player.winRate)}`}
-                        style={{ width: `${player.winRate}%` }}
-                      />
-                    </div>
-                  </td>
-                  <td>
-                    <span className="stat-value wins">{player.wins}</span>
-                  </td>
-                  <td>
-                    <span className="stat-value ties">{player.ties || 0}</span>
-                  </td>
-                  <td>
-                    <span className="stat-value losses">{player.losses}</span>
-                  </td>
-                  <td>
-                    <span className={`mvp-count ${player.mvps > 0 ? 'has-mvps' : ''}`}>
-                      {player.mvps > 0 ? player.mvps : '-'}
+                    <span className="mrc-chip">
+                      <AppIcon name="star" size={12} /> {player.avgRating || '-'}
                     </span>
-                  </td>
-                  <td>
-                    <span
-                      className={`rating-value ${getRatingClass(player.avgRating ? parseFloat(player.avgRating) : 0)}`}
-                    >
-                      {player.avgRating || '-'}
+                    <span className="mrc-chip">
+                      <AppIcon name="spark" size={12} /> {xp} XP
                     </span>
-                  </td>
-                  <td>
-                    <span className="xp-value">{xp}</span>
-                  </td>
-                </tr>
+                    <span className="mrc-chip">
+                      <AppIcon name="trophy" size={12} /> {player.mvps || 0} MVP
+                    </span>
+                    <span className="mrc-chip line">
+                      {player.wins}V · {player.ties || 0}E · {player.losses}D
+                    </span>
+                  </div>
+                </article>
               )
             })}
-          </tbody>
-        </table>
+          </div>
+        </>
       ) : (
         <EmptyState
           type="noStats"

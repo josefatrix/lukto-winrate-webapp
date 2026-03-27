@@ -8,6 +8,8 @@ import { collection, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore'
 
 // Constants
 export const SUPER_ADMIN_EMAIL = 'joseescorcia01@gmail.com'
+const VALID_TIME_FILTERS = ['all', 'month', 'week']
+const VALID_TABS = ['stats', 'ratings', 'matches', 'analytics', 'store', 'dashboard', 'new', 'players', 'users', 'tools', 'allRatings']
 
 const AppContext = createContext(null)
 
@@ -23,6 +25,7 @@ export const AppProvider = ({ children }) => {
   // Core state
   const [players, setPlayers] = useState([])
   const [matches, setMatches] = useState([])
+  const [teamPolls, setTeamPolls] = useState([])
   const [ratings, setRatings] = useState({})
   const [predictions, setPredictions] = useState({})
   const [dataLoaded, setDataLoaded] = useState(false)
@@ -62,9 +65,23 @@ export const AppProvider = ({ children }) => {
   const [activityLogs, setActivityLogs] = useState([])
 
   // UI state
-  const [activeTab, setActiveTab] = useState('stats')
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      const saved = localStorage.getItem('lukto_activeTab')
+      return VALID_TABS.includes(saved) ? saved : 'stats'
+    } catch {
+      return 'stats'
+    }
+  })
   const [toast, setToast] = useState(null)
-  const [timeFilter, setTimeFilter] = useState('all')
+  const [timeFilter, setTimeFilter] = useState(() => {
+    try {
+      const saved = localStorage.getItem('lukto_timeFilter')
+      return VALID_TIME_FILTERS.includes(saved) ? saved : 'all'
+    } catch {
+      return 'all'
+    }
+  })
 
   // Refs
   const confettiTriggered = useRef({})
@@ -91,17 +108,17 @@ export const AppProvider = ({ children }) => {
           playerId: null,
           registeredAt: new Date().toISOString(),
         })
-        console.log('✅ Nuevo usuario registrado:', currentUser.email)
+        console.log('Nuevo usuario registrado:', currentUser.email)
       } else {
         const existingData = linkDoc.data()
         // Only update if playerId is not set (still pending)
         if (!existingData.playerId) {
           await setDoc(linkRef, userData, { merge: true })
-          console.log('✅ Usuario pendiente actualizado:', currentUser.email)
+          console.log('Usuario pendiente actualizado:', currentUser.email)
         } else {
           // User already linked, just update photo/name if changed
           await setDoc(linkRef, userData, { merge: true })
-          console.log('✅ Usuario vinculado actualizado:', currentUser.email)
+          console.log('Usuario vinculado actualizado:', currentUser.email)
         }
       }
     } catch (error) {
@@ -133,6 +150,22 @@ export const AppProvider = ({ children }) => {
       /* Ignore */
     }
   }, [darkMode])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('lukto_activeTab', activeTab)
+    } catch {
+      /* Ignore */
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('lukto_timeFilter', timeFilter)
+    } catch {
+      /* Ignore */
+    }
+  }, [timeFilter])
 
   // Admin check
   useEffect(() => {
@@ -191,7 +224,7 @@ export const AppProvider = ({ children }) => {
           const links = {}
           const pending = []
 
-          console.log('📥 userLinks snapshot:', snapshot.docs.length, 'documentos')
+          console.log('userLinks snapshot:', snapshot.docs.length, 'documentos')
 
           snapshot.docs.forEach(docSnap => {
             const data = docSnap.data()
@@ -214,11 +247,11 @@ export const AppProvider = ({ children }) => {
                 userEmail: data.userEmail || 'Sin email',
                 userPhoto: data.userPhoto || ''
               })
-              console.log('👤 Usuario pendiente:', data.userEmail || docId)
+              console.log('Usuario pendiente:', data.userEmail || docId)
             }
           })
 
-          console.log('📊 Total vinculados:', Object.keys(links).length, '| Pendientes:', pending.length)
+          console.log('Total vinculados:', Object.keys(links).length, '| Pendientes:', pending.length)
 
           setUserLinks(links)
           setPendingUsers(pending)
@@ -250,8 +283,9 @@ export const AppProvider = ({ children }) => {
         collection(db, 'matches'),
         snapshot => {
           if (!snapshot.empty) {
-            const matchesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-            setMatches(matchesData.sort((a, b) => new Date(a.date) - new Date(b.date)))
+            const allDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+            setMatches(allDocs.filter(m => m.type !== 'teamPoll').sort((a, b) => new Date(a.date) - new Date(b.date)))
+            setTeamPolls(allDocs.filter(m => m.type === 'teamPoll').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
           }
           setDataLoaded(true)
         },
@@ -409,6 +443,7 @@ export const AppProvider = ({ children }) => {
     setPlayers,
     matches,
     setMatches,
+    teamPolls,
     ratings,
     predictions,
     dataLoaded,

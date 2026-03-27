@@ -31,6 +31,8 @@
     "release:major": "npm version major && git push origin main --tags"
   },
   "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.17.10",
     "canvas-confetti": "^1.9.2",
     "chart.js": "^4.4.1",
     "firebase": "^10.7.1",
@@ -41,7 +43,8 @@
     "react-confetti": "^6.1.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.1",
-    "recharts": "^2.10.3"
+    "recharts": "^2.10.3",
+    "three": "^0.165.0"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",

@@ -28,6 +28,7 @@ export const useStats = () => {
     })
 
     matches.forEach(match => {
+      if (!match.teamWhite || !match.teamBlack) return
       const winner = match.winner
       const decided = winner === 'white' || winner === 'black'
       const tied = winner === 'tie'
@@ -145,6 +146,7 @@ export const useStats = () => {
     })
 
     getFilteredMatches.forEach(match => {
+      if (!match.teamWhite || !match.teamBlack) return
       const winner = match.winner
       const decided = winner === 'white' || winner === 'black'
       const tied = winner === 'tie'
@@ -229,6 +231,7 @@ export const useStats = () => {
 
     const periodStats = {}
     periodMatches.forEach(match => {
+      if (!match.teamWhite || !match.teamBlack) return
       const winner = match.winner
       const decided = winner === 'white' || winner === 'black'
       const whiteWon = winner === 'white'
@@ -318,6 +321,30 @@ export const useStats = () => {
     return computePlayerOfMatches(periodMatches, 2)
   }
 
+  const getMonthlyWinners = () => {
+    // Get all unique year-month combos from matches, sorted newest first
+    const groups = new Map()
+    matches.forEach(match => {
+      const d = new Date(match.date)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      if (!groups.has(key)) groups.set(key, [])
+      groups.get(key).push(match)
+    })
+
+    return Array.from(groups.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([key, monthMatches]) => {
+        const [year, month] = key.split('-').map(Number)
+        const monthLabel = new Date(year, month - 1, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+        return {
+          key,
+          monthLabel,
+          winner: computePlayerOfMatches(monthMatches, 2),
+        }
+      })
+  }
+
+
   const getWeeklyWinners = (limit = 8) => {
     const startOfWeek = date => {
       const d = new Date(date)
@@ -359,6 +386,7 @@ export const useStats = () => {
     filteredStats,
     getFilteredMatches,
     getPlayerOfMonth,
+    getMonthlyWinners,
     getPlayerOfWeek,
     getWeeklyWinners,
   }

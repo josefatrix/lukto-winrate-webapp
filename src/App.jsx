@@ -4,16 +4,17 @@
  */
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useApp, SUPER_ADMIN_EMAIL } from './contexts'
-import { useStats, useHaptic } from './hooks'
+import { useStats, useHaptic, useMatchBuilder } from './hooks'
 import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs, addDoc, deleteDoc } from 'firebase/firestore'
 import { db } from './firebase'
 import confetti from 'canvas-confetti'
 
 // Import components
 import { Header, BottomNav } from './components/layout'
-import { StatsTab, MatchesTab, RatingsTab } from './components/tabs'
+import { StatsTab, MatchesTab, MatchBuilderTab, RatingsTab, StoreTab } from './components/tabs'
+import { getPositionGroup } from './utils/matchConstants'
 import { AdminLoginModal, PendingUserModal } from './components/modals'
-import { AvatarImage, FloatingActionButton, SkeletonPage, SkeletonTable, SkeletonMatchesList, Onboarding, useOnboarding, EmptyState, AnimatedCounter, PendingRatingsNotification } from './components/common'
+import { AvatarImage, AvatarFigure, AvatarFigure3D, AppIcon, FloatingActionButton, SkeletonPage, SkeletonTable, SkeletonMatchesList, Onboarding, useOnboarding, EmptyState, AnimatedCounter, PendingRatingsNotification, createAvatarState } from './components/common'
 
 // ============ HELPER FUNCTIONS ============
 
@@ -384,9 +385,11 @@ function PlayerProfileModal({
   const xp = calculateXP ? calculateXP(playerId) : 0
   const rank = getRank ? getRank(xp) : { name: 'Bronce', color: '#CD7F32', key: 'bronce' }
   const playerRatings = ratings?.[playerId] || []
-  const photo = getPlayerPhoto ? getPlayerPhoto(playerId) : null
   const linkedUserId = Object.entries(userLinks || {}).find(([, data]) => data?.playerId === playerId)?.[0]
   const cosmetics = linkedUserId ? userLinks?.[linkedUserId]?.cosmetics : null
+  const avatarData = linkedUserId ? userLinks?.[linkedUserId]?.avatar : null
+  const avatarState = createAvatarState(avatarData || {})
+  const avatarLoadout = avatarState.loadout
   const banner = cosmetics?.banner || null
   const nameStyle = cosmetics?.nameStyle || null
   const bannerTextMap = {
@@ -397,6 +400,13 @@ function PlayerProfileModal({
     legend: 'Leyenda',
   }
   const bannerText = banner ? bannerTextMap[banner] : null
+  const avatarJerseyLabel = avatarLoadout.jersey === 'classic_stripes'
+    ? 'Kit Rojiblanco'
+    : avatarLoadout.jersey === 'blackout'
+      ? 'Kit Blackout'
+      : avatarLoadout.jersey === 'mint_wave'
+        ? 'Kit Mint Wave'
+        : 'Kit Base Verde'
   
   // Calculate all stats averages for comparison
   const ratingSamples = stats?.filter(p => p.avgRating) || []
@@ -601,7 +611,7 @@ function PlayerProfileModal({
         <div className={`profile-hero-v2 ${banner ? `banner-${banner}` : ''}`}>
           {bannerText && <div className="profile-banner-text">{bannerText}</div>}
           <div className={`ph-avatar ${cosmetics?.avatarGlow ? 'glow' : ''}`}>
-            <AvatarImage src={photo} name={player.name} />
+            <AvatarFigure3D loadout={avatarLoadout} size={140} className="ph-avatar-figure3d" interactive />
           </div>
           <h2
             className={`ph-name ${cosmetics?.goldName ? 'gold' : ''} ${nameStyle ? `name-${nameStyle}` : ''}`}
@@ -609,6 +619,7 @@ function PlayerProfileModal({
           >
             {player.name}
           </h2>
+          <span className="ph-avatar-kit">{avatarJerseyLabel}</span>
           
           {/* Rank & XP Progress */}
           <div className="ph-rank-section">
@@ -669,7 +680,7 @@ function PlayerProfileModal({
                     <span className="role-label">{entry.role}</span>
                     <span className="role-stats">{entry.wins}V - {entry.ties}E - {entry.losses}D</span>
                     <span className="role-stats">{entry.winRate}% WR</span>
-                    <span className="role-stats">{entry.avgRating || '-'} ⭐</span>
+                    <span className="role-stats"><AppIcon name="star" size={12} /> {entry.avgRating || '-'}</span>
                   </div>
                 ))}
               </div>
@@ -756,7 +767,7 @@ function PlayerProfileModal({
                 <span className="csb-label">Racha actual</span>
               </div>
               {currentStreak.count >= 3 && currentStreak.type === 'win' && (
-                <span className="csb-badge">🔥</span>
+                <span className="csb-badge"><AppIcon name="spark" size={14} /></span>
               )}
             </div>
           )}
@@ -1160,9 +1171,9 @@ function PlayerProfileModal({
                       <span className={`period-wr ${weekStats.winRate >= 50 ? 'good' : 'bad'}`}>{weekStats.winRate}%</span>
                     </div>
                     <div className="period-details">
-                      {weekStats.avgRating && <span>⭐ {weekStats.avgRating}</span>}
-                      {weekStats.mvps > 0 && <span>🏆 {weekStats.mvps} MVP</span>}
-                      <span>📊 {weekStats.played} partidos</span>
+                      {weekStats.avgRating && <span><AppIcon name="star" size={12} /> {weekStats.avgRating}</span>}
+                      {weekStats.mvps > 0 && <span><AppIcon name="trophy" size={12} /> {weekStats.mvps} MVP</span>}
+                      <span><AppIcon name="note" size={12} /> {weekStats.played} partidos</span>
                     </div>
                   </div>
                 )}
@@ -1174,9 +1185,9 @@ function PlayerProfileModal({
                       <span className={`period-wr ${monthStats.winRate >= 50 ? 'good' : 'bad'}`}>{monthStats.winRate}%</span>
                     </div>
                     <div className="period-details">
-                      {monthStats.avgRating && <span>⭐ {monthStats.avgRating}</span>}
-                      {monthStats.mvps > 0 && <span>🏆 {monthStats.mvps} MVP</span>}
-                      <span>📊 {monthStats.played} partidos</span>
+                      {monthStats.avgRating && <span><AppIcon name="star" size={12} /> {monthStats.avgRating}</span>}
+                      {monthStats.mvps > 0 && <span><AppIcon name="trophy" size={12} /> {monthStats.mvps} MVP</span>}
+                      <span><AppIcon name="note" size={12} /> {monthStats.played} partidos</span>
                     </div>
                   </div>
                 )}
@@ -1202,7 +1213,7 @@ function PlayerProfileModal({
                 
                 <div className="sc-player">
                   <div className="sc-avatar" style={{ borderColor: rank.color }}>
-                    <AvatarImage src={photo} name={player.name} />
+                    <AvatarFigure loadout={avatarLoadout} size={94} />
                   </div>
                   <h2 className="sc-name">{player.name}</h2>
                   <div className="sc-rank" style={{ color: rank.color }}>
@@ -1315,14 +1326,14 @@ function PendingUserCard({ pending, players, linkingUser, onLink, onDelete }) {
               ))}
             </select>
             <button className="link-btn" onClick={handleLink}>
-              ✓
+              <AppIcon name="check" size={14} />
             </button>
             <button 
               className="delete-user-btn" 
               onClick={() => onDelete(pending.odedBy, pending.userName || pending.userEmail)}
               title="Eliminar cuenta"
             >
-              🗑️
+              <AppIcon name="trash" size={14} />
             </button>
           </>
         )}
@@ -1376,10 +1387,13 @@ function App() {
   } = useApp()
 
   // Stats hook
-  const { stats, filteredStats, getPlayerOfMonth, getPlayerOfWeek, getWeeklyWinners } = useStats()
+  const { stats, filteredStats, getPlayerOfMonth, getMonthlyWinners, getPlayerOfWeek, getWeeklyWinners } = useStats()
 
   // Onboarding hook
   const { showOnboarding, completeOnboarding } = useOnboarding()
+
+  // Match builder hook
+  const matchBuilder = useMatchBuilder({ showToast, logActivity })
 
   // Local state
   const [showLoginModal, setShowLoginModal] = useState(false)
@@ -1398,51 +1412,40 @@ function App() {
   const [adminExportStart, setAdminExportStart] = useState('')
   const [adminExportEnd, setAdminExportEnd] = useState('')
   const [moderationUserId, setModerationUserId] = useState('')
-
-  // Match form state
-  const [matchDate, setMatchDate] = useState('')
-  const [matchTime, setMatchTime] = useState('')
-  const [matchVenue, setMatchVenue] = useState('LUKTO')
-  const [teamWhite, setTeamWhite] = useState([])
-  const [teamBlack, setTeamBlack] = useState([])
-  const [matchPositions, setMatchPositions] = useState({})
-  const [winner, setWinner] = useState('')
-  const [editingMatchId, setEditingMatchId] = useState(null)
-
-  const POSITION_OPTIONS = [
-    { value: '', label: 'Sin posición' },
-    { value: 'portero', label: 'Portero' },
-    { value: 'cierre', label: 'Cierre / Defensa' },
-    { value: 'lateral_izq', label: 'Lateral Izq' },
-    { value: 'lateral_der', label: 'Lateral Der' },
-    { value: 'medio', label: 'Mediocampista' },
-    { value: 'pivote', label: 'Pivote' },
-    { value: 'delantero', label: 'Delantero' },
-  ]
-
-  const getPositionLabel = (value) => {
-    const found = POSITION_OPTIONS.find(opt => opt.value === value)
-    return found?.label || ''
-  }
-
-  const getPositionGroup = (value) => {
-    if (!value) return 'Sin posición'
-    if (value === 'portero') return 'Portero'
-    if (value === 'cierre' || value === 'lateral_izq' || value === 'lateral_der') return 'Defensa'
-    if (value === 'medio' || value === 'pivote') return 'Medio'
-    if (value === 'delantero') return 'Delantero'
-    return 'Otro'
-  }
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false)
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('')
+  const globalSearchInputRef = useRef(null)
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirmar',
+    cancelText: 'Cancelar',
+    tone: 'danger',
+    resolve: null,
+  })
 
   // Analytics state
   const [h2hPlayer1, setH2hPlayer1] = useState(null)
   const [h2hPlayer2, setH2hPlayer2] = useState(null)
+  const [analyticsView, setAnalyticsView] = useState(() => {
+    try {
+      const saved = localStorage.getItem('lukto_analytics_view')
+      return ['teams', 'roles', 'records', 'progress', 'compare'].includes(saved) ? saved : 'teams'
+    } catch {
+      return 'teams'
+    }
+  })
+  const [progressRoleFilter, setProgressRoleFilter] = useState('all')
 
   // Prediction state
   const [showPredictionModal, setShowPredictionModal] = useState(false)
   const [predictionMatch, setPredictionMatch] = useState(null)
   const [selectedPrediction, setSelectedPrediction] = useState(null)
   const [coinBet, setCoinBet] = useState(10) // LukCoins to bet on prediction
+  const [predictedMvpId, setPredictedMvpId] = useState('')
+  const [predictedScoreWhite, setPredictedScoreWhite] = useState('')
+  const [predictedScoreBlack, setPredictedScoreBlack] = useState('')
   const [showMatchXpModal, setShowMatchXpModal] = useState(false)
   const [matchXpData, setMatchXpData] = useState(null)
 
@@ -1467,9 +1470,88 @@ function App() {
     return () => document.removeEventListener('click', handleClick)
   }, [])
 
+  useEffect(() => {
+    if (!showGlobalSearch) return
+    const id = setTimeout(() => {
+      globalSearchInputRef.current?.focus()
+    }, 10)
+    return () => clearTimeout(id)
+  }, [showGlobalSearch])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('lukto_analytics_view', analyticsView)
+    } catch {
+      /* Ignore */
+    }
+  }, [analyticsView])
+
+  useEffect(() => {
+    if (!isAdmin && ['dashboard', 'new', 'players', 'users', 'tools', 'allRatings'].includes(activeTab)) {
+      setActiveTab('stats')
+    }
+  }, [isAdmin, activeTab, setActiveTab])
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const isCmdK = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k'
+      if (isCmdK) {
+        event.preventDefault()
+        setShowGlobalSearch(true)
+      }
+      if (event.key === 'Escape') {
+        setShowGlobalSearch(false)
+        setGlobalSearchQuery('')
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const askConfirmation = useCallback(({
+    title = 'Confirmar acción',
+    message = '¿Deseas continuar?',
+    confirmText = 'Confirmar',
+    cancelText = 'Cancelar',
+    tone = 'danger',
+  } = {}) => {
+    return new Promise(resolve => {
+      setConfirmDialog({
+        open: true,
+        title,
+        message,
+        confirmText,
+        cancelText,
+        tone,
+        resolve,
+      })
+    })
+  }, [])
+
+  const resolveConfirmation = useCallback((accepted) => {
+    setConfirmDialog(current => {
+      if (typeof current.resolve === 'function') {
+        current.resolve(accepted)
+      }
+      return {
+        open: false,
+        title: '',
+        message: '',
+        confirmText: 'Confirmar',
+        cancelText: 'Cancelar',
+        tone: 'danger',
+        resolve: null,
+      }
+    })
+  }, [])
+
   // ============ CALCULATED VALUES ============
 
   const displayStats = timeFilter === 'all' ? stats : filteredStats
+  const statsById = useMemo(
+    () => Object.fromEntries((stats || []).map(playerStats => [playerStats.id, playerStats])),
+    [stats]
+  )
 
   const positionAnalytics = useMemo(() => {
     const byPlayer = {}
@@ -1567,7 +1649,7 @@ function App() {
     })
 
     return { byPlayer, byPosition }
-  }, [matches, ratings])
+  }, [matches, ratings, getPositionGroup])
 
   const roleRatingRankings = useMemo(() => {
     const rankings = {}
@@ -1619,7 +1701,7 @@ function App() {
     if (mostPlayed) records.push({ title: 'Más partidos', value: `${mostPlayed.maxVal} PJ`, playerIds: mostPlayed.leaders.map(l => l.id) })
     if (mostTies) records.push({ title: 'Más empates', value: `${mostTies.maxVal} E`, playerIds: mostTies.leaders.map(l => l.id) })
     if (bestWinRate) records.push({ title: 'Mejor Win Rate', value: `${bestWinRate.maxVal}%`, playerIds: bestWinRate.leaders.map(l => l.id) })
-    if (bestRating) records.push({ title: 'Mejor Rating', value: `${bestRating.maxVal.toFixed(1)} ⭐`, playerIds: bestRating.leaders.map(l => l.id) })
+    if (bestRating) records.push({ title: 'Mejor Rating', value: `${bestRating.maxVal.toFixed(1)} pts`, playerIds: bestRating.leaders.map(l => l.id) })
 
     const roleRatingLeaders = Object.entries(roleRatingRankings.rankings || {}).map(([role, list]) => {
       if (!list?.length) return null
@@ -1630,13 +1712,130 @@ function App() {
     roleRatingLeaders.forEach(entry => {
       records.push({
         title: `Top Rating ${entry.role}`,
-        value: `${entry.maxVal.toFixed(1)} ⭐`,
+        value: `${entry.maxVal.toFixed(1)} pts`,
         playerIds: entry.leaders.map(l => l.playerId),
       })
     })
 
     return records
   }, [stats, roleRatingRankings])
+
+  const analyticsOverview = useMemo(() => {
+    const completedMatches = matches.filter(
+      match => match.winner === 'white' || match.winner === 'black' || match.winner === 'tie'
+    ).length
+    const trackedRoles = Object.entries(roleRatingRankings.rankings || {}).filter(
+      ([role, list]) => role !== 'Sin posición' && (list?.length || 0) > 0
+    ).length
+    const activePlayers = stats.filter(player => (player.played || 0) > 0).length
+    return [
+      { id: 'matches', label: 'Partidos analizados', value: completedMatches, icon: 'ball' },
+      { id: 'roles', label: 'Posiciones activas', value: trackedRoles, icon: 'target' },
+      { id: 'records', label: 'Récords detectados', value: historicalRecords.length, icon: 'trophy' },
+      { id: 'players', label: 'Jugadores con datos', value: activePlayers, icon: 'profile' },
+    ]
+  }, [matches, roleRatingRankings, historicalRecords, stats])
+
+  const playerProgressInsights = useMemo(() => {
+    const byPlayerRole = {}
+    const sortedMatches = [...(matches || [])].sort((a, b) => new Date(a.date) - new Date(b.date))
+
+    sortedMatches.forEach(match => {
+      const allPlayers = [...(match.teamWhite || []), ...(match.teamBlack || [])]
+      const decided = match.winner === 'white' || match.winner === 'black'
+      const tied = match.winner === 'tie'
+
+      allPlayers.forEach(playerId => {
+        const role = getPositionGroup(match.positions?.[playerId] || '')
+        if (role === 'Sin posición') return
+
+        const key = `${playerId}__${role}`
+        if (!byPlayerRole[key]) byPlayerRole[key] = []
+
+        const myRatings = (ratings?.[playerId] || []).filter(r => r.matchId === match.id)
+        const ratingAvg = myRatings.length > 0
+          ? myRatings.reduce((sum, rating) => sum + rating.score, 0) / myRatings.length
+          : null
+
+        const inWhite = match.teamWhite?.includes(playerId)
+        let resultScore = 0.5
+        if (decided) {
+          const won = (inWhite && match.winner === 'white') || (!inWhite && match.winner === 'black')
+          resultScore = won ? 1 : 0
+        } else if (tied) {
+          resultScore = 0.5
+        }
+
+        byPlayerRole[key].push({
+          date: match.date,
+          resultScore,
+          ratingAvg,
+        })
+      })
+    })
+
+    const summarizeWindow = (entries) => {
+      if (!entries.length) {
+        return {
+          matches: 0,
+          winRate: null,
+          ratingAvg: null,
+        }
+      }
+
+      const winRate = (entries.reduce((sum, entry) => sum + entry.resultScore, 0) / entries.length) * 100
+      const ratingValues = entries.map(entry => entry.ratingAvg).filter(value => typeof value === 'number')
+      const ratingAvg = ratingValues.length > 0
+        ? ratingValues.reduce((sum, value) => sum + value, 0) / ratingValues.length
+        : null
+
+      return {
+        matches: entries.length,
+        winRate,
+        ratingAvg,
+      }
+    }
+
+    const rows = Object.entries(byPlayerRole).map(([key, entries]) => {
+      const [playerId, role] = key.split('__')
+      const last5 = entries.slice(-5)
+      const prev5 = entries.slice(-10, -5)
+      const last10 = entries.slice(-10)
+
+      const last5Stats = summarizeWindow(last5)
+      const prev5Stats = summarizeWindow(prev5)
+      const last10Stats = summarizeWindow(last10)
+
+      const ratingDelta5 = (last5Stats.ratingAvg !== null && prev5Stats.ratingAvg !== null)
+        ? last5Stats.ratingAvg - prev5Stats.ratingAvg
+        : null
+      const winDelta5 = (last5Stats.winRate !== null && prev5Stats.winRate !== null)
+        ? last5Stats.winRate - prev5Stats.winRate
+        : null
+
+      const trendScore = ((ratingDelta5 || 0) * 9) + ((winDelta5 || 0) * 0.55) + (Math.min(last10Stats.matches, 10) * 0.4)
+
+      return {
+        playerId,
+        role,
+        matches: entries.length,
+        trendScore,
+        last5: last5Stats,
+        prev5: prev5Stats,
+        last10: last10Stats,
+        ratingDelta5,
+        winDelta5,
+      }
+    }).filter(row => row.matches >= 3)
+      .sort((a, b) => b.trendScore - a.trendScore || b.matches - a.matches)
+
+    const roles = ['all', ...Array.from(new Set(rows.map(row => row.role))).sort()]
+
+    return {
+      rows,
+      roles,
+    }
+  }, [matches, ratings, getPositionGroup])
 
   const getMatchXpBreakdown = (playerId, match) => {
     const base = { participation: 10, win: 0, rating: 0, mvp: 0, ratingAvg: null }
@@ -1817,7 +2016,12 @@ function App() {
 
   // Remove admin email
   const handleRemoveAdmin = async email => {
-    if (!confirm(`¿Quitar permisos de admin a ${email}?`)) return
+    const confirmed = await askConfirmation({
+      title: 'Quitar permisos de admin',
+      message: `¿Quitar permisos de admin a ${email}?`,
+      confirmText: 'Quitar permisos',
+    })
+    if (!confirmed) return
     try {
       const newList = adminEmails.filter(e => e !== email)
       await setDoc(doc(db, 'settings', 'admins'), { emails: newList })
@@ -1859,7 +2063,12 @@ function App() {
   }
 
   const handleDeletePlayer = async (playerId, playerName) => {
-    if (!confirm(`¿Eliminar a "${playerName}"? Esta acción no se puede deshacer.`)) return
+    const confirmed = await askConfirmation({
+      title: 'Eliminar jugador',
+      message: `¿Eliminar a "${playerName}"? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+    })
+    if (!confirmed) return
     try {
       await setDoc(doc(db, 'players', playerId), { deleted: true }, { merge: true })
       // Actually delete
@@ -1909,66 +2118,8 @@ function App() {
 
   // ============ PREDICTION HANDLERS ============
   
-  // Calculate team win probability based on stats
-  const calculateTeamProbability = (match) => {
-    if (!match || !stats.length) return { white: 50, black: 50 }
-    
-    const getTeamStats = (teamIds) => {
-      const teamStats = teamIds?.map(pid => stats.find(s => s.id === pid)).filter(Boolean) || []
-      if (teamStats.length === 0) return { avgWinRate: 50, avgRating: 5, avgMvps: 0, recentForm: 50 }
-      
-      const avgWinRate = teamStats.reduce((s, p) => s + (p.winRate || 50), 0) / teamStats.length
-      const avgRating = teamStats.reduce((s, p) => s + (parseFloat(p.avgRating) || 5), 0) / teamStats.length
-      const avgMvps = teamStats.reduce((s, p) => s + (p.mvps || 0), 0) / teamStats.length
-      
-      // Calculate recent form (last 5 games win rate)
-      const recentWins = teamStats.reduce((total, player) => {
-        const playerMatches = matches.filter(m => 
-          (m.winner === 'white' || m.winner === 'black') &&
-          (m.teamWhite?.includes(player.id) || m.teamBlack?.includes(player.id))
-        ).slice(-5)
-        const wins = playerMatches.filter(m => {
-          const inWhite = m.teamWhite?.includes(player.id)
-          return (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
-        }).length
-        return total + (playerMatches.length > 0 ? (wins / playerMatches.length) * 100 : 50)
-      }, 0) / teamStats.length
-      
-      return { avgWinRate, avgRating, avgMvps, recentForm: recentWins }
-    }
-    
-    const whiteStats = getTeamStats(match.teamWhite)
-    const blackStats = getTeamStats(match.teamBlack)
-    
-    // Weighted score calculation
-    // Win Rate: 35%, Rating: 30%, MVPs: 15%, Recent Form: 20%
-    const calculateScore = (s) => {
-      return (s.avgWinRate * 0.35) + 
-             (s.avgRating * 3 * 0.30) + // Rating 1-10 scaled to ~30
-             (Math.min(s.avgMvps, 5) * 6 * 0.15) + // MVPs capped at 5, scaled
-             (s.recentForm * 0.20)
-    }
-    
-    const whiteScore = calculateScore(whiteStats)
-    const blackScore = calculateScore(blackStats)
-    const totalScore = whiteScore + blackScore
-    
-    // Convert to percentages
-    let whitePct = totalScore > 0 ? Math.round((whiteScore / totalScore) * 100) : 50
-    let blackPct = 100 - whitePct
-    
-    // Ensure minimum 15% and maximum 85% (never 100% sure)
-    whitePct = Math.max(15, Math.min(85, whitePct))
-    blackPct = 100 - whitePct
-    
-    return { 
-      white: whitePct, 
-      black: blackPct,
-      whiteStats,
-      blackStats
-    }
-  }
-  
+  const { calculateTeamProbability } = matchBuilder
+
   const openPredictionModal = (match) => {
     if (!user || !userPlayer) {
       showToast('error', 'Debes iniciar sesión para predecir')
@@ -1988,6 +2139,9 @@ function App() {
     }
     setPredictionMatch(match)
     setSelectedPrediction(null)
+    setPredictedMvpId('')
+    setPredictedScoreWhite('')
+    setPredictedScoreBlack('')
     setShowPredictionModal(true)
   }
 
@@ -1996,14 +2150,37 @@ function App() {
     setPredictionMatch(null)
     setSelectedPrediction(null)
     setCoinBet(10)
+    setPredictedMvpId('')
+    setPredictedScoreWhite('')
+    setPredictedScoreBlack('')
   }
 
-  const spendLukCoins = async (amount, { cosmeticsUpdate = null, boostUpdate = null } = {}) => {
-    if (!user || !userPlayer) return
+  const spendLukCoins = async (
+    amount,
+    {
+      cosmeticsUpdate = null,
+      boostUpdate = null,
+      avatarUpdate = null,
+      purchaseMeta = null,
+      successMessage = null,
+      errorMessage = 'No se pudo completar la compra',
+    } = {}
+  ) => {
+    if (!user || !userPlayer) return { ok: false, reason: 'auth_required' }
+    if (amount < 0) return { ok: false, reason: 'invalid_amount' }
+    const hasAnyChange = !!(
+      cosmeticsUpdate ||
+      boostUpdate ||
+      avatarUpdate ||
+      purchaseMeta ||
+      amount > 0
+    )
+    if (!hasAnyChange) return { ok: false, reason: 'no_changes' }
+
     const currentCoins = calculateLukCoins(userPlayer)
     if (amount > currentCoins) {
       showToast('error', 'No tienes suficientes LukCoins')
-      return
+      return { ok: false, reason: 'insufficient_funds' }
     }
     const currentLink = userLinks?.[user.uid] || {}
     const newSpent = (currentLink.lukcoinsSpent || 0) + amount
@@ -2016,22 +2193,82 @@ function App() {
           purchasedAt: new Date().toISOString(),
         }
       : currentLink.xpBoostPending || null
+    const currentHistory = Array.isArray(currentLink.purchaseHistory)
+      ? currentLink.purchaseHistory
+      : []
+    const nowIso = new Date().toISOString()
+
+    const currentAvatar = createAvatarState(currentLink.avatar || {})
+    let nextAvatar = currentAvatar
+    if (avatarUpdate) {
+      const inventoryAdd = avatarUpdate.inventoryAdd || {}
+      const loadoutPatch = avatarUpdate.loadoutPatch || {}
+      const clonedInventory = Object.entries(currentAvatar.inventory || {}).reduce((acc, [slot, values]) => {
+        acc[slot] = { ...(values || {}) }
+        return acc
+      }, {})
+      nextAvatar = {
+        loadout: { ...currentAvatar.loadout },
+        inventory: clonedInventory,
+      }
+
+      Object.entries(inventoryAdd).forEach(([slot, values]) => {
+        if (!nextAvatar.inventory[slot]) nextAvatar.inventory[slot] = {}
+        const slotValues = Array.isArray(values) ? values : [values]
+        slotValues.forEach(value => {
+          if (typeof value === 'string' && value.trim()) {
+            nextAvatar.inventory[slot][value] = true
+          }
+        })
+      })
+
+      Object.entries(loadoutPatch).forEach(([slot, value]) => {
+        if (typeof value !== 'string' || !value.trim()) return
+        if (!nextAvatar.inventory[slot]) nextAvatar.inventory[slot] = {}
+        nextAvatar.inventory[slot][value] = true
+        nextAvatar.loadout[slot] = value
+      })
+    }
+
+    const purchaseEntry = purchaseMeta
+      ? {
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+          title: purchaseMeta.title || 'Compra',
+          itemId: purchaseMeta.itemId || null,
+          kind: purchaseMeta.kind || 'item',
+          category: purchaseMeta.category || 'general',
+          rarity: purchaseMeta.rarity || 'common',
+          source: purchaseMeta.source || 'store',
+          price: amount,
+          createdAt: nowIso,
+        }
+      : null
 
     try {
+      const updatePayload = {
+        lukcoinsSpent: newSpent,
+        cosmetics: newCosmetics,
+        xpBoostPending: nextBoost,
+        updatedAt: nowIso,
+      }
+      if (avatarUpdate) {
+        updatePayload.avatar = nextAvatar
+      }
+      if (purchaseEntry) {
+        updatePayload.purchaseHistory = [purchaseEntry, ...currentHistory].slice(0, 20)
+      }
+
       await setDoc(
         doc(db, 'userLinks', user.uid),
-        {
-          lukcoinsSpent: newSpent,
-          cosmetics: newCosmetics,
-          xpBoostPending: nextBoost,
-          updatedAt: new Date().toISOString(),
-        },
+        updatePayload,
         { merge: true }
       )
-      showToast('success', 'Compra realizada')
+      showToast('success', successMessage || (amount > 0 ? 'Compra realizada' : 'Actualizacion guardada'))
+      return { ok: true }
     } catch (error) {
       console.error('Error saving LukCoins purchase:', error)
-      showToast('error', 'No se pudo completar la compra')
+      showToast('error', errorMessage)
+      return { ok: false, reason: 'save_error' }
     }
   }
 
@@ -2141,6 +2378,45 @@ function App() {
       showToast('error', `No tienes suficientes LukCoins (tienes ${currentCoins})`)
       return
     }
+
+    const normalizedScoreWhite = predictedScoreWhite === '' ? null : Number(predictedScoreWhite)
+    const normalizedScoreBlack = predictedScoreBlack === '' ? null : Number(predictedScoreBlack)
+    const hasScorePrediction = normalizedScoreWhite !== null || normalizedScoreBlack !== null
+    if (hasScorePrediction && (normalizedScoreWhite === null || normalizedScoreBlack === null)) {
+      showToast('error', 'Si predices marcador, completa ambos goles')
+      return
+    }
+    if (hasScorePrediction) {
+      const invalidScore = !Number.isInteger(normalizedScoreWhite)
+        || !Number.isInteger(normalizedScoreBlack)
+        || normalizedScoreWhite < 0
+        || normalizedScoreBlack < 0
+        || normalizedScoreWhite > 30
+        || normalizedScoreBlack > 30
+      if (invalidScore) {
+        showToast('error', 'Marcador inválido. Usa números enteros entre 0 y 30')
+        return
+      }
+      const winnerFromScore = normalizedScoreWhite === normalizedScoreBlack
+        ? 'tie'
+        : normalizedScoreWhite > normalizedScoreBlack
+          ? 'white'
+          : 'black'
+      if (winnerFromScore === 'tie') {
+        showToast('error', 'El marcador no puede ser empate porque solo se predice ganador')
+        return
+      }
+      if (winnerFromScore !== selectedPrediction) {
+        showToast('error', 'Tu marcador no coincide con el equipo seleccionado')
+        return
+      }
+    }
+
+    const allMatchPlayers = [...(predictionMatch.teamWhite || []), ...(predictionMatch.teamBlack || [])]
+    if (predictedMvpId && !allMatchPlayers.includes(predictedMvpId)) {
+      showToast('error', 'El MVP probable seleccionado no es válido')
+      return
+    }
     
     try {
       const predictionId = `${user.uid}_${predictionMatch.id}`
@@ -2161,6 +2437,9 @@ function App() {
         lukCoinsBet: coinBet,
         lukCoinsWin: potentialWin,
         probability: winningOdds,
+        predictedMvpId: predictedMvpId || '',
+        predictedScoreWhite: hasScorePrediction ? normalizedScoreWhite : null,
+        predictedScoreBlack: hasScorePrediction ? normalizedScoreBlack : null,
         userName: displayName,
         userEmail: userEmail,
         userPhoto: userPhoto,
@@ -2170,7 +2449,10 @@ function App() {
       await logActivity('prediction_create', {
         matchId: predictionMatch.id,
         prediction: selectedPrediction,
-        bet: coinBet
+        bet: coinBet,
+        predictedMvpId: predictedMvpId || null,
+        predictedScoreWhite: hasScorePrediction ? normalizedScoreWhite : null,
+        predictedScoreBlack: hasScorePrediction ? normalizedScoreBlack : null,
       })
       showToast('success', `¡Apostaste ${coinBet} LukCoins al Equipo ${selectedPrediction === 'white' ? 'Blanco' : 'Negro'}!`)
       closePredictionModal()
@@ -2212,7 +2494,7 @@ function App() {
       console.error('Error checking match status:', error)
     }
 
-    const allPlayers = [...match.teamWhite, ...match.teamBlack]
+    const allPlayers = [...(match.teamWhite || []), ...(match.teamBlack || [])]
     if (!allPlayers.includes(userPlayer)) {
       showToast('error', 'Solo puedes calificar partidos en los que jugaste')
       return
@@ -2233,9 +2515,16 @@ function App() {
     setShowRatingModal(true)
   }
 
-  const handleRatingChange = (playerId, score) => {
+  const handleRatingChange = async (playerId, score) => {
     if (score <= 3) {
-      if (!confirm('¿Enserio tan bajo? Solo coloca esa nota si se lo merece de verdad')) {
+      const confirmed = await askConfirmation({
+        title: 'Calificación muy baja',
+        message: '¿Seguro que deseas poner una nota tan baja?',
+        confirmText: 'Sí, continuar',
+        cancelText: 'Revisar nota',
+        tone: 'warning',
+      })
+      if (!confirmed) {
         return
       }
     }
@@ -2301,7 +2590,7 @@ function App() {
   }
 
   const getPlayersToRate = match => {
-    const allPlayers = [...match.teamWhite, ...match.teamBlack]
+    const allPlayers = [...(match.teamWhite || []), ...(match.teamBlack || [])]
     return allPlayers.filter(id => id !== userPlayer)
   }
 
@@ -2314,98 +2603,14 @@ function App() {
     )
   }
 
-  // Match functions
-  const handlePlayerToggle = (playerId, team) => {
-    if (team === 'white') {
-      if (teamWhite.includes(playerId)) {
-        setTeamWhite(teamWhite.filter(id => id !== playerId))
-        setMatchPositions(prev => {
-          const next = { ...prev }
-          delete next[playerId]
-          return next
-        })
-      } else if (!teamBlack.includes(playerId)) {
-        setTeamWhite([...teamWhite, playerId])
-      }
-    } else {
-      if (teamBlack.includes(playerId)) {
-        setTeamBlack(teamBlack.filter(id => id !== playerId))
-        setMatchPositions(prev => {
-          const next = { ...prev }
-          delete next[playerId]
-          return next
-        })
-      } else if (!teamWhite.includes(playerId)) {
-        setTeamBlack([...teamBlack, playerId])
-      }
-    }
-  }
-
-  const handleAddMatch = async () => {
-    if (!matchDate || teamWhite.length === 0 || teamBlack.length === 0) {
-      showToast('error', 'Completa fecha y equipos')
-      return
-    }
-
-    const matchData = {
-      date: matchDate,
-      time: matchTime || '',
-      venue: matchVenue,
-      teamWhite: [...teamWhite],
-      teamBlack: [...teamBlack],
-      positions: { ...matchPositions },
-      winner,
-      ratingsOpen: true,
-    }
-
-    if (editingMatchId) {
-      const prevMatch = matches.find(m => m.id === editingMatchId)
-      await updateDoc(doc(db, 'matches', editingMatchId), matchData)
-      await logActivity('match_edit', { matchId: editingMatchId, before: prevMatch, after: matchData })
-    } else {
-      const newMatchId = Date.now().toString()
-      await setDoc(doc(db, 'matches', newMatchId), matchData)
-      await logActivity('match_create', {
-        matchId: newMatchId,
-        matchDate: matchData.date,
-        venue: matchData.venue,
-      })
-    }
-
-    resetMatchForm()
-    setActiveTab('matches')
-  }
-
-  const resetMatchForm = () => {
-    setMatchDate('')
-    setMatchTime('')
-    setMatchVenue('LUKTO')
-    setTeamWhite([])
-    setTeamBlack([])
-    setMatchPositions({})
-    setWinner('')
-    setEditingMatchId(null)
-  }
-
-  const openEditMatch = match => {
-    setMatchDate(match.date)
-    setMatchTime(match.time || '')
-    setMatchVenue(match.venue)
-    setTeamWhite([...match.teamWhite])
-    setTeamBlack([...match.teamBlack])
-    setMatchPositions(match.positions || {})
-    setWinner(match.winner)
-    setEditingMatchId(match.id)
-    setActiveTab('new')
-  }
 
   const handleDeleteMatch = async matchId => {
-    if (
-      !confirm(
-        '¿Estás seguro de eliminar este partido y todas sus calificaciones? Esta acción no se puede deshacer.'
-      )
-    )
-      return
+    const confirmed = await askConfirmation({
+      title: 'Eliminar partido',
+      message: '¿Eliminar este partido y todas sus calificaciones? Esta acción no se puede deshacer.',
+      confirmText: 'Eliminar partido',
+    })
+    if (!confirmed) return
 
     try {
       const matchToDelete = matches.find(m => m.id === matchId)
@@ -2442,7 +2647,7 @@ function App() {
       const newState = !isCurrentlyOpen
       await updateDoc(doc(db, 'matches', matchId), { ratingsOpen: newState })
       await logActivity('ratings_toggle', { matchId, open: newState })
-      showToast('success', newState ? '✅ Calificaciones ABIERTAS' : '🔒 Calificaciones CERRADAS')
+      showToast('success', newState ? 'Calificaciones abiertas' : 'Calificaciones cerradas')
     } catch (error) {
       console.error('Error toggling ratings:', error)
       showToast('error', 'Error al cambiar estado')
@@ -2467,7 +2672,12 @@ function App() {
 
   const removeUserPredictions = async userId => {
     if (!userId) return
-    if (!confirm('¿Eliminar todas las predicciones de este usuario?')) return
+    const confirmed = await askConfirmation({
+      title: 'Borrar predicciones',
+      message: '¿Eliminar todas las predicciones de este usuario?',
+      confirmText: 'Borrar predicciones',
+    })
+    if (!confirmed) return
     const predsQuery = query(collection(db, 'predictions'), where('odedBy', '==', userId))
     const snapshot = await getDocs(predsQuery)
     if (snapshot.empty) {
@@ -2483,11 +2693,59 @@ function App() {
 
   const unlinkUser = async userId => {
     if (!userId) return
-    if (!confirm('¿Desvincular este usuario del jugador?')) return
+    const confirmed = await askConfirmation({
+      title: 'Desvincular usuario',
+      message: '¿Desvincular este usuario del jugador?',
+      confirmText: 'Desvincular',
+      tone: 'warning',
+    })
+    if (!confirmed) return
     const linkRef = doc(db, 'userLinks', userId)
     await updateDoc(linkRef, { playerId: '' })
     await logActivity('user_unlink', { userId })
     showToast('success', 'Usuario desvinculado')
+  }
+
+  const handleBulkDeleteRatings = async (matchId) => {
+    if (!matchId) return false
+    const confirmed = await askConfirmation({
+      title: 'Eliminar calificaciones',
+      message: '¿Eliminar TODAS las calificaciones de este partido?',
+      confirmText: 'Eliminar todas',
+    })
+    if (!confirmed) return false
+
+    const batch = writeBatch(db)
+    const ratingsToDelete = Object.values(ratings).flat().filter(r => r.matchId === matchId)
+    ratingsToDelete.forEach(r => {
+      const ratingId = `${r.ratedBy}_${r.ratedPlayerId}_${matchId}`
+      batch.delete(doc(db, 'ratings', ratingId))
+    })
+    await batch.commit()
+    await logActivity('ratings_bulk_delete', { matchId, count: ratingsToDelete.length })
+    showToast('success', 'Calificaciones eliminadas')
+    return true
+  }
+
+  const deleteRaterRatingsForMatch = async (raterId, raterName, matchId) => {
+    const confirmed = await askConfirmation({
+      title: 'Eliminar calificaciones',
+      message: `¿Eliminar todas las calificaciones de ${raterName} en este partido?`,
+      confirmText: 'Eliminar',
+    })
+    if (!confirmed) return
+
+    const batch = writeBatch(db)
+    const ratingsToDelete = Object.values(ratings).flat().filter(
+      r => r.matchId === matchId && r.ratedBy === raterId
+    )
+    ratingsToDelete.forEach(r => {
+      const ratingId = `${r.ratedBy}_${r.ratedPlayerId}_${matchId}`
+      batch.delete(doc(db, 'ratings', ratingId))
+    })
+    await batch.commit()
+    await logActivity('ratings_rater_delete', { raterId, raterName, matchId, count: ratingsToDelete.length })
+    showToast('success', `Calificaciones de ${raterName} eliminadas`)
   }
 
   const getExportRange = () => {
@@ -2536,7 +2794,13 @@ function App() {
 
   const adminUnlinkUser = async odedBy => {
     if (!isAdmin) return
-    if (!confirm('¿Estás seguro de desvincular este usuario?')) return
+    const confirmed = await askConfirmation({
+      title: 'Desvincular usuario',
+      message: '¿Estás seguro de desvincular este usuario?',
+      confirmText: 'Desvincular',
+      tone: 'warning',
+    })
+    if (!confirmed) return
 
     try {
       const linkRef = doc(db, 'userLinks', odedBy)
@@ -2550,7 +2814,12 @@ function App() {
 
   const adminDeleteUser = async (userId, userName) => {
     if (!isAdmin) return
-    if (!confirm(`¿Eliminar completamente a "${userName}"? Esta acción no se puede deshacer.`)) return
+    const confirmed = await askConfirmation({
+      title: 'Eliminar cuenta',
+      message: `¿Eliminar completamente a "${userName}"? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar cuenta',
+    })
+    if (!confirmed) return
 
     try {
       const batch = writeBatch(db)
@@ -2581,10 +2850,15 @@ function App() {
     }
   }
 
-  const showProfile = playerId => {
+  const showProfile = useCallback((playerId) => {
     setSelectedPlayerProfile(playerId)
     setShowPlayerProfile(true)
-  }
+  }, [])
+
+  const closeGlobalSearch = useCallback(() => {
+    setShowGlobalSearch(false)
+    setGlobalSearchQuery('')
+  }, [])
 
   const lukCoins = userPlayer ? calculateLukCoins(userPlayer) : 0
   const matchById = new Map(matches.map(m => [m.id, m]))
@@ -2627,6 +2901,69 @@ function App() {
     alerts.push({ level: 'warning', message: `Pico de predicciones en partido ${spike.matchId}: ${spike.count}` })
   })
 
+  const globalSearchResults = useMemo(() => {
+    const queryText = globalSearchQuery.trim().toLowerCase()
+    const tabs = [
+      { id: 'tab-stats', type: 'tab', tab: 'stats', title: 'Ranking', subtitle: 'Abrir ranking general', search: 'ranking stats jugadores' },
+      { id: 'tab-ratings', type: 'tab', tab: 'ratings', title: 'Calificaciones', subtitle: 'Abrir ranking de ratings', search: 'ratings calificaciones votos' },
+      { id: 'tab-matches', type: 'tab', tab: 'matches', title: 'Partidos', subtitle: 'Ver historial y próximos partidos', search: 'partidos matches calendario predicciones' },
+      { id: 'tab-analytics', type: 'tab', tab: 'analytics', title: 'Análisis', subtitle: 'Ver analítica avanzada', search: 'analytics analisis records roles comparar' },
+      { id: 'tab-store', type: 'tab', tab: 'store', title: 'Tienda', subtitle: 'Abrir tienda', search: 'store tienda lukcoins' },
+    ]
+    const adminTabs = isAdmin ? [
+      { id: 'tab-dashboard', type: 'tab', tab: 'dashboard', title: 'Dashboard Admin', subtitle: 'Panel de control', search: 'admin dashboard panel alertas' },
+      { id: 'tab-new', type: 'tab', tab: 'new', title: 'Nuevo Partido', subtitle: 'Registrar o editar partido', search: 'nuevo partido crear editar match' },
+      { id: 'tab-tools', type: 'tab', tab: 'tools', title: 'Operaciones', subtitle: 'Moderación y ajustes', search: 'tools operaciones moderacion config' },
+      { id: 'tab-users', type: 'tab', tab: 'users', title: 'Vincular Usuarios', subtitle: `${pendingUsers.length} pendientes`, search: 'usuarios vincular pendientes' },
+      { id: 'tab-players', type: 'tab', tab: 'players', title: 'Jugadores', subtitle: 'Administrar jugadores', search: 'players jugadores editar eliminar' },
+    ] : []
+
+    const playerResults = players.map(player => ({
+      id: `player-${player.id}`,
+      type: 'player',
+      playerId: player.id,
+      title: player.name,
+      subtitle: 'Abrir perfil del jugador',
+      search: `${player.name} ${(player.aliases || []).join(' ')} jugador perfil`,
+    }))
+
+    const recentMatches = [...matches]
+      .reverse()
+      .slice(0, 25)
+      .map(match => {
+        const whiteNames = (match.teamWhite || []).map(pid => getPlayerName(pid)).join(' ')
+        const blackNames = (match.teamBlack || []).map(pid => getPlayerName(pid)).join(' ')
+        return {
+          id: `match-${match.id}`,
+          type: 'match',
+          matchId: match.id,
+          title: `${match.venue || 'Partido'} · ${match.date || ''}`,
+          subtitle: `${(match.teamWhite || []).length} vs ${(match.teamBlack || []).length}`,
+          search: `${match.venue || ''} ${match.date || ''} ${whiteNames} ${blackNames} partido`,
+        }
+      })
+
+    const all = [...tabs, ...adminTabs, ...playerResults, ...recentMatches]
+    if (!queryText) return all.slice(0, 14)
+    return all.filter(item => item.search.toLowerCase().includes(queryText)).slice(0, 24)
+  }, [globalSearchQuery, isAdmin, matches, pendingUsers.length, players, getPlayerName])
+
+  const handleGlobalSearchSelect = useCallback((item) => {
+    closeGlobalSearch()
+    if (item.type === 'tab') {
+      setActiveTab(item.tab)
+      return
+    }
+    if (item.type === 'player') {
+      setActiveTab('stats')
+      showProfile(item.playerId)
+      return
+    }
+    if (item.type === 'match') {
+      setActiveTab('matches')
+    }
+  }, [closeGlobalSearch, setActiveTab, showProfile])
+
   useEffect(() => {
     if (typeof window === 'undefined') return
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
@@ -2651,6 +2988,7 @@ function App() {
       <Header
         onShowLoginModal={() => setShowLoginModal(true)}
         onAdminLogout={handleAdminLogout}
+        onOpenSearch={() => setShowGlobalSearch(true)}
         lukCoins={lukCoins}
       />
 
@@ -2745,6 +3083,7 @@ function App() {
           getWinRateClass={getWinRateClass}
           getRatingClass={getRatingClass}
           weeklyHistory={getWeeklyWinners(8)}
+          monthlyHistory={getMonthlyWinners()}
           announcements={announcements}
         />
       )}
@@ -2756,7 +3095,7 @@ function App() {
       {activeTab === 'matches' && (
         <MatchesTab
           onOpenRatingModal={openRatingModal}
-          onOpenEditMatch={openEditMatch}
+          onOpenEditMatch={(match) => { matchBuilder.openEditMatch(match); setActiveTab('new') }}
           onDeleteMatch={handleDeleteMatch}
           onToggleRatings={toggleMatchRatings}
           onOpenPrediction={openPredictionModal}
@@ -2768,10 +3107,45 @@ function App() {
       {/* Analytics Tab */}
       {activeTab === 'analytics' && (
         <section className="stats-section analytics-section">
-          <h2 className="section-title">Análisis Avanzado</h2>
+          <div className="analytics-header">
+            <h2 className="section-title">Análisis Avanzado</h2>
+            <p className="section-subtitle analytics-intro-text">
+              Divide el análisis por foco para leer mejor la información: equipos, posiciones, récords y comparativas.
+            </p>
+            <div className="analytics-overview-grid">
+              {analyticsOverview.map(item => (
+                <article key={item.id} className="analytics-overview-card">
+                  <span className="analytics-overview-icon">
+                    <AppIcon name={item.icon} size={14} />
+                  </span>
+                  <span className="analytics-overview-value">{item.value}</span>
+                  <span className="analytics-overview-label">{item.label}</span>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="analytics-subtabs">
+            {[
+              { id: 'teams', label: 'Equipos', icon: 'users' },
+              { id: 'roles', label: 'Roles', icon: 'target' },
+              { id: 'records', label: 'Récords', icon: 'trophy' },
+              { id: 'progress', label: 'Progreso', icon: 'arrowUp' },
+              { id: 'compare', label: 'Comparar', icon: 'profile' },
+            ].map(item => (
+              <button
+                key={item.id}
+                className={`analytics-subtab ${analyticsView === item.id ? 'active' : ''}`}
+                onClick={() => setAnalyticsView(item.id)}
+              >
+                <AppIcon name={item.icon} size={14} />
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
           
           {/* Best Duos & Trios */}
-          {(() => {
+          {analyticsView === 'teams' && (() => {
             // Calculate duo and trio stats
             const duoStats = {}
             const trioStats = {}
@@ -2833,10 +3207,20 @@ function App() {
               .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
               .slice(0, 3)
             
-            if (topDuos.length === 0 && topTrios.length === 0) return null
+            if (topDuos.length === 0 && topTrios.length === 0) {
+              return (
+                <div className="analytics-pane">
+                  <div className="analytics-empty">
+                    <AppIcon name="users" size={18} />
+                    <span>Aún no hay suficientes partidos para calcular duplas o tríos.</span>
+                  </div>
+                </div>
+              )
+            }
             
             return (
-              <div className="team-stats-section">
+              <div className="analytics-pane">
+                <div className="team-stats-section">
                 {topDuos.length > 0 && (
                   <div className="team-stats-card">
                     <h4 className="ts-title">Mejores Duplas</h4>
@@ -2900,18 +3284,28 @@ function App() {
                     </div>
                   </div>
                 )}
+                </div>
               </div>
             )
           })()}
 
           {/* Position Rankings */}
-          {(() => {
+          {analyticsView === 'roles' && (() => {
             const roles = Object.keys(roleRatingRankings.rankings || {})
               .filter(r => r !== 'Sin posición')
               .sort((a, b) => a.localeCompare(b))
-            if (roles.length === 0) return null
+            if (roles.length === 0) {
+              return (
+                <div className="analytics-pane">
+                  <div className="analytics-empty">
+                    <AppIcon name="target" size={18} />
+                    <span>Sin suficientes datos por posición todavía.</span>
+                  </div>
+                </div>
+              )
+            }
             return (
-              <div className="position-rankings">
+              <div className="position-rankings analytics-pane">
                 <h3 className="position-title">Ranking por Rol/Posición</h3>
                 <div className="position-grid">
                   {roles.map(role => {
@@ -2925,7 +3319,7 @@ function App() {
                             <span className="position-rank">#{idx + 1}</span>
                             <span className="position-name">{getPlayerName(entry.playerId)}</span>
                             <span className="position-metrics">
-                              {entry.avgRating} ⭐ · {entry.played} PJ · {entry.winRate}% WR
+                              <AppIcon name="star" size={12} /> {entry.avgRating} · {entry.played} PJ · {entry.winRate}% WR
                             </span>
                           </div>
                         ))}
@@ -2937,27 +3331,182 @@ function App() {
             )
           })()}
 
-          {historicalRecords.length > 0 && (
-            <div className="position-rankings">
+          {analyticsView === 'records' && (
+            <div className="position-rankings analytics-pane">
               <h3 className="position-title">Récords Históricos</h3>
-              <div className="records-grid">
-                {historicalRecords.map((record, idx) => (
-                  <div key={`${record.title}-${idx}`} className="record-card">
-                    <div className="record-title">{record.title}</div>
-                    <div className="record-value">{record.value}</div>
-                    <div className="record-player">
-                      {(record.playerIds || [])
-                        .map(id => getPlayerName(id))
-                        .filter(Boolean)
-                        .join(', ')}
+              {historicalRecords.length > 0 ? (
+                <div className="records-grid">
+                  {historicalRecords.map((record, idx) => (
+                    <div key={`${record.title}-${idx}`} className="record-card">
+                      <div className="record-title">{record.title}</div>
+                      <div className="record-value">{record.value}</div>
+                      <div className="record-player">
+                        {(record.playerIds || [])
+                          .map(id => getPlayerName(id))
+                          .filter(Boolean)
+                          .join(', ')}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="analytics-empty">
+                  <AppIcon name="trophy" size={18} />
+                  <span>Cuando haya más historial de partidos, aparecerán récords aquí.</span>
+                </div>
+              )}
             </div>
           )}
+
+          {analyticsView === 'progress' && (() => {
+            const filteredRows = (playerProgressInsights.rows || []).filter(row =>
+              progressRoleFilter === 'all' || row.role === progressRoleFilter
+            )
+            const topImprovers = filteredRows.filter(row => row.trendScore > 0).slice(0, 10)
+            const topDecliners = [...filteredRows]
+              .sort((a, b) => a.trendScore - b.trendScore || b.matches - a.matches)
+              .filter(row => row.trendScore < 0)
+              .slice(0, 10)
+
+            return (
+              <div className="analytics-pane">
+                <div className="analytics-selectors">
+                  <div className="selector-group">
+                    <label>Filtrar por rol</label>
+                    <select
+                      value={progressRoleFilter}
+                      onChange={e => setProgressRoleFilter(e.target.value)}
+                      className="player-select-dropdown"
+                    >
+                      {(playerProgressInsights.roles || ['all']).map(role => (
+                        <option key={`progress-role-${role}`} value={role}>
+                          {role === 'all' ? 'Todos los roles' : role}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {filteredRows.length > 0 ? (
+                  <div className="progress-insights-grid">
+                    <div className="progress-card">
+                      <h4>Jugadores en mejora</h4>
+                      {topImprovers.length > 0 ? (
+                        <div className="progress-list">
+                          {topImprovers.map((entry, idx) => (
+                            <div key={`improve-${entry.playerId}-${entry.role}`} className="progress-item improve">
+                              <div className="progress-item-head">
+                                <span className="progress-rank">#{idx + 1}</span>
+                                <span className="progress-name">{getPlayerName(entry.playerId)}</span>
+                                <span className="progress-role">{entry.role}</span>
+                              </div>
+                              <div className="progress-metrics">
+                                <span>
+                                  Rating 5 vs prev 5: {
+                                    entry.last5.ratingAvg !== null
+                                      ? entry.last5.ratingAvg.toFixed(2)
+                                      : '-'
+                                  } / {
+                                    entry.prev5.ratingAvg !== null
+                                      ? entry.prev5.ratingAvg.toFixed(2)
+                                      : '-'
+                                  }
+                                </span>
+                                <span>
+                                  WR 5 vs prev 5: {
+                                    entry.last5.winRate !== null
+                                      ? `${entry.last5.winRate.toFixed(1)}%`
+                                      : '-'
+                                  } / {
+                                    entry.prev5.winRate !== null
+                                      ? `${entry.prev5.winRate.toFixed(1)}%`
+                                      : '-'
+                                  }
+                                </span>
+                                <span>
+                                  Delta: {entry.ratingDelta5 !== null ? `${entry.ratingDelta5 >= 0 ? '+' : ''}${entry.ratingDelta5.toFixed(2)} rating` : 'sin delta de rating'}
+                                  {' · '}
+                                  {entry.winDelta5 !== null ? `${entry.winDelta5 >= 0 ? '+' : ''}${entry.winDelta5.toFixed(1)}% WR` : 'sin delta de WR'}
+                                  {' · '}
+                                  L10 WR: {entry.last10.winRate !== null ? `${entry.last10.winRate.toFixed(1)}%` : '-'}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="analytics-empty">
+                          <AppIcon name="arrowUp" size={18} />
+                          <span>No hay mejoras significativas con este filtro.</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="progress-card">
+                      <h4>Jugadores a vigilar</h4>
+                      {topDecliners.length > 0 ? (
+                        <div className="progress-list">
+                          {topDecliners.map((entry, idx) => (
+                            <div key={`decline-${entry.playerId}-${entry.role}`} className="progress-item decline">
+                              <div className="progress-item-head">
+                                <span className="progress-rank">#{idx + 1}</span>
+                                <span className="progress-name">{getPlayerName(entry.playerId)}</span>
+                                <span className="progress-role">{entry.role}</span>
+                              </div>
+                              <div className="progress-metrics">
+                                <span>
+                                  Rating 5 vs prev 5: {
+                                    entry.last5.ratingAvg !== null
+                                      ? entry.last5.ratingAvg.toFixed(2)
+                                      : '-'
+                                  } / {
+                                    entry.prev5.ratingAvg !== null
+                                      ? entry.prev5.ratingAvg.toFixed(2)
+                                      : '-'
+                                  }
+                                </span>
+                                <span>
+                                  WR 5 vs prev 5: {
+                                    entry.last5.winRate !== null
+                                      ? `${entry.last5.winRate.toFixed(1)}%`
+                                      : '-'
+                                  } / {
+                                    entry.prev5.winRate !== null
+                                      ? `${entry.prev5.winRate.toFixed(1)}%`
+                                      : '-'
+                                  }
+                                </span>
+                                <span>
+                                  Delta: {entry.ratingDelta5 !== null ? `${entry.ratingDelta5 >= 0 ? '+' : ''}${entry.ratingDelta5.toFixed(2)} rating` : 'sin delta de rating'}
+                                  {' · '}
+                                  {entry.winDelta5 !== null ? `${entry.winDelta5 >= 0 ? '+' : ''}${entry.winDelta5.toFixed(1)}% WR` : 'sin delta de WR'}
+                                  {' · '}
+                                  L10 WR: {entry.last10.winRate !== null ? `${entry.last10.winRate.toFixed(1)}%` : '-'}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="analytics-empty">
+                          <AppIcon name="arrowDown" size={18} />
+                          <span>No hay caídas fuertes con este filtro.</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="analytics-empty">
+                    <AppIcon name="note" size={18} />
+                    <span>Aún no hay suficiente historial por rol para medir progreso.</span>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
           
           {/* Player Selection */}
+          {analyticsView === 'compare' && (
           <div className="analytics-selectors">
             <div className="selector-group">
               <label>Jugador 1</label>
@@ -2987,8 +3536,9 @@ function App() {
               </select>
             </div>
           </div>
+          )}
 
-          {!h2hPlayer1 && (
+          {analyticsView === 'compare' && !h2hPlayer1 && (
             <div className="empty-state">
               <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.5 }}>
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
@@ -2999,7 +3549,7 @@ function App() {
           )}
           
           {/* H2H Comparison when both players selected */}
-          {h2hPlayer1 && h2hPlayer2 && (() => {
+          {analyticsView === 'compare' && h2hPlayer1 && h2hPlayer2 && (() => {
             const p1 = stats.find(s => s.id === h2hPlayer1)
             const p2 = stats.find(s => s.id === h2hPlayer2)
             if (!p1 || !p2) return null
@@ -3133,7 +3683,7 @@ function App() {
             )
           })()}
 
-          {h2hPlayer1 && (() => {
+          {analyticsView === 'compare' && h2hPlayer1 && (() => {
             const playerData = stats.find(s => s.id === h2hPlayer1)
             const playerRatings = ratings[h2hPlayer1] || []
             const xp = calculateXP(h2hPlayer1)
@@ -3292,10 +3842,10 @@ function App() {
       )}
 
       {activeTab === 'store' && (
-        <section className="stats-section">
-          <h2 className="section-title">Tienda</h2>
-          <p className="section-subtitle">Próximamente</p>
-        </section>
+        <StoreTab
+          lukCoins={lukCoins}
+          onSpendLukCoins={spendLukCoins}
+        />
       )}
 
       {/* Admin: Users Tab */}
@@ -3352,14 +3902,14 @@ function App() {
                           onClick={() => adminUnlinkUser(odedBy)}
                           title="Desvincular"
                         >
-                          ✕
+                          <AppIcon name="close" size={14} />
                         </button>
                         <button 
                           className="delete-user-btn" 
                           onClick={() => adminDeleteUser(odedBy, data.userName || data.userEmail)}
                           title="Eliminar cuenta"
                         >
-                          🗑️
+                          <AppIcon name="trash" size={14} />
                         </button>
                       </div>
                     </div>
@@ -3376,195 +3926,9 @@ function App() {
 
       {/* Admin: New Match Tab */}
       {activeTab === 'new' && isAdmin && (
-        <section className="stats-section">
-          <h2 className="section-title">
-            {editingMatchId ? 'Editar Partido' : 'Registrar Nuevo Partido'}
-          </h2>
-          <div className="match-form">
-            <div className="form-row">
-              <div className="form-group">
-                <label>Fecha del Partido</label>
-                <input
-                  type="date"
-                  value={matchDate}
-                  onChange={e => setMatchDate(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>Hora del Partido</label>
-                <input
-                  type="time"
-                  value={matchTime}
-                  onChange={e => setMatchTime(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>Lugar / Evento</label>
-                <input
-                  type="text"
-                  value={matchVenue}
-                  onChange={e => setMatchVenue(e.target.value)}
-                  placeholder="LUKTO"
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="team-section team-white">
-                <div className="team-header">
-                  <span className="team-badge white"></span>
-                  <span className="team-title">EQUIPO BLANCO ({teamWhite.length})</span>
-                </div>
-                <div className="player-select-grid">
-                  {players.map(player => (
-                    <button
-                      key={player.id}
-                      className={`player-chip ${teamWhite.includes(player.id) ? 'selected' : ''} ${teamBlack.includes(player.id) ? 'disabled' : ''}`}
-                      onClick={() => handlePlayerToggle(player.id, 'white')}
-                      disabled={teamBlack.includes(player.id)}
-                    >
-                      {player.name}
-                    </button>
-                  ))}
-                </div>
-                {teamWhite.length > 0 && (
-                  <div className="position-list">
-                    {teamWhite.map(playerId => (
-                      <div key={playerId} className="position-row">
-                        <span className="position-player">{getPlayerName(playerId)}</span>
-                        <select
-                          className="position-select"
-                          value={matchPositions[playerId] || ''}
-                          onChange={e =>
-                            setMatchPositions(prev => ({
-                              ...prev,
-                              [playerId]: e.target.value,
-                            }))
-                          }
-                        >
-                          {POSITION_OPTIONS.map(opt => (
-                            <option key={opt.value || 'none'} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="team-section team-black">
-                <div className="team-header">
-                  <span className="team-badge black"></span>
-                  <span className="team-title">EQUIPO NEGRO ({teamBlack.length})</span>
-                </div>
-                <div className="player-select-grid">
-                  {players.map(player => (
-                    <button
-                      key={player.id}
-                      className={`player-chip ${teamBlack.includes(player.id) ? 'selected' : ''} ${teamWhite.includes(player.id) ? 'disabled' : ''}`}
-                      onClick={() => handlePlayerToggle(player.id, 'black')}
-                      disabled={teamWhite.includes(player.id)}
-                    >
-                      {player.name}
-                    </button>
-                  ))}
-                </div>
-                {teamBlack.length > 0 && (
-                  <div className="position-list">
-                    {teamBlack.map(playerId => (
-                      <div key={playerId} className="position-row">
-                        <span className="position-player">{getPlayerName(playerId)}</span>
-                        <select
-                          className="position-select"
-                          value={matchPositions[playerId] || ''}
-                          onChange={e =>
-                            setMatchPositions(prev => ({
-                              ...prev,
-                              [playerId]: e.target.value,
-                            }))
-                          }
-                        >
-                          {POSITION_OPTIONS.map(opt => (
-                            <option key={opt.value || 'none'} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label style={{ textAlign: 'center', display: 'block', marginBottom: '0.5rem' }}>
-                ¿Quién Ganó?
-              </label>
-              <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                Opcional - Déjalo vacío para que los usuarios puedan hacer predicciones
-              </p>
-              <div className="winner-section">
-                <button
-                  className={`winner-btn ${winner === 'white' ? 'selected' : ''}`}
-                  onClick={() => setWinner(winner === 'white' ? '' : 'white')}
-                >
-                  <span className="team-badge white"></span>
-                  EQUIPO BLANCO
-                </button>
-                <button
-                  className={`winner-btn ${winner === 'tie' ? 'selected' : ''}`}
-                  onClick={() => setWinner(winner === 'tie' ? '' : 'tie')}
-                >
-                  🤝 EMPATE
-                </button>
-                <button
-                  className={`winner-btn ${winner === 'black' ? 'selected' : ''}`}
-                  onClick={() => setWinner(winner === 'black' ? '' : 'black')}
-                >
-                  <span className="team-badge black"></span>
-                  EQUIPO NEGRO
-                </button>
-              </div>
-              {winner && (
-                <button 
-                  onClick={() => setWinner('')}
-                  style={{ 
-                    marginTop: '0.75rem', 
-                    width: '100%', 
-                    padding: '0.5rem', 
-                    background: 'transparent', 
-                    border: '1px solid var(--border-color)', 
-                    borderRadius: '8px',
-                    color: 'var(--text-muted)',
-                    fontSize: '0.8rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Quitar ganador (permitir predicciones)
-                </button>
-              )}
-            </div>
-
-            <div className="form-buttons">
-              {editingMatchId && (
-                <button className="cancel-btn" onClick={resetMatchForm}>
-                  CANCELAR
-                </button>
-              )}
-              <button
-                className="submit-btn"
-                onClick={handleAddMatch}
-                disabled={!matchDate || teamWhite.length === 0 || teamBlack.length === 0}
-              >
-                {editingMatchId ? 'ACTUALIZAR PARTIDO' : 'GUARDAR PARTIDO'}
-              </button>
-            </div>
-          </div>
-        </section>
+        <MatchBuilderTab mb={matchBuilder} />
       )}
+
 
       {/* Admin: Players Tab */}
       {activeTab === 'players' && isAdmin && (
@@ -3614,21 +3978,21 @@ function App() {
           {/* Stats Grid */}
           <div className="dashboard-stats-grid">
             <div className="dash-stat-card">
-              <div className="dash-stat-icon">👥</div>
+              <div className="dash-stat-icon"><AppIcon name="users" size={18} /></div>
               <div className="dash-stat-info">
                 <span className="dash-stat-value">{Object.keys(userLinks).length}</span>
                 <span className="dash-stat-label">Usuarios</span>
               </div>
             </div>
             <div className="dash-stat-card">
-              <div className="dash-stat-icon">⚽</div>
+              <div className="dash-stat-icon"><AppIcon name="ball" size={18} /></div>
               <div className="dash-stat-info">
                 <span className="dash-stat-value">{matches.length}</span>
                 <span className="dash-stat-label">Partidos</span>
               </div>
             </div>
             <div className="dash-stat-card accent">
-              <div className="dash-stat-icon">⭐</div>
+              <div className="dash-stat-icon"><AppIcon name="star" size={18} /></div>
               <div className="dash-stat-info">
                 <span className="dash-stat-value">
                   {Object.values(ratings).reduce((sum, r) => sum + r.length, 0)}
@@ -3637,7 +4001,7 @@ function App() {
               </div>
             </div>
             <div className="dash-stat-card warning">
-              <div className="dash-stat-icon">⏳</div>
+              <div className="dash-stat-icon"><AppIcon name="info" size={18} /></div>
               <div className="dash-stat-info">
                 <span className="dash-stat-value">{pendingUsers.length}</span>
                 <span className="dash-stat-label">Pendientes</span>
@@ -3648,28 +4012,28 @@ function App() {
           {/* Ops Metrics */}
           <div className="dashboard-ops-grid">
             <div className="dash-stat-card">
-              <div className="dash-stat-icon">📅</div>
+              <div className="dash-stat-icon"><AppIcon name="calendar" size={18} /></div>
               <div className="dash-stat-info">
                 <span className="dash-stat-value">{matchesLast7.length}</span>
                 <span className="dash-stat-label">Partidos (7 días)</span>
               </div>
             </div>
             <div className="dash-stat-card">
-              <div className="dash-stat-icon">📝</div>
+              <div className="dash-stat-icon"><AppIcon name="note" size={18} /></div>
               <div className="dash-stat-info">
                 <span className="dash-stat-value">{ratingsLast7.length}</span>
                 <span className="dash-stat-label">Ratings (7 días)</span>
               </div>
             </div>
             <div className="dash-stat-card">
-              <div className="dash-stat-icon">💸</div>
+              <div className="dash-stat-icon"><AppIcon name="coins" size={18} /></div>
               <div className="dash-stat-info">
                 <span className="dash-stat-value">{predictionsLast7.length}</span>
                 <span className="dash-stat-label">Predicciones (7 días)</span>
               </div>
             </div>
             <div className="dash-stat-card">
-              <div className="dash-stat-icon">✅</div>
+              <div className="dash-stat-icon"><AppIcon name="check" size={18} /></div>
               <div className="dash-stat-info">
                 <span className="dash-stat-value">{activeUsersLast7.size}</span>
                 <span className="dash-stat-label">Usuarios activos</span>
@@ -3677,135 +4041,141 @@ function App() {
             </div>
           </div>
 
-          {/* Alerts */}
-          <div className="dashboard-alerts">
-            <h3 className="dash-section-title">Alertas Operativas</h3>
-            {alerts.length === 0 ? (
-              <p className="no-data-text">Sin alertas recientes</p>
-            ) : (
-              <div className="alert-list">
-                {alerts.map((alert, idx) => (
-                  <div key={idx} className={`alert-item ${alert.level}`}>
-                    <span>{alert.message}</span>
+          <div className="dashboard-layout">
+            <div className="dashboard-main-column">
+              {/* Alerts */}
+              <div className="dashboard-alerts">
+                <h3 className="dash-section-title">Alertas Operativas</h3>
+                {alerts.length === 0 ? (
+                  <p className="no-data-text">Sin alertas recientes</p>
+                ) : (
+                  <div className="alert-list">
+                    {alerts.map((alert, idx) => (
+                      <div key={idx} className={`alert-item ${alert.level}`}>
+                        <span>{alert.message}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Quick Actions */}
-          <div className="dashboard-quick-actions">
-            <h3 className="dash-section-title">Acciones Rápidas</h3>
-            <div className="quick-actions-grid">
-              <button className="quick-action-btn" onClick={() => setActiveTab('new')}>
-                <span className="qa-icon">+</span>
-                <span>Nuevo Partido</span>
-              </button>
-              <button className="quick-action-btn" onClick={() => setActiveTab('players')}>
-                <span className="qa-icon">👤</span>
-                <span>Jugadores</span>
-              </button>
-              <button className="quick-action-btn" onClick={() => setActiveTab('users')}>
-                <span className="qa-icon">🔗</span>
-                <span>Vincular</span>
-                {pendingUsers.length > 0 && <span className="qa-badge">{pendingUsers.length}</span>}
-              </button>
-              <button className="quick-action-btn" onClick={() => setActiveTab('tools')}>
-                <span className="qa-icon">⚙️</span>
-                <span>Herramientas</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Recent Matches */}
-          <div className="dashboard-recent">
-            <h3 className="dash-section-title">Partidos Recientes</h3>
-            <div className="recent-matches-list">
-              {matches.slice(-5).reverse().map(match => {
-                const matchRatingsCount = Object.values(ratings)
-                  .flat()
-                  .filter(r => r.matchId === match.id).length
-                return (
-                  <div key={match.id} className="recent-match-item">
-                    <div className="recent-match-info">
-                      <span className="recent-match-date">
-                        {new Date(match.date + 'T12:00:00').toLocaleDateString('es-ES', { 
-                          day: 'numeric', month: 'short' 
-                        })}
-                      </span>
-                      <span className="recent-match-teams">
-                        {match.teamWhite.length} vs {match.teamBlack.length}
-                      </span>
-                      <span className={`recent-match-winner ${match.winner || 'pending'}`}>
-                        {match.winner === 'white'
-                          ? 'Blanco'
-                          : match.winner === 'black'
-                            ? 'Negro'
-                            : match.winner === 'tie'
-                              ? 'Empate'
-                              : 'Por jugar'}
-                      </span>
-                    </div>
-                    <div className="recent-match-stats">
-                      <span className="recent-match-ratings">{matchRatingsCount} ⭐</span>
-                      <span className={`recent-match-status ${match.ratingsOpen !== false ? 'open' : 'closed'}`}>
-                        {match.ratingsOpen !== false ? 'Abierto' : 'Cerrado'}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Top Raters */}
-          <div className="dashboard-top-raters">
-            <h3 className="dash-section-title">Usuarios Más Activos</h3>
-            <div className="top-raters-list">
-              {(() => {
-                const raterCounts = {}
-                Object.values(ratings).flat().forEach(r => {
-                  if (r.ratedBy) {
-                    raterCounts[r.ratedBy] = (raterCounts[r.ratedBy] || 0) + 1
-                  }
-                })
-                return Object.entries(raterCounts)
-                  .sort((a, b) => b[1] - a[1])
-                  .slice(0, 5)
-                  .map(([playerId, count], idx) => {
-                    const userLink = Object.values(userLinks).find(l => l.playerId === playerId)
+              {/* Recent Matches */}
+              <div className="dashboard-recent">
+                <h3 className="dash-section-title">Partidos Recientes</h3>
+                <div className="recent-matches-list">
+                  {matches.slice(-5).reverse().map(match => {
+                    const matchRatingsCount = Object.values(ratings)
+                      .flat()
+                      .filter(r => r.matchId === match.id).length
                     return (
-                      <div key={playerId} className="top-rater-item">
-                        <span className="top-rater-pos">{idx + 1}</span>
-                        <AvatarImage
-                          src={userLink?.userPhoto || getPlayerPhoto(playerId)}
-                          name={getPlayerName(playerId)}
-                          imgClassName="top-rater-avatar"
-                          fallbackClassName="top-rater-avatar top-rater-avatar-fallback"
-                        />
-                        <span className="top-rater-name">{getPlayerName(playerId)}</span>
-                        <span className="top-rater-count">{count} votos</span>
+                      <div key={match.id} className="recent-match-item">
+                        <div className="recent-match-info">
+                          <span className="recent-match-date">
+                            {new Date(match.date + 'T12:00:00').toLocaleDateString('es-ES', {
+                              day: 'numeric', month: 'short'
+                            })}
+                          </span>
+                          <span className="recent-match-teams">
+                            {match.teamWhite?.length || 0} vs {match.teamBlack?.length || 0}
+                          </span>
+                          <span className={`recent-match-winner ${match.winner || 'pending'}`}>
+                            {match.winner === 'white'
+                              ? 'Blanco'
+                              : match.winner === 'black'
+                                ? 'Negro'
+                                : match.winner === 'tie'
+                                  ? 'Empate'
+                                  : 'Por jugar'}
+                          </span>
+                        </div>
+                        <div className="recent-match-stats">
+                          <span className="recent-match-ratings"><AppIcon name="star" size={12} /> {matchRatingsCount}</span>
+                          <span className={`recent-match-status ${match.ratingsOpen !== false ? 'open' : 'closed'}`}>
+                            {match.ratingsOpen !== false ? 'Abierto' : 'Cerrado'}
+                          </span>
+                        </div>
                       </div>
                     )
-                  })
-              })()}
-            </div>
-          </div>
-
-          {/* Activity Logs */}
-          <div className="dashboard-activity">
-            <h3 className="dash-section-title">Actividad Reciente</h3>
-            <div className="activity-list">
-              {activityLogs.slice(0, 12).map(log => (
-                <div key={log.id} className="activity-item">
-                  <span className="activity-type">{log.type}</span>
-                  <span className="activity-meta">{log.userEmail || log.userName || 'Sistema'}</span>
-                  <span className="activity-time">
-                    {new Date(log.timestamp).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                  })}
                 </div>
-              ))}
+              </div>
+
+              {/* Activity Logs */}
+              <div className="dashboard-activity">
+                <h3 className="dash-section-title">Actividad Reciente</h3>
+                <div className="activity-list compact">
+                  {activityLogs.slice(0, 12).map(log => (
+                    <div key={log.id} className="activity-item">
+                      <span className="activity-type">{log.type}</span>
+                      <span className="activity-meta">{log.userEmail || log.userName || 'Sistema'}</span>
+                      <span className="activity-time">
+                        {new Date(log.timestamp).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            <aside className="dashboard-side-column">
+              {/* Quick Actions */}
+              <div className="dashboard-quick-actions">
+                <h3 className="dash-section-title">Acciones Rápidas</h3>
+                <div className="quick-actions-grid">
+                  <button className="quick-action-btn" onClick={() => setActiveTab('new')}>
+                    <span className="qa-icon"><AppIcon name="plus" size={14} /></span>
+                    <span>Nuevo Partido</span>
+                  </button>
+                  <button className="quick-action-btn" onClick={() => setActiveTab('players')}>
+                    <span className="qa-icon"><AppIcon name="profile" size={14} /></span>
+                    <span>Jugadores</span>
+                  </button>
+                  <button className="quick-action-btn" onClick={() => setActiveTab('users')}>
+                    <span className="qa-icon"><AppIcon name="link" size={14} /></span>
+                    <span>Vincular</span>
+                    {pendingUsers.length > 0 && <span className="qa-badge">{pendingUsers.length}</span>}
+                  </button>
+                  <button className="quick-action-btn" onClick={() => setActiveTab('tools')}>
+                    <span className="qa-icon"><AppIcon name="settings" size={14} /></span>
+                    <span>Herramientas</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Top Raters */}
+              <div className="dashboard-top-raters">
+                <h3 className="dash-section-title">Usuarios Más Activos</h3>
+                <div className="top-raters-list">
+                  {(() => {
+                    const raterCounts = {}
+                    Object.values(ratings).flat().forEach(r => {
+                      if (r.ratedBy) {
+                        raterCounts[r.ratedBy] = (raterCounts[r.ratedBy] || 0) + 1
+                      }
+                    })
+                    return Object.entries(raterCounts)
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 5)
+                      .map(([playerId, count], idx) => {
+                        const userLink = Object.values(userLinks).find(l => l.playerId === playerId)
+                        return (
+                          <div key={playerId} className="top-rater-item">
+                            <span className="top-rater-pos">{idx + 1}</span>
+                            <AvatarImage
+                              src={userLink?.userPhoto || getPlayerPhoto(playerId)}
+                              name={getPlayerName(playerId)}
+                              imgClassName="top-rater-avatar"
+                              fallbackClassName="top-rater-avatar top-rater-avatar-fallback"
+                            />
+                            <span className="top-rater-name">{getPlayerName(playerId)}</span>
+                            <span className="top-rater-count">{count} votos</span>
+                          </div>
+                        )
+                      })
+                  })()}
+                </div>
+              </div>
+            </aside>
           </div>
         </section>
       )}
@@ -3819,7 +4189,7 @@ function App() {
             {/* Gestionar Admins */}
             <div className="tool-card">
               <div className="tool-header">
-                <span className="tool-icon">👑</span>
+                <span className="tool-icon"><AppIcon name="crown" size={16} /></span>
                 <h3 className="tool-title">Administradores</h3>
               </div>
               <p className="tool-desc">Super Admin: {SUPER_ADMIN_EMAIL}</p>
@@ -3845,7 +4215,7 @@ function App() {
             {/* Moderación Rápida */}
             <div className="tool-card">
               <div className="tool-header">
-                <span className="tool-icon">🛡️</span>
+                <span className="tool-icon"><AppIcon name="shield" size={16} /></span>
                 <h3 className="tool-title">Moderación Rápida</h3>
               </div>
               <p className="tool-desc">Bloquear, desvincular o limpiar predicciones</p>
@@ -3908,7 +4278,7 @@ function App() {
             {/* Gestionar Partidos */}
             <div className="tool-card">
               <div className="tool-header">
-                <span className="tool-icon">⚽</span>
+                <span className="tool-icon"><AppIcon name="ball" size={16} /></span>
                 <h3 className="tool-title">Partidos</h3>
               </div>
               <p className="tool-desc">Abrir/cerrar calificaciones</p>
@@ -3922,18 +4292,25 @@ function App() {
                       className={`match-toggle-btn ${match.ratingsOpen !== false ? 'open' : 'closed'}`}
                       onClick={() => toggleMatchRatings(match.id, match.ratingsOpen !== false)}
                     >
-                      {match.ratingsOpen !== false ? '🔓 Abierto' : '🔒 Cerrado'}
+                      {match.ratingsOpen !== false ? 'Abierto' : 'Cerrado'}
                     </button>
                     {match.winner && (
                       <button
                         className="match-toggle-btn"
                         onClick={async () => {
+                          const confirmed = await askConfirmation({
+                            title: 'Quitar ganador',
+                            message: '¿Quitar el ganador para reabrir predicciones de este partido?',
+                            confirmText: 'Quitar ganador',
+                            tone: 'warning',
+                          })
+                          if (!confirmed) return
                           await updateDoc(doc(db, 'matches', match.id), { winner: '' })
                           await logActivity('match_reopen', { matchId: match.id })
                           showToast('success', 'Ganador eliminado')
                         }}
                       >
-                        ↩︎ Quitar ganador
+                        Quitar ganador
                       </button>
                     )}
                   </div>
@@ -3944,26 +4321,17 @@ function App() {
             {/* Eliminar Calificaciones */}
             <div className="tool-card">
               <div className="tool-header">
-                <span className="tool-icon">🗑️</span>
+                <span className="tool-icon"><AppIcon name="trash" size={16} /></span>
                 <h3 className="tool-title">Eliminar Calificaciones</h3>
               </div>
               <p className="tool-desc">Borrar todas las calificaciones de un partido</p>
               <select 
                 className="delete-ratings-select"
                 onChange={async e => {
-                  if (e.target.value && confirm('¿Eliminar TODAS las calificaciones de este partido?')) {
-                    const matchId = e.target.value
-                    const batch = writeBatch(db)
-                    const ratingsToDelete = Object.values(ratings).flat().filter(r => r.matchId === matchId)
-                    ratingsToDelete.forEach(r => {
-                      const ratingId = `${r.ratedBy}_${r.ratedPlayerId}_${matchId}`
-                      batch.delete(doc(db, 'ratings', ratingId))
-                    })
-                    await batch.commit()
-                    await logActivity('ratings_bulk_delete', { matchId, count: ratingsToDelete.length })
-                    showToast('success', 'Calificaciones eliminadas')
-                    e.target.value = ''
-                  }
+                  const matchId = e.target.value
+                  if (!matchId) return
+                  await handleBulkDeleteRatings(matchId)
+                  e.target.value = ''
                 }}
               >
                 <option value="">Seleccionar partido...</option>
@@ -3980,7 +4348,7 @@ function App() {
             {/* Configuración Liga */}
             <div className="tool-card">
               <div className="tool-header">
-                <span className="tool-icon">⚙️</span>
+                <span className="tool-icon"><AppIcon name="settings" size={16} /></span>
                 <h3 className="tool-title">Configuración</h3>
               </div>
               <div className="config-form">
@@ -4003,7 +4371,7 @@ function App() {
             {/* Exportar Datos */}
             <div className="tool-card">
               <div className="tool-header">
-                <span className="tool-icon">📥</span>
+                <span className="tool-icon"><AppIcon name="download" size={16} /></span>
                 <h3 className="tool-title">Exportar Datos</h3>
               </div>
               <p className="tool-desc">Exporta por rango de fechas</p>
@@ -4085,7 +4453,7 @@ function App() {
             {/* Logs de actividad */}
             <div className="tool-card wide">
               <div className="tool-header">
-                <span className="tool-icon">🧾</span>
+                <span className="tool-icon"><AppIcon name="receipt" size={16} /></span>
                 <h3 className="tool-title">Logs de Actividad</h3>
               </div>
               <p className="tool-desc">Últimos eventos del sistema</p>
@@ -4105,7 +4473,7 @@ function App() {
             {/* Anuncios */}
             <div className="tool-card wide">
               <div className="tool-header">
-                <span className="tool-icon">📢</span>
+                <span className="tool-icon"><AppIcon name="megaphone" size={16} /></span>
                 <h3 className="tool-title">Enviar Anuncio</h3>
               </div>
               <p className="tool-desc">Mensaje visible para todos los usuarios</p>
@@ -4203,7 +4571,7 @@ function App() {
                     </div>
                     <div className="history-match-info">
                       <span className="history-match-title">
-                        {match.teamWhite.length} vs {match.teamBlack.length} • {match.venue}
+                        {match.teamWhite?.length || 0} vs {match.teamBlack?.length || 0} • {match.venue}
                       </span>
                       <span className="history-match-stats">
                         {matchRatings.length} calificaciones • {Object.keys(groupedByRater).length} calificadores
@@ -4226,6 +4594,15 @@ function App() {
                             <span className="history-rater-name">{raterData.raterName}</span>
                             <span className="history-rater-email">{raterData.raterEmail}</span>
                           </div>
+                          {user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() && (
+                            <button
+                              className="btn-icon btn-danger-ghost history-rater-delete"
+                              title="Eliminar calificaciones de este usuario en este partido"
+                              onClick={() => deleteRaterRatingsForMatch(raterId, raterData.raterName, match.id)}
+                            >
+                              <AppIcon name="trash" size={14} />
+                            </button>
+                          )}
                         </div>
                         <div className="history-ratings-grid">
                           {raterData.ratings.map((r, idx) => (
@@ -4245,6 +4622,79 @@ function App() {
             })}
           </div>
         </section>
+      )}
+
+      {/* Global Search Modal */}
+      {showGlobalSearch && (
+        <div className="modal-overlay" onClick={closeGlobalSearch}>
+          <div className="modal global-search-modal" onClick={e => e.stopPropagation()}>
+            <div className="global-search-input-wrap">
+              <AppIcon name="search" size={16} className="global-search-icon" />
+              <input
+                ref={globalSearchInputRef}
+                className="global-search-input"
+                placeholder="Buscar jugador, partido o sección..."
+                value={globalSearchQuery}
+                onChange={e => setGlobalSearchQuery(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && globalSearchResults[0]) {
+                    handleGlobalSearchSelect(globalSearchResults[0])
+                  }
+                }}
+              />
+              <button className="global-search-close" onClick={closeGlobalSearch}>
+                <AppIcon name="close" size={14} />
+              </button>
+            </div>
+            <p className="global-search-hint">Tip: usa Cmd/Ctrl + K para abrir esta búsqueda</p>
+            <div className="global-search-results">
+              {globalSearchResults.length > 0 ? globalSearchResults.map(item => (
+                <button
+                  key={item.id}
+                  className={`global-search-item ${item.type}`}
+                  onClick={() => handleGlobalSearchSelect(item)}
+                >
+                  <span className="global-search-item-icon">
+                    <AppIcon
+                      name={item.type === 'player' ? 'profile' : item.type === 'match' ? 'ball' : 'note'}
+                      size={14}
+                    />
+                  </span>
+                  <span className="global-search-item-text">
+                    <span className="global-search-item-title">{item.title}</span>
+                    <span className="global-search-item-subtitle">{item.subtitle}</span>
+                  </span>
+                </button>
+              )) : (
+                <div className="global-search-empty">Sin resultados para "{globalSearchQuery}"</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmDialog.open && (
+        <div className="modal-overlay" onClick={() => resolveConfirmation(false)}>
+          <div className="modal confirm-action-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{confirmDialog.title}</h2>
+              <button className="modal-close" onClick={() => resolveConfirmation(false)}>×</button>
+            </div>
+            <p className="confirm-action-message">{confirmDialog.message}</p>
+            <div className="modal-actions">
+              <button className="cancel-btn" onClick={() => resolveConfirmation(false)}>
+                {confirmDialog.cancelText}
+              </button>
+              <button
+                className={`submit-btn confirm-action-btn ${confirmDialog.tone === 'warning' ? 'warning' : 'danger'}`}
+                onClick={() => resolveConfirmation(true)}
+              >
+                {confirmDialog.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Admin Login Modal */}
@@ -4433,6 +4883,7 @@ function App() {
         </div>
       )}
 
+
       {/* Prediction Modal */}
       {showPredictionModal && predictionMatch && (() => {
         const probability = calculateTeamProbability(predictionMatch)
@@ -4443,6 +4894,7 @@ function App() {
         const selectedPool = selectedPrediction === 'white' ? totalWhite + coinBet : selectedPrediction === 'black' ? totalBlack + coinBet : 0
         const rivalPool = selectedPrediction === 'white' ? totalBlack : selectedPrediction === 'black' ? totalWhite : 0
         const potentialWin = selectedPrediction ? getPoolPotentialWin(predictionMatch.id, selectedPrediction, coinBet) : 0
+        const allPredictionPlayers = [...(predictionMatch.teamWhite || []), ...(predictionMatch.teamBlack || [])]
         
         return (
           <div className="modal-overlay" onClick={closePredictionModal}>
@@ -4466,7 +4918,7 @@ function App() {
               {/* AI Probability Bar */}
               <div className="probability-section">
                 <div className="probability-header">
-                  <span>📊 Probabilidad según estadísticas</span>
+                  <span><AppIcon name="note" size={12} /> Probabilidad según estadísticas</span>
                 </div>
                 <div className="probability-bar-container">
                   <div className="probability-bar">
@@ -4485,8 +4937,8 @@ function App() {
                   </div>
                 </div>
                 <div className="probability-labels">
-                  <span>⬜ Blanco</span>
-                  <span>⬛ Negro</span>
+                  <span>Blanco</span>
+                  <span>Negro</span>
                 </div>
               </div>
 
@@ -4512,7 +4964,7 @@ function App() {
               {/* Favorite Badge */}
               {favorite !== 'tie' && (
                 <div className={`favorite-badge ${favorite}`}>
-                  🎯 Favorito: Equipo {favorite === 'white' ? 'Blanco' : 'Negro'} ({favorite === 'white' ? probability.white : probability.black}%)
+                  <AppIcon name="target" size={14} /> Favorito: Equipo {favorite === 'white' ? 'Blanco' : 'Negro'} ({favorite === 'white' ? probability.white : probability.black}%)
                 </div>
               )}
 
@@ -4526,7 +4978,7 @@ function App() {
                   onClick={() => setSelectedPrediction('white')}
                 >
                   <div className="team-header">
-                    <div className="team-indicator">⬜</div>
+                    <div className="team-indicator"><span className="team-badge white"></span></div>
                     <div className="team-probability">{probability.white}%</div>
                   </div>
                   <div className="team-label">Equipo Blanco</div>
@@ -4545,7 +4997,7 @@ function App() {
                   onClick={() => setSelectedPrediction('black')}
                 >
                   <div className="team-header">
-                    <div className="team-indicator">⬛</div>
+                    <div className="team-indicator"><span className="team-badge black"></span></div>
                     <div className="team-probability">{probability.black}%</div>
                   </div>
                   <div className="team-label">Equipo Negro</div>
@@ -4556,6 +5008,51 @@ function App() {
                   </div>
                   {selectedPrediction === 'black' && <div className="selected-check">✓</div>}
                 </button>
+              </div>
+
+              <div className="prediction-advanced-section">
+                <div className="prediction-advanced-title">
+                  <AppIcon name="target" size={14} />
+                  <span>Predicción avanzada (opcional)</span>
+                </div>
+                <div className="prediction-advanced-grid">
+                  <div className="prediction-advanced-item">
+                    <label>MVP probable</label>
+                    <select
+                      value={predictedMvpId}
+                      onChange={e => setPredictedMvpId(e.target.value)}
+                    >
+                      <option value="">Sin MVP</option>
+                      {allPredictionPlayers.map(playerId => (
+                        <option key={`pmvp-${playerId}`} value={playerId}>
+                          {getPlayerName(playerId)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="prediction-advanced-item">
+                    <label>Marcador estimado</label>
+                    <div className="prediction-score-inputs">
+                      <input
+                        type="number"
+                        min="0"
+                        max="30"
+                        value={predictedScoreWhite}
+                        onChange={e => setPredictedScoreWhite(e.target.value)}
+                        placeholder="Blanco"
+                      />
+                      <span>-</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="30"
+                        value={predictedScoreBlack}
+                        onChange={e => setPredictedScoreBlack(e.target.value)}
+                        placeholder="Negro"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* LukCoins Betting */}
@@ -4629,17 +5126,17 @@ function App() {
           menuItems={[
             { 
               label: 'Nuevo Partido', 
-              icon: '⚽',
+              icon: <AppIcon name="ball" size={14} />,
               onClick: () => setActiveTab('new')
             },
             { 
               label: 'Agregar Jugador', 
-              icon: '👤',
+              icon: <AppIcon name="profile" size={14} />,
               onClick: () => openAddEditPlayerModal()
             },
             { 
               label: 'Ver Dashboard', 
-              icon: '📊',
+              icon: <AppIcon name="note" size={14} />,
               onClick: () => setActiveTab('dashboard')
             },
           ]}
@@ -4658,7 +5155,7 @@ function App() {
         <div className="toast-premium">
           <div className="toast-content">
             <span className="toast-icon">
-              {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'ℹ'}
+              {toast.type === 'success' ? <AppIcon name="check" size={14} /> : toast.type === 'error' ? <AppIcon name="close" size={14} /> : <AppIcon name="info" size={14} />}
             </span>
             <span className="toast-message">{toast.message}</span>
           </div>

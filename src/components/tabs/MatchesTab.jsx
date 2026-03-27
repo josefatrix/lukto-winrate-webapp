@@ -5,7 +5,7 @@
 
 import { useApp } from '../../contexts'
 import { useState } from 'react'
-import { EmptyState } from '../common'
+import { AppIcon, EmptyState } from '../common'
 
 export const MatchesTab = ({
   onOpenRatingModal,
@@ -109,6 +109,89 @@ export const MatchesTab = ({
     })
   }
 
+  const parseScoreValue = (value) => {
+    if (value === null || value === undefined || value === '') return null
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  const getPostMatchReport = (match, matchPlayerRatings) => {
+    if (!matchPlayerRatings || matchPlayerRatings.length === 0) return null
+
+    const ratingMap = Object.fromEntries(
+      matchPlayerRatings.map(entry => [entry.playerId, parseFloat(entry.avgRating) || 0])
+    )
+
+    const sortedByRating = [...matchPlayerRatings]
+      .sort((a, b) => (b.rawAvg || parseFloat(b.avgRating) || 0) - (a.rawAvg || parseFloat(a.avgRating) || 0))
+    const mvp = sortedByRating[0] || null
+
+    const hasWinner = !!match?.winner
+    const scoreWhite = parseScoreValue(match.scoreWhite)
+    const scoreBlack = parseScoreValue(match.scoreBlack)
+    const hasFinalScore = scoreWhite !== null && scoreBlack !== null
+
+    const winnerTeam = match?.winner === 'white' ? (match.teamWhite || []) : match?.winner === 'black' ? (match.teamBlack || []) : []
+    const loserTeam = match?.winner === 'white' ? (match.teamBlack || []) : match?.winner === 'black' ? (match.teamWhite || []) : []
+    const avgTeamRating = (teamIds) => {
+      if (!teamIds.length) return null
+      const rated = teamIds.map(playerId => ratingMap[playerId]).filter(value => Number.isFinite(value) && value > 0)
+      if (!rated.length) return null
+      return rated.reduce((sum, value) => sum + value, 0) / rated.length
+    }
+    const winnerAvg = avgTeamRating(winnerTeam)
+    const loserAvg = avgTeamRating(loserTeam)
+    const ratingGap = (winnerAvg !== null && loserAvg !== null) ? winnerAvg - loserAvg : null
+
+    let bestPair = null
+    if (hasWinner && winnerTeam.length >= 2) {
+      for (let i = 0; i < winnerTeam.length; i += 1) {
+        for (let j = i + 1; j < winnerTeam.length; j += 1) {
+          const p1 = winnerTeam[i]
+          const p2 = winnerTeam[j]
+          const pairScore = (ratingMap[p1] || 0) + (ratingMap[p2] || 0)
+          if (!bestPair || pairScore > bestPair.score) {
+            bestPair = { p1, p2, score: pairScore }
+          }
+        }
+      }
+    }
+
+    const matchPredictions = Object.values(predictions?.[match.id] || {})
+    const predictionSummary = hasWinner ? {
+      total: matchPredictions.length,
+      correct: match.winner === 'tie' ? 0 : matchPredictions.filter(pred => pred?.prediction === match.winner).length,
+      wrong: match.winner === 'tie' ? 0 : matchPredictions.length - matchPredictions.filter(pred => pred?.prediction === match.winner).length,
+      voided: match.winner === 'tie' ? matchPredictions.length : 0,
+      mvpHits: mvp?.playerId ? matchPredictions.filter(pred => pred?.predictedMvpId && pred.predictedMvpId === mvp.playerId).length : 0,
+      exactScoreHits: hasFinalScore ? matchPredictions.filter(pred =>
+        parseScoreValue(pred?.predictedScoreWhite) === scoreWhite
+        && parseScoreValue(pred?.predictedScoreBlack) === scoreBlack
+      ).length : 0,
+    } : null
+
+    const storyline = hasWinner ? (() => {
+      if (match.winner === 'tie') return 'Partido parejo: terminó en empate.'
+      if (ratingGap !== null && ratingGap >= 0.8) return 'La diferencia de rating del equipo ganador fue clara.'
+      if (ratingGap !== null && ratingGap <= 0.25) return 'Partido cerrado: se definió por detalles.'
+      return 'Resultado sólido con ventaja moderada del equipo ganador.'
+    })() : null
+
+    return {
+      mvp,
+      bestPair,
+      scoreWhite,
+      scoreBlack,
+      hasFinalScore,
+      hasWinner,
+      predictionSummary,
+      storyline,
+      winnerAvg,
+      loserAvg,
+      ratingGap,
+    }
+  }
+
   return (
     <section className="stats-section">
       <h2 className="section-title">Historial de Partidos</h2>
@@ -117,23 +200,26 @@ export const MatchesTab = ({
           const isExpanded = expandedMatches.has(match.id)
           // Calculate top 3 rated players for this match
           const matchPlayerRatings = []
+          if (!match.teamWhite || !match.teamBlack) return null
           const allMatchPlayers = [...match.teamWhite, ...match.teamBlack]
           allMatchPlayers.forEach(playerId => {
             const playerRatings = ratings[playerId] || []
             const matchRatings = playerRatings.filter(r => r.matchId === match.id)
             if (matchRatings.length > 0) {
-              const avg = matchRatings.reduce((sum, r) => sum + (typeof r.score === 'number' ? r.score : 0), 0) / matchRatings.length
+              const avg = matchRatings.reduce((sum, r) => sum + (typeof r.score === 'number' ? r.score : parseFloat(r.score) || 0), 0) / matchRatings.length
               matchPlayerRatings.push({
                 playerId,
                 name: getPlayerName(playerId),
+                rawAvg: avg,
                 avgRating: typeof avg === 'number' && !isNaN(avg) ? avg.toFixed(1) : '0.0',
                 votes: matchRatings.length,
               })
             }
           })
           const top3 = matchPlayerRatings
-            .sort((a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating))
+            .sort((a, b) => (b.rawAvg || 0) - (a.rawAvg || 0))
             .slice(0, 3)
+          const postMatchReport = getPostMatchReport(match, matchPlayerRatings)
           const predictionCount = predictions[match.id]
             ? Object.keys(predictions[match.id]).length
             : 0
@@ -150,6 +236,11 @@ export const MatchesTab = ({
                   {match.winner === 'tie' && (
                     <div className="match-result tie">Empate</div>
                   )}
+                  {postMatchReport?.hasFinalScore && (
+                    <div className="match-scoreline">
+                      Marcador: {postMatchReport.scoreWhite} - {postMatchReport.scoreBlack}
+                    </div>
+                  )}
                 </div>
                 <div className="match-actions">
                   {user &&
@@ -163,10 +254,10 @@ export const MatchesTab = ({
                     )}
                   {/* SIEMPRE mostrar badge si está cerrado */}
                   {match.ratingsOpen === false && (
-                    <span className="ratings-closed-badge">🔒 CERRADO</span>
+                    <span className="ratings-closed-badge"><AppIcon name="lock" size={12} /> CERRADO</span>
                   )}
                   {match.ratingsOpen !== false && (
-                    <span className="ratings-open-badge">🟢 ABIERTO</span>
+                    <span className="ratings-open-badge"><AppIcon name="check" size={12} /> ABIERTO</span>
                   )}
                   {/* Solo mostrar botón calificar si NO está cerrado */}
                   {user && userPlayer && match.ratingsOpen !== false && (
@@ -185,7 +276,7 @@ export const MatchesTab = ({
                             : 'Cerrar calificaciones'
                         }
                       >
-                        {match.ratingsOpen === false ? '🔒' : '🔓'}
+                        {match.ratingsOpen === false ? <AppIcon name="lock" size={14} /> : <AppIcon name="unlock" size={14} />}
                       </button>
                       <button className="edit-match-btn" onClick={() => onOpenEditMatch(match)}>
                         Editar
@@ -277,11 +368,63 @@ export const MatchesTab = ({
                               >
                                 {idx + 1}
                               </span>
-                              <span className="leaderboard-name">{player.name}</span>
+                              <span className="leaderboard-name">
+                                {player.name}
+                                {idx === 0 && <span className="mvp-badge-inline"> MVP</span>}
+                              </span>
                               <span className="leaderboard-score">{player.avgRating}</span>
                             </div>
                           )
                         })}
+                      </div>
+                    </div>
+                  )}
+
+                  {postMatchReport && (
+                    <div className="post-match-report">
+                      <div className="post-match-report-title">
+                        <AppIcon name="note" size={14} />
+                        <span>Reporte automático</span>
+                      </div>
+                      <div className="post-match-report-grid">
+                        {postMatchReport.storyline && (
+                          <div className="pmr-card">
+                            <span className="pmr-label">Lectura del partido</span>
+                            <strong>{postMatchReport.storyline}</strong>
+                          </div>
+                        )}
+                        <div className="pmr-card">
+                          <span className="pmr-label">MVP detectado</span>
+                          <strong>
+                            {postMatchReport.mvp
+                              ? `${postMatchReport.mvp.name} (${postMatchReport.mvp.avgRating})`
+                              : 'Sin calificaciones suficientes'}
+                          </strong>
+                        </div>
+                        {postMatchReport.hasWinner && (
+                          <div className="pmr-card">
+                            <span className="pmr-label">Dupla destacada</span>
+                            <strong>
+                              {postMatchReport.bestPair
+                                ? `${getPlayerName(postMatchReport.bestPair.p1)} + ${getPlayerName(postMatchReport.bestPair.p2)}`
+                                : 'Sin datos suficientes'}
+                            </strong>
+                          </div>
+                        )}
+                        {postMatchReport.predictionSummary && (
+                          <div className="pmr-card">
+                            <span className="pmr-label">Predicciones</span>
+                            <strong>
+                              {postMatchReport.predictionSummary.correct} correctas
+                              {postMatchReport.predictionSummary.wrong > 0 ? ` · ${postMatchReport.predictionSummary.wrong} fallidas` : ''}
+                              {postMatchReport.predictionSummary.voided > 0 ? ` · ${postMatchReport.predictionSummary.voided} anuladas` : ''}
+                            </strong>
+                            <span className="pmr-sub">
+                              MVP acertado: {postMatchReport.predictionSummary.mvpHits}
+                              {postMatchReport.hasFinalScore ? ` · Marcador exacto: ${postMatchReport.predictionSummary.exactScoreHits}` : ''}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -296,6 +439,10 @@ export const MatchesTab = ({
                           const status = getPredictionStatus(predictionData, match.winner)
                           const bet = getPredictionBet(predictionData)
                           const win = getPredictionWin(predictionData)
+                          const predictedScoreWhite = parseScoreValue(predictionData?.predictedScoreWhite)
+                          const predictedScoreBlack = parseScoreValue(predictionData?.predictedScoreBlack)
+                          const hasPredictedScore = predictedScoreWhite !== null && predictedScoreBlack !== null
+                          const predictedMvp = predictionData?.predictedMvpId ? getPlayerName(predictionData.predictedMvpId) : null
                           const isMe = user?.uid === odedBy
                           const name = getPredictionUserName(odedBy, predictionData)
                           return (
@@ -309,7 +456,7 @@ export const MatchesTab = ({
                               </div>
                               <div className="prediction-tile-body">
                                 <span className={`prediction-team-chip ${predictionValue}`}>
-                                  {predictionValue === 'white' ? '⬜ Blanco' : '⬛ Negro'}
+                                  {predictionValue === 'white' ? 'Equipo Blanco' : 'Equipo Negro'}
                                 </span>
                                 <span className="prediction-outcome">
                                   {status === 'pending'
@@ -320,6 +467,16 @@ export const MatchesTab = ({
                                         ? `Ganó +${win} LC`
                                         : `Perdió -${bet} LC`}
                                 </span>
+                                {hasPredictedScore && (
+                                  <span className="prediction-extra-line">
+                                    Marcador: {predictedScoreWhite} - {predictedScoreBlack}
+                                  </span>
+                                )}
+                                {predictedMvp && (
+                                  <span className="prediction-extra-line">
+                                    MVP probable: {predictedMvp}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           )

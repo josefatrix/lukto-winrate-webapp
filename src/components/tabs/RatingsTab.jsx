@@ -2,9 +2,9 @@
  * Ratings Tab Component
  * Shows player ratings accordion
  */
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useApp } from '../../contexts'
-import { AvatarImage, EmptyState } from '../common'
+import { AvatarImage, AppIcon, EmptyState } from '../common'
 import { isPredictionCorrect } from '../../hooks/useStats'
 
 // Prediction bonus constant
@@ -105,6 +105,39 @@ export const RatingsTab = ({ getRatingClass }) => {
               ratingsByMatch[r.matchId].ratings.push(r)
             })
 
+            const matchRows = Object.entries(ratingsByMatch)
+              .sort(
+                (a, b) =>
+                  new Date(b[1].match?.date || 0) - new Date(a[1].match?.date || 0)
+              )
+              .map(([matchId, data]) => {
+                let matchAvg = '-'
+
+                const playerId = player.id
+                const userId = userLinks
+                  ? Object.entries(userLinks).find(([_uid, linkData]) => linkData?.playerId === playerId)?.[0]
+                  : null
+
+                const predictionCorrect = userId && data.match?.winner
+                  ? isPredictionCorrect(userId, matchId, data.match.winner, predictions)
+                  : false
+
+                if (data.ratings.length > 0) {
+                  const sum = data.ratings.reduce((acc, r) => acc + (typeof r.score === 'number' ? r.score : 0), 0)
+                  const baseAvg = sum / data.ratings.length
+                  const finalAvg = predictionCorrect ? baseAvg + PREDICTION_BONUS : baseAvg
+                  matchAvg = typeof finalAvg === 'number' && !isNaN(finalAvg) ? finalAvg.toFixed(1) : '-'
+                }
+
+                return {
+                  matchId,
+                  match: data.match,
+                  ratingsCount: data.ratings.length,
+                  matchAvg,
+                  predictionCorrect,
+                }
+              })
+
             return (
               <div key={player.id} className={`accordion-item ${isExpanded ? 'expanded' : ''}`}>
                 <div
@@ -123,69 +156,45 @@ export const RatingsTab = ({ getRatingClass }) => {
                     {player.avgRating}
                   </span>
                   <span className="stat-value votes-count">{playerRatings.length} votos</span>
-                  <span className={`expand-icon ${isExpanded ? 'rotated' : ''}`}>▼</span>
+                  <span className={`expand-icon ${isExpanded ? 'rotated' : ''}`}>
+                    <AppIcon name="arrowDown" size={12} />
+                  </span>
                 </div>
 
                 {isExpanded && (
                   <div className="accordion-content">
-                    {Object.entries(ratingsByMatch).length > 0 ? (
-                      <table className="match-ratings-table">
-                        <thead>
-                          <tr>
-                            <th>Partido</th>
-                            <th>Promedio</th>
-                            <th>Votos</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {Object.entries(ratingsByMatch)
-                            .sort(
-                              (a, b) =>
-                                new Date(b[1].match?.date || 0) - new Date(a[1].match?.date || 0)
-                            )
-                            .map(([matchId, data]) => {
-                              let matchAvg = '-'
-                              let baseAvg = 0
-                              
-                              // Find user ID for this player to check prediction
-                              const playerId = player.id
-                              const userId = userLinks 
-                                ? Object.entries(userLinks).find(([uid, linkData]) => linkData?.playerId === playerId)?.[0]
-                                : null
-                              
-                              // Check if prediction was correct
-                              const predictionCorrect = userId && data.match?.winner
-                                ? isPredictionCorrect(userId, matchId, data.match.winner, predictions)
-                                : false
-                              
-                              if (data.ratings.length > 0) {
-                                const sum = data.ratings.reduce((acc, r) => acc + (typeof r.score === 'number' ? r.score : 0), 0)
-                                baseAvg = sum / data.ratings.length
-                                // Add prediction bonus if correct
-                                const finalAvg = predictionCorrect ? baseAvg + PREDICTION_BONUS : baseAvg
-                                matchAvg = typeof finalAvg === 'number' && !isNaN(finalAvg) ? finalAvg.toFixed(1) : '-'
-                              }
-                              
-                              return (
-                                <tr key={matchId}>
+                    {matchRows.length > 0 ? (
+                      <>
+                        <div className="desktop-match-ratings">
+                          <table className="match-ratings-table">
+                            <thead>
+                              <tr>
+                                <th>Partido</th>
+                                <th>Promedio</th>
+                                <th>Votos</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {matchRows.map(row => (
+                                <tr key={row.matchId}>
                                   <td>
                                     <div className="match-info-cell">
                                       <span className="match-date-small">
-                                        {data.match
-                                          ? formatDate(data.match.date)
+                                        {row.match
+                                          ? formatDate(row.match.date)
                                           : 'Partido eliminado'}
                                       </span>
-                                      {data.match && (
-                                        <span className="match-venue-small">{data.match.venue}</span>
+                                      {row.match && (
+                                        <span className="match-venue-small">{row.match.venue}</span>
                                       )}
                                     </div>
                                   </td>
                                   <td>
                                     <span
-                                      className={`rating-value ${getRatingClass(parseFloat(matchAvg))}`}
+                                      className={`rating-value ${getRatingClass(parseFloat(row.matchAvg))}`}
                                     >
-                                      {matchAvg}
-                                      {predictionCorrect && (
+                                      {row.matchAvg}
+                                      {row.predictionCorrect && (
                                         <span className="prediction-bonus-badge" title={`+${PREDICTION_BONUS} por predicción correcta`}>
                                           <svg width="12" height="12" viewBox="0 0 12 12">
                                             <circle cx="6" cy="6" r="5" fill="#a855f7" />
@@ -196,13 +205,36 @@ export const RatingsTab = ({ getRatingClass }) => {
                                     </span>
                                   </td>
                                   <td>
-                                    <span className="stat-value">{data.ratings.length}</span>
+                                    <span className="stat-value">{row.ratingsCount}</span>
                                   </td>
                                 </tr>
-                              )
-                            })}
-                        </tbody>
-                      </table>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div className="mobile-match-ratings">
+                          {matchRows.map(row => (
+                            <article key={`m-${row.matchId}`} className="mobile-rating-card">
+                              <div className="mobile-rating-head">
+                                <span className="mobile-rating-date">
+                                  <AppIcon name="calendar" size={12} /> {row.match ? formatDate(row.match.date) : 'Partido eliminado'}
+                                </span>
+                                <span className={`rating-value ${getRatingClass(parseFloat(row.matchAvg))}`}>
+                                  {row.matchAvg}
+                                </span>
+                              </div>
+                              {row.match && <div className="mobile-rating-venue">{row.match.venue}</div>}
+                              <div className="mobile-rating-meta">
+                                <span>{row.ratingsCount} votos</span>
+                                {row.predictionCorrect && (
+                                  <span className="mobile-rating-bonus">+{PREDICTION_BONUS} bono predicción</span>
+                                )}
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      </>
                     ) : (
                       <p className="no-data-text">Sin calificaciones detalladas</p>
                     )}

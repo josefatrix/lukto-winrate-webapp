@@ -54,6 +54,7 @@ export const calculateStreaks = (playerId, matches) => {
   let tempType = null
 
   sortedMatches.forEach(match => {
+    if (!match.teamWhite || !match.teamBlack) return
     const inWhite = match.teamWhite.includes(playerId)
     const inBlack = match.teamBlack.includes(playerId)
     if (!inWhite && !inBlack) return
@@ -97,6 +98,7 @@ export const calculateH2H = (player1Id, player2Id, matches) => {
   let againstLosses = 0
 
   matches.forEach(match => {
+    if (!match.teamWhite || !match.teamBlack) return
     const p1White = match.teamWhite.includes(player1Id)
     const p1Black = match.teamBlack.includes(player1Id)
     const p2White = match.teamWhite.includes(player2Id)
@@ -132,6 +134,7 @@ export const calculateXP = (playerId, matches, ratings) => {
   
   // XP from games
   matches.forEach(match => {
+    if (!match.teamWhite || !match.teamBlack) return
     const inWhite = match.teamWhite.includes(playerId)
     const inBlack = match.teamBlack.includes(playerId)
     if (!inWhite && !inBlack) return

@@ -32,6 +32,13 @@ const ShieldIcon = () => (
   </svg>
 )
 
+const SearchIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+    <circle cx="11" cy="11" r="7" />
+    <path d="M20 20l-3.5-3.5" />
+  </svg>
+)
+
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18">
     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -44,6 +51,7 @@ const GoogleIcon = () => (
 export const Header = ({
   onShowLoginModal,
   onAdminLogout,
+  onOpenSearch = () => {},
   lukCoins = 0,
 }) => {
   const {
@@ -90,6 +98,15 @@ export const Header = ({
         </div>
         
         <div className="header-actions">
+          <button
+            className="header-btn header-search-btn"
+            onClick={onOpenSearch}
+            aria-label="Buscar"
+            title="Buscar (Ctrl/Cmd + K)"
+          >
+            <SearchIcon />
+          </button>
+
           <button
             className="header-btn"
             onClick={() => setDarkMode(!darkMode)}

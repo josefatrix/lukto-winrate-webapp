@@ -4,6 +4,7 @@
 export { useLocalStorage } from './useLocalStorage'
 export { useToast } from './useToast'
 export { useStats } from './useStats'
+export { useMatchBuilder } from './useMatchBuilder'
 export { 
   useHaptic, 
   useAnimatedCounter, 
