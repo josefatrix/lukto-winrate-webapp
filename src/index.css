@@ -844,6 +844,7 @@ body {
    ============================================ */
 .header-minimal {
   padding: 0.65rem 0.9rem 0.7rem;
+  margin-bottom: 0.5rem;
   background: var(--glass-surface);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
