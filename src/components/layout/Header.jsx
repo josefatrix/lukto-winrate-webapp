@@ -4,6 +4,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react'
+import LiquidGlass from 'liquid-glass-react'
 import { useApp } from '../../contexts'
 
 // Header Icons - SofaScore-inspired refined style
@@ -158,7 +159,15 @@ export const Header = ({
                   <img src={user.photoURL} alt="" />
                 </button>
                 {showUserMenu && (
-                  <div className="header-user-menu">
+                  <LiquidGlass
+                    className="header-user-menu"
+                    displacementScale={35}
+                    blurAmount={0.06}
+                    saturation={140}
+                    aberrationIntensity={1.5}
+                    elasticity={0.15}
+                    cornerRadius={12}
+                  >
                     {userPlayer && (
                       <button className="hum-item" onClick={() => { onShowProfile(userPlayer); setShowUserMenu(false) }}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -169,7 +178,7 @@ export const Header = ({
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                       Cerrar sesión
                     </button>
-                  </div>
+                  </LiquidGlass>
                 )}
               </div>
             </>
@@ -200,7 +209,15 @@ export const Header = ({
                 {userXP} XP
               </button>
               {showXPPanel && xpBreakdown && (
-                <div className="header-breakdown-panel">
+                <LiquidGlass
+                  className="header-breakdown-panel"
+                  displacementScale={30}
+                  blurAmount={0.05}
+                  saturation={140}
+                  aberrationIntensity={1}
+                  elasticity={0.12}
+                  cornerRadius={14}
+                >
                   <div className="hbp-title">Experiencia (XP)</div>
                   <div className="hbp-rows">
                     <div className="hbp-row">
@@ -237,7 +254,7 @@ export const Header = ({
                     <span>Total</span>
                     <span className="hbp-total-val xp">{xpBreakdown.total} XP</span>
                   </div>
-                </div>
+                </LiquidGlass>
               )}
             </div>
 
@@ -251,7 +268,15 @@ export const Header = ({
                 LC {lukCoins}
               </button>
               {showLCPanel && lcBreakdown && (
-                <div className="header-breakdown-panel">
+                <LiquidGlass
+                  className="header-breakdown-panel"
+                  displacementScale={30}
+                  blurAmount={0.05}
+                  saturation={140}
+                  aberrationIntensity={1}
+                  elasticity={0.12}
+                  cornerRadius={14}
+                >
                   <div className="hbp-title">LukCoins</div>
                   <div className="hbp-rows">
                     <div className="hbp-row">
@@ -316,7 +341,7 @@ export const Header = ({
                     <span>Disponible</span>
                     <span className="hbp-total-val lc">{lukCoins} LC</span>
                   </div>
-                </div>
+                </LiquidGlass>
               )}
             </div>
 

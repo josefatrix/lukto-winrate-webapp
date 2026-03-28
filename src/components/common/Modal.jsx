@@ -1,8 +1,9 @@
 /**
  * Modal Component
- * Reusable modal dialog
+ * Reusable modal dialog with Liquid Glass effect
  */
 import React, { useEffect } from 'react'
+import LiquidGlass from 'liquid-glass-react'
 
 export const Modal = ({ 
   isOpen, 
@@ -11,9 +12,9 @@ export const Modal = ({
   children, 
   className = '',
   showCloseButton = true,
-  size = 'medium' // 'small', 'medium', 'large', 'full'
+  size = 'medium',
+  disableGlass = false
 }) => {
-  // Close on escape key
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -25,7 +26,6 @@ export const Modal = ({
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isOpen, onClose])
 
-  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -39,26 +39,48 @@ export const Modal = ({
 
   if (!isOpen) return null
 
+  const modalInner = (
+    <>
+      {(title || showCloseButton) && (
+        <div className="modal-header">
+          {title && <h2 className="modal-title">{title}</h2>}
+          {showCloseButton && (
+            <button className="modal-close" onClick={onClose} aria-label="Cerrar">
+              ✕
+            </button>
+          )}
+        </div>
+      )}
+      <div className="modal-body">
+        {children}
+      </div>
+    </>
+  )
+
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div 
-        className={`modal-content modal-${size} ${className}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {(title || showCloseButton) && (
-          <div className="modal-header">
-            {title && <h2 className="modal-title">{title}</h2>}
-            {showCloseButton && (
-              <button className="modal-close" onClick={onClose} aria-label="Cerrar">
-                ✕
-              </button>
-            )}
-          </div>
-        )}
-        <div className="modal-body">
-          {children}
+      {!disableGlass ? (
+        <LiquidGlass
+          className={`modal-content modal-glass modal-${size} ${className}`}
+          displacementScale={40}
+          blurAmount={0.05}
+          saturation={150}
+          aberrationIntensity={1.5}
+          elasticity={0.12}
+          cornerRadius={20}
+          style={{ maxWidth: size === 'large' ? '640px' : size === 'small' ? '340px' : '480px', width: '100%' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {modalInner}
+        </LiquidGlass>
+      ) : (
+        <div 
+          className={`modal-content modal-${size} ${className}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {modalInner}
         </div>
-      </div>
+      )}
     </div>
   )
 }

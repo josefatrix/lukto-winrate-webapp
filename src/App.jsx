@@ -8,6 +8,7 @@ import { useStats, useHaptic, useMatchBuilder } from './hooks'
 import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs, addDoc, deleteDoc } from 'firebase/firestore'
 import { db } from './firebase'
 import confetti from 'canvas-confetti'
+import LiquidGlass from 'liquid-glass-react'
 
 // Import components
 import { Header, BottomNav } from './components/layout'
@@ -4009,7 +4010,16 @@ function App() {
       {/* Global Search Modal */}
       {showGlobalSearch && (
         <div className="modal-overlay" onClick={closeGlobalSearch}>
-          <div className="modal global-search-modal" onClick={e => e.stopPropagation()}>
+          <LiquidGlass
+            className="modal global-search-modal modal-glass"
+            displacementScale={35}
+            blurAmount={0.04}
+            saturation={150}
+            aberrationIntensity={1.5}
+            elasticity={0.1}
+            cornerRadius={20}
+            onClick={e => e.stopPropagation()}
+          >
             <div className="global-search-input-wrap">
               <AppIcon name="search" size={16} className="global-search-icon" />
               <input
@@ -4051,7 +4061,7 @@ function App() {
                 <div className="global-search-empty">Sin resultados para "{globalSearchQuery}"</div>
               )}
             </div>
-          </div>
+          </LiquidGlass>
         </div>
       )}
 
