@@ -6761,6 +6761,51 @@ body:has(.modal-overlay) .fab-backdrop {
   transform: scale(0.98);
 }
 
+.weekly-history-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  z-index: 10001;
+  overscroll-behavior: contain;
+}
+
+.weekly-history-sheet {
+  width: 100%;
+  max-width: 100%;
+  height: min(86vh, 86svh);
+  background: var(--bg-card-solid);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.weekly-history-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  background: inherit;
+}
+
+.weekly-history-sheet-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 .weekly-history-list {
   display: flex;
   flex-direction: column;
@@ -6769,25 +6814,7 @@ body:has(.modal-overlay) .fab-backdrop {
   padding-right: 2px;
 }
 
-.history-modal-overlay .modal.weekly-history-modal {
-  height: min(80vh, 80svh);
-  max-height: min(80vh, 80svh);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding-bottom: 1rem;
-}
-
-.history-modal-overlay .modal.weekly-history-modal .modal-header {
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: inherit;
-  padding-bottom: 0.25rem;
-}
-
-.history-modal-overlay .weekly-history-list {
+.weekly-history-sheet .weekly-history-list {
   overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
@@ -6795,12 +6822,25 @@ body:has(.modal-overlay) .fab-backdrop {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  margin-top: 0.5rem;
-  padding-right: 4px;
-  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  margin-top: 0;
+  padding: 0.85rem 1rem calc(5.5rem + env(safe-area-inset-bottom, 0px)) 1rem;
   flex: 1;
   min-height: 0;
   max-height: 100%;
+}
+
+@media (min-width: 560px) {
+  .weekly-history-overlay {
+    align-items: center;
+    padding: 1.25rem;
+  }
+
+  .weekly-history-sheet {
+    max-width: 460px;
+    height: min(82vh, 820px);
+    border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  }
 }
 
 .weekly-history-item {

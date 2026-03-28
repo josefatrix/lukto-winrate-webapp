@@ -2,9 +2,46 @@
  * Stats Tab — Premium Redesign v2
  */
 
-import { useState, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useApp } from '../../contexts'
 import { AvatarImage, AppIcon, EmptyState } from '../common'
+
+function HistoryModal({ open, title, onClose, children }) {
+  const listRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    requestAnimationFrame(() => {
+      listRef.current?.scrollTo({ top: 0, behavior: 'auto' })
+    })
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+    }
+  }, [open])
+
+  if (!open || typeof document === 'undefined') return null
+
+  return createPortal(
+    <div className="weekly-history-overlay" onClick={onClose}>
+      <div className="weekly-history-sheet" onClick={e => e.stopPropagation()}>
+        <div className="weekly-history-sheet-header">
+          <h2>{title}</h2>
+          <button className="modal-close" onClick={onClose} aria-label="Cerrar">×</button>
+        </div>
+        <div className="weekly-history-list" ref={listRef}>
+          {children}
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
 
 export const StatsTab = ({
   stats,
@@ -164,71 +201,67 @@ export const StatsTab = ({
       </div>
 
       {/* ── Modals ── */}
-      {showWeekHistory && (
-        <div className="modal-overlay history-modal-overlay" onClick={() => { if (Date.now() - lastWeekHistoryOpenAt.current < 350) return; setShowWeekHistory(false) }}>
-          <div className="modal weekly-history-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Jugadores de la Semana</h2>
-              <button className="modal-close" onClick={() => setShowWeekHistory(false)}>×</button>
-            </div>
-            <div className="weekly-history-list">
-              {normalizedWeeklyHistory.length === 0 ? (
-                <p className="weekly-history-empty">Aún no hay semanas con datos.</p>
-              ) : normalizedWeeklyHistory.map(entry => {
-                const winner = entry.winner ? players.find(p => p.id === entry.winner.id) : null
-                const dateLabel = `${entry.weekStart.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} – ${entry.weekEnd.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`
-                const isCurrent = entry.weekStart.toISOString().split('T')[0] === currentWeekKey
-                return (
-                  <div key={entry.weekStart.toISOString()} className="weekly-history-item">
-                    <div className="weekly-history-dates">{dateLabel}{isCurrent ? ' · Actual' : ''}</div>
-                    {winner ? (
-                      <div className="weekly-history-winner">
-                        <AvatarImage src={getPlayerPhoto(entry.winner.id)} name={winner.name} imgClassName="weekly-history-avatar" fallbackClassName="weekly-history-avatar-placeholder" />
-                        <div className="weekly-history-info">
-                          <span className="weekly-history-name">{winner.name}</span>
-                          <span className="weekly-history-stats">{entry.winner.wins}V {entry.winner.ties || 0}E {entry.winner.losses || 0}D · {entry.winner.winRate}%</span>
-                        </div>
-                      </div>
-                    ) : <div className="weekly-history-none">Sin datos suficientes</div>}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+      <HistoryModal
+        open={showWeekHistory}
+        title="Jugadores de la Semana"
+        onClose={() => {
+          if (Date.now() - lastWeekHistoryOpenAt.current < 350) return
+          setShowWeekHistory(false)
+        }}
+      >
+        {normalizedWeeklyHistory.length === 0 ? (
+          <p className="weekly-history-empty">Aún no hay semanas con datos.</p>
+        ) : normalizedWeeklyHistory.map(entry => {
+          const winner = entry.winner ? players.find(p => p.id === entry.winner.id) : null
+          const dateLabel = `${entry.weekStart.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} – ${entry.weekEnd.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`
+          const isCurrent = entry.weekStart.toISOString().split('T')[0] === currentWeekKey
 
-      {showMonthHistory && (
-        <div className="modal-overlay history-modal-overlay" onClick={() => { if (Date.now() - lastMonthHistoryOpenAt.current < 350) return; setShowMonthHistory(false) }}>
-          <div className="modal weekly-history-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Jugadores del Mes</h2>
-              <button className="modal-close" onClick={() => setShowMonthHistory(false)}>×</button>
-            </div>
-            <div className="weekly-history-list">
-              {monthlyHistory.length === 0 ? (
-                <p className="weekly-history-empty">Aún no hay meses con datos.</p>
-              ) : monthlyHistory.map(entry => {
-                const winner = entry.winner ? players.find(p => p.id === entry.winner.id) : null
-                return (
-                  <div key={entry.key} className="weekly-history-item">
-                    <div className="weekly-history-dates">{entry.monthLabel}</div>
-                    {winner ? (
-                      <div className="weekly-history-winner">
-                        <AvatarImage src={getPlayerPhoto(entry.winner.id)} name={winner.name} imgClassName="weekly-history-avatar" fallbackClassName="weekly-history-avatar-placeholder" />
-                        <div className="weekly-history-info">
-                          <span className="weekly-history-name">{winner.name}</span>
-                          <span className="weekly-history-stats">{entry.winner.wins}V {entry.winner.ties || 0}E {entry.winner.losses || 0}D · {entry.winner.winRate}%</span>
-                        </div>
-                      </div>
-                    ) : <div className="weekly-history-none">Sin datos suficientes</div>}
+          return (
+            <div key={entry.weekStart.toISOString()} className="weekly-history-item">
+              <div className="weekly-history-dates">{dateLabel}{isCurrent ? ' · Actual' : ''}</div>
+              {winner ? (
+                <div className="weekly-history-winner">
+                  <AvatarImage src={getPlayerPhoto(entry.winner.id)} name={winner.name} imgClassName="weekly-history-avatar" fallbackClassName="weekly-history-avatar-placeholder" />
+                  <div className="weekly-history-info">
+                    <span className="weekly-history-name">{winner.name}</span>
+                    <span className="weekly-history-stats">{entry.winner.wins}V {entry.winner.ties || 0}E {entry.winner.losses || 0}D · {entry.winner.winRate}%</span>
                   </div>
-                )
-              })}
+                </div>
+              ) : <div className="weekly-history-none">Sin datos suficientes</div>}
             </div>
-          </div>
-        </div>
-      )}
+          )
+        })}
+      </HistoryModal>
+
+      <HistoryModal
+        open={showMonthHistory}
+        title="Jugadores del Mes"
+        onClose={() => {
+          if (Date.now() - lastMonthHistoryOpenAt.current < 350) return
+          setShowMonthHistory(false)
+        }}
+      >
+        {monthlyHistory.length === 0 ? (
+          <p className="weekly-history-empty">Aún no hay meses con datos.</p>
+        ) : monthlyHistory.map(entry => {
+          const winner = entry.winner ? players.find(p => p.id === entry.winner.id) : null
+
+          return (
+            <div key={entry.key} className="weekly-history-item">
+              <div className="weekly-history-dates">{entry.monthLabel}</div>
+              {winner ? (
+                <div className="weekly-history-winner">
+                  <AvatarImage src={getPlayerPhoto(entry.winner.id)} name={winner.name} imgClassName="weekly-history-avatar" fallbackClassName="weekly-history-avatar-placeholder" />
+                  <div className="weekly-history-info">
+                    <span className="weekly-history-name">{winner.name}</span>
+                    <span className="weekly-history-stats">{entry.winner.wins}V {entry.winner.ties || 0}E {entry.winner.losses || 0}D · {entry.winner.winRate}%</span>
+                  </div>
+                </div>
+              ) : <div className="weekly-history-none">Sin datos suficientes</div>}
+            </div>
+          )
+        })}
+      </HistoryModal>
 
       {/* ── Ranking ── */}
       <div className="ranking-section">
