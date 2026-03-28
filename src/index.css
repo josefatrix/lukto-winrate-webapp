@@ -3437,9 +3437,6 @@ body:has(.modal-overlay:not(.history-modal-overlay)) {
 }
 body:has(.history-modal-overlay) {
   overflow: hidden;
-  position: fixed;
-  inset: 0;
-  width: 100%;
 }
 
 /* Modal overlay — centers content, no scrolling here */
@@ -3464,7 +3461,8 @@ body:has(.history-modal-overlay) {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   padding-top: max(1rem, calc(env(safe-area-inset-top) + 0.5rem));
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  touch-action: pan-y;
 }
 
 /* Modal card — flex column so inner list can scroll */
@@ -6774,6 +6772,8 @@ body:has(.history-modal-overlay) {
 .history-modal-overlay .modal.weekly-history-modal {
   max-height: none;
   overflow: visible;
+  flex-shrink: 0;
+  margin-bottom: 2rem;
 }
 
 .history-modal-overlay .weekly-history-list {
@@ -6784,6 +6784,7 @@ body:has(.history-modal-overlay) {
   gap: 0.75rem;
   margin-top: 0.5rem;
   padding-right: 2px;
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
 }
 
 .weekly-history-item {
