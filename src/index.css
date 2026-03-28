@@ -3436,6 +3436,13 @@ body:has(.modal-overlay) {
   overflow: hidden;
 }
 
+body:has(.modal-overlay) .bottom-nav,
+body:has(.modal-overlay) .fab,
+body:has(.modal-overlay) .fab-menu,
+body:has(.modal-overlay) .fab-backdrop {
+  pointer-events: none;
+}
+
 /* Modal overlay — centers content, no scrolling here */
 .modal-overlay {
   position: fixed;
@@ -3455,6 +3462,7 @@ body:has(.modal-overlay) {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
 }
 
 /* Modal card — flex column so inner list can scroll */
@@ -6762,19 +6770,25 @@ body:has(.modal-overlay) {
 }
 
 .history-modal-overlay .modal.weekly-history-modal {
-  max-height: 80vh;
-  max-height: 80svh;
+  height: min(80vh, 80svh);
+  max-height: min(80vh, 80svh);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  padding-bottom: 1rem;
 }
 
 .history-modal-overlay .modal.weekly-history-modal .modal-header {
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: inherit;
+  padding-bottom: 0.25rem;
 }
 
 .history-modal-overlay .weekly-history-list {
-  overflow-y: auto;
+  overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
@@ -6783,9 +6797,10 @@ body:has(.modal-overlay) {
   gap: 0.75rem;
   margin-top: 0.5rem;
   padding-right: 4px;
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
   flex: 1;
   min-height: 0;
+  max-height: 100%;
 }
 
 .weekly-history-item {
