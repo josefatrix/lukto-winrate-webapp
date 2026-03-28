@@ -3431,11 +3431,8 @@ body {
   color: var(--text-primary);
 }
 
-/* Lock body scroll while any modal is open (except scrollable history modals) */
-body:has(.modal-overlay:not(.history-modal-overlay)) {
-  overflow: hidden;
-}
-body:has(.history-modal-overlay) {
+/* Lock body scroll while any modal is open */
+body:has(.modal-overlay) {
   overflow: hidden;
 }
 
@@ -3455,14 +3452,9 @@ body:has(.history-modal-overlay) {
 }
 
 .history-modal-overlay {
-  align-items: flex-start;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  padding-top: max(1rem, calc(env(safe-area-inset-top) + 0.5rem));
-  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
-  touch-action: pan-y;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 /* Modal card — flex column so inner list can scroll */
@@ -6770,21 +6762,30 @@ body:has(.history-modal-overlay) {
 }
 
 .history-modal-overlay .modal.weekly-history-modal {
-  max-height: none;
-  overflow: visible;
+  max-height: 80vh;
+  max-height: 80svh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-modal-overlay .modal.weekly-history-modal .modal-header {
   flex-shrink: 0;
-  margin-bottom: 2rem;
 }
 
 .history-modal-overlay .weekly-history-list {
-  overflow: visible;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   touch-action: pan-y;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 0.5rem;
-  padding-right: 2px;
-  padding-bottom: env(safe-area-inset-bottom, 1rem);
+  padding-right: 4px;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  flex: 1;
+  min-height: 0;
 }
 
 .weekly-history-item {
