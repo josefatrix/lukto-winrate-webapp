@@ -3481,6 +3481,7 @@ body:has(.modal-overlay) {
 
 .modal.rating-modal {
   max-width: 480px;
+  min-height: min(70vh, 70svh);
 }
 
 /* Success State */
@@ -4601,14 +4602,15 @@ body:has(.modal-overlay) {
 
 /* Rating List */
 .rating-list {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow-y: scroll;
+  flex: 1 1 auto;
+  min-height: 120px;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 .rating-item {
