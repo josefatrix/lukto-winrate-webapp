@@ -5,12 +5,24 @@ import { getPositionLabel } from '../../utils/matchConstants'
 import { doc, deleteDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
 
+/* Position pills — short labels for quick assignment */
+const POSITION_PILLS = [
+  { value: 'portero',     short: 'GK' },
+  { value: 'cierre',      short: 'DF' },
+  { value: 'lateral_izq', short: 'LI' },
+  { value: 'lateral_der', short: 'LD' },
+  { value: 'medio',       short: 'MC' },
+  { value: 'pivote',      short: 'PV' },
+  { value: 'delantero',   short: 'DC' },
+]
+
 export function MatchBuilderTab({ mb }) {
-  const { getPlayerName, setActiveTab, teamPolls } = useApp()
+  const { getPlayerName, setActiveTab, teamPolls, stats } = useApp()
 
   const [presetName, setPresetName] = useState('')
   const [showPresets, setShowPresets] = useState(false)
   const [showAdvancedInsights, setShowAdvancedInsights] = useState(false)
+  const [poolOpen, setPoolOpen] = useState(true)
 
   // Poll state
   const [pollOptions, setPollOptions] = useState(null)
@@ -25,6 +37,29 @@ export function MatchBuilderTab({ mb }) {
   const poolReady = mb.selectedPlayers.length === mb.requiredPlayers
   const teamsReady = mb.teamWhite.length === mb.teamSize && mb.teamBlack.length === mb.teamSize
   const canSave = mb.matchDate && poolReady && teamsReady
+
+  /* Per-player power indicator from stats */
+  const playerPowerMap = useMemo(() => {
+    if (!stats?.length) return {}
+    const scores = stats.map(s => parseFloat(s.rankingScore) || 0)
+    const maxScore = Math.max(...scores, 1)
+    const map = {}
+    stats.forEach(s => {
+      const score = parseFloat(s.rankingScore) || 0
+      const pct = score / maxScore
+      map[s.id] = {
+        rating: parseFloat(s.avgRating) || 0,
+        tier: pct >= 0.65 ? 'high' : pct >= 0.35 ? 'mid' : 'low',
+      }
+    })
+    return map
+  }, [stats])
+
+  /* Auto-collapse pool section once it's ready */
+  const handlePoolToggle = useCallback(() => setPoolOpen(o => !o), [])
+  const handlePoolPlayerToggle = useCallback((pid) => {
+    mb.handlePoolPlayerToggle(pid)
+  }, [mb])
 
   const handleSave = async () => {
     const ok = await mb.handleAddMatch()
@@ -62,10 +97,7 @@ export function MatchBuilderTab({ mb }) {
     if (!pollOptions) return
     setCreatingPoll(true)
     const pollId = await mb.createTeamPoll(pollOptions)
-    if (pollId) {
-      const url = `${window.location.origin}/vote/${pollId}`
-      setPollLink(url)
-    }
+    if (pollId) setPollLink(`${window.location.origin}/vote/${pollId}`)
     setCreatingPoll(false)
   }, [pollOptions, mb])
 
@@ -85,14 +117,10 @@ export function MatchBuilderTab({ mb }) {
 
   const handleApplyOption = useCallback((option) => {
     option.teamWhite.forEach(pid => {
-      if (!mb.teamWhite.includes(pid) && !mb.teamBlack.includes(pid)) {
-        mb.handlePlayerToggle(pid, 'white')
-      }
+      if (!mb.teamWhite.includes(pid) && !mb.teamBlack.includes(pid)) mb.handlePlayerToggle(pid, 'white')
     })
     option.teamBlack.forEach(pid => {
-      if (!mb.teamWhite.includes(pid) && !mb.teamBlack.includes(pid)) {
-        mb.handlePlayerToggle(pid, 'black')
-      }
+      if (!mb.teamWhite.includes(pid) && !mb.teamBlack.includes(pid)) mb.handlePlayerToggle(pid, 'black')
     })
     setShowPollModal(false)
   }, [mb])
@@ -100,6 +128,21 @@ export function MatchBuilderTab({ mb }) {
   const topAlerts = useMemo(() =>
     insights.alerts.filter(a => a.tone === 'danger' || a.tone === 'warning'),
   [insights.alerts])
+
+  /* Unassigned = in pool but not in either team */
+  const unassigned = useMemo(() =>
+    mb.selectedPlayers.filter(pid => !mb.teamWhite.includes(pid) && !mb.teamBlack.includes(pid)),
+  [mb.selectedPlayers, mb.teamWhite, mb.teamBlack])
+
+  const handleSwap = useCallback((pid, fromTeam) => {
+    const toTeam = fromTeam === 'white' ? 'black' : 'white'
+    mb.handlePlayerToggle(pid, fromTeam)   // remove from current
+    mb.handlePlayerToggle(pid, toTeam)     // add to other
+  }, [mb])
+
+  const handleAssignFromPool = useCallback((pid, team) => {
+    mb.handlePlayerToggle(pid, team)
+  }, [mb])
 
   return (
     <section className="stats-section">
@@ -113,13 +156,9 @@ export function MatchBuilderTab({ mb }) {
       )}
 
       <div className="mb-wizard">
+
         {/* ── STEP 0: Match Info ── */}
-        <StepCard
-          number={0}
-          title="Datos del partido"
-          subtitle="Fecha, hora y formato"
-          done={!!mb.matchDate}
-        >
+        <StepCard number={0} title="Datos del partido" subtitle="Fecha, hora y formato" done={!!mb.matchDate}>
           <div className="mb-info-grid">
             <div className="mb-field">
               <label>Fecha</label>
@@ -147,110 +186,126 @@ export function MatchBuilderTab({ mb }) {
           </div>
         </StepCard>
 
-        {/* ── STEP 1: Player Pool ── */}
+        {/* ── STEP 1+2 COMBINED: Convocatoria + Armado ── */}
         <StepCard
           number={1}
-          title="Convocatoria"
-          subtitle={`${mb.selectedPlayers.length} de ${mb.requiredPlayers} jugadores`}
-          done={poolReady}
-          badge={poolReady ? 'Listo' : `${mb.requiredPlayers - mb.selectedPlayers.length} faltan`}
-          badgeTone={poolReady ? 'good' : 'neutral'}
+          title="Armado de equipos"
+          subtitle={
+            !poolReady
+              ? `Convocatoria: ${mb.selectedPlayers.length}/${mb.requiredPlayers} jugadores`
+              : teamsReady
+                ? `${insights.balanceBand.label} · Balance ${insights.balanceScore}/100`
+                : `Pool listo · Asigna los ${mb.teamSize} de cada equipo`
+          }
+          done={teamsReady}
+          badge={teamsReady ? `${insights.balanceScore}/100` : poolReady ? `${mb.teamSize * 2 - mb.teamWhite.length - mb.teamBlack.length} sin asignar` : undefined}
+          badgeTone={teamsReady ? insights.balanceBand.tone : 'neutral'}
         >
-          <input
-            type="text"
-            value={mb.poolSearch}
-            onChange={e => mb.setPoolSearch(e.target.value)}
-            placeholder="Buscar jugador por nombre..."
-            className="mb-search"
-          />
 
-          {/* Presets */}
-          <div className="mb-presets-row">
-            <button className="mb-preset-toggle" onClick={() => setShowPresets(!showPresets)}>
-              <AppIcon name="note" size={12} />
-              {showPresets ? 'Ocultar convocatorias' : 'Convocatorias guardadas'}
-            </button>
-            {mb.selectedPlayers.length > 0 && !showPresets && (
-              <button className="mb-action-sm danger" onClick={mb.clearSelectedPlayers}>
-                <AppIcon name="trash" size={11} /> Limpiar
-              </button>
+          {/* ── Convocatoria (colapsable una vez lista) ── */}
+          <div className="mb-pool-section">
+            <div className="mb-pool-section-head" onClick={handlePoolToggle}>
+              <span className="mb-pool-section-title">
+                {poolReady
+                  ? <><AppIcon name="check" size={12} /> Convocatoria lista ({mb.selectedPlayers.length})</>
+                  : `Convocatoria — ${mb.selectedPlayers.length}/${mb.requiredPlayers}`
+                }
+              </span>
+              <span className={`mb-pool-chevron ${poolOpen ? 'up' : ''}`}>›</span>
+            </div>
+
+            {poolOpen && (
+              <div className="mb-pool-body">
+                <div className="mb-pool-controls">
+                  <input
+                    type="text"
+                    value={mb.poolSearch}
+                    onChange={e => mb.setPoolSearch(e.target.value)}
+                    placeholder="Buscar..."
+                    className="mb-search"
+                  />
+                  <div className="mb-presets-row">
+                    <button className="mb-preset-toggle" onClick={() => setShowPresets(!showPresets)}>
+                      <AppIcon name="note" size={12} />
+                      {showPresets ? 'Ocultar' : 'Guardadas'}
+                    </button>
+                    {mb.selectedPlayers.length > 0 && (
+                      <button className="mb-action-sm danger" onClick={mb.clearSelectedPlayers}>
+                        <AppIcon name="trash" size={11} /> Limpiar
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {showPresets && (
+                  <div className="mb-presets-panel">
+                    {presets.length > 0 ? (
+                      <div className="mb-preset-list">
+                        {presets.map(p => (
+                          <div key={p.name} className="mb-preset-item">
+                            <button className="mb-preset-load" onClick={() => { mb.applyPreset(p); setShowPresets(false) }}>
+                              <span className="mb-preset-name">{p.name}</span>
+                              <span className="mb-preset-count">{p.playerIds.length} jug.</span>
+                            </button>
+                            <button className="mb-preset-delete" onClick={() => mb.deletePreset(p.name)}>×</button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mb-preset-empty">No hay convocatorias guardadas.</p>
+                    )}
+                    <div className="mb-preset-save-row">
+                      <input
+                        type="text"
+                        value={presetName}
+                        onChange={e => setPresetName(e.target.value)}
+                        placeholder="Nombre de la convocatoria..."
+                        className="mb-preset-input"
+                        onKeyDown={e => e.key === 'Enter' && handleSavePreset()}
+                      />
+                      <button
+                        className="mb-action-sm primary"
+                        onClick={handleSavePreset}
+                        disabled={!presetName.trim() || mb.selectedPlayers.length === 0}
+                      >
+                        Guardar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Progress bar */}
+                <div className="mb-pool-progress">
+                  <div
+                    className={`mb-pool-bar ${poolReady ? 'ready' : ''}`}
+                    style={{ width: `${Math.min(100, (mb.selectedPlayers.length / mb.requiredPlayers) * 100)}%` }}
+                  />
+                </div>
+
+                {/* Player grid */}
+                <div className="player-select-grid">
+                  {mb.filteredPoolPlayers.map(player => {
+                    const isSelected = mb.selectedPlayers.includes(player.id)
+                    const isDisabled = !isSelected && mb.selectedPlayers.length >= mb.requiredPlayers
+                    const power = playerPowerMap[player.id]
+                    return (
+                      <button
+                        key={player.id}
+                        className={`player-chip ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
+                        onClick={() => handlePoolPlayerToggle(player.id)}
+                        disabled={isDisabled}
+                      >
+                        {power && <span className={`mb-chip-power ${power.tier}`} />}
+                        {player.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             )}
           </div>
 
-          {showPresets && (
-            <div className="mb-presets-panel">
-              {presets.length > 0 ? (
-                <div className="mb-preset-list">
-                  {presets.map(p => (
-                    <div key={p.name} className="mb-preset-item">
-                      <button className="mb-preset-load" onClick={() => { mb.applyPreset(p); setShowPresets(false) }}>
-                        <span className="mb-preset-name">{p.name}</span>
-                        <span className="mb-preset-count">{p.playerIds.length} jugadores</span>
-                      </button>
-                      <button className="mb-preset-delete" onClick={() => mb.deletePreset(p.name)} title="Eliminar">×</button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="mb-preset-empty">No hay convocatorias guardadas todavía.</p>
-              )}
-              <div className="mb-preset-save-row">
-                <input
-                  type="text"
-                  value={presetName}
-                  onChange={e => setPresetName(e.target.value)}
-                  placeholder="Nombre de la convocatoria..."
-                  className="mb-preset-input"
-                  onKeyDown={e => e.key === 'Enter' && handleSavePreset()}
-                />
-                <button
-                  className="mb-action-sm primary"
-                  onClick={handleSavePreset}
-                  disabled={!presetName.trim() || mb.selectedPlayers.length === 0}
-                >
-                  Guardar
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Pool progress bar */}
-          <div className="mb-pool-progress">
-            <div
-              className={`mb-pool-bar ${poolReady ? 'ready' : ''}`}
-              style={{ width: `${Math.min(100, (mb.selectedPlayers.length / mb.requiredPlayers) * 100)}%` }}
-            />
-          </div>
-
-          <div className="player-select-grid">
-            {mb.filteredPoolPlayers.map(player => {
-              const isSelected = mb.selectedPlayers.includes(player.id)
-              const isDisabled = !isSelected && mb.selectedPlayers.length >= mb.requiredPlayers
-              return (
-                <button
-                  key={player.id}
-                  className={`player-chip ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
-                  onClick={() => mb.handlePoolPlayerToggle(player.id)}
-                  disabled={isDisabled}
-                >
-                  {player.name}
-                </button>
-              )
-            })}
-          </div>
-        </StepCard>
-
-        {/* ── STEP 2: Build Teams ── */}
-        <StepCard
-          number={2}
-          title="Armar equipos"
-          subtitle={teamsReady ? `${insights.balanceBand.label} · Balance ${insights.balanceScore}/100` : 'Auto-balance o selección manual'}
-          done={teamsReady}
-          badge={teamsReady ? `${insights.balanceScore}/100` : undefined}
-          badgeTone={teamsReady ? insights.balanceBand.tone : 'neutral'}
-          disabled={!poolReady}
-        >
-          {/* Balance meter (only show when there's something to balance) */}
+          {/* ── Balance meter ── */}
           {(mb.teamWhite.length > 0 || mb.teamBlack.length > 0) && (
             <div className="mb-balance-strip">
               <div className="mb-balance-bar-track">
@@ -262,13 +317,13 @@ export function MatchBuilderTab({ mb }) {
               <div className="mb-balance-labels">
                 <span className={`mb-balance-tag ${insights.balanceBand.tone}`}>{insights.balanceBand.label}</span>
                 <span className="mb-balance-prob">
-                  {insights.probability.white}% vs {insights.probability.black}%
+                  Blanco {insights.probability.white}% · Negro {insights.probability.black}%
                 </span>
               </div>
             </div>
           )}
 
-          {/* Actions */}
+          {/* ── Actions row ── */}
           <div className="mb-actions-row">
             <button
               className="mb-action primary"
@@ -277,22 +332,18 @@ export function MatchBuilderTab({ mb }) {
             >
               <AppIcon name="spark" size={14} /> Auto-balance
             </button>
-            <button
-              className="mb-action"
-              onClick={mb.clearCurrentTeams}
-              disabled={mb.teamWhite.length === 0 && mb.teamBlack.length === 0}
-            >
+            <button className="mb-action" onClick={mb.clearCurrentTeams} disabled={mb.teamWhite.length === 0 && mb.teamBlack.length === 0}>
               <AppIcon name="close" size={13} /> Limpiar
             </button>
             <button className="mb-action" onClick={mb.openTvBoard} disabled={!poolReady}>
               <AppIcon name="note" size={13} /> Pizarra
             </button>
             <button className="mb-action poll" onClick={handleGeneratePoll} disabled={!poolReady}>
-              <AppIcon name="users" size={13} /> Votar armado
+              <AppIcon name="users" size={13} /> Votar
             </button>
           </div>
 
-          {/* Quick alerts (only critical ones, inline) */}
+          {/* ── Inline alerts ── */}
           {topAlerts.length > 0 && teamsReady && (
             <div className="mb-quick-alerts">
               {topAlerts.map((a, i) => (
@@ -304,7 +355,7 @@ export function MatchBuilderTab({ mb }) {
             </div>
           )}
 
-          {/* Swap suggestions (shown prominently only when beneficial) */}
+          {/* ── Swap suggestions ── */}
           {teamsReady && insights.swapSuggestions.length > 0 && (
             <div className="mb-swaps">
               <span className="mb-swaps-label">Mejoras sugeridas:</span>
@@ -321,39 +372,54 @@ export function MatchBuilderTab({ mb }) {
             </div>
           )}
 
-          {/* Teams side by side */}
-          <div className="mb-teams-grid">
-            <TeamColumn
-              label="Blanco"
-              team="white"
-              teamPlayers={mb.teamWhite}
-              teamSize={mb.teamSize}
-              selectedPlayers={mb.selectedPlayers}
-              otherTeam={mb.teamBlack}
-              matchPositions={mb.matchPositions}
-              onToggle={mb.handlePlayerToggle}
-              onPositionChange={(pid, val) => mb.setMatchPositions(prev => ({ ...prev, [pid]: val }))}
-              positionOptions={mb.POSITION_OPTIONS}
-              getPlayerName={getPlayerName}
-              insights={insights.white}
-            />
-            <TeamColumn
-              label="Negro"
-              team="black"
-              teamPlayers={mb.teamBlack}
-              teamSize={mb.teamSize}
-              selectedPlayers={mb.selectedPlayers}
-              otherTeam={mb.teamWhite}
-              matchPositions={mb.matchPositions}
-              onToggle={mb.handlePlayerToggle}
-              onPositionChange={(pid, val) => mb.setMatchPositions(prev => ({ ...prev, [pid]: val }))}
-              positionOptions={mb.POSITION_OPTIONS}
-              getPlayerName={getPlayerName}
-              insights={insights.black}
-            />
-          </div>
+          {/* ── THREE-ZONE DRAFT ── */}
+          {poolReady && (
+            <div className="mb-draft-zones">
 
-          {/* Captain lock (collapsed, secondary) */}
+              {/* Team Blanco */}
+              <DraftTeamZone
+                team="white"
+                label="Blanco"
+                teamPlayers={mb.teamWhite}
+                teamSize={mb.teamSize}
+                matchPositions={mb.matchPositions}
+                onRemove={pid => mb.handlePlayerToggle(pid, 'white')}
+                onSwap={pid => handleSwap(pid, 'white')}
+                onPositionChange={(pid, val) => mb.setMatchPositions(prev => ({ ...prev, [pid]: val }))}
+                getPlayerName={getPlayerName}
+                insights={insights.white}
+                playerPowerMap={playerPowerMap}
+              />
+
+              {/* Pool — unassigned */}
+              <DraftPoolZone
+                unassigned={unassigned}
+                getPlayerName={getPlayerName}
+                onAddToWhite={pid => handleAssignFromPool(pid, 'white')}
+                onAddToBlack={pid => handleAssignFromPool(pid, 'black')}
+                whiteFull={mb.teamWhite.length >= mb.teamSize}
+                blackFull={mb.teamBlack.length >= mb.teamSize}
+                playerPowerMap={playerPowerMap}
+              />
+
+              {/* Team Negro */}
+              <DraftTeamZone
+                team="black"
+                label="Negro"
+                teamPlayers={mb.teamBlack}
+                teamSize={mb.teamSize}
+                matchPositions={mb.matchPositions}
+                onRemove={pid => mb.handlePlayerToggle(pid, 'black')}
+                onSwap={pid => handleSwap(pid, 'black')}
+                onPositionChange={(pid, val) => mb.setMatchPositions(prev => ({ ...prev, [pid]: val }))}
+                getPlayerName={getPlayerName}
+                insights={insights.black}
+                playerPowerMap={playerPowerMap}
+              />
+            </div>
+          )}
+
+          {/* ── Capitanes (collapsed) ── */}
           <details className="mb-captains-detail">
             <summary>Opciones de capitanes</summary>
             <div className="mb-captains-body">
@@ -388,7 +454,7 @@ export function MatchBuilderTab({ mb }) {
             </div>
           </details>
 
-          {/* Advanced insights (collapsed by default) */}
+          {/* ── Advanced insights (collapsed) ── */}
           {teamsReady && (
             <details className="mb-advanced-detail" open={showAdvancedInsights} onToggle={e => setShowAdvancedInsights(e.currentTarget.open)}>
               <summary>Análisis detallado</summary>
@@ -413,9 +479,9 @@ export function MatchBuilderTab({ mb }) {
           )}
         </StepCard>
 
-        {/* ── STEP 3: Result ── */}
+        {/* ── STEP 2: Result ── */}
         <StepCard
-          number={3}
+          number={2}
           title="Resultado"
           subtitle="Marcador y ganador (opcional)"
           done={!!mb.winner || (mb.scoreWhite !== '' && mb.scoreBlack !== '')}
@@ -447,9 +513,9 @@ export function MatchBuilderTab({ mb }) {
 
           <div className="mb-winner-row">
             {[
-              { key: 'white', label: 'Blanco', icon: null },
-              { key: 'tie', label: 'Empate', icon: 'users' },
-              { key: 'black', label: 'Negro', icon: null },
+              { key: 'white', label: 'Blanco' },
+              { key: 'tie',   label: 'Empate', icon: 'users' },
+              { key: 'black', label: 'Negro' },
             ].map(opt => (
               <button
                 key={opt.key}
@@ -472,19 +538,13 @@ export function MatchBuilderTab({ mb }) {
             <button className="mb-save-cancel" onClick={mb.resetMatchForm}>Cancelar</button>
           )}
           <button className="mb-save-btn" onClick={handleSave} disabled={!canSave || mb.saving}>
-            {mb.saving
-              ? 'Guardando...'
-              : mb.editingMatchId
-                ? 'Actualizar partido'
-                : 'Guardar partido'}
+            {mb.saving ? 'Guardando...' : mb.editingMatchId ? 'Actualizar partido' : 'Guardar partido'}
           </button>
         </div>
       </div>
 
-      {/* TV Board */}
       {mb.showTvBoard && <TvBoardOverlay mb={mb} getPlayerName={getPlayerName} />}
 
-      {/* Poll Modal */}
       {showPollModal && pollOptions && (
         <PollModal
           options={pollOptions}
@@ -501,6 +561,115 @@ export function MatchBuilderTab({ mb }) {
         />
       )}
     </section>
+  )
+}
+
+/* ── Three-Zone: Team column ── */
+function DraftTeamZone({ team, label, teamPlayers, teamSize, matchPositions, onRemove, onSwap, onPositionChange, getPlayerName, insights, playerPowerMap }) {
+  const filled = teamPlayers.length
+  const isEmpty = filled === 0
+  const isWhite = team === 'white'
+
+  return (
+    <div className={`mb-draft-zone dz-team dz-${team}`}>
+      <div className="mb-dz-header">
+        <span className={`mb-dz-dot ${team}`} />
+        <span className="mb-dz-label">{label}</span>
+        <span className="mb-dz-count">{filled}/{teamSize}</span>
+      </div>
+
+      <div className="mb-dz-body">
+        {isEmpty && <p className="mb-dz-empty">Sin jugadores</p>}
+
+        {teamPlayers.map(pid => {
+          const power = playerPowerMap[pid]
+          const pos = matchPositions[pid] || ''
+          return (
+            <div key={pid} className="mb-dz-player">
+              <div className="mb-dz-player-row">
+                {power && <span className={`mb-power-dot ${power.tier}`} title={`★ ${power.rating}`} />}
+                <span className="mb-dz-name">{getPlayerName(pid)}</span>
+                <div className="mb-dz-btns">
+                  <button
+                    className="mb-dz-btn swap"
+                    onClick={() => onSwap(pid)}
+                    title={`Mover a ${isWhite ? 'Negro' : 'Blanco'}`}
+                  >
+                    {isWhite ? '→' : '←'}
+                  </button>
+                  <button className="mb-dz-btn remove" onClick={() => onRemove(pid)} title="Quitar">×</button>
+                </div>
+              </div>
+              <div className="mb-pos-pills">
+                {POSITION_PILLS.map(p => (
+                  <button
+                    key={p.value}
+                    className={`mb-pos-pill ${pos === p.value ? 'active' : ''}`}
+                    onClick={() => onPositionChange(pid, pos === p.value ? '' : p.value)}
+                  >
+                    {p.short}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {filled > 0 && (
+        <div className="mb-dz-stats">
+          <span>WR {insights.avgWinRate.toFixed(0)}%</span>
+          <span>★ {insights.avgRating.toFixed(1)}</span>
+          <span>Q {insights.chemistry.score.toFixed(0)}%</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Three-Zone: Unassigned pool column ── */
+function DraftPoolZone({ unassigned, getPlayerName, onAddToWhite, onAddToBlack, whiteFull, blackFull, playerPowerMap }) {
+  return (
+    <div className="mb-draft-zone dz-pool">
+      <div className="mb-dz-header pool">
+        <span className="mb-dz-label">Sin asignar</span>
+        <span className="mb-dz-count">{unassigned.length}</span>
+      </div>
+
+      <div className="mb-dz-body">
+        {unassigned.length === 0 ? (
+          <div className="mb-dz-all-assigned">
+            <AppIcon name="check" size={14} />
+            <span>Todos asignados</span>
+          </div>
+        ) : unassigned.map(pid => {
+          const power = playerPowerMap[pid]
+          return (
+            <div key={pid} className="mb-dz-pool-player">
+              <div className="mb-dz-player-info">
+                {power && <span className={`mb-power-dot ${power.tier}`} title={`★ ${power.rating}`} />}
+                <span className="mb-dz-name">{getPlayerName(pid)}</span>
+                {power && <span className="mb-dz-rating">★{power.rating.toFixed(1)}</span>}
+              </div>
+              <div className="mb-dz-assign-btns">
+                <button
+                  className="mb-assign-btn white"
+                  onClick={() => onAddToWhite(pid)}
+                  disabled={whiteFull}
+                  title="Asignar a Blanco"
+                >B</button>
+                <button
+                  className="mb-assign-btn black"
+                  onClick={() => onAddToBlack(pid)}
+                  disabled={blackFull}
+                  title="Asignar a Negro"
+                >N</button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -525,78 +694,16 @@ function StepCard({ number, title, subtitle, done, badge, badgeTone, disabled, c
   )
 }
 
-/* ── Team Column (assignment + positions) ── */
-function TeamColumn({
-  label, team, teamPlayers, teamSize, selectedPlayers,
-  otherTeam, matchPositions, onToggle, onPositionChange,
-  positionOptions, getPlayerName, insights,
-}) {
-  const unassigned = selectedPlayers.filter(pid => !teamPlayers.includes(pid) && !otherTeam.includes(pid))
-
-  return (
-    <div className={`mb-team-col ${team}`}>
-      <div className="mb-team-head">
-        <span className={`team-badge ${team}`}></span>
-        <span className="mb-team-title">{label}</span>
-        <span className="mb-team-count">{teamPlayers.length}/{teamSize}</span>
-      </div>
-
-      {/* Assigned players with positions */}
-      <div className="mb-team-roster">
-        {teamPlayers.map(pid => (
-          <div key={pid} className="mb-roster-row">
-            <button className="mb-roster-remove" onClick={() => onToggle(pid, team)} title="Quitar del equipo">×</button>
-            <span className="mb-roster-name">{getPlayerName(pid)}</span>
-            <select
-              className="mb-roster-pos"
-              value={matchPositions[pid] || ''}
-              onChange={e => onPositionChange(pid, e.target.value)}
-            >
-              {positionOptions.map(opt => (
-                <option key={opt.value || 'none'} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-        ))}
-        {teamPlayers.length === 0 && (
-          <p className="mb-team-empty">Toca jugadores abajo para agregar</p>
-        )}
-      </div>
-
-      {/* Available (unassigned) players */}
-      {unassigned.length > 0 && teamPlayers.length < teamSize && (
-        <div className="mb-team-available">
-          {unassigned.map(pid => (
-            <button key={pid} className="mb-avail-chip" onClick={() => onToggle(pid, team)}>
-              + {getPlayerName(pid)}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Mini stats under the team */}
-      {teamPlayers.length > 0 && (
-        <div className="mb-team-mini-stats">
-          <span>WR {insights.avgWinRate.toFixed(0)}%</span>
-          <span>Rtg {insights.avgRating.toFixed(1)}</span>
-          <span>Quím {insights.chemistry.score.toFixed(0)}%</span>
-        </div>
-      )}
-    </div>
-  )
-}
-
 /* ── Compare Card (advanced) ── */
 function CompareCard({ team, tone, data }) {
   const rows = [
     { label: 'Win Rate', value: `${data.avgWinRate.toFixed(1)}%` },
-    { label: 'Rating', value: data.avgRating.toFixed(2) },
-    { label: 'MVPs', value: data.avgMvps.toFixed(1) },
+    { label: 'Rating',   value: data.avgRating.toFixed(2) },
+    { label: 'MVPs',     value: data.avgMvps.toFixed(1) },
     { label: 'Partidos', value: data.avgPlayed.toFixed(0) },
-    { label: 'Química', value: `${data.chemistry.score.toFixed(0)}%` },
+    { label: 'Química',  value: `${data.chemistry.score.toFixed(0)}%` },
   ]
   const missing = data.missingRoles || []
-
   return (
     <div className={`mb-compare-card ${tone}`}>
       <h4>{team}</h4>
@@ -605,11 +712,7 @@ function CompareCard({ team, tone, data }) {
           <span>{r.label}</span><strong>{r.value}</strong>
         </div>
       ))}
-      {missing.length > 0 && (
-        <div className="mb-compare-missing">
-          Falta: {missing.join(', ')}
-        </div>
-      )}
+      {missing.length > 0 && <div className="mb-compare-missing">Falta: {missing.join(', ')}</div>}
     </div>
   )
 }
@@ -727,13 +830,9 @@ function ActivePolls({ polls, getPlayerName }) {
   const handleDelete = async (pollId) => {
     if (!confirm('¿Eliminar esta encuesta?')) return
     setDeleting(pollId)
-    try {
-      await deleteDoc(doc(db, 'matches', pollId))
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setDeleting(null)
-    }
+    try { await deleteDoc(doc(db, 'matches', pollId)) }
+    catch (e) { console.error(e) }
+    finally { setDeleting(null) }
   }
 
   return (
@@ -742,7 +841,6 @@ function ActivePolls({ polls, getPlayerName }) {
         <h3>Encuestas activas</h3>
         <span className="ap-count">{polls.length}</span>
       </div>
-
       <div className="ap-list">
         {polls.map(poll => {
           const isOpen = expanded === poll.id
@@ -751,7 +849,6 @@ function ActivePolls({ polls, getPlayerName }) {
           const winner = total > 0
             ? opts.reduce((best, o, i) => (o.votes || 0) > (best.votes || 0) ? { ...o, idx: i } : best, { votes: 0, idx: 0 })
             : null
-
           return (
             <div key={poll.id} className={`ap-card ${isOpen ? 'open' : ''}`}>
               <div className="ap-card-head" onClick={() => setExpanded(isOpen ? null : poll.id)}>
@@ -759,19 +856,15 @@ function ActivePolls({ polls, getPlayerName }) {
                   <span className="ap-card-title">{poll.matchFormat} · {poll.matchDate ? formatPollDate(poll.matchDate) : 'Sin fecha'}</span>
                   <span className="ap-card-votes">{total} voto{total !== 1 ? 's' : ''}</span>
                 </div>
-                {winner && total > 0 && (
-                  <span className="ap-leading">Lidera: Opción {winner.idx + 1}</span>
-                )}
+                {winner && total > 0 && <span className="ap-leading">Lidera: Opción {winner.idx + 1}</span>}
                 <span className={`ap-chevron ${isOpen ? 'open' : ''}`}>›</span>
               </div>
-
               {isOpen && (
                 <div className="ap-card-body">
                   <div className="ap-options">
                     {opts.map((opt, idx) => {
                       const pct = total > 0 ? Math.round(((opt.votes || 0) / total) * 100) : 0
                       const isLeading = total > 0 && (opt.votes || 0) === Math.max(...opts.map(o => o.votes || 0)) && (opt.votes || 0) > 0
-
                       return (
                         <div key={idx} className={`ap-option ${isLeading ? 'leading' : ''}`}>
                           <div className="ap-option-head">
@@ -779,42 +872,29 @@ function ActivePolls({ polls, getPlayerName }) {
                             <span className="ap-option-balance">{opt.balanceScore}/100</span>
                             <span className="ap-option-votes">{opt.votes || 0} votos · {pct}%</span>
                           </div>
-
                           <div className="ap-bar-track">
                             <div className={`ap-bar-fill ${isLeading ? 'leading' : ''}`} style={{ width: `${pct}%` }} />
                           </div>
-
                           <div className="ap-teams-mini">
                             <div className="ap-team-mini">
                               <span className="team-badge white"></span>
-                              {opt.teamWhite?.map(pid => (
-                                <span key={pid} className="ap-player">{poll.playerNames?.[pid] || getPlayerName(pid)}</span>
-                              ))}
+                              {opt.teamWhite?.map(pid => <span key={pid} className="ap-player">{poll.playerNames?.[pid] || getPlayerName(pid)}</span>)}
                             </div>
                             <div className="ap-team-mini">
                               <span className="team-badge black"></span>
-                              {opt.teamBlack?.map(pid => (
-                                <span key={pid} className="ap-player">{poll.playerNames?.[pid] || getPlayerName(pid)}</span>
-                              ))}
+                              {opt.teamBlack?.map(pid => <span key={pid} className="ap-player">{poll.playerNames?.[pid] || getPlayerName(pid)}</span>)}
                             </div>
                           </div>
                         </div>
                       )
                     })}
                   </div>
-
                   <div className="ap-actions">
                     <button className="ap-btn copy" onClick={() => handleCopy(poll.id)}>
                       {copiedId === poll.id ? '✓ Copiado' : 'Copiar enlace'}
                     </button>
-                    <button className="ap-btn whatsapp" onClick={() => handleShare(poll)}>
-                      WhatsApp
-                    </button>
-                    <button
-                      className="ap-btn delete"
-                      onClick={() => handleDelete(poll.id)}
-                      disabled={deleting === poll.id}
-                    >
+                    <button className="ap-btn whatsapp" onClick={() => handleShare(poll)}>WhatsApp</button>
+                    <button className="ap-btn delete" onClick={() => handleDelete(poll.id)} disabled={deleting === poll.id}>
                       {deleting === poll.id ? '...' : 'Eliminar'}
                     </button>
                   </div>
@@ -832,16 +912,11 @@ function formatPollDate(dateStr) {
   try {
     const d = new Date(dateStr + 'T12:00:00')
     return d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
-  } catch {
-    return dateStr
-  }
+  } catch { return dateStr }
 }
 
 /* ── Poll Modal ── */
-function PollModal({
-  options, pollLink, creatingPoll, copiedLink, getPlayerName,
-  onClose, onRegenerate, onCreatePoll, onCopyLink, onShareWhatsApp, onApplyOption,
-}) {
+function PollModal({ options, pollLink, creatingPoll, copiedLink, getPlayerName, onClose, onRegenerate, onCreatePoll, onCopyLink, onShareWhatsApp, onApplyOption }) {
   return (
     <div className="poll-overlay" onClick={onClose}>
       <div className="poll-modal" onClick={e => e.stopPropagation()}>
@@ -852,7 +927,6 @@ function PollModal({
           </div>
           <button className="poll-close" onClick={onClose}>×</button>
         </div>
-
         <div className="poll-options-list">
           {options.map((opt, idx) => (
             <div key={idx} className="poll-option-card">
@@ -863,7 +937,6 @@ function PollModal({
                 </span>
                 <span className="poll-option-prob">{opt.probability.white}% vs {opt.probability.black}%</span>
               </div>
-
               <div className="poll-teams-row">
                 <div className="poll-team white">
                   <div className="poll-team-label"><span className="team-badge white"></span> Blanco</div>
@@ -884,7 +957,6 @@ function PollModal({
                   ))}
                 </div>
               </div>
-
               <div className="poll-option-actions">
                 <button className="poll-opt-btn" onClick={() => onRegenerate(idx)}>
                   <AppIcon name="spark" size={12} /> Regenerar
@@ -896,7 +968,6 @@ function PollModal({
             </div>
           ))}
         </div>
-
         <div className="poll-share-section">
           {!pollLink ? (
             <button className="poll-create-btn" onClick={onCreatePoll} disabled={creatingPoll}>
@@ -907,13 +978,9 @@ function PollModal({
               <p className="poll-share-label">Enlace listo para compartir:</p>
               <div className="poll-link-row">
                 <input type="text" value={pollLink} readOnly className="poll-link-input" onClick={e => e.target.select()} />
-                <button className="poll-copy-btn" onClick={onCopyLink}>
-                  {copiedLink ? '✓ Copiado' : 'Copiar'}
-                </button>
+                <button className="poll-copy-btn" onClick={onCopyLink}>{copiedLink ? '✓ Copiado' : 'Copiar'}</button>
               </div>
-              <button className="poll-whatsapp-btn" onClick={onShareWhatsApp}>
-                Compartir en WhatsApp
-              </button>
+              <button className="poll-whatsapp-btn" onClick={onShareWhatsApp}>Compartir en WhatsApp</button>
             </div>
           )}
         </div>

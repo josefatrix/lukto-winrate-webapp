@@ -1,9 +1,8 @@
 /**
- * Stats Tab Component
- * Shows ranking table and featured players
+ * Stats Tab — Premium Redesign v2
  */
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useApp } from '../../contexts'
 import { AvatarImage, AppIcon, EmptyState } from '../common'
 
@@ -20,23 +19,15 @@ export const StatsTab = ({
   getWinRateClass,
   getRatingClass,
   announcements,
+  playerFormMap = {},
 }) => {
-  const { players, timeFilter, getPlayerPhoto } = useApp()
+  const { players, timeFilter, setTimeFilter, getPlayerPhoto } = useApp()
 
-  // Sort state
   const [sortBy, setSortBy] = useState(() => {
-    try {
-      return localStorage.getItem('lukto_stats_sortBy') || 'rankingScore'
-    } catch {
-      return 'rankingScore'
-    }
+    try { return localStorage.getItem('lukto_stats_sortBy') || 'rankingScore' } catch { return 'rankingScore' }
   })
   const [sortDir, setSortDir] = useState(() => {
-    try {
-      return localStorage.getItem('lukto_stats_sortDir') || 'desc'
-    } catch {
-      return 'desc'
-    }
+    try { return localStorage.getItem('lukto_stats_sortDir') || 'desc' } catch { return 'desc' }
   })
   const [showWeekHistory, setShowWeekHistory] = useState(false)
   const lastWeekHistoryOpenAt = useRef(0)
@@ -45,6 +36,7 @@ export const StatsTab = ({
 
   const potwPlayer = playerOfWeek ? players.find(p => p.id === playerOfWeek.id) : null
   const potmPlayer = playerOfMonth ? players.find(p => p.id === playerOfMonth.id) : null
+
   const normalizedWeeklyHistory = useMemo(() => {
     if (!weeklyHistory?.length) return []
     return weeklyHistory.map(entry => ({
@@ -63,304 +55,151 @@ export const StatsTab = ({
     return d.toISOString().split('T')[0]
   }, [])
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('lukto_stats_sortBy', sortBy)
-      localStorage.setItem('lukto_stats_sortDir', sortDir)
-    } catch {
-      /* Ignore */
-    }
-  }, [sortBy, sortDir])
-
-  // Filter and sort stats
   const filteredStats = useMemo(() => {
     let result = [...stats]
-
-    // Sort
     result.sort((a, b) => {
       let aVal, bVal
       switch (sortBy) {
-        case 'name':
-          aVal = a.name?.toLowerCase() || ''
-          bVal = b.name?.toLowerCase() || ''
-          break
-        case 'winRate':
-          aVal = a.winRate || 0
-          bVal = b.winRate || 0
-          break
-        case 'wins':
-          aVal = a.wins || 0
-          bVal = b.wins || 0
-          break
-        case 'mvps':
-          aVal = a.mvps || 0
-          bVal = b.mvps || 0
-          break
-        case 'avgRating':
-          aVal = parseFloat(a.avgRating) || 0
-          bVal = parseFloat(b.avgRating) || 0
-          break
-        case 'xp':
-          aVal = calculateXP(a.id) || 0
-          bVal = calculateXP(b.id) || 0
-          break
-        default:
-          aVal = parseFloat(a.rankingScore) || 0
-          bVal = parseFloat(b.rankingScore) || 0
+        case 'name': aVal = a.name?.toLowerCase() || ''; bVal = b.name?.toLowerCase() || ''; break
+        case 'winRate': aVal = a.winRate || 0; bVal = b.winRate || 0; break
+        case 'wins': aVal = a.wins || 0; bVal = b.wins || 0; break
+        case 'mvps': aVal = a.mvps || 0; bVal = b.mvps || 0; break
+        case 'avgRating': aVal = parseFloat(a.avgRating) || 0; bVal = parseFloat(b.avgRating) || 0; break
+        case 'xp': aVal = calculateXP(a.id) || 0; bVal = calculateXP(b.id) || 0; break
+        default: aVal = parseFloat(a.rankingScore) || 0; bVal = parseFloat(b.rankingScore) || 0
       }
-      
-      if (sortBy === 'name') {
-        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
-      }
+      if (sortBy === 'name') return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
       return sortDir === 'asc' ? aVal - bVal : bVal - aVal
     })
-    
     return result
   }, [stats, sortBy, sortDir, calculateXP])
 
-  const handleSort = (column) => {
-    if (sortBy === column) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortBy(column)
-      setSortDir('desc')
-    }
+  const toggleSort = (col) => {
+    const newDir = sortBy === col && sortDir === 'desc' ? 'asc' : 'desc'
+    setSortBy(col)
+    setSortDir(newDir)
+    try { localStorage.setItem('lukto_stats_sortBy', col); localStorage.setItem('lukto_stats_sortDir', newDir) } catch {}
   }
 
-  const SortIcon = ({ column }) => {
-    if (sortBy !== column) return <span className="sort-icon">⇅</span>
-    return <span className="sort-icon active">{sortDir === 'asc' ? '↑' : '↓'}</span>
-  }
-
-  // Custom SVG icons for sort chips
-  const SortIcons = {
-    score: (
-      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-      </svg>
-    ),
-    winRate: (
-      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
-      </svg>
-    ),
-    rating: (
-      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-      </svg>
-    ),
-    mvp: (
-      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-        <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2z"/>
-      </svg>
-    ),
-    wins: (
-      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-      </svg>
-    ),
-    xp: (
-      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-        <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
-      </svg>
-    ),
-  }
-
-  // Sort options for chips
-  const sortOptions = [
-    { key: 'rankingScore', label: 'Score', icon: SortIcons.score },
-    { key: 'winRate', label: 'Win Rate', icon: SortIcons.winRate },
-    { key: 'avgRating', label: 'Rating', icon: SortIcons.rating },
-    { key: 'mvps', label: 'MVPs', icon: SortIcons.mvp },
-    { key: 'wins', label: 'Victorias', icon: SortIcons.wins },
-    { key: 'xp', label: 'XP', icon: SortIcons.xp },
-  ]
+  const SortArrow = ({ col }) => sortBy === col
+    ? <span className="sth-arrow">{sortDir === 'desc' ? '↓' : '↑'}</span>
+    : null
 
   return (
     <section className="stats-section">
-      {/* Show latest announcement to all users */}
+
+      {/* Announcement */}
       {announcements?.length > 0 && (
         <div className="user-announcement">
-          <div className="user-announcement-icon">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-            </svg>
-          </div>
+          <div className="user-announcement-icon"><AppIcon name="info" size={16} /></div>
           <p className="user-announcement-text">{announcements[0].message}</p>
         </div>
       )}
 
-      {/* Player of Week / Month Cards */}
-      <div className="featured-players">
-        {/* Player of the Week */}
+      {/* ── Destacados Card (Semana + Mes fusionados) ── */}
+      <div
+        className="destacados-card"
+        style={playerOfWeek ? { '--potm-photo': `url(${getPlayerPhoto(playerOfWeek.id)})` } : {}}
+      >
+        {playerOfWeek && <div className="potm-bg-blur" />}
+
+        {/* Semana row */}
         <div
-          className="featured-card week clickable"
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            lastWeekHistoryOpenAt.current = Date.now()
-            setShowWeekHistory(true)
-          }}
-          onKeyDown={e => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              lastWeekHistoryOpenAt.current = Date.now()
-              setShowWeekHistory(true)
-            }
-          }}
+          className="destacados-row clickable"
+          onClick={() => { lastWeekHistoryOpenAt.current = Date.now(); setShowWeekHistory(true) }}
         >
-          <div className="featured-badge">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-              <path d="M7 2v11h3v9l7-12h-4l4-8z" />
+          <span className="destacados-badge week">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="9" height="9">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
-            Jugador de la Semana
-          </div>
-          <div className="featured-content">
-            {playerOfWeek && potwPlayer ? (
-              <>
-                <AvatarImage
-                  src={getPlayerPhoto(playerOfWeek.id)}
-                  name={potwPlayer?.name || ''}
-                  imgClassName="featured-avatar"
-                  fallbackClassName="featured-avatar-placeholder"
-                />
-                <div className="featured-info">
-                  <h3>{potwPlayer?.name}</h3>
-                  <div className="featured-stats">
-                    <span className="stat-item">
-                      {playerOfWeek.wins}V {playerOfWeek.ties || 0}E {playerOfWeek.losses || 0}D
-                    </span>
-                    <span className="stat-item highlight">{playerOfWeek.winRate}%</span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="featured-info">
-                <h3>Sin datos esta semana</h3>
-                <div className="featured-stats">
-                  <span className="stat-item">Toca para ver semanas pasadas</span>
-                </div>
+            Semana
+          </span>
+          {playerOfWeek && potwPlayer ? (
+            <>
+              <AvatarImage
+                src={getPlayerPhoto(playerOfWeek.id)}
+                name={potwPlayer.name}
+                imgClassName="destacados-avatar"
+                fallbackClassName="destacados-avatar-ph"
+              />
+              <div className="destacados-info">
+                <span className="destacados-name">{potwPlayer.name}</span>
+                <span className="destacados-rec">{playerOfWeek.wins}V · {playerOfWeek.ties || 0}E · {playerOfWeek.losses || 0}D</span>
               </div>
-            )}
-          </div>
+              <span className="destacados-rating">{playerOfWeek.avgRating || '—'} ★</span>
+            </>
+          ) : <span className="destacados-empty">Sin datos esta semana</span>}
         </div>
 
-        {/* Player of the Month */}
+        {/* Divider */}
+        <div className="destacados-divider" />
+
+        {/* Mes row */}
         <div
-          className="featured-card month clickable"
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            lastMonthHistoryOpenAt.current = Date.now()
-            setShowMonthHistory(true)
-          }}
-          onKeyDown={e => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              lastMonthHistoryOpenAt.current = Date.now()
-              setShowMonthHistory(true)
-            }
-          }}
+          className="destacados-row clickable"
+          onClick={() => { lastMonthHistoryOpenAt.current = Date.now(); setShowMonthHistory(true) }}
         >
-          <div className="featured-badge">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-              <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" />
+          <span className="destacados-badge month">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="9" height="9">
+              <path d="M7 4h10v4a5 5 0 01-10 0V4zM4 6H2a2 2 0 002 2h1M20 6h2a2 2 0 01-2 2h-1M12 13v7M8 20h8" />
             </svg>
-            Jugador del Mes
-          </div>
-          <div className="featured-content">
-            {playerOfMonth && potmPlayer ? (
-              <>
-                <AvatarImage
-                  src={getPlayerPhoto(playerOfMonth.id)}
-                  name={potmPlayer?.name || ''}
-                  imgClassName="featured-avatar"
-                  fallbackClassName="featured-avatar-placeholder"
-                />
-                <div className="featured-info">
-                  <h3>{potmPlayer?.name}</h3>
-                  <div className="featured-stats">
-                    <span className="stat-item">
-                      {playerOfMonth.wins}V {playerOfMonth.ties || 0}E {playerOfMonth.losses || 0}D
-                    </span>
-                    <span className="stat-item highlight">{playerOfMonth.winRate}%</span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="featured-info">
-                <h3>Sin datos del mes</h3>
-                <div className="featured-stats">
-                  <span className="stat-item">Toca para ver el ranking mensual</span>
-                </div>
+            Mes
+          </span>
+          {playerOfMonth && potmPlayer ? (
+            <>
+              <AvatarImage
+                src={getPlayerPhoto(playerOfMonth.id)}
+                name={potmPlayer.name}
+                imgClassName="destacados-avatar"
+                fallbackClassName="destacados-avatar-ph"
+              />
+              <div className="destacados-info">
+                <span className="destacados-name">{potmPlayer.name}</span>
+                <span className="destacados-rec">{playerOfMonth.wins}V · {playerOfMonth.ties || 0}E · {playerOfMonth.losses || 0}D</span>
               </div>
-            )}
-          </div>
+              <span className="destacados-rating">{playerOfMonth.avgRating || '—'} ★</span>
+            </>
+          ) : <span className="destacados-empty">Sin datos este mes</span>}
         </div>
       </div>
 
+      {/* ── Modals ── */}
       {showWeekHistory && (
-        <div
-          className="modal-overlay"
-          onClick={() => {
-            if (Date.now() - lastWeekHistoryOpenAt.current < 350) return
-            setShowWeekHistory(false)
-          }}
-        >
+        <div className="modal-overlay history-modal-overlay" onClick={() => { if (Date.now() - lastWeekHistoryOpenAt.current < 350) return; setShowWeekHistory(false) }}>
           <div className="modal weekly-history-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Jugadores de Semanas Pasadas</h2>
+              <h2>Jugadores de la Semana</h2>
               <button className="modal-close" onClick={() => setShowWeekHistory(false)}>×</button>
             </div>
             <div className="weekly-history-list">
               {normalizedWeeklyHistory.length === 0 ? (
-                <p className="weekly-history-empty">Aún no hay semanas pasadas con datos.</p>
-              ) : (
-                normalizedWeeklyHistory.map(entry => {
-                  const winner = entry.winner ? players.find(p => p.id === entry.winner.id) : null
-                  const dateLabel = `${entry.weekStart.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - ${entry.weekEnd.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`
-                  const isCurrentWeek = entry.weekStart.toISOString().split('T')[0] === currentWeekKey
-                  return (
-                    <div key={entry.weekStart.toISOString()} className="weekly-history-item">
-                      <div className="weekly-history-dates">
-                        {dateLabel} {isCurrentWeek ? '· Semana actual' : ''}
-                      </div>
-                      {winner ? (
-                        <div className="weekly-history-winner">
-                          <AvatarImage
-                            src={getPlayerPhoto(entry.winner.id)}
-                            name={winner?.name || ''}
-                            imgClassName="weekly-history-avatar"
-                            fallbackClassName="weekly-history-avatar-placeholder"
-                          />
-                          <div className="weekly-history-info">
-                            <span className="weekly-history-name">{winner?.name}</span>
-                            <span className="weekly-history-stats">
-                              {entry.winner.wins}V {entry.winner.ties || 0}E {entry.winner.losses || 0}D · {entry.winner.winRate}%
-                            </span>
-                          </div>
+                <p className="weekly-history-empty">Aún no hay semanas con datos.</p>
+              ) : normalizedWeeklyHistory.map(entry => {
+                const winner = entry.winner ? players.find(p => p.id === entry.winner.id) : null
+                const dateLabel = `${entry.weekStart.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} – ${entry.weekEnd.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`
+                const isCurrent = entry.weekStart.toISOString().split('T')[0] === currentWeekKey
+                return (
+                  <div key={entry.weekStart.toISOString()} className="weekly-history-item">
+                    <div className="weekly-history-dates">{dateLabel}{isCurrent ? ' · Actual' : ''}</div>
+                    {winner ? (
+                      <div className="weekly-history-winner">
+                        <AvatarImage src={getPlayerPhoto(entry.winner.id)} name={winner.name} imgClassName="weekly-history-avatar" fallbackClassName="weekly-history-avatar-placeholder" />
+                        <div className="weekly-history-info">
+                          <span className="weekly-history-name">{winner.name}</span>
+                          <span className="weekly-history-stats">{entry.winner.wins}V {entry.winner.ties || 0}E {entry.winner.losses || 0}D · {entry.winner.winRate}%</span>
                         </div>
-                      ) : (
-                        <div className="weekly-history-none">Sin datos suficientes</div>
-                      )}
-                    </div>
-                  )
-                })
-              )}
+                      </div>
+                    ) : <div className="weekly-history-none">Sin datos suficientes</div>}
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
       )}
 
       {showMonthHistory && (
-        <div
-          className="modal-overlay"
-          onClick={() => {
-            if (Date.now() - lastMonthHistoryOpenAt.current < 350) return
-            setShowMonthHistory(false)
-          }}
-        >
+        <div className="modal-overlay history-modal-overlay" onClick={() => { if (Date.now() - lastMonthHistoryOpenAt.current < 350) return; setShowMonthHistory(false) }}>
           <div className="modal weekly-history-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Jugadores del Mes</h2>
@@ -369,237 +208,139 @@ export const StatsTab = ({
             <div className="weekly-history-list">
               {monthlyHistory.length === 0 ? (
                 <p className="weekly-history-empty">Aún no hay meses con datos.</p>
-              ) : (
-                monthlyHistory.map(entry => {
-                  const winner = entry.winner ? players.find(p => p.id === entry.winner.id) : null
-                  return (
-                    <div key={entry.key} className="weekly-history-item">
-                      <div className="weekly-history-dates">{entry.monthLabel}</div>
-                      {winner ? (
-                        <div className="weekly-history-winner">
-                          <AvatarImage
-                            src={getPlayerPhoto(entry.winner.id)}
-                            name={winner.name}
-                            imgClassName="weekly-history-avatar"
-                            fallbackClassName="weekly-history-avatar-placeholder"
-                          />
-                          <div className="weekly-history-info">
-                            <span className="weekly-history-name">{winner.name}</span>
-                            <span className="weekly-history-stats">
-                              {entry.winner.wins}V {entry.winner.ties || 0}E {entry.winner.losses || 0}D · {entry.winner.winRate}%
-                            </span>
-                          </div>
+              ) : monthlyHistory.map(entry => {
+                const winner = entry.winner ? players.find(p => p.id === entry.winner.id) : null
+                return (
+                  <div key={entry.key} className="weekly-history-item">
+                    <div className="weekly-history-dates">{entry.monthLabel}</div>
+                    {winner ? (
+                      <div className="weekly-history-winner">
+                        <AvatarImage src={getPlayerPhoto(entry.winner.id)} name={winner.name} imgClassName="weekly-history-avatar" fallbackClassName="weekly-history-avatar-placeholder" />
+                        <div className="weekly-history-info">
+                          <span className="weekly-history-name">{winner.name}</span>
+                          <span className="weekly-history-stats">{entry.winner.wins}V {entry.winner.ties || 0}E {entry.winner.losses || 0}D · {entry.winner.winRate}%</span>
                         </div>
-                      ) : (
-                        <div className="weekly-history-none">Sin datos suficientes</div>
-                      )}
-                    </div>
-                  )
-                })
-              )}
+                      </div>
+                    ) : <div className="weekly-history-none">Sin datos suficientes</div>}
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
       )}
 
-      <h2 className="section-title">
-        {timeFilter === 'all'
-          ? 'Ranking General'
-          : timeFilter === 'month'
-            ? 'Ranking del Mes'
-            : 'Ranking de la Semana'}
-      </h2>
+      {/* ── Ranking ── */}
+      <div className="ranking-section">
 
-      {/* Sort Chips */}
-      <div className="sort-chips">
-        <span className="sort-label">Ordenar:</span>
-        <div className="sort-chips-scroll">
-          {sortOptions.map(opt => (
+        {/* Filter pills inside ranking section */}
+        <div className="rg-filter-bar">
+          {['all', 'month', 'week'].map(f => (
             <button
-              key={opt.key}
-              className={`sort-chip ${sortBy === opt.key ? 'active' : ''}`}
-              onClick={() => handleSort(opt.key)}
+              key={f}
+              className={`rg-filter-pill ${timeFilter === f ? 'active' : ''}`}
+              onClick={() => setTimeFilter(f)}
             >
-              <span className="sort-chip-icon">{opt.icon}</span>
-              <span className="sort-chip-label">{opt.label}</span>
-              {sortBy === opt.key && (
-                <svg className="sort-chip-arrow" viewBox="0 0 24 24" fill="currentColor" width="10" height="10">
-                  {sortDir === 'desc' 
-                    ? <path d="M7 10l5 5 5-5H7z"/>
-                    : <path d="M7 14l5-5 5 5H7z"/>
-                  }
-                </svg>
-              )}
+              {f === 'all' ? 'Todo' : f === 'month' ? 'Mes' : 'Semana'}
             </button>
           ))}
         </div>
-      </div>
 
-      {filteredStats.length > 0 ? (
-        <>
-          <div className="desktop-ranking-table">
-            <table className="stats-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-              <th onClick={() => handleSort('name')} className="sortable" title="Orden alfabético por nombre">
-                Jugador <SortIcon column="name" />
-              </th>
-              <th className="rank-col"></th>
-              <th onClick={() => handleSort('rankingScore')} className="sortable" title="Score combinado entre win rate y rating">
-                Score <SortIcon column="rankingScore" />
-              </th>
-              <th onClick={() => handleSort('winRate')} className="sortable" title="Win Rate: (Victorias + 0.5*Empates) / Partidos">
-                WR <SortIcon column="winRate" />
-              </th>
-              <th className="bar-col"></th>
-              <th onClick={() => handleSort('wins')} className="sortable" title="Total de victorias">
-                V <SortIcon column="wins" />
-              </th>
-              <th title="Empates">E</th>
-              <th title="Derrotas">D</th>
-              <th onClick={() => handleSort('mvps')} className="sortable" title="Cantidad de MVPs">
-                MVP <SortIcon column="mvps" />
-              </th>
-              <th onClick={() => handleSort('avgRating')} className="sortable" title="Promedio de calificaciones recibidas">
-                Rat <SortIcon column="avgRating" />
-              </th>
-              <th onClick={() => handleSort('xp')} className="sortable" title="Experiencia acumulada">
-                XP <SortIcon column="xp" />
-              </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStats.map((player, index) => {
-                  const xp = calculateXP(player.id)
-                  const rank = getRank(xp)
-                  return (
-                    <tr key={player.id} onClick={() => onPlayerClick(player.id)} className="clickable-row">
-                      <td>
-                        <span className={`rank rank-${index + 1}`}>{index + 1}</span>
-                      </td>
-                      <td>
-                        <div className="player-name">
-                          <AvatarImage
-                            src={getPlayerPhoto(player.id)}
-                            name={player.name}
-                            imgClassName="player-avatar-img"
-                            fallbackClassName="player-avatar"
-                          />
-                          {player.name}
-                        </div>
-                      </td>
-                      <td>
-                        <span className="rank-icon-cell" style={{ color: rank.color }} title={rank.name}>
-                          {getRankIcon(rank.key, 20)}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="ranking-score">{player.rankingScore}</span>
-                      </td>
-                      <td>
-                        <span className={`win-rate ${getWinRateClass(player.winRate)}`}>
-                          {typeof player.winRate === 'number' ? player.winRate.toFixed(0) : player.winRate || 0}%
-                        </span>
-                      </td>
-                      <td>
-                        <div className="winrate-bar-container">
-                          <div
-                            className={`winrate-bar ${getWinRateClass(player.winRate)}`}
-                            style={{ width: `${player.winRate}%` }}
-                          />
-                        </div>
-                      </td>
-                      <td>
-                        <span className="stat-value wins">{player.wins}</span>
-                      </td>
-                      <td>
-                        <span className="stat-value ties">{player.ties || 0}</span>
-                      </td>
-                      <td>
-                        <span className="stat-value losses">{player.losses}</span>
-                      </td>
-                      <td>
-                        <span className={`mvp-count ${player.mvps > 0 ? 'has-mvps' : ''}`}>
-                          {player.mvps > 0 ? player.mvps : '-'}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`rating-value ${getRatingClass(player.avgRating ? parseFloat(player.avgRating) : 0)}`}
-                        >
-                          {player.avgRating || '-'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="xp-value">{xp}</span>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+        {/* Horizontally scrollable table */}
+        <div className="rg-scroll-wrap">
 
-          <div className="mobile-ranking-list">
+        {/* Grid header — aligns 1:1 with each row */}
+        <div className="rg-header">
+          <span className="rg-h-pos">#</span>
+          <span className="rg-h-player">Jugador</span>
+          <button className={`rg-h-btn ${sortBy === 'rankingScore' ? 'active' : ''}`} onClick={() => toggleSort('rankingScore')}>
+            PTS<SortArrow col="rankingScore" />
+          </button>
+          <button className={`rg-h-btn ${sortBy === 'winRate' ? 'active' : ''}`} onClick={() => toggleSort('winRate')}>
+            WR<SortArrow col="winRate" />
+          </button>
+          <button className={`rg-h-btn ${sortBy === 'wins' ? 'active' : ''}`} onClick={() => toggleSort('wins')}>
+            V<SortArrow col="wins" />
+          </button>
+          <span className="rg-h-btn">E</span>
+          <span className="rg-h-btn">D</span>
+          <button className={`rg-h-btn ${sortBy === 'avgRating' ? 'active' : ''}`} onClick={() => toggleSort('avgRating')}>
+            ★<SortArrow col="avgRating" />
+          </button>
+          <button className={`rg-h-btn ${sortBy === 'mvps' ? 'active' : ''}`} onClick={() => toggleSort('mvps')}>
+            MVP<SortArrow col="mvps" />
+          </button>
+          <span className="rg-h-form">Forma</span>
+        </div>
+
+        {filteredStats.length > 0 ? (
+          <div className="rank-list">
             {filteredStats.map((player, index) => {
               const xp = calculateXP(player.id)
               const rank = getRank(xp)
+              const wr = typeof player.winRate === 'number' ? player.winRate : parseFloat(player.winRate) || 0
+              const medal = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''
+
               return (
                 <article
-                  key={`mobile-${player.id}`}
-                  className="mobile-ranking-card"
+                  key={player.id}
+                  className={`rg-row ${medal}`}
                   onClick={() => onPlayerClick(player.id)}
                 >
-                  <div className="mrc-header">
-                    <span className={`rank rank-${index + 1}`}>{index + 1}</span>
+                  {/* Position bubble */}
+                  <span className={`rg-pos ${medal}`}>{index + 1}</span>
+
+                  {/* Avatar + name */}
+                  <div className="rg-player">
                     <AvatarImage
                       src={getPlayerPhoto(player.id)}
                       name={player.name}
-                      imgClassName="player-avatar-img"
-                      fallbackClassName="player-avatar"
+                      imgClassName="rg-avatar"
+                      fallbackClassName="rg-avatar-ph"
                     />
-                    <div className="mrc-player">
-                      <span className="mrc-name">{player.name}</span>
-                      <span className="mrc-rank" style={{ color: rank.color }}>
-                        {getRankIcon(rank.key, 14)} {rank.name}
-                      </span>
+                    <div className="rg-player-info">
+                      <span className="rg-name">{player.name}</span>
+                      <span className="rg-sub">{getRankIcon(rank.key, 9)} {rank.name}</span>
                     </div>
-                    <span className="ranking-score">{player.rankingScore}</span>
                   </div>
-                  <div className="mrc-stats">
-                    <span className="mrc-chip">
-                      <AppIcon name="target" size={12} /> {Math.round(player.winRate || 0)}% WR
-                    </span>
-                    <span className="mrc-chip">
-                      <AppIcon name="star" size={12} /> {player.avgRating || '-'}
-                    </span>
-                    <span className="mrc-chip">
-                      <AppIcon name="spark" size={12} /> {xp} XP
-                    </span>
-                    <span className="mrc-chip">
-                      <AppIcon name="trophy" size={12} /> {player.mvps || 0} MVP
-                    </span>
-                    <span className="mrc-chip line">
-                      {player.wins}V · {player.ties || 0}E · {player.losses}D
-                    </span>
+
+                  {/* Stat columns — must match header grid exactly */}
+                  <span className={`rg-stat pts ${sortBy === 'rankingScore' ? 'sorted' : ''}`}>
+                    {player.rankingScore}
+                  </span>
+                  <span className={`rg-stat wr ${getWinRateClass(wr)} ${sortBy === 'winRate' ? 'sorted' : ''}`}>
+                    {wr.toFixed(0)}%
+                  </span>
+                  <span className={`rg-stat v ${sortBy === 'wins' ? 'sorted' : ''}`}>
+                    {player.wins}
+                  </span>
+                  <span className="rg-stat e">{player.ties || 0}</span>
+                  <span className="rg-stat d">{player.losses || 0}</span>
+                  <span className={`rg-stat rat ${getRatingClass(player.avgRating ? parseFloat(player.avgRating) : 0)} ${sortBy === 'avgRating' ? 'sorted' : ''}`}>
+                    {player.avgRating || '—'}
+                  </span>
+                  <span className={`rg-stat mvp ${player.mvps > 0 ? 'has' : ''} ${sortBy === 'mvps' ? 'sorted' : ''}`}>
+                    {player.mvps > 0 ? player.mvps : '—'}
+                  </span>
+                  <div className="rg-form">
+                    {(playerFormMap[player.id] || []).map((r, i) => (
+                      <span key={i} className={`form-badge ${r}`}>{r === 'v' ? 'V' : r === 'e' ? 'E' : 'D'}</span>
+                    ))}
                   </div>
                 </article>
               )
             })}
           </div>
-        </>
-      ) : (
-        <EmptyState
-          type="noStats"
-          title="Sin estadísticas"
-          description={
-            timeFilter !== 'all'
-              ? 'No hay partidos en este período'
-              : 'Agrega partidos para ver las estadísticas'
-          }
-        />
-      )}
+        ) : (
+          <EmptyState
+            type="noStats"
+            title="Sin estadísticas"
+            description={timeFilter !== 'all' ? 'No hay partidos en este período' : 'Agrega partidos para ver las estadísticas'}
+          />
+        )}
+
+        </div>{/* /rg-scroll-wrap */}
+      </div>
     </section>
   )
 }

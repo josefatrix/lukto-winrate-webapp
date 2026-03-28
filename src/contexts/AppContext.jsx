@@ -56,6 +56,7 @@ export const AppProvider = ({ children }) => {
     }
   })
   const [blockedUsers, setBlockedUsers] = useState([])
+  const [ratingRestrictions, setRatingRestrictions] = useState({ users: [], perMatch: {} })
   const [leagueSettings, setLeagueSettings] = useState({
     name: 'LUKTO',
     mvpMinVotes: 1,
@@ -85,6 +86,21 @@ export const AppProvider = ({ children }) => {
 
   // Refs
   const confettiTriggered = useRef({})
+
+  // Global haptic feedback on touch (Android only — iOS blocks Vibration API)
+  useEffect(() => {
+    if (!navigator.vibrate) return
+    const onTouch = (e) => {
+      const el = e.target.closest(
+        'button, [role="button"], .rg-row, .potm-hero, .potw-strip, ' +
+        '.bottom-nav-item, .rg-filter-pill, .analytics-subtab, ' +
+        '.admin-tab, .tool-card, .match-card, .player-card'
+      )
+      if (el) navigator.vibrate(6)
+    }
+    document.addEventListener('touchstart', onTouch, { passive: true })
+    return () => document.removeEventListener('touchstart', onTouch)
+  }, [])
 
   // Register user as pending when they log in (only if not already registered)
   const registerPendingUser = async currentUser => {
@@ -338,6 +354,13 @@ export const AppProvider = ({ children }) => {
     )
 
     unsubscribers.push(
+      onSnapshot(doc(db, 'settings', 'ratingRestrictions'), docSnap => {
+        if (docSnap.exists()) setRatingRestrictions(docSnap.data())
+        else setRatingRestrictions({ users: [], perMatch: {} })
+      })
+    )
+
+    unsubscribers.push(
       onSnapshot(doc(db, 'settings', 'league'), docSnap => {
         if (docSnap.exists()) setLeagueSettings(docSnap.data())
       })
@@ -465,6 +488,8 @@ export const AppProvider = ({ children }) => {
     setAdminEmails,
     blockedUsers,
     setBlockedUsers,
+    ratingRestrictions,
+    setRatingRestrictions,
 
     // Settings
     darkMode,

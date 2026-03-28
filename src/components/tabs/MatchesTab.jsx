@@ -1,6 +1,5 @@
 /**
- * Matches Tab Component
- * Shows match history with leaderboards
+ * Matches Tab — SofaScore-style fixture cards
  */
 
 import { useApp } from '../../contexts'
@@ -26,21 +25,19 @@ export const MatchesTab = ({
     getPlayerName,
     userLinks,
   } = useApp()
-  const [expandedMatches, setExpandedMatches] = useState(new Set())
+
+  // Two independent expand states per match
+  const [expandedPlayers, setExpandedPlayers] = useState(new Set())
+  const [expandedDetails, setExpandedDetails] = useState(new Set())
 
   const formatDate = dateStr => {
     const date = new Date(dateStr + 'T12:00:00')
     return date.toLocaleDateString('es-ES', {
-      weekday: 'long',
+      weekday: 'short',
       day: 'numeric',
-      month: 'long',
+      month: 'short',
       year: 'numeric',
     })
-  }
-
-  const formatTime = timeStr => {
-    if (!timeStr) return ''
-    return timeStr
   }
 
   const getPredictionBet = pred => pred?.lukCoinsBet ?? pred?.xpBet ?? 0
@@ -61,10 +58,10 @@ export const MatchesTab = ({
     return 'Usuario'
   }
 
-  const getPositionLabel = (value) => {
+  const getPositionLabel = value => {
     const map = {
       portero: 'Portero',
-      cierre: 'Cierre / Defensa',
+      cierre: 'Cierre / Def',
       lateral_izq: 'Lateral Izq',
       lateral_der: 'Lateral Der',
       medio: 'Mediocampista',
@@ -74,42 +71,7 @@ export const MatchesTab = ({
     return map[value] || ''
   }
 
-  const getPositionGroup = (value) => {
-    if (!value) return 'Sin posición'
-    if (value === 'portero') return 'Portero'
-    if (value === 'cierre' || value === 'lateral_izq' || value === 'lateral_der') return 'Defensa'
-    if (value === 'medio' || value === 'pivote') return 'Medio'
-    if (value === 'delantero') return 'Delantero'
-    return 'Otro'
-  }
-
-  const getTeamFormationSummary = (teamIds, positions = {}) => {
-    const counts = {}
-    teamIds.forEach(id => {
-      const group = getPositionGroup(positions[id])
-      if (group === 'Sin posición') return
-      counts[group] = (counts[group] || 0) + 1
-    })
-    const ordered = ['Portero', 'Defensa', 'Medio', 'Delantero']
-    const parts = ordered
-      .filter(k => counts[k])
-      .map(k => `${k} ${counts[k]}`)
-    return parts.length > 0 ? parts.join(' · ') : 'Sin posiciones'
-  }
-
-  const toggleDetails = (matchId) => {
-    setExpandedMatches(prev => {
-      const next = new Set(prev)
-      if (next.has(matchId)) {
-        next.delete(matchId)
-      } else {
-        next.add(matchId)
-      }
-      return next
-    })
-  }
-
-  const parseScoreValue = (value) => {
+  const parseScoreValue = value => {
     if (value === null || value === undefined || value === '') return null
     const parsed = Number(value)
     return Number.isFinite(parsed) ? parsed : null
@@ -117,90 +79,77 @@ export const MatchesTab = ({
 
   const getPostMatchReport = (match, matchPlayerRatings) => {
     if (!matchPlayerRatings || matchPlayerRatings.length === 0) return null
-
     const ratingMap = Object.fromEntries(
       matchPlayerRatings.map(entry => [entry.playerId, parseFloat(entry.avgRating) || 0])
     )
-
     const sortedByRating = [...matchPlayerRatings]
       .sort((a, b) => (b.rawAvg || parseFloat(b.avgRating) || 0) - (a.rawAvg || parseFloat(a.avgRating) || 0))
     const mvp = sortedByRating[0] || null
-
     const hasWinner = !!match?.winner
     const scoreWhite = parseScoreValue(match.scoreWhite)
     const scoreBlack = parseScoreValue(match.scoreBlack)
     const hasFinalScore = scoreWhite !== null && scoreBlack !== null
-
     const winnerTeam = match?.winner === 'white' ? (match.teamWhite || []) : match?.winner === 'black' ? (match.teamBlack || []) : []
     const loserTeam = match?.winner === 'white' ? (match.teamBlack || []) : match?.winner === 'black' ? (match.teamWhite || []) : []
-    const avgTeamRating = (teamIds) => {
+    const avgTeamRating = teamIds => {
       if (!teamIds.length) return null
-      const rated = teamIds.map(playerId => ratingMap[playerId]).filter(value => Number.isFinite(value) && value > 0)
+      const rated = teamIds.map(pid => ratingMap[pid]).filter(v => Number.isFinite(v) && v > 0)
       if (!rated.length) return null
-      return rated.reduce((sum, value) => sum + value, 0) / rated.length
+      return rated.reduce((s, v) => s + v, 0) / rated.length
     }
     const winnerAvg = avgTeamRating(winnerTeam)
     const loserAvg = avgTeamRating(loserTeam)
-    const ratingGap = (winnerAvg !== null && loserAvg !== null) ? winnerAvg - loserAvg : null
-
+    const ratingGap = winnerAvg !== null && loserAvg !== null ? winnerAvg - loserAvg : null
     let bestPair = null
     if (hasWinner && winnerTeam.length >= 2) {
-      for (let i = 0; i < winnerTeam.length; i += 1) {
-        for (let j = i + 1; j < winnerTeam.length; j += 1) {
-          const p1 = winnerTeam[i]
-          const p2 = winnerTeam[j]
+      for (let i = 0; i < winnerTeam.length; i++) {
+        for (let j = i + 1; j < winnerTeam.length; j++) {
+          const p1 = winnerTeam[i]; const p2 = winnerTeam[j]
           const pairScore = (ratingMap[p1] || 0) + (ratingMap[p2] || 0)
-          if (!bestPair || pairScore > bestPair.score) {
-            bestPair = { p1, p2, score: pairScore }
-          }
+          if (!bestPair || pairScore > bestPair.score) bestPair = { p1, p2, score: pairScore }
         }
       }
     }
-
     const matchPredictions = Object.values(predictions?.[match.id] || {})
     const predictionSummary = hasWinner ? {
       total: matchPredictions.length,
-      correct: match.winner === 'tie' ? 0 : matchPredictions.filter(pred => pred?.prediction === match.winner).length,
-      wrong: match.winner === 'tie' ? 0 : matchPredictions.length - matchPredictions.filter(pred => pred?.prediction === match.winner).length,
+      correct: match.winner === 'tie' ? 0 : matchPredictions.filter(p => p?.prediction === match.winner).length,
+      wrong: match.winner === 'tie' ? 0 : matchPredictions.length - matchPredictions.filter(p => p?.prediction === match.winner).length,
       voided: match.winner === 'tie' ? matchPredictions.length : 0,
-      mvpHits: mvp?.playerId ? matchPredictions.filter(pred => pred?.predictedMvpId && pred.predictedMvpId === mvp.playerId).length : 0,
-      exactScoreHits: hasFinalScore ? matchPredictions.filter(pred =>
-        parseScoreValue(pred?.predictedScoreWhite) === scoreWhite
-        && parseScoreValue(pred?.predictedScoreBlack) === scoreBlack
+      mvpHits: mvp?.playerId ? matchPredictions.filter(p => p?.predictedMvpId === mvp.playerId).length : 0,
+      exactScoreHits: hasFinalScore ? matchPredictions.filter(p =>
+        parseScoreValue(p?.predictedScoreWhite) === scoreWhite && parseScoreValue(p?.predictedScoreBlack) === scoreBlack
       ).length : 0,
     } : null
-
     const storyline = hasWinner ? (() => {
       if (match.winner === 'tie') return 'Partido parejo: terminó en empate.'
       if (ratingGap !== null && ratingGap >= 0.8) return 'La diferencia de rating del equipo ganador fue clara.'
       if (ratingGap !== null && ratingGap <= 0.25) return 'Partido cerrado: se definió por detalles.'
       return 'Resultado sólido con ventaja moderada del equipo ganador.'
     })() : null
-
-    return {
-      mvp,
-      bestPair,
-      scoreWhite,
-      scoreBlack,
-      hasFinalScore,
-      hasWinner,
-      predictionSummary,
-      storyline,
-      winnerAvg,
-      loserAvg,
-      ratingGap,
-    }
+    return { mvp, bestPair, scoreWhite, scoreBlack, hasFinalScore, hasWinner, predictionSummary, storyline, winnerAvg, loserAvg, ratingGap }
   }
+
+  const togglePlayers = id => setExpandedPlayers(prev => {
+    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
+  })
+  const toggleDetails = id => setExpandedDetails(prev => {
+    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
+  })
 
   return (
     <section className="stats-section">
       <h2 className="section-title">Historial de Partidos</h2>
+
       {matches.length > 0 ? (
         [...matches].reverse().map(match => {
-          const isExpanded = expandedMatches.has(match.id)
-          // Calculate top 3 rated players for this match
-          const matchPlayerRatings = []
           if (!match.teamWhite || !match.teamBlack) return null
+
+          const playersOpen = expandedPlayers.has(match.id)
+          const detailsOpen = expandedDetails.has(match.id)
+
+          // Build ratings data
+          const matchPlayerRatings = []
           const allMatchPlayers = [...match.teamWhite, ...match.teamBlack]
           allMatchPlayers.forEach(playerId => {
             const playerRatings = ratings[playerId] || []
@@ -216,145 +165,153 @@ export const MatchesTab = ({
               })
             }
           })
-          const top3 = matchPlayerRatings
-            .sort((a, b) => (b.rawAvg || 0) - (a.rawAvg || 0))
-            .slice(0, 3)
+          const top3 = [...matchPlayerRatings].sort((a, b) => (b.rawAvg || 0) - (a.rawAvg || 0)).slice(0, 3)
           const postMatchReport = getPostMatchReport(match, matchPlayerRatings)
-          const predictionCount = predictions[match.id]
-            ? Object.keys(predictions[match.id]).length
-            : 0
+          const predictionCount = predictions[match.id] ? Object.keys(predictions[match.id]).length : 0
+
+          const scoreWhite = parseScoreValue(match.scoreWhite)
+          const scoreBlack = parseScoreValue(match.scoreBlack)
+          const hasFinalScore = scoreWhite !== null && scoreBlack !== null
+          const isClosed = match.ratingsOpen === false
+
+          // Team result classes
+          const whiteResult = match.winner === 'white' ? 'winner' : match.winner === 'black' ? 'loser' : match.winner === 'tie' ? 'tied' : ''
+          const blackResult = match.winner === 'black' ? 'winner' : match.winner === 'white' ? 'loser' : match.winner === 'tie' ? 'tied' : ''
 
           return (
-            <div key={match.id} className="match-card">
-              <div className="match-header">
-                <div>
-                  <div className="match-date">{formatDate(match.date)}</div>
-                  <div className="match-venue">
-                    {match.venue}
-                    {match.time && <span> · {formatTime(match.time)}</span>}
-                  </div>
-                  {match.winner === 'tie' && (
-                    <div className="match-result tie">Empate</div>
-                  )}
-                  {postMatchReport?.hasFinalScore && (
-                    <div className="match-scoreline">
-                      Marcador: {postMatchReport.scoreWhite} - {postMatchReport.scoreBlack}
+            <div key={match.id} className="mc-card">
+
+              {/* ── Top meta: date + venue + status + admin ── */}
+              <div className="mc-meta">
+                <div className="mc-meta-left">
+                  <span className="mc-date">{formatDate(match.date)}</span>
+                  {match.time && <span className="mc-time">{match.time}</span>}
+                  {match.venue && <span className="mc-venue">{match.venue}</span>}
+                </div>
+                <div className="mc-meta-right">
+                  {isClosed
+                    ? <span className="mc-status closed"><AppIcon name="lock" size={10} /> Cerrado</span>
+                    : <span className="mc-status open"><AppIcon name="check" size={10} /> Abierto</span>
+                  }
+                  {isAdmin && (
+                    <div className="mc-admin-actions">
+                      <button
+                        className={`mc-icon-btn ${isClosed ? 'red' : 'purple'}`}
+                        onClick={() => onToggleRatings(match.id, isClosed)}
+                        title={isClosed ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
+                      >
+                        <AppIcon name={isClosed ? 'lock' : 'unlock'} size={13} />
+                      </button>
+                      <button className="mc-icon-btn" onClick={() => onOpenEditMatch(match)}>
+                        <AppIcon name="note" size={13} />
+                      </button>
+                      <button className="mc-icon-btn red" onClick={() => onDeleteMatch(match.id)}>
+                        <AppIcon name="close" size={13} />
+                      </button>
                     </div>
                   )}
                 </div>
-                <div className="match-actions">
-                  {user &&
-                    userPlayer &&
-                    !predictions[match.id]?.[user.uid] &&
-                    !match.winner &&
-                    (canPredictMatch ? canPredictMatch(match) : true) && (
-                      <button className="predict-btn" onClick={() => onOpenPrediction(match)}>
-                        Predecir
-                      </button>
-                    )}
-                  {/* SIEMPRE mostrar badge si está cerrado */}
-                  {match.ratingsOpen === false && (
-                    <span className="ratings-closed-badge"><AppIcon name="lock" size={12} /> CERRADO</span>
+              </div>
+
+              {/* ── Fixture score row ── */}
+              <div className="mc-fixture">
+                <div className={`mc-team-side left ${whiteResult}`}>
+                  <span className="mc-team-dot white-dot" />
+                  <span className="mc-team-label">Blanco</span>
+                  {match.winner === 'white' && <span className="mc-winner-check">✓</span>}
+                </div>
+
+                <div className="mc-score-center">
+                  {hasFinalScore ? (
+                    <>
+                      <span className={`mc-score-num ${whiteResult}`}>{scoreWhite}</span>
+                      <span className="mc-score-dash">–</span>
+                      <span className={`mc-score-num ${blackResult}`}>{scoreBlack}</span>
+                    </>
+                  ) : match.winner === 'tie' ? (
+                    <span className="mc-tie-label">Empate</span>
+                  ) : (
+                    <span className="mc-vs-label">VS</span>
                   )}
-                  {match.ratingsOpen !== false && (
-                    <span className="ratings-open-badge"><AppIcon name="check" size={12} /> ABIERTO</span>
+                </div>
+
+                <div className={`mc-team-side right ${blackResult}`}>
+                  {match.winner === 'black' && <span className="mc-winner-check">✓</span>}
+                  <span className="mc-team-label">Negro</span>
+                  <span className="mc-team-dot black-dot" />
+                </div>
+              </div>
+
+              {/* ── Player list (collapsed by default) ── */}
+              {playersOpen && (
+                <div className="mc-players">
+                  <div className={`mc-player-col ${whiteResult}`}>
+                    {match.teamWhite.map(id => (
+                      <div key={id} className="mc-player-row">
+                        <span className="mc-player-name">{getPlayerName(id)}</span>
+                        {match.positions?.[id] && (
+                          <span className="mc-player-pos">{getPositionLabel(match.positions[id])}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className={`mc-player-col ${blackResult}`}>
+                    {match.teamBlack.map(id => (
+                      <div key={id} className="mc-player-row">
+                        <span className="mc-player-name">{getPlayerName(id)}</span>
+                        {match.positions?.[id] && (
+                          <span className="mc-player-pos">{getPositionLabel(match.positions[id])}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Footer: chips + actions ── */}
+              <div className="mc-footer">
+                <div className="mc-footer-chips">
+                  {top3[0] && (
+                    <span className="mc-chip mvp">
+                      ★ {top3[0].name} {top3[0].avgRating}
+                    </span>
                   )}
-                  {/* Solo mostrar botón calificar si NO está cerrado */}
-                  {user && userPlayer && match.ratingsOpen !== false && (
-                    <button className="rate-match-btn" onClick={() => onOpenRatingModal(match)}>
+                  {predictionCount > 0 && (
+                    <span className="mc-chip">{predictionCount} pred.</span>
+                  )}
+                </div>
+                <div className="mc-footer-actions">
+                  <button className="mc-toggle-btn" onClick={() => togglePlayers(match.id)}>
+                    {playersOpen ? 'Ocultar' : 'Jugadores'}
+                    <span className={`mc-chevron ${playersOpen ? 'up' : ''}`}>›</span>
+                  </button>
+                  {user && userPlayer && !isClosed && (
+                    <button className="mc-rate-btn" onClick={() => onOpenRatingModal(match)}>
                       Calificar
                     </button>
                   )}
-                  {isAdmin && (
-                    <>
-                      <button
-                        className={`toggle-ratings-btn ${match.ratingsOpen === false ? 'closed' : 'open'}`}
-                        onClick={() => onToggleRatings(match.id, match.ratingsOpen !== false)}
-                        title={
-                          match.ratingsOpen === false
-                            ? 'Abrir calificaciones'
-                            : 'Cerrar calificaciones'
-                        }
-                      >
-                        {match.ratingsOpen === false ? <AppIcon name="lock" size={14} /> : <AppIcon name="unlock" size={14} />}
-                      </button>
-                      <button className="edit-match-btn" onClick={() => onOpenEditMatch(match)}>
-                        Editar
-                      </button>
-                      <button className="delete-match-btn" onClick={() => onDeleteMatch(match.id)}>
-                        ×
-                      </button>
-                    </>
+                  {user && userPlayer && !predictions[match.id]?.[user.uid] && !match.winner && (canPredictMatch ? canPredictMatch(match) : true) && (
+                    <button className="mc-predict-btn" onClick={() => onOpenPrediction(match)}>
+                      Predecir
+                    </button>
+                  )}
+                  {(top3.length > 0 || predictionCount > 0) && (
+                    <button className="mc-toggle-btn" onClick={() => toggleDetails(match.id)}>
+                      {detailsOpen ? 'Menos' : 'Informe'}
+                      <span className={`mc-chevron ${detailsOpen ? 'up' : ''}`}>›</span>
+                    </button>
                   )}
                 </div>
               </div>
-              <div className="match-teams">
-                <div className={`match-team ${match.winner === 'white' ? 'winner' : ''}`}>
-                  <div className="match-team-header">
-                    <span className="team-badge white"></span>
-                    Equipo Blanco
-                    {match.winner === 'white' && ' · Ganador'}
-                  </div>
-                  <div className="match-formation">
-                    {getTeamFormationSummary(match.teamWhite, match.positions)}
-                  </div>
-                  <div className="match-team-players">
-                    {match.teamWhite.map(id => (
-                      <span key={id} className="match-player-tag">
-                        <span className="match-player-name">{getPlayerName(id)}</span>
-                        {match.positions?.[id] && (
-                          <span className="match-player-position">
-                            {getPositionLabel(match.positions[id])}
-                          </span>
-                        )}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="vs-badge">VS</div>
-                <div className={`match-team ${match.winner === 'black' ? 'winner' : ''}`}>
-                  <div className="match-team-header">
-                    <span className="team-badge black"></span>
-                    Equipo Negro
-                    {match.winner === 'black' && ' · Ganador'}
-                  </div>
-                  <div className="match-formation">
-                    {getTeamFormationSummary(match.teamBlack, match.positions)}
-                  </div>
-                  <div className="match-team-players">
-                    {match.teamBlack.map(id => (
-                      <span key={id} className="match-player-tag">
-                        <span className="match-player-name">{getPlayerName(id)}</span>
-                        {match.positions?.[id] && (
-                          <span className="match-player-position">
-                            {getPositionLabel(match.positions[id])}
-                          </span>
-                        )}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
 
-              <div className="match-summary-row">
-                {top3.length > 0 && <span className="match-summary-pill">Top: {top3.length}</span>}
-                {predictionCount > 0 && <span className="match-summary-pill">Predicciones: {predictionCount}</span>}
-                <button
-                  className="match-details-toggle"
-                  onClick={() => toggleDetails(match.id)}
-                >
-                  {isExpanded ? 'Ver menos' : 'Ver más'}
-                </button>
-              </div>
-
-              {isExpanded && (
+              {/* ── Expanded: leaderboard + report + predictions ── */}
+              {detailsOpen && (
                 <>
                   {top3.length > 0 && (
                     <div className="match-leaderboard">
                       <div className="leaderboard-title">Top del partido</div>
                       <div className="leaderboard-items">
                         {top3.map((player, idx) => {
-                          // Trigger confetti if current user is MVP
                           if (idx === 0 && player.playerId === userPlayer) {
                             setTimeout(() => triggerMVPConfetti(match.id, player.playerId), 500)
                           }
@@ -363,9 +320,7 @@ export const MatchesTab = ({
                               key={player.playerId}
                               className={`leaderboard-item ${idx === 0 && player.playerId === userPlayer ? 'is-me' : ''}`}
                             >
-                              <span
-                                className={`leaderboard-position ${idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'}`}
-                              >
+                              <span className={`leaderboard-position ${idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'}`}>
                                 {idx + 1}
                               </span>
                               <span className="leaderboard-name">
@@ -429,7 +384,6 @@ export const MatchesTab = ({
                     </div>
                   )}
 
-                  {/* Show predictions for this match */}
                   {predictions[match.id] && Object.keys(predictions[match.id]).length > 0 && (
                     <div className="match-predictions">
                       <div className="predictions-title">Predicciones</div>
@@ -446,10 +400,7 @@ export const MatchesTab = ({
                           const isMe = user?.uid === odedBy
                           const name = getPredictionUserName(odedBy, predictionData)
                           return (
-                            <div
-                              key={odedBy}
-                              className={`prediction-tile ${status}`}
-                            >
+                            <div key={odedBy} className={`prediction-tile ${status}`}>
                               <div className="prediction-tile-header">
                                 <span className="prediction-name">{name}</span>
                                 {isMe && <span className="prediction-me">Tú</span>}

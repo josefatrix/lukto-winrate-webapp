@@ -12,7 +12,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route path="/vote/:pollId" element={
-          <Suspense fallback={<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'#818cf8'}}>Cargando...</div>}>
+          <Suspense fallback={<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0E0E1A',color:'#374DF5',fontFamily:'Inter,system-ui,sans-serif'}}>Cargando...</div>}>
             <VotePage />
           </Suspense>
         } />
