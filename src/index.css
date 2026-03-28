@@ -3436,12 +3436,6 @@ body:has(.modal-overlay) {
   overflow: hidden;
 }
 
-body:has(.modal-overlay) .bottom-nav,
-body:has(.modal-overlay) .fab,
-body:has(.modal-overlay) .fab-menu,
-body:has(.modal-overlay) .fab-backdrop {
-  pointer-events: none;
-}
 
 /* Modal overlay — centers content, no scrolling here */
 .modal-overlay {
