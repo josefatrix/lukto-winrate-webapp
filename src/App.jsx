@@ -4293,182 +4293,184 @@ function App() {
         const allPredictionPlayers = [...(predictionMatch.teamWhite || []), ...(predictionMatch.teamBlack || [])]
         
         return (
-          <div className="modal-overlay" onClick={closePredictionModal}>
+          <div className="modal-overlay prediction-modal-overlay" onClick={closePredictionModal}>
             <div className="modal prediction-modal" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Predicción del Partido</h3>
                 <button className="modal-close" onClick={closePredictionModal}>×</button>
               </div>
-              
-              <div className="prediction-match-info">
-                <span className="prediction-date">
-                  {new Date(predictionMatch.date + 'T12:00:00').toLocaleDateString('es-ES', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long'
-                  })}
-                </span>
-                <span className="prediction-venue">{predictionMatch.venue}</span>
-              </div>
 
-              {/* Context Card: Probability + Stats + Favorite */}
-              <div className="pm-context-card">
-                <div className="pm-prob-bar-wrap">
-                  <div className="pm-prob-bar">
-                    <div className="pm-prob-fill white" style={{ width: `${probability.white}%` }}>
-                      <span className="pm-prob-label">Blanco · {probability.white}%</span>
+              <div className="prediction-modal-scroll">
+                <div className="prediction-match-info">
+                  <span className="prediction-date">
+                    {new Date(predictionMatch.date + 'T12:00:00').toLocaleDateString('es-ES', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long'
+                    })}
+                  </span>
+                  <span className="prediction-venue">{predictionMatch.venue}</span>
+                </div>
+
+                {/* Context Card: Probability + Stats + Favorite */}
+                <div className="pm-context-card">
+                  <div className="pm-prob-bar-wrap">
+                    <div className="pm-prob-bar">
+                      <div className="pm-prob-fill white" style={{ width: `${probability.white}%` }}>
+                        <span className="pm-prob-label">Blanco · {probability.white}%</span>
+                      </div>
+                      <div className="pm-prob-fill black" style={{ width: `${probability.black}%` }}>
+                        <span className="pm-prob-label">{probability.black}% · Negro</span>
+                      </div>
                     </div>
-                    <div className="pm-prob-fill black" style={{ width: `${probability.black}%` }}>
-                      <span className="pm-prob-label">{probability.black}% · Negro</span>
+                    {favorite !== 'tie' && (
+                      <span className={`pm-fav-chip ${favorite}`}>
+                        ★ Favorito: Equipo {favorite === 'white' ? 'Blanco' : 'Negro'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="pm-stats-row">
+                    <div className="pm-stat">
+                      <span className="pm-stat-left">{probability.whiteStats.avgWinRate.toFixed(0)}%</span>
+                      <span className="pm-stat-name">Win Rate</span>
+                      <span className="pm-stat-right">{probability.blackStats.avgWinRate.toFixed(0)}%</span>
+                    </div>
+                    <div className="pm-stat">
+                      <span className="pm-stat-left">{probability.whiteStats.avgRating.toFixed(1)}</span>
+                      <span className="pm-stat-name">Rating</span>
+                      <span className="pm-stat-right">{probability.blackStats.avgRating.toFixed(1)}</span>
+                    </div>
+                    <div className="pm-stat">
+                      <span className="pm-stat-left">{probability.whiteStats.recentForm.toFixed(0)}%</span>
+                      <span className="pm-stat-name">Forma</span>
+                      <span className="pm-stat-right">{probability.blackStats.recentForm.toFixed(0)}%</span>
                     </div>
                   </div>
-                  {favorite !== 'tie' && (
-                    <span className={`pm-fav-chip ${favorite}`}>
-                      ★ Favorito: Equipo {favorite === 'white' ? 'Blanco' : 'Negro'}
-                    </span>
-                  )}
                 </div>
-                <div className="pm-stats-row">
-                  <div className="pm-stat">
-                    <span className="pm-stat-left">{probability.whiteStats.avgWinRate.toFixed(0)}%</span>
-                    <span className="pm-stat-name">Win Rate</span>
-                    <span className="pm-stat-right">{probability.blackStats.avgWinRate.toFixed(0)}%</span>
-                  </div>
-                  <div className="pm-stat">
-                    <span className="pm-stat-left">{probability.whiteStats.avgRating.toFixed(1)}</span>
-                    <span className="pm-stat-name">Rating</span>
-                    <span className="pm-stat-right">{probability.blackStats.avgRating.toFixed(1)}</span>
-                  </div>
-                  <div className="pm-stat">
-                    <span className="pm-stat-left">{probability.whiteStats.recentForm.toFixed(0)}%</span>
-                    <span className="pm-stat-name">Forma</span>
-                    <span className="pm-stat-right">{probability.blackStats.recentForm.toFixed(0)}%</span>
-                  </div>
+
+                <div className="prediction-divider">
+                  <span>¿Con quién vas?</span>
                 </div>
-              </div>
 
-              <div className="prediction-divider">
-                <span>¿Con quién vas?</span>
-              </div>
-
-              <div className="prediction-teams">
-                <button
-                  className={`prediction-team white ${selectedPrediction === 'white' ? 'selected' : ''}`}
-                  onClick={() => setSelectedPrediction('white')}
-                >
-                  {selectedPrediction === 'white' && <div className="pt-check">✓</div>}
-                  <div className="pt-pct">{probability.white}%</div>
-                  <div className="pt-name">Equipo Blanco</div>
-                  <div className="pt-players">
-                    {predictionMatch.teamWhite?.map(pid => (
-                      <span key={pid} className="pt-player">{getPlayerName(pid)}</span>
-                    ))}
-                  </div>
-                </button>
-
-                <button
-                  className={`prediction-team black ${selectedPrediction === 'black' ? 'selected' : ''}`}
-                  onClick={() => setSelectedPrediction('black')}
-                >
-                  {selectedPrediction === 'black' && <div className="pt-check">✓</div>}
-                  <div className="pt-pct">{probability.black}%</div>
-                  <div className="pt-name">Equipo Negro</div>
-                  <div className="pt-players">
-                    {predictionMatch.teamBlack?.map(pid => (
-                      <span key={pid} className="pt-player">{getPlayerName(pid)}</span>
-                    ))}
-                  </div>
-                </button>
-              </div>
-
-              <div className="prediction-advanced-section">
-                <div className="prediction-advanced-title">
-                  <AppIcon name="target" size={14} />
-                  <span>Predicción avanzada (opcional)</span>
-                </div>
-                <div className="prediction-advanced-grid">
-                  <div className="prediction-advanced-item">
-                    <label>MVP probable</label>
-                    <select
-                      value={predictedMvpId}
-                      onChange={e => setPredictedMvpId(e.target.value)}
-                    >
-                      <option value="">Sin MVP</option>
-                      {allPredictionPlayers.map(playerId => (
-                        <option key={`pmvp-${playerId}`} value={playerId}>
-                          {getPlayerName(playerId)}
-                        </option>
+                <div className="prediction-teams">
+                  <button
+                    className={`prediction-team white ${selectedPrediction === 'white' ? 'selected' : ''}`}
+                    onClick={() => setSelectedPrediction('white')}
+                  >
+                    {selectedPrediction === 'white' && <div className="pt-check">✓</div>}
+                    <div className="pt-pct">{probability.white}%</div>
+                    <div className="pt-name">Equipo Blanco</div>
+                    <div className="pt-players">
+                      {predictionMatch.teamWhite?.map(pid => (
+                        <span key={pid} className="pt-player">{getPlayerName(pid)}</span>
                       ))}
-                    </select>
+                    </div>
+                  </button>
+
+                  <button
+                    className={`prediction-team black ${selectedPrediction === 'black' ? 'selected' : ''}`}
+                    onClick={() => setSelectedPrediction('black')}
+                  >
+                    {selectedPrediction === 'black' && <div className="pt-check">✓</div>}
+                    <div className="pt-pct">{probability.black}%</div>
+                    <div className="pt-name">Equipo Negro</div>
+                    <div className="pt-players">
+                      {predictionMatch.teamBlack?.map(pid => (
+                        <span key={pid} className="pt-player">{getPlayerName(pid)}</span>
+                      ))}
+                    </div>
+                  </button>
+                </div>
+
+                <div className="prediction-advanced-section">
+                  <div className="prediction-advanced-title">
+                    <AppIcon name="target" size={14} />
+                    <span>Predicción avanzada (opcional)</span>
                   </div>
-                  <div className="prediction-advanced-item">
-                    <label>Marcador estimado</label>
-                    <div className="prediction-score-inputs">
-                      <input
-                        type="number"
-                        min="0"
-                        max="30"
-                        value={predictedScoreWhite}
-                        onChange={e => setPredictedScoreWhite(e.target.value)}
-                        placeholder="Blanco"
-                      />
-                      <span>-</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="30"
-                        value={predictedScoreBlack}
-                        onChange={e => setPredictedScoreBlack(e.target.value)}
-                        placeholder="Negro"
-                      />
+                  <div className="prediction-advanced-grid">
+                    <div className="prediction-advanced-item">
+                      <label>MVP probable</label>
+                      <select
+                        value={predictedMvpId}
+                        onChange={e => setPredictedMvpId(e.target.value)}
+                      >
+                        <option value="">Sin MVP</option>
+                        {allPredictionPlayers.map(playerId => (
+                          <option key={`pmvp-${playerId}`} value={playerId}>
+                            {getPlayerName(playerId)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="prediction-advanced-item">
+                      <label>Marcador estimado</label>
+                      <div className="prediction-score-inputs">
+                        <input
+                          type="number"
+                          min="0"
+                          max="30"
+                          value={predictedScoreWhite}
+                          onChange={e => setPredictedScoreWhite(e.target.value)}
+                          placeholder="Blanco"
+                        />
+                        <span>-</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="30"
+                          value={predictedScoreBlack}
+                          onChange={e => setPredictedScoreBlack(e.target.value)}
+                          placeholder="Negro"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* LukCoins Betting */}
-              <div className="xp-bet-section">
-                <div className="xp-bet-header">
-                  <span className="xp-bet-title">Apostar LukCoins</span>
-                  <span className="xp-bet-balance">Tus LukCoins: {userPlayer ? calculateLukCoins(userPlayer) : 0}</span>
-                </div>
-                <div className="pool-info">
-                  <div className="pool-row">
-                    <span>Pozo Blanco</span>
-                    <strong>{totalWhite} LC</strong>
+                {/* LukCoins Betting */}
+                <div className="xp-bet-section">
+                  <div className="xp-bet-header">
+                    <span className="xp-bet-title">Apostar LukCoins</span>
+                    <span className="xp-bet-balance">Tus LukCoins: {userPlayer ? calculateLukCoins(userPlayer) : 0}</span>
                   </div>
-                  <div className="pool-row">
-                    <span>Pozo Negro</span>
-                    <strong>{totalBlack} LC</strong>
+                  <div className="pool-info">
+                    <div className="pool-row">
+                      <span>Pozo Blanco</span>
+                      <strong>{totalWhite} LC</strong>
+                    </div>
+                    <div className="pool-row">
+                      <span>Pozo Negro</span>
+                      <strong>{totalBlack} LC</strong>
+                    </div>
                   </div>
-                </div>
-                <div className="xp-bet-options">
-                  {[5, 10, 25, 50].map(amount => (
-                    <button
-                      key={amount}
-                      className={`xp-bet-btn ${coinBet === amount ? 'selected' : ''}`}
-                      onClick={() => setCoinBet(amount)}
-                      disabled={userPlayer && calculateLukCoins(userPlayer) < amount}
-                    >
-                      {amount} LC
-                    </button>
-                  ))}
-                </div>
-                <div className="xp-bet-potential">
+                  <div className="xp-bet-options">
+                    {[5, 10, 25, 50].map(amount => (
+                      <button
+                        key={amount}
+                        className={`xp-bet-btn ${coinBet === amount ? 'selected' : ''}`}
+                        onClick={() => setCoinBet(amount)}
+                        disabled={userPlayer && calculateLukCoins(userPlayer) < amount}
+                      >
+                        {amount} LC
+                      </button>
+                    ))}
+                  </div>
+                  <div className="xp-bet-potential">
+                    {selectedPrediction && (
+                      <span>
+                        Pozo rival: <strong>{rivalPool} LC</strong> ·
+                        Retorno estimado: <strong className="potential-win">
+                          +{potentialWin} LC
+                        </strong> · Total: <strong>{coinBet + potentialWin} LC</strong>
+                      </span>
+                    )}
+                  </div>
                   {selectedPrediction && (
-                    <span>
-                      Pozo rival: <strong>{rivalPool} LC</strong> ·
-                      Retorno estimado: <strong className="potential-win">
-                        +{potentialWin} LC
-                      </strong> · Total: <strong>{coinBet + potentialWin} LC</strong>
-                    </span>
+                    <div className="pool-hint">
+                      Tu apuesta entra al pozo de tu equipo ({selectedPool} LC).
+                    </div>
                   )}
                 </div>
-                {selectedPrediction && (
-                  <div className="pool-hint">
-                    Tu apuesta entra al pozo de tu equipo ({selectedPool} LC).
-                  </div>
-                )}
               </div>
 
               <div className="modal-actions">

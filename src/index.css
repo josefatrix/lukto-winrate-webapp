@@ -3528,6 +3528,21 @@ body:has(.modal-overlay) {
   max-width: 400px;
 }
 
+.prediction-modal-overlay {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.prediction-modal-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.1rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
 /* XP Betting Section */
 .xp-bet-section {
   background: var(--bg-elevated);
@@ -5468,6 +5483,18 @@ body:has(.modal-overlay) {
     border-radius: 12px;
     max-height: 85svh;
     max-height: 85vh;
+  }
+
+  .prediction-modal-overlay {
+    align-items: flex-start;
+    padding:
+      max(0.75rem, env(safe-area-inset-top))
+      1rem
+      max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .modal.prediction-modal {
+    margin: auto 0;
   }
   
   .modal-header h2 {
