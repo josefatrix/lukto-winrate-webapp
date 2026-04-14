@@ -159,15 +159,14 @@ export const Header = ({
                   <img src={user.photoURL} alt="" />
                 </button>
                 {showUserMenu && (
-                  <LiquidGlass
-                    className="header-user-menu"
-                    displacementScale={35}
-                    blurAmount={0.06}
-                    saturation={140}
-                    aberrationIntensity={1.5}
-                    elasticity={0.15}
-                    cornerRadius={12}
-                  >
+                  <div className="header-user-menu">
+                    <div className="hum-user">
+                      <img src={user.photoURL} alt="" />
+                      <div>
+                        <span>{user.displayName?.split(' ')[0] || 'Perfil'}</span>
+                        {userPlayer && <small>{getPlayerName(userPlayer)}</small>}
+                      </div>
+                    </div>
                     {userPlayer && (
                       <button className="hum-item" onClick={() => { onShowProfile(userPlayer); setShowUserMenu(false) }}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -178,7 +177,7 @@ export const Header = ({
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                       Cerrar sesión
                     </button>
-                  </LiquidGlass>
+                  </div>
                 )}
               </div>
             </>

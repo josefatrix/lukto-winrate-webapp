@@ -12,7 +12,7 @@ import LiquidGlass from 'liquid-glass-react'
 
 // Import components
 import { Header, BottomNav } from './components/layout'
-import { StatsTab, MatchesTab, MatchBuilderTab, RatingsTab, StoreTab } from './components/tabs'
+import { StatsTab, MatchesTab, MatchBuilderTab, RatingsTab } from './components/tabs'
 import { getPositionGroup } from './utils/matchConstants'
 import {
   formatDate,
@@ -143,6 +143,7 @@ function App() {
   const [showRatingModal, setShowRatingModal] = useState(false)
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [currentRatings, setCurrentRatings] = useState({})
+  const [ratingInputs, setRatingInputs] = useState({})
   const [ratingSuccess, setRatingSuccess] = useState(false)
   const [showPlayerProfile, setShowPlayerProfile] = useState(false)
   const [selectedPlayerProfile, setSelectedPlayerProfile] = useState(null)
@@ -1337,6 +1338,20 @@ function App() {
     })
   }
 
+  const clampRatingScore = value => {
+    const parsed = typeof value === 'number' ? value : parseFloat(value)
+    if (!Number.isFinite(parsed)) return null
+    return Math.min(10, Math.max(0, Math.round(parsed * 10) / 10))
+  }
+
+  const formatRatingInputValue = value => {
+    const normalized = clampRatingScore(value)
+    if (normalized === null) return ''
+    return Number.isInteger(normalized) ? String(normalized) : normalized.toFixed(1)
+  }
+
+  const hasRatingValue = (ratingsMap, playerId) => Object.prototype.hasOwnProperty.call(ratingsMap, playerId)
+
   // Rating modal functions
   const openRatingModal = async match => {
     if (!userPlayer) {
@@ -1384,29 +1399,74 @@ function App() {
         r => (r.ratedBy === userPlayer || r.odedBy === userPlayer) && r.matchId === match.id
       )
       if (myRating) {
-        existingRatings[playerId] = myRating.score
+        const normalizedScore = clampRatingScore(myRating.score)
+        if (normalizedScore !== null) {
+          existingRatings[playerId] = normalizedScore
+        }
       }
     })
 
     setSelectedMatch(match)
     setCurrentRatings(existingRatings)
+    setRatingInputs(
+      Object.fromEntries(
+        Object.entries(existingRatings).map(([playerId, score]) => [playerId, formatRatingInputValue(score)])
+      )
+    )
     setShowRatingModal(true)
   }
 
-  const handleRatingChange = async (playerId, score) => {
-    if (score <= 3) {
-      const confirmed = await askConfirmation({
-        title: 'Calificación muy baja',
-        message: '¿Seguro que deseas poner una nota tan baja?',
-        confirmText: 'Sí, continuar',
-        cancelText: 'Revisar nota',
-        tone: 'warning',
+  const handleRatingChange = (playerId, score) => {
+    const normalizedScore = clampRatingScore(score)
+    if (normalizedScore === null) return
+
+    setCurrentRatings(prev => ({ ...prev, [playerId]: normalizedScore }))
+    setRatingInputs(prev => ({ ...prev, [playerId]: formatRatingInputValue(normalizedScore) }))
+  }
+
+  const handleRatingInputChange = (playerId, value) => {
+    const normalizedValue = value.replace(',', '.').replace(/[^0-9.]/g, '')
+    const [integerPart = '', ...decimalParts] = normalizedValue.split('.')
+    const sanitizedValue = decimalParts.length > 0
+      ? `${integerPart}.${decimalParts.join('')}`
+      : integerPart
+
+    setRatingInputs(prev => ({ ...prev, [playerId]: sanitizedValue }))
+
+    if (sanitizedValue === '') {
+      setCurrentRatings(prev => {
+        const nextRatings = { ...prev }
+        delete nextRatings[playerId]
+        return nextRatings
       })
-      if (!confirmed) {
-        return
-      }
+      return
     }
-    setCurrentRatings({ ...currentRatings, [playerId]: score })
+
+    const parsedScore = clampRatingScore(sanitizedValue)
+    if (parsedScore === null) return
+    setCurrentRatings(prev => ({ ...prev, [playerId]: parsedScore }))
+  }
+
+  const handleRatingInputBlur = playerId => {
+    const rawValue = ratingInputs[playerId]
+    if (!rawValue) {
+      setRatingInputs(prev => ({ ...prev, [playerId]: '' }))
+      return
+    }
+
+    const normalizedScore = clampRatingScore(rawValue)
+    if (normalizedScore === null) {
+      setRatingInputs(prev => ({ ...prev, [playerId]: '' }))
+      setCurrentRatings(prev => {
+        const nextRatings = { ...prev }
+        delete nextRatings[playerId]
+        return nextRatings
+      })
+      return
+    }
+
+    setCurrentRatings(prev => ({ ...prev, [playerId]: normalizedScore }))
+    setRatingInputs(prev => ({ ...prev, [playerId]: formatRatingInputValue(normalizedScore) }))
   }
 
   const submitRatings = async () => {
@@ -1440,7 +1500,7 @@ function App() {
       }
 
       const playersToRate = getPlayersToRate(selectedMatch)
-      const missingRatings = playersToRate.filter(id => !currentRatings[id])
+      const missingRatings = playersToRate.filter(id => !hasRatingValue(currentRatings, id))
 
       if (missingRatings.length > 0) {
         const missingNames = missingRatings.map(id => getPlayerName(id)).join(', ')
@@ -1451,13 +1511,16 @@ function App() {
       const batch = writeBatch(db)
 
       Object.entries(currentRatings).forEach(([playerId, score]) => {
+        const normalizedScore = clampRatingScore(score)
+        if (normalizedScore === null) return
+
         const ratingId = `${userPlayer}_${playerId}_${selectedMatch.id}`
         const ratingRef = doc(db, 'ratings', ratingId)
         batch.set(ratingRef, {
           ratedBy: userPlayer,
           ratedPlayerId: playerId,
           matchId: selectedMatch.id,
-          score: parseInt(score),
+          score: normalizedScore,
           timestamp: new Date().toISOString(),
         })
       })
@@ -1480,6 +1543,7 @@ function App() {
     setShowRatingModal(false)
     setSelectedMatch(null)
     setCurrentRatings({})
+    setRatingInputs({})
     setRatingSuccess(false)
   }
 
@@ -1851,7 +1915,6 @@ function App() {
       { id: 'tab-ratings', type: 'tab', tab: 'ratings', title: 'Calificaciones', subtitle: 'Abrir ranking de ratings', search: 'ratings calificaciones votos' },
       { id: 'tab-matches', type: 'tab', tab: 'matches', title: 'Partidos', subtitle: 'Ver historial y próximos partidos', search: 'partidos matches calendario predicciones' },
       { id: 'tab-analytics', type: 'tab', tab: 'analytics', title: 'Análisis', subtitle: 'Ver analítica avanzada', search: 'analytics analisis records roles comparar' },
-      { id: 'tab-store', type: 'tab', tab: 'store', title: 'Tienda', subtitle: 'Abrir tienda', search: 'store tienda lukcoins' },
     ]
     const adminTabs = isAdmin ? [
       { id: 'tab-dashboard', type: 'tab', tab: 'dashboard', title: 'Dashboard Admin', subtitle: 'Panel de control', search: 'admin dashboard panel alertas' },
@@ -2921,13 +2984,6 @@ function App() {
             )
           })()}
         </section>
-      )}
-
-      {activeTab === 'store' && (
-        <StoreTab
-          lukCoins={lukCoins}
-          onSpendLukCoins={spendLukCoins}
-        />
       )}
 
       {/* Admin: Users Tab */}
@@ -4176,37 +4232,68 @@ function App() {
                 </p>
 
                 <div className="rating-list">
-                  {getPlayersToRate(selectedMatch).map(playerId => (
-                    <div key={playerId} className="rating-item">
-                      <div className="rating-player">
-                        <AvatarImage
-                          src={getPlayerPhoto(playerId)}
-                          name={getPlayerName(playerId)}
-                          imgClassName="player-avatar-img"
-                          fallbackClassName="player-avatar"
-                        />
-                        <span>{getPlayerName(playerId)}</span>
+                  {getPlayersToRate(selectedMatch).map(playerId => {
+                    const rated = hasRatingValue(currentRatings, playerId)
+                    const ratingValue = rated ? currentRatings[playerId] : 5
+                    const ratingProgress = `${(ratingValue / 10) * 100}%`
+                    const playerInputId = `rating-input-${playerId}`
+
+                    return (
+                      <div key={playerId} className={`rating-item ${rated ? 'filled' : ''}`}>
+                        <div className="rating-item-top">
+                          <div className="rating-player">
+                            <AvatarImage
+                              src={getPlayerPhoto(playerId)}
+                              name={getPlayerName(playerId)}
+                              imgClassName="player-avatar-img"
+                              fallbackClassName="player-avatar"
+                            />
+                            <span>{getPlayerName(playerId)}</span>
+                          </div>
+                          <div className={`rating-score-badge ${rated ? 'filled' : ''}`}>
+                            {rated ? ratingValue.toFixed(1) : '--'}
+                          </div>
+                        </div>
+
+                        <div className="rating-input-row">
+                          <label htmlFor={playerInputId} className="rating-input-label">
+                            Nota
+                          </label>
+                          <input
+                            id={playerInputId}
+                            className="rating-decimal-input"
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="7.5 o 5,3"
+                            value={ratingInputs[playerId] ?? ''}
+                            onChange={e => handleRatingInputChange(playerId, e.target.value)}
+                            onBlur={() => handleRatingInputBlur(playerId)}
+                          />
+                        </div>
+
+                        <div className="rating-slider-row">
+                          <span>0.0</span>
+                          <input
+                            className="rating-slider"
+                            type="range"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            value={ratingValue}
+                            style={{
+                              background: `linear-gradient(90deg, rgba(122, 132, 255, 0.95) 0%, rgba(100, 181, 246, 0.9) ${ratingProgress}, rgba(255, 255, 255, 0.08) ${ratingProgress}, rgba(255, 255, 255, 0.08) 100%)`,
+                            }}
+                            onChange={e => handleRatingChange(playerId, e.target.value)}
+                          />
+                          <span>10.0</span>
+                        </div>
+
                       </div>
-                      <div className="rating-stars">
-                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(score => {
-                          const rated = currentRatings[playerId] !== undefined
-                          const isActive = rated && (score === 0 ? currentRatings[playerId] === 0 : currentRatings[playerId] >= score)
-                          return (
-                            <button
-                              key={score}
-                              className={`star-btn ${isActive ? 'active' : ''} ${score === 0 ? 'zero' : ''}`}
-                              onClick={() => handleRatingChange(playerId, score)}
-                            >
-                              {score}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
-                <div className="modal-actions">
+                <div className="modal-actions rating-modal-actions">
                   <button className="cancel-btn" onClick={closeRatingModal}>
                     Cancelar
                   </button>

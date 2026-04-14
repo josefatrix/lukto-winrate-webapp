@@ -9,7 +9,7 @@ import { collection, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore'
 // Constants
 export const SUPER_ADMIN_EMAIL = 'joseescorcia01@gmail.com'
 const VALID_TIME_FILTERS = ['all', 'month', 'week']
-const VALID_TABS = ['stats', 'ratings', 'matches', 'analytics', 'store', 'dashboard', 'new', 'players', 'users', 'tools', 'allRatings']
+const VALID_TABS = ['stats', 'ratings', 'matches', 'analytics', 'dashboard', 'new', 'players', 'users', 'tools', 'allRatings']
 
 const AppContext = createContext(null)
 
