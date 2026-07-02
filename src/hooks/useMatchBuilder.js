@@ -6,6 +6,9 @@ import { useStats } from './useStats'
 import {
   POSITION_OPTIONS,
   MATCH_FORMAT_OPTIONS,
+  DEFAULT_MATCH_FORMAT,
+  getFormatTeamSize,
+  getFormatForTeamSize,
   getPositionLabel,
   getPositionGroup,
   clamp,
@@ -32,7 +35,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   const [matchDate, setMatchDate] = useState('')
   const [matchTime, setMatchTime] = useState('')
   const [matchVenue, setMatchVenue] = useState('LUKTO')
-  const [matchFormat, setMatchFormat] = useState('6v6')
+  const [matchFormat, setMatchFormat] = useState(DEFAULT_MATCH_FORMAT)
   const [selectedPlayers, setSelectedPlayers] = useState([])
   const [scoreWhite, setScoreWhite] = useState('')
   const [scoreBlack, setScoreBlack] = useState('')
@@ -58,7 +61,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   const tvLastDragAtRef = useRef(0)
 
   // ── derived values ──
-  const teamSize = matchFormat === '7v7' ? 7 : 6
+  const teamSize = getFormatTeamSize(matchFormat)
   const requiredPlayers = teamSize * 2
 
   const statsById = useMemo(
@@ -101,7 +104,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     const validIds = new Set(players.map(p => p.id))
     const ids = preset.playerIds.filter(id => validIds.has(id))
     const nextFormat = preset.format || matchFormat
-    const nextTeamSize = nextFormat === '7v7' ? 7 : 6
+    const nextTeamSize = getFormatTeamSize(nextFormat)
     const nextRequired = nextTeamSize * 2
     const finalIds = ids.slice(0, nextRequired)
 
@@ -169,7 +172,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   // ── Format change ──
   const handleMatchFormatChange = useCallback((nextFormat) => {
     if (nextFormat === matchFormat) return
-    const nextTeamSize = nextFormat === '7v7' ? 7 : 6
+    const nextTeamSize = getFormatTeamSize(nextFormat)
     const nextRequired = nextTeamSize * 2
     const next = selectedPlayers.slice(0, nextRequired)
     const allowed = new Set(next)
@@ -1014,7 +1017,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     setMatchDate('')
     setMatchTime('')
     setMatchVenue('LUKTO')
-    setMatchFormat('6v6')
+    setMatchFormat(DEFAULT_MATCH_FORMAT)
     setSelectedPlayers([])
     setScoreWhite('')
     setScoreBlack('')
@@ -1032,8 +1035,8 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   // ── Open edit match ──
   const openEditMatch = useCallback((match) => {
     const inferredTeamSize = Number(match.teamSize) || Math.max(match.teamWhite?.length || 0, match.teamBlack?.length || 0, 6)
-    const nextFormat = match.matchFormat || (inferredTeamSize >= 7 ? '7v7' : '6v6')
-    const nextTeamSize = nextFormat === '7v7' ? 7 : 6
+    const nextFormat = match.matchFormat || getFormatForTeamSize(inferredTeamSize)
+    const nextTeamSize = getFormatTeamSize(nextFormat)
     const nextRequired = nextTeamSize * 2
     const matchPool = Array.from(new Set([...(match.playerPool || []), ...(match.teamWhite || []), ...(match.teamBlack || [])]))
     const normalized = matchPool.slice(0, nextRequired)

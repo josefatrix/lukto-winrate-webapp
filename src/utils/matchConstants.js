@@ -10,9 +10,22 @@ export const POSITION_OPTIONS = [
 ]
 
 export const MATCH_FORMAT_OPTIONS = [
+  { value: '5v5', label: '5 vs 5', teamSize: 5 },
   { value: '6v6', label: '6 vs 6', teamSize: 6 },
   { value: '7v7', label: '7 vs 7', teamSize: 7 },
 ]
+
+export const DEFAULT_MATCH_FORMAT = '6v6'
+
+export const getFormatTeamSize = (format) => {
+  const found = MATCH_FORMAT_OPTIONS.find(opt => opt.value === format)
+  return found?.teamSize || 6
+}
+
+export const getFormatForTeamSize = (size) => {
+  const found = MATCH_FORMAT_OPTIONS.find(opt => opt.teamSize === Number(size))
+  return found?.value || DEFAULT_MATCH_FORMAT
+}
 
 export const getPositionLabel = (value) => {
   const found = POSITION_OPTIONS.find(opt => opt.value === value)
