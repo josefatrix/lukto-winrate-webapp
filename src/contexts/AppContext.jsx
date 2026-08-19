@@ -9,7 +9,21 @@ import { collection, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore'
 // Constants
 export const SUPER_ADMIN_EMAIL = 'joseescorcia01@gmail.com'
 const VALID_TIME_FILTERS = ['all', 'month', 'week']
-const VALID_TABS = ['stats', 'ratings', 'matches', 'analytics', 'dashboard', 'new', 'players', 'users', 'tools', 'allRatings']
+const VALID_TABS = ['home', 'stats', 'matches', 'analytics', 'profile', 'dashboard', 'new', 'players', 'users', 'tools', 'allRatings']
+
+// Tabs that no longer exist, mapped to where their content now lives.
+// Keeps stored preferences from stranding returning users on a blank screen.
+const LEGACY_TAB_REDIRECTS = { ratings: 'stats' }
+
+const readStoredTab = () => {
+  try {
+    const saved = localStorage.getItem('lukto_activeTab')
+    if (LEGACY_TAB_REDIRECTS[saved]) return LEGACY_TAB_REDIRECTS[saved]
+    return VALID_TABS.includes(saved) ? saved : 'home'
+  } catch {
+    return 'home'
+  }
+}
 
 const AppContext = createContext(null)
 
@@ -66,14 +80,7 @@ export const AppProvider = ({ children }) => {
   const [activityLogs, setActivityLogs] = useState([])
 
   // UI state
-  const [activeTab, setActiveTab] = useState(() => {
-    try {
-      const saved = localStorage.getItem('lukto_activeTab')
-      return VALID_TABS.includes(saved) ? saved : 'stats'
-    } catch {
-      return 'stats'
-    }
-  })
+  const [activeTab, setActiveTab] = useState(readStoredTab)
   const [toast, setToast] = useState(null)
   const [timeFilter, setTimeFilter] = useState(() => {
     try {
@@ -92,8 +99,8 @@ export const AppProvider = ({ children }) => {
     if (!navigator.vibrate) return
     const onTouch = (e) => {
       const el = e.target.closest(
-        'button, [role="button"], .rg-row, .potm-hero, .potw-strip, ' +
-        '.bottom-nav-item, .rg-filter-pill, .analytics-subtab, ' +
+        'button, [role="button"], .rk-row-main, .hm-mover, .destacados-row, ' +
+        '.bottom-nav-item, .rk-chip, .rk-period-btn, .analytics-subtab, ' +
         '.admin-tab, .tool-card, .match-card, .player-card'
       )
       if (el) navigator.vibrate(6)

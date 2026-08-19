@@ -15,6 +15,7 @@ import {
 } from '../utils/matchConstants'
 
 const BEST_OF_N_ITERATIONS = 40
+const DRAFT_KEY = 'lukto_match_draft'
 
 const EMPTY_POINTER_STATE = {
   playerId: '',
@@ -69,6 +70,9 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     [stats],
   )
 
+  // Forward reference: applyPreset is defined above pushUndo but needs to snapshot too
+  const pushUndoRef = useRef(null)
+
   // ── Preset / convocatoria management ──
   const PRESETS_KEY = 'lukto_match_presets'
 
@@ -101,6 +105,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
 
   const applyPreset = useCallback((preset) => {
     if (!preset?.playerIds?.length) return
+    pushUndoRef.current?.(`Cargar "${preset.name}"`)
     const validIds = new Set(players.map(p => p.id))
     const ids = preset.playerIds.filter(id => validIds.has(id))
     const nextFormat = preset.format || matchFormat
@@ -117,11 +122,102 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     showToast('success', `Convocatoria "${preset.name}" cargada (${finalIds.length} jugadores)`)
   }, [players, matchFormat, showToast])
 
+  /* Create a player without leaving the builder, and call them up right away.
+     Same document shape as the Jugadores admin tab: { name, aliases }. */
+  const [creatingPlayer, setCreatingPlayer] = useState(false)
+
+  const createPlayer = useCallback(async (rawName) => {
+    const name = (rawName || '').trim()
+    if (!name) {
+      showToast('error', 'Escribe un nombre para el jugador')
+      return null
+    }
+    const taken = (players || []).some(p =>
+      p.name?.trim().toLowerCase() === name.toLowerCase() ||
+      (p.aliases || []).some(a => a.trim().toLowerCase() === name.toLowerCase()),
+    )
+    if (taken) {
+      showToast('error', `Ya existe un jugador llamado "${name}"`)
+      return null
+    }
+
+    setCreatingPlayer(true)
+    try {
+      const playerId = Date.now().toString()
+      await setDoc(doc(db, 'players', playerId), { name, aliases: [] })
+      await logActivity?.('player_create', { playerId, data: { name }, from: 'match_builder' })
+
+      // Call them up immediately — creating a player mid-draft only makes
+      // sense if they're playing today.
+      const hasRoom = selectedPlayers.length < requiredPlayers
+      if (hasRoom) {
+        setSelectedPlayers(prev => (prev.includes(playerId) ? prev : [...prev, playerId]))
+      }
+      showToast('success', hasRoom
+        ? `"${name}" creado y añadido a la convocatoria`
+        : `"${name}" creado · la convocatoria ya está llena`)
+      return playerId
+    } catch (error) {
+      console.error('Error creating player:', error)
+      showToast('error', 'No se pudo crear el jugador')
+      return null
+    } finally {
+      setCreatingPlayer(false)
+    }
+  }, [players, selectedPlayers, requiredPlayers, showToast, logActivity])
+
   const deletePreset = useCallback((name) => {
     const presets = loadPresets().filter(p => p.name !== name)
     localStorage.setItem(PRESETS_KEY, JSON.stringify(presets))
     showToast('success', `Convocatoria "${name}" eliminada`)
   }, [loadPresets, showToast])
+
+  /* Next matchday, inferred from the weekday + kickoff time you actually use.
+     Saves the one field that otherwise blocks saving from second zero. */
+  const suggestedSchedule = useMemo(() => {
+    const recent = (matches || [])
+      .filter(m => m.date)
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .slice(0, 12)
+    if (!recent.length) return null
+
+    const weekdayCount = {}
+    const timeCount = {}
+    recent.forEach(m => {
+      const d = new Date(`${m.date}T12:00:00`)
+      if (!Number.isNaN(d.getTime())) weekdayCount[d.getDay()] = (weekdayCount[d.getDay()] || 0) + 1
+      if (m.time) timeCount[m.time] = (timeCount[m.time] || 0) + 1
+    })
+
+    const topBy = (obj) => Object.entries(obj).sort((a, b) => b[1] - a[1])[0]
+    const topWeekday = topBy(weekdayCount)
+    if (!topWeekday) return null
+
+    const target = Number(topWeekday[0])
+    const today = new Date()
+    today.setHours(12, 0, 0, 0)
+    const next = new Date(today)
+    next.setDate(today.getDate() + ((target - today.getDay() + 7) % 7))
+
+    const pad = n => String(n).padStart(2, '0')
+    return {
+      date: `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}`,
+      time: topBy(timeCount)?.[0] || '',
+    }
+  }, [matches])
+
+  /* The roster of the most recent match — the fastest possible convocatoria
+     for a group that plays with the same people every week. */
+  const lastConvocatoria = useMemo(() => {
+    const last = (matches || [])
+      .filter(m => (m.teamWhite?.length || 0) + (m.teamBlack?.length || 0) > 0)
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))[0]
+    if (!last) return null
+    const validIds = new Set((players || []).map(p => p.id))
+    const playerIds = [...(last.teamWhite || []), ...(last.teamBlack || [])].filter(id => validIds.has(id))
+    if (!playerIds.length) return null
+    return { name: 'Última convocatoria', playerIds, format: last.matchFormat || DEFAULT_MATCH_FORMAT }
+  }, [matches, players])
 
   // ── Most frequent position for a player (auto-default) ──
   const playerFrequentPositions = useMemo(() => {
@@ -243,8 +339,44 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     }
   }, [selectedPlayers, teamWhite, teamBlack, teamSize, showToast, autoAssignPosition])
 
+  // ── Undo (one level) ──
+  // Mirrors live state so snapshots never capture a stale closure.
+  const stateRef = useRef({})
+  stateRef.current = {
+    matchFormat, selectedPlayers, teamWhite, teamBlack, matchPositions,
+    winner, scoreWhite, scoreBlack, preserveCaptains,
+    lockedWhiteCaptain, lockedBlackCaptain, tvBoardLayout,
+  }
+
+  const [undoEntry, setUndoEntry] = useState(null)
+
+  const pushUndo = useCallback((label) => {
+    setUndoEntry({ label, snapshot: { ...stateRef.current } })
+  }, [])
+  pushUndoRef.current = pushUndo
+
+  const undoLastAction = useCallback(() => {
+    if (!undoEntry) return
+    const s = undoEntry.snapshot
+    setSelectedPlayers(s.selectedPlayers)
+    setTeamWhite(s.teamWhite)
+    setTeamBlack(s.teamBlack)
+    setMatchPositions(s.matchPositions)
+    setWinner(s.winner)
+    setScoreWhite(s.scoreWhite)
+    setScoreBlack(s.scoreBlack)
+    setPreserveCaptains(s.preserveCaptains)
+    setLockedWhiteCaptain(s.lockedWhiteCaptain)
+    setLockedBlackCaptain(s.lockedBlackCaptain)
+    setTvBoardLayout(s.tvBoardLayout)
+    setUndoEntry(null)
+    showToast('success', `Se deshizo: ${undoEntry.label}`)
+  }, [undoEntry, showToast])
+
   // ── Clear helpers ──
+  /* Wipes everything: pool, teams, positions, captains, result. */
   const clearSelectedPlayers = useCallback(() => {
+    pushUndo('Vaciar convocatoria')
     setSelectedPlayers([])
     setPreserveCaptains(false)
     setLockedWhiteCaptain('')
@@ -253,13 +385,122 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     setTeamBlack([])
     setMatchPositions({})
     setWinner('')
-  }, [])
+  }, [pushUndo])
 
+  /* Only empties the two teams — the pool stays. */
   const clearCurrentTeams = useCallback(() => {
+    pushUndo('Deshacer equipos')
     setTeamWhite([])
     setTeamBlack([])
     setWinner('')
+  }, [pushUndo])
+
+  // ── Swap which roster wears white and which wears black ──
+  const swapTeamColors = useCallback(() => {
+    if (!teamWhite.length && !teamBlack.length) return
+    pushUndo('Intercambiar colores')
+    setTeamWhite(teamBlack)
+    setTeamBlack(teamWhite)
+    setScoreWhite(scoreBlack)
+    setScoreBlack(scoreWhite)
+    setWinner(w => (w === 'white' ? 'black' : w === 'black' ? 'white' : w))
+    setLockedWhiteCaptain(lockedBlackCaptain)
+    setLockedBlackCaptain(lockedWhiteCaptain)
+    // Mirror the chalkboard so each side keeps its half of the pitch
+    setTvBoardLayout(prev => {
+      const next = {}
+      Object.entries(prev).forEach(([pid, pos]) => {
+        next[pid] = { ...pos, x: 100 - pos.x }
+      })
+      return next
+    })
+    showToast('success', 'Equipos intercambiados')
+  }, [teamWhite, teamBlack, scoreWhite, scoreBlack, lockedWhiteCaptain, lockedBlackCaptain, pushUndo, showToast])
+
+  // ── Draft persistence: survive a reload / PWA restart ──
+  const [restorableDraft, setRestorableDraft] = useState(null)
+  const draftCheckedRef = useRef(false)
+
+  useEffect(() => {
+    if (draftCheckedRef.current) return
+    draftCheckedRef.current = true
+    try {
+      const stored = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null')
+      if (stored?.selectedPlayers?.length) setRestorableDraft(stored)
+    } catch {
+      /* Corrupt draft — ignore */
+    }
   }, [])
+
+  useEffect(() => {
+    // Never overwrite a stored draft with an empty form, otherwise offering
+    // "retomar borrador" would destroy the very thing it offers.
+    if (editingMatchId) return
+    if (selectedPlayers.length === 0 && !matchDate) return
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          savedAt: Date.now(),
+          matchDate, matchTime, matchVenue, matchFormat,
+          selectedPlayers, teamWhite, teamBlack, matchPositions,
+          lockedWhiteCaptain, lockedBlackCaptain, preserveCaptains,
+          scoreWhite, scoreBlack, winner,
+        }))
+      } catch {
+        /* Storage full or unavailable */
+      }
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [
+    editingMatchId, matchDate, matchTime, matchVenue, matchFormat,
+    selectedPlayers, teamWhite, teamBlack, matchPositions,
+    lockedWhiteCaptain, lockedBlackCaptain, preserveCaptains,
+    scoreWhite, scoreBlack, winner,
+  ])
+
+  const discardDraft = useCallback(() => {
+    try { localStorage.removeItem(DRAFT_KEY) } catch { /* ignore */ }
+    setRestorableDraft(null)
+  }, [])
+
+  const restoreDraft = useCallback(() => {
+    const d = restorableDraft
+    if (!d) return
+    const validIds = new Set((players || []).map(p => p.id))
+    const format = d.matchFormat || DEFAULT_MATCH_FORMAT
+    const size = getFormatTeamSize(format)
+    const pool = (d.selectedPlayers || []).filter(id => validIds.has(id)).slice(0, size * 2)
+    const allowed = new Set(pool)
+
+    setMatchFormat(format)
+    setMatchDate(d.matchDate || '')
+    setMatchTime(d.matchTime || '')
+    setMatchVenue(d.matchVenue || 'LUKTO')
+    setSelectedPlayers(pool)
+    setTeamWhite((d.teamWhite || []).filter(id => allowed.has(id)).slice(0, size))
+    setTeamBlack((d.teamBlack || []).filter(id => allowed.has(id)).slice(0, size))
+    setMatchPositions(Object.fromEntries(
+      Object.entries(d.matchPositions || {}).filter(([pid]) => allowed.has(pid)),
+    ))
+    setPreserveCaptains(!!d.preserveCaptains)
+    setLockedWhiteCaptain(allowed.has(d.lockedWhiteCaptain) ? d.lockedWhiteCaptain : '')
+    setLockedBlackCaptain(allowed.has(d.lockedBlackCaptain) ? d.lockedBlackCaptain : '')
+    setScoreWhite(d.scoreWhite || '')
+    setScoreBlack(d.scoreBlack || '')
+    setWinner(d.winner || '')
+    setRestorableDraft(null)
+    showToast('success', `Borrador recuperado (${pool.length} jugadores)`)
+  }, [restorableDraft, players, showToast])
+
+  const applyLastConvocatoria = useCallback(() => {
+    if (lastConvocatoria) applyPreset(lastConvocatoria)
+  }, [lastConvocatoria, applyPreset])
+
+  const applySuggestedSchedule = useCallback(() => {
+    if (!suggestedSchedule) return
+    setMatchDate(suggestedSchedule.date)
+    if (suggestedSchedule.time) setMatchTime(suggestedSchedule.time)
+  }, [suggestedSchedule])
 
   // ── Captain handlers ──
   const handleWhiteCaptainChange = useCallback((playerId) => {
@@ -282,6 +523,33 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     const played = Number(ps.played) || 0
     return (avgRating * 6) + (winRate * 0.5) + (Math.min(mvps, 10) * 1.2) + (Math.min(played, 20) * 0.15)
   }, [statsById])
+
+  /* Single source of truth for "how strong is this player".
+     Same formula the balancer uses, so the dots in the UI can never
+     disagree with the algorithm. `known: false` means the score is a
+     placeholder, not a measurement. */
+  const playerPowerMap = useMemo(() => {
+    const ids = (players || []).map(p => p.id)
+    if (!ids.length) return {}
+    const scores = ids.map(id => getPlayerBalanceScore(id))
+    const min = Math.min(...scores)
+    const span = Math.max(Math.max(...scores) - min, 1)
+    const map = {}
+    ids.forEach((id, i) => {
+      const ps = statsById[id]
+      const played = Number(ps?.played) || 0
+      const known = played > 0
+      const pct = (scores[i] - min) / span
+      map[id] = {
+        score: scores[i],
+        known,
+        played,
+        rating: known ? parseFloat(ps.avgRating) || 0 : null,
+        tier: !known ? 'unknown' : pct >= 0.66 ? 'high' : pct >= 0.33 ? 'mid' : 'low',
+      }
+    })
+    return map
+  }, [players, statsById, getPlayerBalanceScore])
 
   // ── Role penalty ──
   const getTeamRolePenalty = useCallback((teamIds) => {
@@ -431,6 +699,8 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
       return
     }
 
+    pushUndo('Auto-balance')
+
     const scored = pool
       .map(pid => ({ playerId: pid, score: getPlayerBalanceScore(pid) }))
       .sort((a, b) => b.score - a.score || a.playerId.localeCompare(b.playerId))
@@ -498,7 +768,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     players, selectedPlayers, requiredPlayers, teamSize,
     preserveCaptains, lockedWhiteCaptain, lockedBlackCaptain,
     getPlayerBalanceScore, getTeamRolePenalty, matchPositions,
-    buildGreedyTeams, evaluateSplit, playerFrequentPositions, showToast,
+    buildGreedyTeams, evaluateSplit, playerFrequentPositions, showToast, pushUndo,
   ])
 
   // ── Live draft insights (teams summary, no swaps) ──
@@ -597,10 +867,6 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     const whiteDuelPct = duelTotal > 0 ? (duo.whiteWins / duelTotal) * 100 : 50
 
     const alerts = []
-    if (selectedPlayers.length < requiredPlayers)
-      alerts.push({ tone: 'info', text: `Faltan ${requiredPlayers - selectedPlayers.length} jugadores por seleccionar.` })
-    if (selectedPlayers.length === requiredPlayers && unassignedCount > 0)
-      alerts.push({ tone: 'warning', text: `Hay ${unassignedCount} jugadores seleccionados sin equipo.` })
     if (teamWhite.length === teamSize && white.missingRoles.includes('Portero'))
       alerts.push({ tone: 'warning', text: 'Equipo blanco sin Portero asignado.' })
     if (teamBlack.length === teamSize && black.missingRoles.includes('Portero'))
@@ -611,8 +877,6 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
       alerts.push({ tone: 'danger', text: 'El balance general está bajo; revisa cambios o aplica un swap sugerido.' })
     if (rolePenalty >= 2)
       alerts.push({ tone: 'warning', text: 'Las posiciones están afectando el balance. Ajusta roles o usa un swap.' })
-    if (duo.knownDuels > 0 && teamWhite.length > 0 && teamBlack.length > 0)
-      alerts.push({ tone: 'info', text: `Historial entre equipos: ${whiteDuelPct.toFixed(0)}% para blanco en duelos previos.` })
 
     return {
       white, black, probability, probabilityGap, powerGapPct, rolePenalty,
@@ -1030,7 +1294,45 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     setWinner('')
     setEditingMatchId(null)
     setPoolSearch('')
+    setUndoEntry(null)
+    try { localStorage.removeItem(DRAFT_KEY) } catch { /* ignore */ }
   }, [])
+
+  /* "+Partido" must always land on a blank form. Switching tabs used to leave
+     whatever was in the builder — including a past match opened for editing,
+     which meant you could overwrite it thinking you were creating a new one.
+     Unsaved work isn't lost: it's stashed as a recoverable draft. */
+  const startNewMatch = useCallback(() => {
+    const current = stateRef.current
+    const worthKeeping = !editingMatchId && current.selectedPlayers.length > 0
+
+    const stash = worthKeeping
+      ? {
+          savedAt: Date.now(),
+          matchDate, matchTime, matchVenue,
+          matchFormat: current.matchFormat,
+          selectedPlayers: current.selectedPlayers,
+          teamWhite: current.teamWhite,
+          teamBlack: current.teamBlack,
+          matchPositions: current.matchPositions,
+          lockedWhiteCaptain: current.lockedWhiteCaptain,
+          lockedBlackCaptain: current.lockedBlackCaptain,
+          preserveCaptains: current.preserveCaptains,
+          scoreWhite: current.scoreWhite,
+          scoreBlack: current.scoreBlack,
+          winner: current.winner,
+        }
+      : null
+
+    resetMatchForm()
+
+    if (stash) {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(stash)) } catch { /* ignore */ }
+      setRestorableDraft(stash)
+    } else {
+      setRestorableDraft(null)
+    }
+  }, [editingMatchId, matchDate, matchTime, matchVenue, resetMatchForm])
 
   // ── Open edit match ──
   const openEditMatch = useCallback((match) => {
@@ -1099,12 +1401,32 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     handlePlayerToggle,
     clearSelectedPlayers,
     clearCurrentTeams,
+    swapTeamColors,
+
+    // Undo (one level)
+    undoLabel: undoEntry?.label || '',
+    undoLastAction,
+
+    // Draft recovery
+    restorableDraft,
+    restoreDraft,
+    discardDraft,
+
+    // Shortcuts
+    suggestedSchedule,
+    applySuggestedSchedule,
+    lastConvocatoria,
+    applyLastConvocatoria,
+
+    // Strength model (same one the balancer uses)
+    playerPowerMap,
     handleWhiteCaptainChange,
     handleBlackCaptainChange,
     suggestBalancedTeams,
     applySwapSuggestion,
     handleAddMatch,
     resetMatchForm,
+    startNewMatch,
     openEditMatch,
 
     // Insights
@@ -1113,6 +1435,8 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     // Presets
     loadPresets,
     savePreset,
+    createPlayer,
+    creatingPlayer,
     applyPreset,
     deletePreset,
 

@@ -25,6 +25,8 @@ export function PlayerProfileModal({
   getPlayerName,
   calculateXP,
   getRank,
+  // Renders the same content inline as a full tab instead of as an overlay.
+  asPage = false,
 }) {
   const isVisible = !!show && !!playerId
 
@@ -38,7 +40,9 @@ export function PlayerProfileModal({
   const profileCardRef = useRef(null)
 
   useEffect(() => {
-    if (!show) return undefined
+    // As a tab the profile scrolls with the page — locking the body would
+    // freeze the whole app.
+    if (!show || asPage) return undefined
     const originalOverflow = document.body.style.overflow
     const originalPaddingRight = document.body.style.paddingRight
     const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth
@@ -52,7 +56,7 @@ export function PlayerProfileModal({
       document.body.style.overflow = originalOverflow
       document.body.style.paddingRight = originalPaddingRight
     }
-  }, [show])
+  }, [show, asPage])
 
   useEffect(() => {
     if (!show) return
@@ -89,13 +93,19 @@ export function PlayerProfileModal({
   const player = players?.find(p => p.id === playerId)
   if (!player) {
     return (
-      <div className="profile-overlay" onClick={onClose}>
-        <div className="profile-card" ref={profileCardRef} onClick={e => e.stopPropagation()}>
-          <button className="profile-close" onClick={onClose}>×</button>
-          <p style={{ textAlign: 'center', padding: '40px', color: '#888' }}>Jugador no encontrado</p>
-          <div className="profile-footer-actions">
-            <button className="cancel-btn" onClick={onClose}>Cerrar</button>
-          </div>
+      <div className={asPage ? 'profile-page' : 'profile-overlay'} onClick={asPage ? undefined : onClose}>
+        <div
+          className={`profile-card ${asPage ? 'as-page' : ''}`}
+          ref={profileCardRef}
+          onClick={asPage ? undefined : e => e.stopPropagation()}
+        >
+          {!asPage && <button className="profile-close" onClick={onClose}>×</button>}
+          <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Jugador no encontrado</p>
+          {!asPage && (
+            <div className="profile-footer-actions">
+              <button className="cancel-btn" onClick={onClose}>Cerrar</button>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -316,17 +326,21 @@ export function PlayerProfileModal({
   }
 
   return (
-    <div className="profile-overlay" onClick={onClose}>
-      <div className="profile-card profile-card-v2" ref={profileCardRef} onClick={e => e.stopPropagation()}>
+    <div className={asPage ? 'profile-page' : 'profile-overlay'} onClick={asPage ? undefined : onClose}>
+      <div
+        className={`profile-card profile-card-v2 ${asPage ? 'as-page' : ''}`}
+        ref={profileCardRef}
+        onClick={asPage ? undefined : e => e.stopPropagation()}
+      >
         <div className="profile-actions">
           <button className="profile-share" onClick={shareProfile} title="Compartir">
             <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
               <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
             </svg>
           </button>
-          <button className="profile-close" onClick={onClose}>×</button>
+          {!asPage && <button className="profile-close" onClick={onClose}>×</button>}
         </div>
-        
+
         {/* Clean Hero Header */}
         <div className={`profile-hero-v2 ${banner ? `banner-${banner}` : ''}`}>
           {bannerText && <div className="profile-banner-text">{bannerText}</div>}

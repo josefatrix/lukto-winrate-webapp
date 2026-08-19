@@ -7,18 +7,19 @@ import { useRef } from 'react'
 import { useApp } from '../../contexts'
 import { PendingRatingsBadge } from '../common'
 
+const HomeIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
+    <path d="M3 11l9-8 9 8" />
+    <path d="M5 10v10h14V10" />
+  </svg>
+)
+
 const RankingIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
     <path d="M3 20h18" />
     <rect x="2" y="13" width="5" height="7" rx="1" />
     <rect x="9.5" y="7" width="5" height="13" rx="1" />
     <rect x="17" y="10" width="5" height="10" rx="1" />
-  </svg>
-)
-
-const StarIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
-    <path d="M12 2l2.68 6.26L22 9.27l-5.36 4.73 1.62 7L12 17.77 5.74 21l1.62-7L2 9.27l7.32-1.01L12 2z" />
   </svg>
 )
 
@@ -48,13 +49,23 @@ const ProfileIcon = () => (
   </svg>
 )
 
-export const BottomNav = ({ showPlayerProfile, selectedPlayerProfile, onShowProfile }) => {
-  const { activeTab, setActiveTab, userPlayer } = useApp()
+const TABS = [
+  { id: 'home', icon: <HomeIcon />, label: 'Hoy' },
+  { id: 'stats', icon: <RankingIcon />, label: 'Ranking' },
+  { id: 'matches', icon: <MatchesIcon />, label: 'Partidos' },
+  { id: 'analytics', icon: <AnalyticsIcon />, label: 'Análisis' },
+  { id: 'profile', icon: <ProfileIcon />, label: 'Perfil' },
+]
+
+export const BottomNav = () => {
+  const { activeTab, setActiveTab } = useApp()
   const navRef = useRef(null)
   const dragStartX = useRef(null)
-  const dragStartIndex = useRef(null)
   const isDragging = useRef(false)
   const lastHapticIndex = useRef(-1)
+
+  const total = TABS.length
+  const activeIndex = TABS.findIndex(t => t.id === activeTab)
 
   const triggerHaptic = () => {
     if (navigator.vibrate) navigator.vibrate(5)
@@ -66,26 +77,6 @@ export const BottomNav = ({ showPlayerProfile, selectedPlayerProfile, onShowProf
     setActiveTab(tab)
   }
 
-  const handleProfileClick = () => {
-    if (isDragging.current) return
-    triggerHaptic()
-    if (onShowProfile && userPlayer) onShowProfile(userPlayer)
-  }
-
-  const tabs = [
-    { id: 'stats', icon: <RankingIcon />, label: 'Ranking' },
-    { id: 'ratings', icon: <StarIcon />, label: 'Rating' },
-    { id: 'matches', icon: <MatchesIcon />, label: 'Partidos' },
-    { id: 'analytics', icon: <AnalyticsIcon />, label: 'Análisis' },
-  ]
-
-  const allItems = userPlayer ? [...tabs, { id: 'profile' }] : tabs
-  const total = allItems.length
-
-  const activeIndex = showPlayerProfile && selectedPlayerProfile === userPlayer
-    ? allItems.length - 1
-    : allItems.findIndex(t => t.id === activeTab)
-
   const getIndexFromX = (clientX) => {
     if (!navRef.current) return -1
     const rect = navRef.current.getBoundingClientRect()
@@ -96,10 +87,9 @@ export const BottomNav = ({ showPlayerProfile, selectedPlayerProfile, onShowProf
 
   const handleTouchStart = (e) => {
     dragStartX.current = e.touches[0].clientX
-    dragStartIndex.current = activeIndex
     isDragging.current = false
     lastHapticIndex.current = activeIndex
-    
+
     if (navRef.current) {
       const rect = navRef.current.getBoundingClientRect()
       const relX = e.touches[0].clientX - rect.left
@@ -111,12 +101,12 @@ export const BottomNav = ({ showPlayerProfile, selectedPlayerProfile, onShowProf
     if (dragStartX.current === null) return
     const clientX = e.touches[0].clientX
     const dx = Math.abs(clientX - dragStartX.current)
-    
+
     if (dx > 6) {
       isDragging.current = true
       if (navRef.current) navRef.current.setAttribute('data-dragging', 'true')
     }
-    
+
     if (!isDragging.current) return
 
     if (navRef.current) {
@@ -130,13 +120,8 @@ export const BottomNav = ({ showPlayerProfile, selectedPlayerProfile, onShowProf
     if (idx !== lastHapticIndex.current) {
       triggerHaptic()
       lastHapticIndex.current = idx
-      const item = allItems[idx]
-      if (!item) return
-      if (item.id === 'profile') {
-        if (onShowProfile && userPlayer) onShowProfile(userPlayer)
-      } else {
-        setActiveTab(item.id)
-      }
+      const item = TABS[idx]
+      if (item) setActiveTab(item.id)
     }
   }
 
@@ -160,28 +145,20 @@ export const BottomNav = ({ showPlayerProfile, selectedPlayerProfile, onShowProf
     >
       <div className="nav-slider" />
 
-      {tabs.map(tab => (
+      {TABS.map(tab => (
         <button
           key={tab.id}
-          className={`bottom-nav-item ${activeTab === tab.id && !showPlayerProfile ? 'active' : ''}`}
+          className={`bottom-nav-item ${activeTab === tab.id ? 'active' : ''}`}
           onClick={() => handleTabClick(tab.id)}
+          aria-current={activeTab === tab.id ? 'page' : undefined}
         >
           <span className="nav-icon-wrapper">
             {tab.icon}
-            {tab.id === 'matches' && <PendingRatingsBadge />}
+            {tab.id === 'home' && <PendingRatingsBadge />}
           </span>
           <span>{tab.label}</span>
         </button>
       ))}
-      {userPlayer && (
-        <button
-          className={`bottom-nav-item ${showPlayerProfile && selectedPlayerProfile === userPlayer ? 'active' : ''}`}
-          onClick={handleProfileClick}
-        >
-          <ProfileIcon />
-          <span>Perfil</span>
-        </button>
-      )}
     </nav>
   )
 }

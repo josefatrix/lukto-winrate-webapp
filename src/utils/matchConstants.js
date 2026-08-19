@@ -42,3 +42,31 @@ export const getPositionGroup = (value) => {
 }
 
 export const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+
+/**
+ * Kick-off Date for a match, or null when the date is unusable.
+ * Matches without a time default to end-of-day so they stay "upcoming" until
+ * the day is over. Shared so the match card, the Hoy screen and the prediction
+ * cutoff all agree on when a match starts.
+ */
+export const getMatchStartDate = (match) => {
+  if (!match?.date) return null
+  const timeValue = match.time || match.matchTime || match.startTime || '23:59'
+  const start = new Date(`${match.date}T${timeValue}:00`)
+  return isNaN(start.getTime()) ? null : start
+}
+
+/**
+ * A match counts as played once it has a result — a winner, or both scores.
+ * Ratings only make sense after that; before it, only predictions do.
+ * Single source of truth so the match card, the rating modal and the pending
+ * notification can never disagree about what is rateable.
+ */
+export const isMatchPlayed = (match) => {
+  if (!match) return false
+  if (match.winner) return true
+  const white = match.scoreWhite
+  const black = match.scoreBlack
+  const present = v => v !== null && v !== undefined && v !== '' && !Number.isNaN(Number(v))
+  return present(white) && present(black)
+}

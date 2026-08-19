@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useMemo } from 'react'
 import { useApp } from '../../contexts'
+import { isMatchPlayed } from '../../utils/matchConstants'
 
 export const PendingRatingsNotification = ({ 
   onOpenRatingModal,
@@ -36,8 +37,8 @@ export const PendingRatingsNotification = ({
       // Check if ratings are open for this match
       if (match.ratingsOpen === false) return false
       
-      // Match must have a winner to rate
-      if (!match.winner) return false
+      // Match must have a result to rate
+      if (!isMatchPlayed(match)) return false
       
       // Check if user has already rated this match
       const hasRated = Object.values(ratings).some(playerRatings =>
@@ -298,13 +299,16 @@ export const PendingRatingsBadge = ({ className = '' }) => {
       const allPlayers = [...(match.teamWhite || []), ...(match.teamBlack || [])]
       if (!allPlayers.includes(userPlayer)) return false
       if (match.ratingsOpen === false) return false
-      
+      // Same rule as the banner and the Hoy screen: a match without a result
+      // is not rateable, so it must not raise the badge either.
+      if (!isMatchPlayed(match)) return false
+
       const hasRated = Object.values(ratings).some(playerRatings =>
         playerRatings.some(
           r => (r.ratedBy === userPlayer || r.odedBy === userPlayer) && r.matchId === match.id
         )
       )
-      
+
       return !hasRated
     }).length
   }, [user, userPlayer, matches, ratings])

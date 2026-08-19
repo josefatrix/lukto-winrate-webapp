@@ -1,11 +1,42 @@
 /**
- * Stats Tab — Premium Redesign v2
+ * Stats Tab — Ranking
+ *
+ * One metric at a time on phones (chosen with the chips, which also sort), the
+ * full set from 768px up. No horizontal scrolling at any width: the extra
+ * numbers live in the row expansion instead of in columns nobody can reach.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useApp } from '../../contexts'
 import { AvatarImage, AppIcon, EmptyState } from '../common'
+import { isPredictionCorrect } from '../../hooks/useStats'
+
+const PREDICTION_BONUS = 0.2
+
+const METRICS = [
+  { id: 'rankingScore', short: 'PTS', label: 'PTS', hint: 'Puntos de ranking · rating 45% · MVP 25% · win rate 20% · participación 10%' },
+  { id: 'winRate', short: 'WR', label: 'WR', hint: 'Porcentaje de victorias (los empates valen medio partido)' },
+  { id: 'avgRating', short: '★', label: '★ Rating', hint: 'Promedio de las calificaciones recibidas de sus compañeros' },
+  { id: 'wins', short: 'V', label: 'V', hint: 'Partidos ganados en el período seleccionado' },
+  { id: 'mvps', short: 'MVP', label: 'MVP', hint: 'Veces que terminó como mejor calificado del partido' },
+]
+
+const readStored = (key, fallback) => {
+  try {
+    return localStorage.getItem(key) || fallback
+  } catch {
+    return fallback
+  }
+}
+
+const writeStored = (key, value) => {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    /* Ignore */
+  }
+}
 
 function HistoryModal({ open, title, onClose, children }) {
   const listRef = useRef(null)
@@ -55,17 +86,25 @@ export const StatsTab = ({
   getRankIcon,
   getWinRateClass,
   getRatingClass,
-  announcements,
   playerFormMap = {},
 }) => {
-  const { players, timeFilter, setTimeFilter, getPlayerPhoto } = useApp()
+  const {
+    players,
+    matches,
+    ratings,
+    predictions,
+    userLinks,
+    userPlayer,
+    timeFilter,
+    setTimeFilter,
+    getPlayerPhoto,
+  } = useApp()
 
-  const [sortBy, setSortBy] = useState(() => {
-    try { return localStorage.getItem('lukto_stats_sortBy') || 'rankingScore' } catch { return 'rankingScore' }
+  const [metric, setMetric] = useState(() => {
+    const saved = readStored('lukto_stats_metric', 'rankingScore')
+    return METRICS.some(m => m.id === saved) ? saved : 'rankingScore'
   })
-  const [sortDir, setSortDir] = useState(() => {
-    try { return localStorage.getItem('lukto_stats_sortDir') || 'desc' } catch { return 'desc' }
-  })
+  const [expandedId, setExpandedId] = useState(null)
   const [showWeekHistory, setShowWeekHistory] = useState(false)
   const lastWeekHistoryOpenAt = useRef(0)
   const [showMonthHistory, setShowMonthHistory] = useState(false)
@@ -92,46 +131,77 @@ export const StatsTab = ({
     return d.toISOString().split('T')[0]
   }, [])
 
-  const filteredStats = useMemo(() => {
-    let result = [...stats]
-    result.sort((a, b) => {
-      let aVal, bVal
-      switch (sortBy) {
-        case 'name': aVal = a.name?.toLowerCase() || ''; bVal = b.name?.toLowerCase() || ''; break
-        case 'winRate': aVal = a.winRate || 0; bVal = b.winRate || 0; break
-        case 'wins': aVal = a.wins || 0; bVal = b.wins || 0; break
-        case 'mvps': aVal = a.mvps || 0; bVal = b.mvps || 0; break
-        case 'avgRating': aVal = parseFloat(a.avgRating) || 0; bVal = parseFloat(b.avgRating) || 0; break
-        case 'xp': aVal = calculateXP(a.id) || 0; bVal = calculateXP(b.id) || 0; break
-        default: aVal = parseFloat(a.rankingScore) || 0; bVal = parseFloat(b.rankingScore) || 0
+  const sortedStats = useMemo(() => {
+    const value = (player) => {
+      switch (metric) {
+        case 'winRate': return typeof player.winRate === 'number' ? player.winRate : parseFloat(player.winRate) || 0
+        case 'avgRating': return parseFloat(player.avgRating) || 0
+        case 'wins': return player.wins || 0
+        case 'mvps': return player.mvps || 0
+        default: return parseFloat(player.rankingScore) || 0
       }
-      if (sortBy === 'name') return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
-      return sortDir === 'asc' ? aVal - bVal : bVal - aVal
-    })
-    return result
-  }, [stats, sortBy, sortDir, calculateXP])
+    }
+    return [...stats].sort((a, b) => value(b) - value(a) || parseFloat(b.rankingScore) - parseFloat(a.rankingScore))
+  }, [stats, metric])
 
-  const toggleSort = (col) => {
-    const newDir = sortBy === col && sortDir === 'desc' ? 'asc' : 'desc'
-    setSortBy(col)
-    setSortDir(newDir)
-    try { localStorage.setItem('lukto_stats_sortBy', col); localStorage.setItem('lukto_stats_sortDir', newDir) } catch {}
+  const selectMetric = (id) => {
+    setMetric(id)
+    writeStored('lukto_stats_metric', id)
   }
 
-  const SortArrow = ({ col }) => sortBy === col
-    ? <span className="sth-arrow">{sortDir === 'desc' ? '↓' : '↑'}</span>
-    : null
+  const toggleRow = (id) => {
+    setExpandedId(current => (current === id ? null : id))
+  }
+
+  const activeMetric = METRICS.find(m => m.id === metric) || METRICS[0]
+
+  // Per-match rating breakdown for the expanded row. This is what the old
+  // "Rating" tab showed; it now lives where the player already is.
+  const getMatchRatings = (playerId) => {
+    const playerRatings = ratings?.[playerId] || []
+    if (playerRatings.length === 0) return []
+
+    const linkedUserId = Object.entries(userLinks || {}).find(
+      ([, link]) => link?.playerId === playerId
+    )?.[0]
+
+    const byMatch = new Map()
+    playerRatings.forEach(r => {
+      if (!r.matchId) return
+      if (!byMatch.has(r.matchId)) byMatch.set(r.matchId, [])
+      byMatch.get(r.matchId).push(r)
+    })
+
+    return Array.from(byMatch.entries())
+      .map(([matchId, list]) => {
+        const match = matches.find(m => m.id === matchId)
+        const sum = list.reduce((acc, r) => acc + (typeof r.score === 'number' ? r.score : 0), 0)
+        const base = sum / list.length
+        const bonus =
+          linkedUserId && match?.winner && isPredictionCorrect(linkedUserId, matchId, match.winner, predictions)
+            ? PREDICTION_BONUS
+            : 0
+        return {
+          matchId,
+          match,
+          votes: list.length,
+          average: (base + bonus).toFixed(1),
+          hasBonus: bonus > 0,
+        }
+      })
+      .sort((a, b) => new Date(b.match?.date || 0) - new Date(a.match?.date || 0))
+      .slice(0, 5)
+  }
+
+  const formatMatchDate = (dateStr) => {
+    if (!dateStr) return 'Partido eliminado'
+    const date = new Date(`${dateStr}T12:00:00`)
+    if (isNaN(date.getTime())) return dateStr
+    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
 
   return (
     <section className="stats-section">
-
-      {/* Announcement */}
-      {announcements?.length > 0 && (
-        <div className="user-announcement">
-          <div className="user-announcement-icon"><AppIcon name="info" size={16} /></div>
-          <p className="user-announcement-text">{announcements[0].message}</p>
-        </div>
-      )}
 
       {/* ── Destacados Card (Semana + Mes fusionados) ── */}
       <div
@@ -266,100 +336,154 @@ export const StatsTab = ({
       {/* ── Ranking ── */}
       <div className="ranking-section">
 
-        {/* Filter pills inside ranking section */}
-        <div className="rg-filter-bar">
-          {['all', 'month', 'week'].map(f => (
+        {/* Period segmented control */}
+        <div className="rk-period" role="tablist" aria-label="Período">
+          {[
+            { id: 'all', label: 'Todo' },
+            { id: 'month', label: 'Mes' },
+            { id: 'week', label: 'Semana' },
+          ].map(option => (
             <button
-              key={f}
-              className={`rg-filter-pill ${timeFilter === f ? 'active' : ''}`}
-              onClick={() => setTimeFilter(f)}
+              key={option.id}
+              role="tab"
+              aria-selected={timeFilter === option.id}
+              className={`rk-period-btn ${timeFilter === option.id ? 'active' : ''}`}
+              onClick={() => setTimeFilter(option.id)}
             >
-              {f === 'all' ? 'Todo' : f === 'month' ? 'Mes' : 'Semana'}
+              {option.label}
             </button>
           ))}
         </div>
 
-        {/* Horizontally scrollable table */}
-        <div className="rg-scroll-wrap">
-
-        {/* Grid header — aligns 1:1 with each row */}
-        <div className="rg-header">
-          <span className="rg-h-pos">#</span>
-          <span className="rg-h-player">Jugador</span>
-          <button className={`rg-h-btn ${sortBy === 'rankingScore' ? 'active' : ''}`} onClick={() => toggleSort('rankingScore')}>
-            PTS<SortArrow col="rankingScore" />
-          </button>
-          <button className={`rg-h-btn ${sortBy === 'winRate' ? 'active' : ''}`} onClick={() => toggleSort('winRate')}>
-            WR<SortArrow col="winRate" />
-          </button>
-          <button className={`rg-h-btn ${sortBy === 'wins' ? 'active' : ''}`} onClick={() => toggleSort('wins')}>
-            V<SortArrow col="wins" />
-          </button>
-          <span className="rg-h-btn">E</span>
-          <span className="rg-h-btn">D</span>
-          <button className={`rg-h-btn ${sortBy === 'avgRating' ? 'active' : ''}`} onClick={() => toggleSort('avgRating')}>
-            ★<SortArrow col="avgRating" />
-          </button>
-          <button className={`rg-h-btn ${sortBy === 'mvps' ? 'active' : ''}`} onClick={() => toggleSort('mvps')}>
-            MVP<SortArrow col="mvps" />
-          </button>
-          <span className="rg-h-form">Forma</span>
+        {/* Metric chips */}
+        <div className="rk-metrics-wrap">
+          <span className="rk-metrics-label">Ordenar por</span>
+          <div className="rk-metrics">
+            {METRICS.map(item => (
+              <button
+                key={item.id}
+                className={`rk-chip ${metric === item.id ? 'active' : ''}`}
+                onClick={() => selectMetric(item.id)}
+                aria-pressed={metric === item.id}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
         </div>
+        <p className="rk-metric-hint">{activeMetric.hint}</p>
 
-        {filteredStats.length > 0 ? (
-          <div className="rank-list">
-            {filteredStats.map((player, index) => {
+        {sortedStats.length > 0 ? (
+          <div className="rk-list">
+            {sortedStats.map((player, index) => {
               const xp = calculateXP(player.id)
               const rank = getRank(xp)
               const wr = typeof player.winRate === 'number' ? player.winRate : parseFloat(player.winRate) || 0
               const medal = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''
+              const isMe = userPlayer && player.id === userPlayer
+              const isOpen = expandedId === player.id
+              const form = playerFormMap[player.id] || []
 
               return (
-                <article
-                  key={player.id}
-                  className={`rg-row ${medal}`}
-                  onClick={() => onPlayerClick(player.id)}
-                >
-                  {/* Position bubble */}
-                  <span className={`rg-pos ${medal}`}>{index + 1}</span>
+                <article key={player.id} className={`rk-row ${medal} ${isMe ? 'is-me' : ''} ${isOpen ? 'is-open' : ''}`}>
+                  <button
+                    className="rk-row-main"
+                    onClick={() => toggleRow(player.id)}
+                    aria-expanded={isOpen}
+                    aria-label={`${player.name}, posición ${index + 1}`}
+                  >
+                    <span className="rk-mark" aria-hidden="true" />
+                    <span className={`rk-pos ${medal}`}>{index + 1}</span>
 
-                  {/* Avatar + name */}
-                  <div className="rg-player">
                     <AvatarImage
                       src={getPlayerPhoto(player.id)}
                       name={player.name}
-                      imgClassName="rg-avatar"
-                      fallbackClassName="rg-avatar-ph"
+                      imgClassName="rk-avatar"
+                      fallbackClassName="rk-avatar-ph"
                     />
-                    <div className="rg-player-info">
-                      <span className="rg-name">{player.name}</span>
-                      <span className="rg-sub">{getRankIcon(rank.key, 9)} {rank.name}</span>
-                    </div>
-                  </div>
 
-                  {/* Stat columns — must match header grid exactly */}
-                  <span className={`rg-stat pts ${sortBy === 'rankingScore' ? 'sorted' : ''}`}>
-                    {player.rankingScore}
-                  </span>
-                  <span className={`rg-stat wr ${getWinRateClass(wr)} ${sortBy === 'winRate' ? 'sorted' : ''}`}>
-                    {wr.toFixed(0)}%
-                  </span>
-                  <span className={`rg-stat v ${sortBy === 'wins' ? 'sorted' : ''}`}>
-                    {player.wins}
-                  </span>
-                  <span className="rg-stat e">{player.ties || 0}</span>
-                  <span className="rg-stat d">{player.losses || 0}</span>
-                  <span className={`rg-stat rat ${getRatingClass(player.avgRating ? parseFloat(player.avgRating) : 0)} ${sortBy === 'avgRating' ? 'sorted' : ''}`}>
-                    {player.avgRating || '—'}
-                  </span>
-                  <span className={`rg-stat mvp ${player.mvps > 0 ? 'has' : ''} ${sortBy === 'mvps' ? 'sorted' : ''}`}>
-                    {player.mvps > 0 ? player.mvps : '—'}
-                  </span>
-                  <div className="rg-form">
-                    {(playerFormMap[player.id] || []).map((r, i) => (
-                      <span key={i} className={`form-badge ${r}`}>{r === 'v' ? 'V' : r === 'e' ? 'E' : 'D'}</span>
-                    ))}
-                  </div>
+                    <span className="rk-identity">
+                      <span className="rk-name">{player.name}</span>
+                      <span className="rk-sub">
+                        {getRankIcon(rank.key, 9)} {rank.name}
+                        {isMe && <span className="rk-you">Tú</span>}
+                      </span>
+                    </span>
+
+                    <span className={`rk-cell pts ${metric === 'rankingScore' ? 'active' : ''}`}>
+                      <span className="rk-cell-key">PTS</span>
+                      <span className="rk-cell-value">{player.rankingScore}</span>
+                    </span>
+                    <span className={`rk-cell ${metric === 'winRate' ? 'active' : ''}`}>
+                      <span className="rk-cell-key">WR</span>
+                      <span className={`rk-cell-value ${getWinRateClass(wr)}`}>{wr.toFixed(0)}%</span>
+                    </span>
+                    <span className={`rk-cell ${metric === 'avgRating' ? 'active' : ''}`}>
+                      <span className="rk-cell-key">★</span>
+                      <span className={`rk-cell-value ${getRatingClass(player.avgRating ? parseFloat(player.avgRating) : 0)}`}>
+                        {player.avgRating || '—'}
+                      </span>
+                    </span>
+                    <span className={`rk-cell ${metric === 'wins' ? 'active' : ''}`}>
+                      <span className="rk-cell-key">V</span>
+                      <span className="rk-cell-value win">{player.wins}</span>
+                    </span>
+                    <span className={`rk-cell ${metric === 'mvps' ? 'active' : ''}`}>
+                      <span className="rk-cell-key">MVP</span>
+                      <span className={`rk-cell-value ${player.mvps > 0 ? 'mvp' : ''}`}>{player.mvps > 0 ? player.mvps : '—'}</span>
+                    </span>
+
+                    <span className="rk-form" aria-hidden="true">
+                      {form.map((r, i) => (
+                        <span key={i} className={`form-badge ${r}`}>{r === 'v' ? 'V' : r === 'e' ? 'E' : 'D'}</span>
+                      ))}
+                    </span>
+
+                    <span className={`rk-chevron ${isOpen ? 'open' : ''}`} aria-hidden="true">
+                      <AppIcon name="arrowDown" size={14} />
+                    </span>
+                  </button>
+
+                  {isOpen && (
+                    <div className="rk-detail">
+                      <div className="rk-detail-grid">
+                        <div className="rk-stat"><span className="rk-stat-value pts">{player.rankingScore}</span><span className="rk-stat-key">PTS</span></div>
+                        <div className="rk-stat"><span className={`rk-stat-value ${getWinRateClass(wr)}`}>{wr.toFixed(0)}%</span><span className="rk-stat-key">Win rate</span></div>
+                        <div className="rk-stat"><span className={`rk-stat-value ${getRatingClass(player.avgRating ? parseFloat(player.avgRating) : 0)}`}>{player.avgRating || '—'}</span><span className="rk-stat-key">Rating</span></div>
+                        <div className="rk-stat"><span className={`rk-stat-value ${player.mvps > 0 ? 'mvp' : ''}`}>{player.mvps > 0 ? player.mvps : '—'}</span><span className="rk-stat-key">MVP</span></div>
+                        <div className="rk-stat"><span className="rk-stat-value win">{player.wins}</span><span className="rk-stat-key">Ganados</span></div>
+                        <div className="rk-stat"><span className="rk-stat-value">{player.ties || 0}</span><span className="rk-stat-key">Empates</span></div>
+                        <div className="rk-stat"><span className="rk-stat-value loss">{player.losses || 0}</span><span className="rk-stat-key">Perdidos</span></div>
+                        <div className="rk-stat"><span className="rk-stat-value">{xp}</span><span className="rk-stat-key">XP</span></div>
+                      </div>
+
+                      {(() => {
+                        const matchRatings = getMatchRatings(player.id)
+                        if (matchRatings.length === 0) {
+                          return <p className="rk-detail-empty">Todavía no tiene calificaciones por partido.</p>
+                        }
+                        return (
+                          <div className="rk-ratings">
+                            <span className="rk-detail-title">Últimas calificaciones</span>
+                            {matchRatings.map(row => (
+                              <div key={row.matchId} className="rk-rating-row">
+                                <span className="rk-rating-date">{formatMatchDate(row.match?.date)}</span>
+                                <span className="rk-rating-votes">{row.votes} {row.votes === 1 ? 'voto' : 'votos'}</span>
+                                <span className={`rk-rating-avg ${getRatingClass(parseFloat(row.average))}`}>
+                                  {row.average}
+                                  {row.hasBonus && <span className="rk-rating-bonus" title={`+${PREDICTION_BONUS} por predicción correcta`}>+</span>}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })()}
+
+                      <button className="rk-profile-btn" onClick={() => onPlayerClick(player.id)}>
+                        Ver perfil completo
+                      </button>
+                    </div>
+                  )}
                 </article>
               )
             })}
@@ -371,8 +495,6 @@ export const StatsTab = ({
             description={timeFilter !== 'all' ? 'No hay partidos en este período' : 'Agrega partidos para ver las estadísticas'}
           />
         )}
-
-        </div>{/* /rg-scroll-wrap */}
       </div>
     </section>
   )

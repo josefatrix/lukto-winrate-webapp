@@ -12,8 +12,8 @@ import LiquidGlass from 'liquid-glass-react'
 
 // Import components
 import { Header, BottomNav } from './components/layout'
-import { StatsTab, MatchesTab, MatchBuilderTab, RatingsTab } from './components/tabs'
-import { getPositionGroup } from './utils/matchConstants'
+import { HomeTab, StatsTab, MatchesTab, MatchBuilderTab, ProfileTab } from './components/tabs'
+import { getMatchStartDate, getPositionGroup, isMatchPlayed } from './utils/matchConstants'
 import {
   formatDate,
   getPredictionBet,
@@ -130,7 +130,7 @@ function App() {
   } = useApp()
 
   // Stats hook
-  const { stats, filteredStats, getPlayerOfMonth, getMonthlyWinners, getPlayerOfWeek, getWeeklyWinners } = useStats()
+  const { stats, filteredStats, rankingMovers, getPlayerOfMonth, getMonthlyWinners, getPlayerOfWeek, getWeeklyWinners } = useStats()
 
   // Onboarding hook
   const { showOnboarding, completeOnboarding } = useOnboarding()
@@ -239,7 +239,7 @@ function App() {
 
   useEffect(() => {
     if (!isAdmin && ['dashboard', 'new', 'players', 'users', 'tools', 'allRatings'].includes(activeTab)) {
-      setActiveTab('stats')
+      setActiveTab('home')
     }
   }, [isAdmin, activeTab, setActiveTab])
 
@@ -857,7 +857,7 @@ function App() {
     } catch {
       /* Ignore */
     }
-    setActiveTab('stats')
+    setActiveTab('home')
   }
 
   // Add admin email
@@ -966,13 +966,6 @@ function App() {
     setShowPlayerModal(true)
   }
 
-  const getMatchStartDate = (match) => {
-    if (!match?.date) return null
-    const timeValue = match.time || match.matchTime || match.startTime || '23:59'
-    const start = new Date(`${match.date}T${timeValue}:00`)
-    return isNaN(start) ? null : start
-  }
-
   const canPredictMatch = (match) => {
     const start = getMatchStartDate(match)
     if (!start) return true
@@ -984,7 +977,9 @@ function App() {
   
   const { calculateTeamProbability } = matchBuilder
 
-  const openPredictionModal = (match) => {
+  // `preselectedTeam` lets the Hoy screen jump straight into the modal with the
+  // side the user tapped already chosen.
+  const openPredictionModal = (match, preselectedTeam = null) => {
     if (!user || !userPlayer) {
       showToast('error', 'Debes iniciar sesión para predecir')
       return
@@ -1002,7 +997,7 @@ function App() {
       return
     }
     setPredictionMatch(match)
-    setSelectedPrediction(null)
+    setSelectedPrediction(preselectedTeam === 'white' || preselectedTeam === 'black' ? preselectedTeam : null)
     setPredictedMvpId('')
     setPredictedScoreWhite('')
     setPredictedScoreBlack('')
@@ -1358,6 +1353,10 @@ function App() {
       showToast('error', 'Primero debes vincular tu cuenta')
       return
     }
+    if (!isMatchPlayed(match)) {
+      showToast('error', 'Este partido aún no tiene resultado')
+      return
+    }
 
     // Check rating restrictions before opening the modal
     if (blockedUsers.includes(user?.uid)) {
@@ -1600,9 +1599,17 @@ function App() {
     }
   }
 
-  const toggleMatchRatings = async (matchId, isCurrentlyOpen) => {
+  /* Takes only the id on purpose: a boolean parameter here was silently
+     inverted by one of the two call sites, so the toggle wrote back the
+     current value and never changed anything. */
+  const toggleMatchRatings = async matchId => {
+    const match = matches.find(m => m.id === matchId)
+    if (!match) {
+      showToast('error', 'No se encontró el partido')
+      return
+    }
     try {
-      const newState = !isCurrentlyOpen
+      const newState = match.ratingsOpen === false
       await updateDoc(doc(db, 'matches', matchId), { ratingsOpen: newState })
       await logActivity('ratings_toggle', { matchId, open: newState })
       showToast('success', newState ? 'Calificaciones abiertas' : 'Calificaciones cerradas')
@@ -1995,36 +2002,14 @@ function App() {
         onShowLoginModal={() => setShowLoginModal(true)}
         onAdminLogout={handleAdminLogout}
         onOpenSearch={() => setShowGlobalSearch(true)}
-        onShowProfile={showProfile}
+        onShowProfile={() => setActiveTab('profile')}
         lukCoins={lukCoins}
         userXP={userXP}
         lcBreakdown={lcBreakdown}
         xpBreakdown={xpBreakdown}
       />
       {/* Nav — fixed bottom on mobile, top tabs on desktop */}
-      <BottomNav
-        showPlayerProfile={showPlayerProfile}
-        selectedPlayerProfile={selectedPlayerProfile}
-        onShowProfile={showProfile}
-      />
-
-      {/* Time Filter Pills — only shown for ratings (stats has its own inline filter) */}
-      {activeTab === 'ratings' && (
-        <div className="filter-pills animate-fade-in">
-          {['all', 'month', 'week'].map((filter) => (
-            <button
-              key={filter}
-              className={`pill btn-haptic ${timeFilter === filter ? 'active' : ''}`}
-              onClick={() => {
-                if (navigator.vibrate) navigator.vibrate(5)
-                setTimeFilter(filter)
-              }}
-            >
-              {filter === 'all' ? 'Todo' : filter === 'month' ? 'Mes' : 'Semana'}
-            </button>
-          ))}
-        </div>
-      )}
+      <BottomNav />
 
       {/* Admin Bar */}
       {isAdmin && (
@@ -2040,7 +2025,10 @@ function App() {
             <button
               key={item.id}
               className={`admin-bar-btn ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                if (item.id === 'new') matchBuilder.startNewMatch()
+                setActiveTab(item.id)
+              }}
             >
               {item.icon}
               <span>{item.label}</span>
@@ -2051,11 +2039,20 @@ function App() {
       )}
 
       {/* Pending Ratings & Predictions Notification */}
-      {(activeTab === 'stats' || activeTab === 'matches' || activeTab === 'ratings') && (
+      {(activeTab === 'stats' || activeTab === 'matches') && (
         <PendingRatingsNotification 
           onOpenRatingModal={openRatingModal} 
           onOpenPrediction={openPredictionModal}
         />
+      )}
+
+      {/* Loading State - Home */}
+      {activeTab === 'home' && !dataLoaded && (
+        <section className="stats-section">
+          <h2 className="section-title">Hoy</h2>
+          <p className="section-subtitle">Cargando tu resumen...</p>
+          <SkeletonMatchesList count={2} />
+        </section>
       )}
 
       {/* Loading State - Stats */}
@@ -2076,13 +2073,17 @@ function App() {
         </section>
       )}
 
-      {/* Loading State - Ratings */}
-      {activeTab === 'ratings' && !dataLoaded && (
-        <section className="stats-section">
-          <h2 className="section-title">Calificaciones</h2>
-          <p className="section-subtitle">Cargando calificaciones...</p>
-          <SkeletonTable rows={6} />
-        </section>
+      {/* Home Tab */}
+      {activeTab === 'home' && dataLoaded && (
+        <HomeTab
+          onOpenRatingModal={openRatingModal}
+          onOpenPrediction={openPredictionModal}
+          onOpenProfile={showProfile}
+          onGoToMatches={() => setActiveTab('matches')}
+          canPredictMatch={canPredictMatch}
+          announcements={announcements}
+          rankingMovers={rankingMovers}
+        />
       )}
 
       {/* Stats Tab */}
@@ -2099,13 +2100,28 @@ function App() {
           getRatingClass={getRatingClass}
           weeklyHistory={getWeeklyWinners(8)}
           monthlyHistory={getMonthlyWinners()}
-          announcements={announcements}
           playerFormMap={playerFormMap}
         />
       )}
 
-      {/* Ratings Tab */}
-      {activeTab === 'ratings' && <RatingsTab getRatingClass={getRatingClass} />}
+      {/* Profile Tab — own profile + the store */}
+      {activeTab === 'profile' && (
+        <ProfileTab
+          lukCoins={lukCoins}
+          onSpendLukCoins={spendLukCoins}
+          players={players}
+          stats={stats}
+          matches={matches}
+          ratings={ratings}
+          predictions={predictions}
+          userLinks={userLinks}
+          positionAnalytics={positionAnalytics}
+          getPlayerPhoto={getPlayerPhoto}
+          getPlayerName={getPlayerName}
+          calculateXP={calculateXP}
+          getRank={getRank}
+        />
+      )}
 
       {/* Matches Tab */}
       {activeTab === 'matches' && (
@@ -3260,7 +3276,7 @@ function App() {
               <div className="dashboard-quick-actions">
                 <h3 className="dash-section-title">Acciones Rápidas</h3>
                 <div className="quick-actions-grid">
-                  <button className="quick-action-btn" onClick={() => setActiveTab('new')}>
+                  <button className="quick-action-btn" onClick={() => { matchBuilder.startNewMatch(); setActiveTab('new') }}>
                     <span className="qa-icon"><AppIcon name="plus" size={14} /></span>
                     <span>Nuevo Partido</span>
                   </button>
@@ -3691,7 +3707,7 @@ function App() {
                     </span>
                     <button
                       className={`match-toggle-btn ${match.ratingsOpen !== false ? 'open' : 'closed'}`}
-                      onClick={() => toggleMatchRatings(match.id, match.ratingsOpen !== false)}
+                      onClick={() => toggleMatchRatings(match.id)}
                     >
                       {match.ratingsOpen !== false ? 'Abierto' : 'Cerrado'}
                     </button>
@@ -4587,7 +4603,7 @@ function App() {
             { 
               label: 'Nuevo Partido', 
               icon: <AppIcon name="ball" size={14} />,
-              onClick: () => setActiveTab('new')
+              onClick: () => { matchBuilder.startNewMatch(); setActiveTab('new') }
             },
             { 
               label: 'Agregar Jugador', 

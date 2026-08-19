@@ -4,7 +4,8 @@
 
 import { useApp } from '../../contexts'
 import { useState } from 'react'
-import { AppIcon, EmptyState } from '../common'
+import { AppIcon, EmptyState, MatchShareCard } from '../common'
+import { isMatchPlayed } from '../../utils/matchConstants'
 
 export const MatchesTab = ({
   onOpenRatingModal,
@@ -29,6 +30,8 @@ export const MatchesTab = ({
   // Two independent expand states per match
   const [expandedPlayers, setExpandedPlayers] = useState(new Set())
   const [expandedDetails, setExpandedDetails] = useState(new Set())
+  // Match currently open in the share-image sheet
+  const [shareTarget, setShareTarget] = useState(null)
 
   const formatDate = dateStr => {
     const date = new Date(dateStr + 'T12:00:00')
@@ -127,7 +130,7 @@ export const MatchesTab = ({
       if (ratingGap !== null && ratingGap <= 0.25) return 'Partido cerrado: se definió por detalles.'
       return 'Resultado sólido con ventaja moderada del equipo ganador.'
     })() : null
-    return { mvp, bestPair, scoreWhite, scoreBlack, hasFinalScore, hasWinner, predictionSummary, storyline, winnerAvg, loserAvg, ratingGap }
+    return { mvp, bestPair, scoreWhite, scoreBlack, hasFinalScore, hasWinner, predictionSummary, storyline, winnerAvg, loserAvg, ratingGap, ranking: sortedByRating }
   }
 
   const togglePlayers = id => setExpandedPlayers(prev => {
@@ -173,6 +176,8 @@ export const MatchesTab = ({
           const scoreBlack = parseScoreValue(match.scoreBlack)
           const hasFinalScore = scoreWhite !== null && scoreBlack !== null
           const isClosed = match.ratingsOpen === false
+          // No result yet → nothing to rate, only to predict
+          const isPlayed = isMatchPlayed(match)
 
           // Team result classes
           const whiteResult = match.winner === 'white' ? 'winner' : match.winner === 'black' ? 'loser' : match.winner === 'tie' ? 'tied' : ''
@@ -197,7 +202,7 @@ export const MatchesTab = ({
                     <div className="mc-admin-actions">
                       <button
                         className={`mc-icon-btn ${isClosed ? 'red' : 'purple'}`}
-                        onClick={() => onToggleRatings(match.id, isClosed)}
+                        onClick={() => onToggleRatings(match.id)}
                         title={isClosed ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
                       >
                         <AppIcon name={isClosed ? 'lock' : 'unlock'} size={13} />
@@ -285,7 +290,7 @@ export const MatchesTab = ({
                     {playersOpen ? 'Ocultar' : 'Jugadores'}
                     <span className={`mc-chevron ${playersOpen ? 'up' : ''}`}>›</span>
                   </button>
-                  {user && userPlayer && !isClosed && (
+                  {user && userPlayer && !isClosed && isPlayed && (
                     <button className="mc-rate-btn" onClick={() => onOpenRatingModal(match)}>
                       Calificar
                     </button>
@@ -299,6 +304,22 @@ export const MatchesTab = ({
                     <button className="mc-toggle-btn" onClick={() => toggleDetails(match.id)}>
                       {detailsOpen ? 'Menos' : 'Informe'}
                       <span className={`mc-chevron ${detailsOpen ? 'up' : ''}`}>›</span>
+                    </button>
+                  )}
+                  {isPlayed && (
+                    <button
+                      className="mc-share-btn"
+                      onClick={() => setShareTarget({ match, report: postMatchReport })}
+                      aria-label="Compartir resumen del partido"
+                      title="Compartir resumen"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+                        <circle cx="18" cy="5" r="3" />
+                        <circle cx="6" cy="12" r="3" />
+                        <circle cx="18" cy="19" r="3" />
+                        <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
+                      </svg>
+                      <span>Compartir</span>
                     </button>
                   )}
                 </div>
@@ -447,6 +468,15 @@ export const MatchesTab = ({
           description="Agrega tu primer partido para comenzar"
         />
       )}
+
+      <MatchShareCard
+        open={!!shareTarget}
+        match={shareTarget?.match}
+        report={shareTarget?.report}
+        top={shareTarget?.report?.ranking || []}
+        getPlayerName={getPlayerName}
+        onClose={() => setShareTarget(null)}
+      />
     </section>
   )
 }
