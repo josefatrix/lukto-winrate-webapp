@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { AvatarImage, AvatarFigure, AvatarFigure3D, AppIcon, createAvatarState } from './index'
+import { AvatarImage, AppIcon } from './index'
 import { ProfileIcons } from './ProfileIcons'
 
 function getPredictionBet(pred) {
@@ -107,15 +107,21 @@ export function PlayerProfileModal({
     )
   }
 
-  const playerStats = stats?.find(s => s.id === playerId) || { played: 0, wins: 0, losses: 0, mvps: 0, winRate: 0 }
+  const sortedByPts = stats?.length > 0
+    ? [...stats].sort((a, b) => (parseFloat(b.rankingScore) || 0) - (parseFloat(a.rankingScore) || 0))
+    : []
+  const rankingIndex = sortedByPts.findIndex(s => s.id === playerId)
+  const rankingPos = rankingIndex >= 0 ? rankingIndex + 1 : null
+
+  const playerStats = stats?.find(s => s.id === playerId) || { played: 0, wins: 0, losses: 0, ties: 0, mvps: 0, winRate: 0, rankingScore: '0.0' }
   const xp = calculateXP ? calculateXP(playerId) : 0
   const rank = getRank ? getRank(xp) : { name: 'Bronce', color: '#CD7F32', key: 'bronce' }
   const playerRatings = ratings?.[playerId] || []
   const linkedUserId = Object.entries(userLinks || {}).find(([, data]) => data?.playerId === playerId)?.[0]
-  const cosmetics = linkedUserId ? userLinks?.[linkedUserId]?.cosmetics : null
-  const avatarData = linkedUserId ? userLinks?.[linkedUserId]?.avatar : null
-  const avatarState = createAvatarState(avatarData || {})
-  const avatarLoadout = avatarState.loadout
+  const linkedUserData = linkedUserId ? userLinks?.[linkedUserId] : null
+  const cosmetics = linkedUserData?.cosmetics || null
+  const lukCoins = typeof linkedUserData?.lukCoins === 'number' ? linkedUserData.lukCoins : null
+  const playerPhoto = getPlayerPhoto ? getPlayerPhoto(playerId) : null
   const banner = cosmetics?.banner || null
   const nameStyle = cosmetics?.nameStyle || null
   const bannerTextMap = {
@@ -126,13 +132,13 @@ export function PlayerProfileModal({
     legend: 'Leyenda',
   }
   const bannerText = banner ? bannerTextMap[banner] : null
-  const avatarJerseyLabel = avatarLoadout.jersey === 'classic_stripes'
-    ? 'Kit Rojiblanco'
-    : avatarLoadout.jersey === 'blackout'
-      ? 'Kit Blackout'
-      : avatarLoadout.jersey === 'mint_wave'
-        ? 'Kit Mint Wave'
-        : 'Kit Base Verde'
+
+  // Determine primary position on the pitch
+  const playerRoleMap = positionAnalytics?.byPlayer?.[playerId] || {}
+  const topRoleEntry = Object.entries(playerRoleMap)
+    .filter(([, d]) => (d?.played || 0) > 0)
+    .sort((a, b) => b[1].played - a[1].played)[0]
+  const primaryRole = topRoleEntry ? topRoleEntry[0] : (player.position || 'Polivalente')
   
   // Calculate all stats averages for comparison
   const ratingSamples = stats?.filter(p => p.avgRating) || []
@@ -337,19 +343,53 @@ export function PlayerProfileModal({
           {!asPage && <button className="profile-close" onClick={onClose} aria-label="Cerrar perfil">×</button>}
         </div>
 
-        {/* Clean Hero Header */}
-        <div className={`profile-hero-v2 ${banner ? `banner-${banner}` : ''}`}>
+        {/* Premier League / Scouting Hero Header */}
+        <div
+          className={`profile-hero-v2 ${banner ? `banner-${banner}` : ''}`}
+          style={{
+            '--rank-color': rank.color,
+            ...(playerPhoto ? { '--ph-photo': `url(${playerPhoto})` } : {}),
+          }}
+        >
+          {playerPhoto && <div className="ph-backdrop-blur" aria-hidden="true" />}
           {bannerText && <div className="profile-banner-text">{bannerText}</div>}
-          <div className={`ph-avatar ${cosmetics?.avatarGlow ? 'glow' : ''}`}>
-            <AvatarFigure3D loadout={avatarLoadout} size={140} className="ph-avatar-figure3d" interactive />
+
+          <div className={`ph-photo-wrap ${cosmetics?.avatarGlow ? 'glow' : ''}`}>
+            <AvatarImage
+              src={playerPhoto}
+              name={player.name}
+              imgClassName="ph-photo-img"
+              fallbackClassName="ph-photo-fallback"
+            />
+            {rankingPos && (
+              <span className={`ph-pos-badge ${rankingPos === 1 ? 'gold' : rankingPos === 2 ? 'silver' : rankingPos === 3 ? 'bronze' : ''}`}>
+                #{rankingPos}
+              </span>
+            )}
           </div>
+
           <h2
             className={`ph-name ${cosmetics?.goldName ? 'gold' : ''} ${nameStyle ? `name-${nameStyle}` : ''}`}
             data-text={player.name}
           >
             {player.name}
           </h2>
-          <span className="ph-avatar-kit">{avatarJerseyLabel}</span>
+
+          <div className="ph-meta-pills">
+            {rankingPos && (
+              <span className="ph-meta-pill pts">
+                #{rankingPos} Ranking · <b>{playerStats.rankingScore || '0.0'} PTS</b>
+              </span>
+            )}
+            <span className="ph-meta-pill role">
+              {primaryRole}
+            </span>
+            {lukCoins !== null && (
+              <span className="ph-meta-pill coins">
+                {lukCoins} LC
+              </span>
+            )}
+          </div>
           
           {/* Rank & XP Progress */}
           <div className="ph-rank-section">
@@ -362,19 +402,88 @@ export function PlayerProfileModal({
             </div>
             <div className="ph-progress-labels">
               <span>{currentThreshold} XP</span>
+              <span>
+                {nextThreshold > xp ? `Faltan ${nextThreshold - xp} XP` : 'Rango Máximo'}
+              </span>
               <span>{nextThreshold} XP</span>
             </div>
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="profile-stats-row">
-          <div className="psr-item"><span className="psr-value">{playerStats.played}</span><span className="psr-label">Partidos</span></div>
-          <div className="psr-item win"><span className="psr-value">{playerStats.wins}</span><span className="psr-label">Victorias</span></div>
-          <div className="psr-item tie"><span className="psr-value">{playerStats.ties || 0}</span><span className="psr-label">Empates</span></div>
-          <div className="psr-item loss"><span className="psr-value">{playerStats.losses}</span><span className="psr-label">Derrotas</span></div>
-          <div className="psr-item"><span className="psr-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span><span className="psr-label">Win Rate</span></div>
+        {/* Complete 8-KPI Scouting Grid */}
+        <div className="profile-stats-grid">
+          <div className="psg-item pts">
+            <span className="psg-value">{playerStats.rankingScore || '0.0'}</span>
+            <span className="psg-label">PTS Ranking</span>
+          </div>
+          <div className="psg-item rating">
+            <span className="psg-value">{avgRating ? avgRating.toFixed(1) : '—'}</span>
+            <span className="psg-label">★ Calif.</span>
+          </div>
+          <div className="psg-item mvp">
+            <span className="psg-value">{playerStats.mvps || 0}</span>
+            <span className="psg-label">MVPs</span>
+          </div>
+          <div className="psg-item wr">
+            <span className="psg-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : parseFloat(playerStats.winRate || 0).toFixed(0)}%</span>
+            <span className="psg-label">Efectividad</span>
+          </div>
+          <div className="psg-item">
+            <span className="psg-value">{playerStats.played || 0}</span>
+            <span className="psg-label">Partidos (PJ)</span>
+          </div>
+          <div className="psg-item win">
+            <span className="psg-value">{playerStats.wins || 0}</span>
+            <span className="psg-label">Victorias (V)</span>
+          </div>
+          <div className="psg-item tie">
+            <span className="psg-value">{playerStats.ties || 0}</span>
+            <span className="psg-label">Empates (E)</span>
+          </div>
+          <div className="psg-item loss">
+            <span className="psg-value">{playerStats.losses || 0}</span>
+            <span className="psg-label">Derrotas (D)</span>
+          </div>
         </div>
+
+        {/* Recent 5 Matches Form Strip */}
+        {(() => {
+          const decidedMatches = playerMatches
+            .filter(m => m.winner === 'white' || m.winner === 'black' || m.winner === 'tie')
+            .slice(0, 5)
+            .reverse()
+          if (decidedMatches.length === 0) return null
+
+          return (
+            <div className="profile-section-v2">
+              <h4 className="ps-title">Forma Reciente (Últimos {decidedMatches.length})</h4>
+              <div className="profile-recent-form">
+                {decidedMatches.map((m, idx) => {
+                  const inWhite = m.teamWhite?.includes(playerId)
+                  const won = (inWhite && m.winner === 'white') || (!inWhite && m.winner === 'black')
+                  const res = m.winner === 'tie' ? 'e' : won ? 'v' : 'd'
+                  const mRatings = (ratings?.[playerId] || []).filter(r => r.matchId === m.id)
+                  const mAvg = mRatings.length > 0
+                    ? (mRatings.reduce((s, r) => s + r.score, 0) / mRatings.length).toFixed(1)
+                    : null
+                  const dateShort = m.date
+                    ? new Date(m.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+                    : ''
+                  const isLatest = idx === decidedMatches.length - 1
+                  return (
+                    <div key={m.id || idx} className={`prf-card ${res} ${isLatest ? 'latest' : ''}`}>
+                      <span className={`pl-form-dot ${res} ${isLatest ? 'latest' : ''}`}>
+                        {res === 'v' ? 'V' : res === 'e' ? 'E' : 'D'}
+                      </span>
+                      <span className="prf-rating">{mAvg ? `${mAvg} ★` : '—'}</span>
+                      <span className="prf-date">{dateShort}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
 
         {(() => {
           const roleStats = positionAnalytics.byPlayer?.[playerId] || {}
@@ -1086,9 +1195,11 @@ export function PlayerProfileModal({
           )
         })()}
 
-        <div className="profile-footer-actions">
-          <button className="cancel-btn" onClick={onClose}>Cerrar perfil</button>
-        </div>
+        {!asPage && (
+          <div className="profile-footer-actions">
+            <button className="cancel-btn" onClick={onClose}>Cerrar perfil</button>
+          </div>
+        )}
 
         {/* Share Card Modal */}
         {showShareCard && (
@@ -1103,15 +1214,24 @@ export function PlayerProfileModal({
                 
                 <div className="sc-player">
                   <div className="sc-avatar" style={{ borderColor: rank.color }}>
-                    <AvatarFigure loadout={avatarLoadout} size={94} />
+                    <AvatarImage
+                      src={playerPhoto}
+                      name={player.name}
+                      imgClassName="sc-photo-img"
+                      fallbackClassName="sc-photo-fallback"
+                    />
                   </div>
                   <h2 className="sc-name">{player.name}</h2>
                   <div className="sc-rank" style={{ color: rank.color }}>
-                    {rank.name} · {xp} XP
+                    {rankingPos ? `#${rankingPos} · ` : ''}{rank.name} · {xp} XP
                   </div>
                 </div>
 
                 <div className="sc-stats">
+                  <div className="sc-stat">
+                    <span className="sc-stat-value">{playerStats.rankingScore || '0.0'}</span>
+                    <span className="sc-stat-label">PTS</span>
+                  </div>
                   <div className="sc-stat">
                     <span className="sc-stat-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : 0}%</span>
                     <span className="sc-stat-label">Win Rate</span>
@@ -1123,10 +1243,6 @@ export function PlayerProfileModal({
                   <div className="sc-stat">
                     <span className="sc-stat-value">{playerStats.mvps || 0}</span>
                     <span className="sc-stat-label">MVPs</span>
-                  </div>
-                  <div className="sc-stat">
-                    <span className="sc-stat-value">{playerStats.played || 0}</span>
-                    <span className="sc-stat-label">Partidos</span>
                   </div>
                 </div>
 
