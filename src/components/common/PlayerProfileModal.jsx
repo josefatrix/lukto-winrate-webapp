@@ -6,10 +6,6 @@ function getPredictionBet(pred) {
   return pred?.lukCoinsBet ?? pred?.xpBet ?? 0
 }
 
-function getPredictionWin(pred) {
-  return pred?.lukCoinsWin ?? pred?.potentialWin ?? 0
-}
-
 export function PlayerProfileModal({ 
   show, 
   playerId, 
@@ -99,7 +95,7 @@ export function PlayerProfileModal({
           ref={profileCardRef}
           onClick={asPage ? undefined : e => e.stopPropagation()}
         >
-          {!asPage && <button className="profile-close" onClick={onClose}>×</button>}
+          {!asPage && <button className="profile-close" onClick={onClose} aria-label="Cerrar perfil">×</button>}
           <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Jugador no encontrado</p>
           {!asPage && (
             <div className="profile-footer-actions">
@@ -198,7 +194,7 @@ export function PlayerProfileModal({
   // Rating badges
   if (bestRating === 10) badges.push({ icon: 'check100', name: 'Perfecto', color: '#10b981', desc: 'Recibir una calificación perfecta de 10' })
   if (avgRating >= 8 && playerStats.played >= 3) badges.push({ icon: 'target', name: 'Consistente', color: '#3b82f6', desc: 'Mantener un rating promedio superior a 8.0' })
-  if (avgRating >= 9 && playerStats.played >= 5) badges.push({ icon: 'diamond', name: 'Élite', color: '#06b6d4', desc: 'Rating promedio de 9+ con 5 partidos jugados' })
+  if (avgRating >= 9 && playerStats.played >= 5) badges.push({ icon: 'diamond', name: 'Élite', color: '#06b6d4', desc: 'Calificación promedio de 9+ con 5 partidos jugados' })
   if (worstRating >= 7 && playerStats.played >= 3) badges.push({ icon: 'shield', name: 'Blindado', color: '#64748b', desc: 'Nunca recibir una calificación menor a 7' })
   
   // Win rate badges
@@ -252,7 +248,7 @@ export function PlayerProfileModal({
   }
   const medio = roleStats.Medio
   if (medio?.played >= 5 && (roleAvgRating(medio) || 0) >= 8) {
-    badges.push({ icon: 'target', name: 'Motor', color: '#0ea5e9', desc: 'Rating 8+ jugando en Medio' })
+    badges.push({ icon: 'target', name: 'Motor', color: '#0ea5e9', desc: 'Calificación 8+ jugando en Medio' })
   }
   const delantero = roleStats.Delantero
   if (delantero?.played >= 5 && (delantero.mvps || 0) >= 2) {
@@ -338,7 +334,7 @@ export function PlayerProfileModal({
               <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
             </svg>
           </button>
-          {!asPage && <button className="profile-close" onClick={onClose}>×</button>}
+          {!asPage && <button className="profile-close" onClick={onClose} aria-label="Cerrar perfil">×</button>}
         </div>
 
         {/* Clean Hero Header */}
@@ -467,7 +463,7 @@ export function PlayerProfileModal({
               </span>
             </div>
             <div className="comp-v2">
-              <span className="comp-v2-label">Rating</span>
+              <span className="comp-v2-label">Calificación</span>
               <span className="comp-v2-value">{avgRating ? avgRating.toFixed(1) : '-'}</span>
               <span className={`comp-v2-diff ${avgRating >= avgStats.rating ? 'pos' : 'neg'}`}>
                 {avgRating >= avgStats.rating ? '+' : ''}{(avgRating - avgStats.rating).toFixed(1)}
@@ -520,12 +516,12 @@ export function PlayerProfileModal({
             <div className="record-v2">
               <span className="record-v2-icon win">{ProfileIcons.arrowUp}</span>
               <span className="record-v2-value">{bestRating || '-'}</span>
-              <span className="record-v2-label">Rating max</span>
+              <span className="record-v2-label">Calificación máx.</span>
             </div>
             <div className="record-v2">
               <span className="record-v2-icon loss">{ProfileIcons.arrowDown}</span>
               <span className="record-v2-value">{worstRating || '-'}</span>
-              <span className="record-v2-label">Rating min</span>
+              <span className="record-v2-label">Calificación mín.</span>
             </div>
           </div>
         </div>
@@ -708,7 +704,7 @@ export function PlayerProfileModal({
         {(() => {
           // Find user ID for this player
           const userId = userLinks 
-            ? Object.entries(userLinks).find(([uid, linkData]) => linkData?.playerId === playerId)?.[0]
+            ? Object.entries(userLinks).find(([, linkData]) => linkData?.playerId === playerId)?.[0]
             : null
           
           if (!userId) return null
@@ -1023,7 +1019,7 @@ export function PlayerProfileModal({
                   <span className="erc-row"><span className="erc-val">+10</span> Participar</span>
                   <span className="erc-row"><span className="erc-val">+25</span> Victoria</span>
                   <span className="erc-row"><span className="erc-val">+50</span> MVP</span>
-                  <span className="erc-row"><span className="erc-val">+N</span> Rating × 5</span>
+                  <span className="erc-row"><span className="erc-val">+N</span> Calificación × 5</span>
                 </div>
                 <div className="erc-divider" />
                 <div className="erc-col">
@@ -1122,7 +1118,7 @@ export function PlayerProfileModal({
                   </div>
                   <div className="sc-stat">
                     <span className="sc-stat-value">{avgRating ? avgRating.toFixed(1) : '-'}</span>
-                    <span className="sc-stat-label">Rating</span>
+                    <span className="sc-stat-label">Calificación</span>
                   </div>
                   <div className="sc-stat">
                     <span className="sc-stat-value">{playerStats.mvps || 0}</span>

@@ -3,7 +3,6 @@
  * Reusable modal dialog with Liquid Glass effect
  */
 import React, { useEffect } from 'react'
-import LiquidGlass from 'liquid-glass-react'
 
 export const Modal = ({ 
   isOpen, 
@@ -59,28 +58,13 @@ export const Modal = ({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      {!disableGlass ? (
-        <LiquidGlass
-          className={`modal-content modal-glass modal-${size} ${className}`}
-          displacementScale={40}
-          blurAmount={0.05}
-          saturation={150}
-          aberrationIntensity={1.5}
-          elasticity={0.12}
-          cornerRadius={20}
-          style={{ maxWidth: size === 'large' ? '640px' : size === 'small' ? '340px' : '480px', width: '100%' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {modalInner}
-        </LiquidGlass>
-      ) : (
-        <div 
-          className={`modal-content modal-${size} ${className}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {modalInner}
-        </div>
-      )}
+      <div 
+        className={`modal-content ${!disableGlass ? 'modal-glass' : ''} modal-${size} ${className}`}
+        style={{ maxWidth: size === 'large' ? '640px' : size === 'small' ? '340px' : '480px', width: '100%' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {modalInner}
+      </div>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 {
-  "name": "LUKTO Stats",
+  "name": "LUKTO",
   "short_name": "LUKTO",
-  "description": "Win Rate & Ratings Tracker para partidos de fútbol",
+  "description": "Estadísticas, resultados y rendimiento para partidos de fútbol",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
@@ -33,4 +33,3 @@
     }
   ]
 }
-

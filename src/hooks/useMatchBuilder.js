@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
-import { doc, setDoc, updateDoc } from 'firebase/firestore'
+import { doc, setDoc, updateDoc, Timestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useApp } from '../contexts'
 import { useStats } from './useStats'
@@ -11,6 +11,7 @@ import {
   getFormatForTeamSize,
   getPositionLabel,
   getPositionGroup,
+  getMatchStartDate,
   clamp,
 } from '../utils/matchConstants'
 
@@ -1233,8 +1234,12 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     if (winner && winnerByScore && winner !== winnerByScore) { showToast('error', 'El ganador no coincide con el marcador registrado'); return }
     const resolvedWinner = winnerByScore || winner
 
+    const kickoff = getMatchStartDate({ date: matchDate, time: matchTime })
     const matchData = {
       date: matchDate, time: matchTime || '', venue: matchVenue,
+      // Stored with new matches so predictions can be securely validated on
+      // the free Firebase plan without trusting the browser's clock.
+      kickoffAt: kickoff ? Timestamp.fromDate(kickoff) : null,
       matchFormat, teamSize,
       playerPool: [...selectedPlayers],
       captains: { white: lockedWhiteCaptain || '', black: lockedBlackCaptain || '' },

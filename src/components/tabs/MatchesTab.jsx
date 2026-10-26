@@ -194,9 +194,11 @@ export const MatchesTab = ({
                   {match.venue && <span className="mc-venue">{match.venue}</span>}
                 </div>
                 <div className="mc-meta-right">
-                  {isClosed
-                    ? <span className="mc-status closed"><AppIcon name="lock" size={10} /> Cerrado</span>
-                    : <span className="mc-status open"><AppIcon name="check" size={10} /> Abierto</span>
+                  {!isPlayed
+                    ? <span className="mc-status upcoming"><AppIcon name="calendar" size={10} /> Programado</span>
+                    : isClosed
+                      ? <span className="mc-status closed"><AppIcon name="lock" size={10} /> Calif. cerrada</span>
+                      : <span className="mc-status open"><AppIcon name="check" size={10} /> Calif. abierta</span>
                   }
                   {isAdmin && (
                     <div className="mc-admin-actions">
@@ -204,13 +206,14 @@ export const MatchesTab = ({
                         className={`mc-icon-btn ${isClosed ? 'red' : 'purple'}`}
                         onClick={() => onToggleRatings(match.id)}
                         title={isClosed ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
+                        aria-label={isClosed ? 'Abrir calificaciones' : 'Cerrar calificaciones'}
                       >
                         <AppIcon name={isClosed ? 'lock' : 'unlock'} size={13} />
                       </button>
-                      <button className="mc-icon-btn" onClick={() => onOpenEditMatch(match)}>
+                      <button className="mc-icon-btn" onClick={() => onOpenEditMatch(match)} aria-label="Editar partido">
                         <AppIcon name="note" size={13} />
                       </button>
-                      <button className="mc-icon-btn red" onClick={() => onDeleteMatch(match.id)}>
+                      <button className="mc-icon-btn red" onClick={() => onDeleteMatch(match.id)} aria-label="Eliminar partido">
                         <AppIcon name="close" size={13} />
                       </button>
                     </div>
@@ -286,7 +289,7 @@ export const MatchesTab = ({
                   )}
                 </div>
                 <div className="mc-footer-actions">
-                  <button className="mc-toggle-btn" onClick={() => togglePlayers(match.id)}>
+                  <button className="mc-toggle-btn" onClick={() => togglePlayers(match.id)} aria-expanded={playersOpen}>
                     {playersOpen ? 'Ocultar' : 'Jugadores'}
                     <span className={`mc-chevron ${playersOpen ? 'up' : ''}`}>›</span>
                   </button>
@@ -301,7 +304,7 @@ export const MatchesTab = ({
                     </button>
                   )}
                   {(top3.length > 0 || predictionCount > 0) && (
-                    <button className="mc-toggle-btn" onClick={() => toggleDetails(match.id)}>
+                    <button className="mc-toggle-btn" onClick={() => toggleDetails(match.id)} aria-expanded={detailsOpen}>
                       {detailsOpen ? 'Menos' : 'Informe'}
                       <span className={`mc-chevron ${detailsOpen ? 'up' : ''}`}>›</span>
                     </button>
@@ -465,7 +468,7 @@ export const MatchesTab = ({
         <EmptyState
           type="noMatches"
           title="Sin partidos"
-          description="Agrega tu primer partido para comenzar"
+          description={isAdmin ? 'Agrega tu primer partido para comenzar' : 'Todavía no hay partidos registrados'}
         />
       )}
 

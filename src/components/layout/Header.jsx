@@ -4,7 +4,6 @@
  */
 
 import { useState, useRef, useEffect } from 'react'
-import LiquidGlass from 'liquid-glass-react'
 import { useApp } from '../../contexts'
 
 // Header Icons - SofaScore-inspired refined style
@@ -146,16 +145,21 @@ export const Header = ({
           {user ? (
             <>
               {isAdmin ? (
-                <button className="header-btn admin-active" onClick={onAdminLogout}>
+                <button className="header-btn admin-active" onClick={onAdminLogout} aria-label="Salir del panel de administración">
                   <ShieldIcon />
                 </button>
               ) : (
-                <button className="header-btn" onClick={handleAdminClick}>
+                <button className="header-btn" onClick={handleAdminClick} aria-label="Abrir panel de administración">
                   <ShieldIcon />
                 </button>
               )}
               <div className="header-avatar-wrap" ref={menuRef}>
-                <button className="header-avatar" onClick={() => setShowUserMenu(m => !m)}>
+                <button
+                  className="header-avatar"
+                  onClick={() => setShowUserMenu(m => !m)}
+                  aria-label="Abrir menú de usuario"
+                  aria-expanded={showUserMenu}
+                >
                   <img src={user.photoURL} alt="" />
                 </button>
                 {showUserMenu && (
@@ -208,15 +212,7 @@ export const Header = ({
                 {userXP} XP
               </button>
               {showXPPanel && xpBreakdown && (
-                <LiquidGlass
-                  className="header-breakdown-panel"
-                  displacementScale={30}
-                  blurAmount={0.05}
-                  saturation={140}
-                  aberrationIntensity={1}
-                  elasticity={0.12}
-                  cornerRadius={14}
-                >
+                <div className="header-breakdown-panel xp-panel">
                   <div className="hbp-title">Experiencia (XP)</div>
                   <div className="hbp-rows">
                     <div className="hbp-row">
@@ -236,14 +232,14 @@ export const Header = ({
                     </div>
                     {xpBreakdown.ratingXP > 0 && (
                       <div className="hbp-row">
-                        <span className="hbp-label">Rating</span>
-                        <span className="hbp-detail">avg × 5</span>
+                      <span className="hbp-label">Calificación</span>
+                      <span className="hbp-detail">prom. × 5</span>
                         <span className="hbp-val">+{xpBreakdown.ratingXP}</span>
                       </div>
                     )}
                     {xpBreakdown.boostXP > 0 && (
                       <div className="hbp-row">
-                        <span className="hbp-label">Boost XP</span>
+                      <span className="hbp-label">Bono XP</span>
                         <span className="hbp-detail">×{((xpBreakdown.boostXP / (xpBreakdown.total - xpBreakdown.boostXP)) + 1).toFixed(1)}</span>
                         <span className="hbp-val">+{xpBreakdown.boostXP}</span>
                       </div>
@@ -253,7 +249,7 @@ export const Header = ({
                     <span>Total</span>
                     <span className="hbp-total-val xp">{xpBreakdown.total} XP</span>
                   </div>
-                </LiquidGlass>
+                </div>
               )}
             </div>
 
@@ -267,15 +263,7 @@ export const Header = ({
                 LC {lukCoins}
               </button>
               {showLCPanel && lcBreakdown && (
-                <LiquidGlass
-                  className="header-breakdown-panel"
-                  displacementScale={30}
-                  blurAmount={0.05}
-                  saturation={140}
-                  aberrationIntensity={1}
-                  elasticity={0.12}
-                  cornerRadius={14}
-                >
+                <div className="header-breakdown-panel lc-panel">
                   <div className="hbp-title">LukCoins</div>
                   <div className="hbp-rows">
                     <div className="hbp-row">
@@ -340,7 +328,7 @@ export const Header = ({
                     <span>Disponible</span>
                     <span className="hbp-total-val lc">{lukCoins} LC</span>
                   </div>
-                </LiquidGlass>
+                </div>
               )}
             </div>
 

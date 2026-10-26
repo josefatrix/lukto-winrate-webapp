@@ -26,6 +26,16 @@ module.exports = {
     },
   },
   plugins: ['react', 'react-hooks'],
+  overrides: [
+    {
+      // React Three Fiber renders Three.js primitives, whose properties are
+      // intentionally different from DOM attributes.
+      files: ['src/components/common/AvatarFigure3D.jsx'],
+      rules: {
+        'react/no-unknown-property': 'off',
+      },
+    },
+  ],
   rules: {
     'react/prop-types': 'off',
     'react/no-unescaped-entities': 'off',
@@ -34,4 +44,3 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'warn',
   },
 }
-

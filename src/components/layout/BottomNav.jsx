@@ -5,14 +5,6 @@
 
 import { useRef } from 'react'
 import { useApp } from '../../contexts'
-import { PendingRatingsBadge } from '../common'
-
-const HomeIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
-    <path d="M3 11l9-8 9 8" />
-    <path d="M5 10v10h14V10" />
-  </svg>
-)
 
 const RankingIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
@@ -50,7 +42,6 @@ const ProfileIcon = () => (
 )
 
 const TABS = [
-  { id: 'home', icon: <HomeIcon />, label: 'Hoy' },
   { id: 'stats', icon: <RankingIcon />, label: 'Ranking' },
   { id: 'matches', icon: <MatchesIcon />, label: 'Partidos' },
   { id: 'analytics', icon: <AnalyticsIcon />, label: 'Análisis' },
@@ -138,6 +129,7 @@ export const BottomNav = () => {
     <nav
       ref={navRef}
       className="bottom-nav"
+      data-has-active={activeIndex >= 0 ? 'true' : 'false'}
       style={{ '--nav-total': total, '--nav-index': activeIndex >= 0 ? activeIndex : 0 }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -154,7 +146,6 @@ export const BottomNav = () => {
         >
           <span className="nav-icon-wrapper">
             {tab.icon}
-            {tab.id === 'home' && <PendingRatingsBadge />}
           </span>
           <span>{tab.label}</span>
         </button>

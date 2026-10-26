@@ -4,27 +4,25 @@
  */
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useApp, SUPER_ADMIN_EMAIL } from './contexts'
-import { useStats, useHaptic, useMatchBuilder } from './hooks'
-import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs, addDoc, deleteDoc } from 'firebase/firestore'
+import { useStats, useMatchBuilder } from './hooks'
+import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs, addDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from './firebase'
 import confetti from 'canvas-confetti'
-import LiquidGlass from 'liquid-glass-react'
 
 // Import components
 import { Header, BottomNav } from './components/layout'
-import { HomeTab, StatsTab, MatchesTab, MatchBuilderTab, ProfileTab } from './components/tabs'
+import { StatsTab, MatchesTab, MatchBuilderTab, ProfileTab } from './components/tabs'
 import { getMatchStartDate, getPositionGroup, isMatchPlayed } from './utils/matchConstants'
 import {
   formatDate,
   getPredictionBet,
-  getPredictionWin,
   getRank,
   getRankIcon,
   getRatingClass,
   getWinRateClass,
 } from './utils/ranks'
 import { AdminLoginModal, PendingUserModal } from './components/modals'
-import { AvatarImage, AvatarFigure, AvatarFigure3D, AppIcon, FloatingActionButton, SkeletonPage, SkeletonTable, SkeletonMatchesList, Onboarding, useOnboarding, EmptyState, AnimatedCounter, PendingRatingsNotification, createAvatarState, PlayerProfileModal } from './components/common'
+import { AvatarImage, AppIcon, FloatingActionButton, SkeletonTable, SkeletonMatchesList, PendingRatingsNotification, createAvatarState, PlayerProfileModal } from './components/common'
 
 // ============ PENDING USER CARD ============
 
@@ -133,7 +131,6 @@ function App() {
   const { stats, filteredStats, rankingMovers, getPlayerOfMonth, getMonthlyWinners, getPlayerOfWeek, getWeeklyWinners } = useStats()
 
   // Onboarding hook
-  const { showOnboarding, completeOnboarding } = useOnboarding()
 
   // Match builder hook
   const matchBuilder = useMatchBuilder({ showToast, logActivity })
@@ -166,6 +163,7 @@ function App() {
   const [showGlobalSearch, setShowGlobalSearch] = useState(false)
   const [globalSearchQuery, setGlobalSearchQuery] = useState('')
   const globalSearchInputRef = useRef(null)
+  const globalSearchPreviousFocusRef = useRef(null)
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
     title: '',
@@ -208,25 +206,16 @@ function App() {
     return 'denied'
   })
 
-  // Global haptic feedback for all buttons
-  useEffect(() => {
-    const handleClick = (e) => {
-      const target = e.target.closest('button, .btn, .pill, .nav-item, .admin-tab, .clickable-row, .badge-v2, .prediction-team, .xp-bet-btn, .winner-btn, .match-card, [role="button"]')
-      if (target && navigator.vibrate) {
-        navigator.vibrate(3) // Short vibration
-      }
-    }
-    
-    document.addEventListener('click', handleClick, { passive: true })
-    return () => document.removeEventListener('click', handleClick)
-  }, [])
-
   useEffect(() => {
     if (!showGlobalSearch) return
+    globalSearchPreviousFocusRef.current = document.activeElement
     const id = setTimeout(() => {
       globalSearchInputRef.current?.focus()
     }, 10)
-    return () => clearTimeout(id)
+    return () => {
+      clearTimeout(id)
+      globalSearchPreviousFocusRef.current?.focus?.()
+    }
   }, [showGlobalSearch])
 
   useEffect(() => {
@@ -239,7 +228,7 @@ function App() {
 
   useEffect(() => {
     if (!isAdmin && ['dashboard', 'new', 'players', 'users', 'tools', 'allRatings'].includes(activeTab)) {
-      setActiveTab('home')
+      setActiveTab('stats')
     }
   }, [isAdmin, activeTab, setActiveTab])
 
@@ -481,8 +470,8 @@ function App() {
     if (mostMvps) records.push({ title: 'Más MVPs', value: `${mostMvps.maxVal} MVP`, playerIds: mostMvps.leaders.map(l => l.id) })
     if (mostPlayed) records.push({ title: 'Más partidos', value: `${mostPlayed.maxVal} PJ`, playerIds: mostPlayed.leaders.map(l => l.id) })
     if (mostTies) records.push({ title: 'Más empates', value: `${mostTies.maxVal} E`, playerIds: mostTies.leaders.map(l => l.id) })
-    if (bestWinRate) records.push({ title: 'Mejor Win Rate', value: `${bestWinRate.maxVal}%`, playerIds: bestWinRate.leaders.map(l => l.id) })
-    if (bestRating) records.push({ title: 'Mejor Rating', value: `${bestRating.maxVal.toFixed(1)} pts`, playerIds: bestRating.leaders.map(l => l.id) })
+    if (bestWinRate) records.push({ title: 'Mejor efectividad', value: `${bestWinRate.maxVal}%`, playerIds: bestWinRate.leaders.map(l => l.id) })
+    if (bestRating) records.push({ title: 'Mejor calificación', value: `${bestRating.maxVal.toFixed(1)} pts`, playerIds: bestRating.leaders.map(l => l.id) })
 
     const roleRatingLeaders = Object.entries(roleRatingRankings.rankings || {}).map(([role, list]) => {
       if (!list?.length) return null
@@ -492,7 +481,7 @@ function App() {
     }).filter(Boolean)
     roleRatingLeaders.forEach(entry => {
       records.push({
-        title: `Top Rating ${entry.role}`,
+        title: `Mejor calificación como ${entry.role}`,
         value: `${entry.maxVal.toFixed(1)} pts`,
         playerIds: entry.leaders.map(l => l.playerId),
       })
@@ -857,7 +846,7 @@ function App() {
     } catch {
       /* Ignore */
     }
-    setActiveTab('home')
+    setActiveTab('stats')
   }
 
   // Add admin email
@@ -1524,6 +1513,10 @@ function App() {
         })
       })
 
+      // Keep rating writes compatible with the current security rules and let
+      // other clients know that this match's ratings have changed.
+      batch.update(doc(db, 'matches', selectedMatch.id), { ratingsRevision: serverTimestamp() })
+
       await batch.commit()
       await logActivity('rating', {
         matchId: selectedMatch.id,
@@ -1732,6 +1725,7 @@ function App() {
       const ratingId = `${r.ratedBy}_${r.ratedPlayerId}_${matchId}`
       batch.delete(doc(db, 'ratings', ratingId))
     })
+    batch.update(doc(db, 'matches', matchId), { ratingsRevision: serverTimestamp() })
     await batch.commit()
     await logActivity('ratings_bulk_delete', { matchId, count: ratingsToDelete.length })
     showToast('success', 'Calificaciones eliminadas')
@@ -1754,6 +1748,7 @@ function App() {
       const ratingId = `${r.ratedBy}_${r.ratedPlayerId}_${matchId}`
       batch.delete(doc(db, 'ratings', ratingId))
     })
+    batch.update(doc(db, 'matches', matchId), { ratingsRevision: serverTimestamp() })
     await batch.commit()
     await logActivity('ratings_rater_delete', { raterId, raterName, matchId, count: ratingsToDelete.length })
     showToast('success', `Calificaciones de ${raterName} eliminadas`)
@@ -1902,11 +1897,11 @@ function App() {
   const alerts = []
   const lowRatings = ratingsLast7.filter(r => r.score <= 2)
   if (lowRatings.length >= 3) {
-    alerts.push({ level: 'warning', message: `Ratings muy bajos esta semana: ${lowRatings.length}` })
+    alerts.push({ level: 'warning', message: `Calificaciones muy bajas esta semana: ${lowRatings.length}` })
   }
   const highRatings = ratingsLast7.filter(r => r.score >= 9.5)
   if (highRatings.length >= 5) {
-    alerts.push({ level: 'info', message: `Ratings muy altos esta semana: ${highRatings.length}` })
+    alerts.push({ level: 'info', message: `Calificaciones muy altas esta semana: ${highRatings.length}` })
   }
   const predictionSpikes = matches
     .map(m => ({ matchId: m.id, count: Object.keys(predictions?.[m.id] || {}).length }))
@@ -1918,13 +1913,12 @@ function App() {
   const globalSearchResults = useMemo(() => {
     const queryText = globalSearchQuery.trim().toLowerCase()
     const tabs = [
-      { id: 'tab-stats', type: 'tab', tab: 'stats', title: 'Ranking', subtitle: 'Abrir ranking general', search: 'ranking stats jugadores' },
-      { id: 'tab-ratings', type: 'tab', tab: 'ratings', title: 'Calificaciones', subtitle: 'Abrir ranking de ratings', search: 'ratings calificaciones votos' },
+      { id: 'tab-stats', type: 'tab', tab: 'stats', title: 'Ranking', subtitle: 'Abrir ranking general', search: 'ranking estadísticas jugadores calificaciones' },
       { id: 'tab-matches', type: 'tab', tab: 'matches', title: 'Partidos', subtitle: 'Ver historial y próximos partidos', search: 'partidos matches calendario predicciones' },
       { id: 'tab-analytics', type: 'tab', tab: 'analytics', title: 'Análisis', subtitle: 'Ver analítica avanzada', search: 'analytics analisis records roles comparar' },
     ]
     const adminTabs = isAdmin ? [
-      { id: 'tab-dashboard', type: 'tab', tab: 'dashboard', title: 'Dashboard Admin', subtitle: 'Panel de control', search: 'admin dashboard panel alertas' },
+      { id: 'tab-dashboard', type: 'tab', tab: 'dashboard', title: 'Panel administrativo', subtitle: 'Panel de control', search: 'administración panel alertas' },
       { id: 'tab-new', type: 'tab', tab: 'new', title: 'Nuevo Partido', subtitle: 'Registrar o editar partido', search: 'nuevo partido crear editar match' },
       { id: 'tab-tools', type: 'tab', tab: 'tools', title: 'Operaciones', subtitle: 'Moderación y ajustes', search: 'tools operaciones moderacion config' },
       { id: 'tab-users', type: 'tab', tab: 'users', title: 'Vincular Usuarios', subtitle: `${pendingUsers.length} pendientes`, search: 'usuarios vincular pendientes' },
@@ -1988,14 +1982,6 @@ function App() {
 
   return (
     <>
-      {/* Onboarding for new users */}
-      {showOnboarding && (
-        <Onboarding 
-          onComplete={completeOnboarding} 
-          onSkip={completeOnboarding} 
-        />
-      )}
-
       <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
       {/* Header */}
       <Header
@@ -2047,14 +2033,6 @@ function App() {
       )}
 
       {/* Loading State - Home */}
-      {activeTab === 'home' && !dataLoaded && (
-        <section className="stats-section">
-          <h2 className="section-title">Hoy</h2>
-          <p className="section-subtitle">Cargando tu resumen...</p>
-          <SkeletonMatchesList count={2} />
-        </section>
-      )}
-
       {/* Loading State - Stats */}
       {activeTab === 'stats' && !dataLoaded && (
         <section className="stats-section">
@@ -2071,19 +2049,6 @@ function App() {
           <p className="section-subtitle">Cargando partidos...</p>
           <SkeletonMatchesList count={4} />
         </section>
-      )}
-
-      {/* Home Tab */}
-      {activeTab === 'home' && dataLoaded && (
-        <HomeTab
-          onOpenRatingModal={openRatingModal}
-          onOpenPrediction={openPredictionModal}
-          onOpenProfile={showProfile}
-          onGoToMatches={() => setActiveTab('matches')}
-          canPredictMatch={canPredictMatch}
-          announcements={announcements}
-          rankingMovers={rankingMovers}
-        />
       )}
 
       {/* Stats Tab */}
@@ -2104,11 +2069,9 @@ function App() {
         />
       )}
 
-      {/* Profile Tab — own profile + the store */}
+      {/* Profile Tab */}
       {activeTab === 'profile' && (
         <ProfileTab
-          lukCoins={lukCoins}
-          onSpendLukCoins={spendLukCoins}
           players={players}
           stats={stats}
           matches={matches}
@@ -2124,7 +2087,7 @@ function App() {
       )}
 
       {/* Matches Tab */}
-      {activeTab === 'matches' && (
+      {activeTab === 'matches' && dataLoaded && (
         <MatchesTab
           onOpenRatingModal={openRatingModal}
           onOpenEditMatch={(match) => { matchBuilder.openEditMatch(match); setActiveTab('new') }}
@@ -2142,16 +2105,22 @@ function App() {
           <div className="analytics-header">
             <h2 className="section-title">Análisis Avanzado</h2>
             <div className="analytics-stats-strip">
-              {analyticsOverview.map(item => (
-                <div key={item.id} className="ast-pill" onClick={() => {
-                  if (item.id === 'records') setAnalyticsView('records')
-                  if (item.id === 'roles') setAnalyticsView('roles')
-                }}>
-                  <span className="ast-icon"><AppIcon name={item.icon} size={13} /></span>
-                  <span className="ast-value">{item.value}</span>
-                  <span className="ast-label">{item.label}</span>
-                </div>
-              ))}
+              {analyticsOverview.map(item => {
+                const targetView = item.id === 'records' ? 'records' : item.id === 'roles' ? 'roles' : null
+                const Pill = targetView ? 'button' : 'div'
+                return (
+                  <Pill
+                    key={item.id}
+                    className={`ast-pill ${targetView ? 'interactive' : ''}`}
+                    type={targetView ? 'button' : undefined}
+                    onClick={targetView ? () => setAnalyticsView(targetView) : undefined}
+                  >
+                    <span className="ast-icon"><AppIcon name={item.icon} size={13} /></span>
+                    <span className="ast-value">{item.value}</span>
+                    <span className="ast-label">{item.label}</span>
+                  </Pill>
+                )
+              })}
             </div>
           </div>
 
@@ -2559,8 +2528,8 @@ function App() {
 
             const catConfig = {
               racha:     { emoji: '🔥', label: 'En racha', desc: 'Racha activa de victorias consecutivas', cls: 'racha' },
-              mejorando: { emoji: '📈', label: 'Mejorando', desc: 'Rating subiendo vs partidos anteriores', cls: 'mejorando' },
-              bajando:   { emoji: '📉', label: 'Bajando', desc: 'Rating cayendo vs partidos anteriores', cls: 'bajando' },
+              mejorando: { emoji: '📈', label: 'Mejorando', desc: 'Calificación subiendo frente a partidos anteriores', cls: 'mejorando' },
+              bajando:   { emoji: '📉', label: 'Bajando', desc: 'Calificación bajando frente a partidos anteriores', cls: 'bajando' },
               estable:   { emoji: '➡️', label: 'Estable', desc: 'Rendimiento constante', cls: 'estable' },
             }
 
@@ -2786,11 +2755,11 @@ function App() {
 
                   <div className="h2h-stats">
                     {[
-                      { label: 'Win Rate', v1: p1.winRate || 0, v2: p2.winRate || 0, fmt: v => `${Math.round(v)}%`, max: 100 },
-                      { label: 'Rating ★', v1: parseFloat(p1.avgRating) || 0, v2: parseFloat(p2.avgRating) || 0, fmt: v => v > 0 ? v.toFixed(1) : '-', max: 10 },
+                      { label: 'Efectividad', v1: p1.winRate || 0, v2: p2.winRate || 0, fmt: v => `${Math.round(v)}%`, max: 100 },
+                      { label: 'Calificación ★', v1: parseFloat(p1.avgRating) || 0, v2: parseFloat(p2.avgRating) || 0, fmt: v => v > 0 ? v.toFixed(1) : '-', max: 10 },
                       { label: 'MVPs', v1: p1.mvps || 0, v2: p2.mvps || 0, fmt: v => v, max: Math.max(p1.mvps || 0, p2.mvps || 0) || 1 },
                       { label: 'Partidos', v1: p1.played || 0, v2: p2.played || 0, fmt: v => v, max: Math.max(p1.played || 0, p2.played || 0) || 1 },
-                    ].map(({ label, v1, v2, fmt, max }) => {
+                    ].map(({ label, v1, v2, fmt }) => {
                       const total = v1 + v2
                       const pct1 = total > 0 ? Math.round((v1 / total) * 100) : 50
                       const pct2 = 100 - pct1
@@ -2922,11 +2891,11 @@ function App() {
                   <div className="asc-stats">
                     <div className="asc-stat">
                       <span className="asc-stat-value">{typeof playerData?.winRate === 'number' ? Math.round(playerData.winRate) : 0}%</span>
-                      <span className="asc-stat-label">Win Rate</span>
+                      <span className="asc-stat-label">Efectividad</span>
                     </div>
                     <div className="asc-stat">
                       <span className="asc-stat-value">{typeof playerData?.avgRating === 'number' ? playerData.avgRating.toFixed(1) : (playerData?.avgRating || '-')}</span>
-                      <span className="asc-stat-label">Rating</span>
+                      <span className="asc-stat-label">Calificación</span>
                     </div>
                     <div className="asc-stat">
                       <span className="asc-stat-value">{playerData?.mvps || 0}</span>
@@ -3176,7 +3145,7 @@ function App() {
               <div className="dash-stat-icon"><AppIcon name="note" size={18} /></div>
               <div className="dash-stat-info">
                 <span className="dash-stat-value">{ratingsLast7.length}</span>
-                <span className="dash-stat-label">Ratings (7 días)</span>
+                <span className="dash-stat-label">Calificaciones (7 días)</span>
               </div>
             </div>
             <div className="dash-stat-card">
@@ -4082,14 +4051,11 @@ function App() {
       {/* Global Search Modal */}
       {showGlobalSearch && (
         <div className="modal-overlay" onClick={closeGlobalSearch}>
-          <LiquidGlass
+          <div
             className="modal global-search-modal modal-glass"
-            displacementScale={35}
-            blurAmount={0.04}
-            saturation={150}
-            aberrationIntensity={1.5}
-            elasticity={0.1}
-            cornerRadius={20}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Búsqueda global"
             onClick={e => e.stopPropagation()}
           >
             <div className="global-search-input-wrap">
@@ -4098,6 +4064,7 @@ function App() {
                 ref={globalSearchInputRef}
                 className="global-search-input"
                 placeholder="Buscar jugador, partido o sección..."
+                aria-label="Buscar jugador, partido o sección"
                 value={globalSearchQuery}
                 onChange={e => setGlobalSearchQuery(e.target.value)}
                 onKeyDown={e => {
@@ -4106,11 +4073,11 @@ function App() {
                   }
                 }}
               />
-              <button className="global-search-close" onClick={closeGlobalSearch}>
+              <button className="global-search-close" onClick={closeGlobalSearch} aria-label="Cerrar búsqueda">
                 <AppIcon name="close" size={14} />
               </button>
             </div>
-            <p className="global-search-hint">Tip: usa Cmd/Ctrl + K para abrir esta búsqueda</p>
+            <p className="global-search-hint">Consejo: usa Cmd/Ctrl + K para abrir esta búsqueda</p>
             <div className="global-search-results">
               {globalSearchResults.length > 0 ? globalSearchResults.map(item => (
                 <button
@@ -4133,7 +4100,7 @@ function App() {
                 <div className="global-search-empty">Sin resultados para "{globalSearchQuery}"</div>
               )}
             </div>
-          </LiquidGlass>
+          </div>
         </div>
       )}
 
@@ -4352,7 +4319,7 @@ function App() {
               </div>
               <div className="xp-reward-row">
                 <span>
-                  Rating{matchXpData.breakdown.ratingAvg === null ? ' (sin calificaciones)' : ` (${matchXpData.breakdown.ratingAvg.toFixed(1)})`}
+                  Calificación{matchXpData.breakdown.ratingAvg === null ? ' (sin calificaciones)' : ` (${matchXpData.breakdown.ratingAvg.toFixed(1)})`}
                 </span>
                 <strong>+{matchXpData.breakdown.rating}</strong>
               </div>
@@ -4435,12 +4402,12 @@ function App() {
                   <div className="pm-stats-row">
                     <div className="pm-stat">
                       <span className="pm-stat-left">{probability.whiteStats.avgWinRate.toFixed(0)}%</span>
-                      <span className="pm-stat-name">Win Rate</span>
+                      <span className="pm-stat-name">Efectividad</span>
                       <span className="pm-stat-right">{probability.blackStats.avgWinRate.toFixed(0)}%</span>
                     </div>
                     <div className="pm-stat">
                       <span className="pm-stat-left">{probability.whiteStats.avgRating.toFixed(1)}</span>
-                      <span className="pm-stat-name">Rating</span>
+                      <span className="pm-stat-name">Calificación</span>
                       <span className="pm-stat-right">{probability.blackStats.avgRating.toFixed(1)}</span>
                     </div>
                     <div className="pm-stat">
@@ -4597,7 +4564,7 @@ function App() {
 
       {/* Bottom Navigation */}
       {/* Floating Action Button - Admin Only */}
-      {isAdmin && (
+      {isAdmin && activeTab !== 'new' && (
         <FloatingActionButton
           menuItems={[
             { 

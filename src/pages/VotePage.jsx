@@ -109,7 +109,7 @@ export function VotePage() {
         <div className="vote-error">
           <h2>Oops</h2>
           <p>{error}</p>
-          <a href="/" className="vote-home-link">Ir a LUKTO Stats</a>
+          <a href="/" className="vote-home-link">Ir a LUKTO</a>
         </div>
       </div>
     )
@@ -226,7 +226,7 @@ export function VotePage() {
 
         {/* Footer */}
         <div className="vote-footer">
-          <a href="/" className="vote-home-link">Ir a LUKTO Stats →</a>
+          <a href="/" className="vote-home-link">Ir a LUKTO →</a>
         </div>
       </div>
     </div>

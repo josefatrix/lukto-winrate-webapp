@@ -5,23 +5,27 @@ import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { auth, googleProvider, db } from '../firebase'
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth'
 import { collection, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore'
+import { loadRatingHistory } from '../services/ratingHistory'
 
 // Constants
 export const SUPER_ADMIN_EMAIL = 'joseescorcia01@gmail.com'
 const VALID_TIME_FILTERS = ['all', 'month', 'week']
-const VALID_TABS = ['home', 'stats', 'matches', 'analytics', 'profile', 'dashboard', 'new', 'players', 'users', 'tools', 'allRatings']
+const VALID_TABS = ['stats', 'matches', 'analytics', 'profile', 'dashboard', 'new', 'players', 'users', 'tools', 'allRatings']
 
 // Tabs that no longer exist, mapped to where their content now lives.
 // Keeps stored preferences from stranding returning users on a blank screen.
-const LEGACY_TAB_REDIRECTS = { ratings: 'stats' }
+const LEGACY_TAB_REDIRECTS = { ratings: 'stats', home: 'stats' }
 
 const readStoredTab = () => {
   try {
+    const requested = new URLSearchParams(window.location.search).get('view')
+    if (LEGACY_TAB_REDIRECTS[requested]) return LEGACY_TAB_REDIRECTS[requested]
+    if (VALID_TABS.includes(requested)) return requested
     const saved = localStorage.getItem('lukto_activeTab')
     if (LEGACY_TAB_REDIRECTS[saved]) return LEGACY_TAB_REDIRECTS[saved]
-    return VALID_TABS.includes(saved) ? saved : 'home'
+    return VALID_TABS.includes(saved) ? saved : 'stats'
   } catch {
-    return 'home'
+    return 'stats'
   }
 }
 
@@ -225,6 +229,8 @@ export const AppProvider = ({ children }) => {
   // Load Firebase data
   useEffect(() => {
     const unsubscribers = []
+    let disposed = false
+    let ratingsLoadVersion = 0
 
     // Admin emails
     unsubscribers.push(
@@ -305,33 +311,23 @@ export const AppProvider = ({ children }) => {
       onSnapshot(
         collection(db, 'matches'),
         snapshot => {
-          if (!snapshot.empty) {
-            const allDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
-            setMatches(allDocs.filter(m => m.type !== 'teamPoll').sort((a, b) => new Date(a.date) - new Date(b.date)))
-            setTeamPolls(allDocs.filter(m => m.type === 'teamPoll').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
-          }
+          const allDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+          const matchList = allDocs.filter(m => m.type !== 'teamPoll')
+          setMatches(matchList.sort((a, b) => new Date(a.date) - new Date(b.date)))
+          setTeamPolls(allDocs.filter(m => m.type === 'teamPoll').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
+          const loadVersion = ++ratingsLoadVersion
+          loadRatingHistory(matchList)
+            .then(({ ratings: nextRatings }) => {
+              if (!disposed && loadVersion === ratingsLoadVersion) setRatings(nextRatings)
+            })
+            .catch(error => {
+              // A cached snapshot is preserved by ratingHistory. Leave visible
+              // data untouched if the network quota is temporarily exhausted.
+              console.error('Unable to refresh rating history:', error)
+            })
           setDataLoaded(true)
         },
         () => setDataLoaded(true)
-      )
-    )
-
-    // Ratings
-    unsubscribers.push(
-      onSnapshot(
-        collection(db, 'ratings'),
-        snapshot => {
-          const ratingsData = {}
-          snapshot.docs.forEach(doc => {
-            const data = doc.data()
-            if (!ratingsData[data.ratedPlayerId]) {
-              ratingsData[data.ratedPlayerId] = []
-            }
-            ratingsData[data.ratedPlayerId].push(data)
-          })
-          setRatings(ratingsData)
-        },
-        () => {}
       )
     )
 
@@ -383,19 +379,25 @@ export const AppProvider = ({ children }) => {
       })
     )
 
-    unsubscribers.push(
-      onSnapshot(collection(db, 'activityLogs'), snapshot => {
-        setActivityLogs(
-          snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .slice(0, 50)
-        )
-      })
-    )
-
-    return () => unsubscribers.forEach(unsub => unsub())
+    return () => {
+      disposed = true
+      unsubscribers.forEach(unsub => unsub())
+    }
   }, [])
+
+  // Activity is administrative and can grow without bound; load it only on
+  // the two screens that actually display it.
+  useEffect(() => {
+    if (!isAdmin || !['dashboard', 'tools'].includes(activeTab)) return undefined
+    return onSnapshot(collection(db, 'activityLogs'), snapshot => {
+      setActivityLogs(
+        snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+          .slice(0, 50)
+      )
+    })
+  }, [activeTab, isAdmin])
 
   // Update userPlayer when links change
   useEffect(() => {

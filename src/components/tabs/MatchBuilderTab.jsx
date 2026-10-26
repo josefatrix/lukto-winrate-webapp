@@ -1169,7 +1169,7 @@ function CompareCard({ team, tone, data, unknownCount = 0 }) {
   const est = unknownCount > 0 ? '~' : ''
   const rows = [
     { label: 'Win Rate', value: `${est}${data.avgWinRate.toFixed(1)}%` },
-    { label: 'Rating',   value: `${est}${data.avgRating.toFixed(2)}` },
+    { label: 'Calificación', value: `${est}${data.avgRating.toFixed(2)}` },
     { label: 'MVPs',     value: data.avgMvps.toFixed(1) },
     { label: 'Partidos', value: data.avgPlayed.toFixed(0) },
     { label: 'Química',  value: chem.value, title: chem.title },

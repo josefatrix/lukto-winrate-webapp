@@ -8,7 +8,7 @@
 export const SUPER_ADMIN_EMAIL = 'joseescorcia01@gmail.com'
 
 // App Settings
-export const APP_NAME = 'LUKTO Stats'
+export const APP_NAME = 'LUKTO'
 export const APP_VERSION = '1.0.0'
 
 // Rating Configuration
@@ -66,4 +66,3 @@ export const DEFAULT_LEAGUE_SETTINGS = {
   mvpMinVotes: 1,
   mvpMethod: 'average' // 'average' or 'total'
 }
-
