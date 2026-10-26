@@ -18064,6 +18064,7 @@ button:active,
   border-radius: 9px;
   background: var(--accent-primary);
   box-shadow: 0 4px 14px rgba(122, 132, 255, 0.32);
+  transform: translateX(calc(var(--mb-seg-index, 0) * 100%));
   transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 0;
   pointer-events: none;
@@ -18072,13 +18073,15 @@ button:active,
 .mb-format-btn {
   position: relative;
   z-index: 1;
-  min-height: 46px;
-  padding: 0.38rem 0.4rem;
+  min-height: 44px;
+  padding: 0.4rem 0.5rem;
   border-radius: 9px;
   border: none;
   background: transparent;
   color: var(--text-secondary);
   font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -18090,7 +18093,7 @@ button:active,
 }
 
 .mb-format-btn strong {
-  font-size: 0.84rem;
+  font-size: 0.85rem;
   font-weight: 800;
   line-height: 1.15;
 }
@@ -18100,6 +18103,10 @@ button:active,
   font-weight: 600;
   opacity: 0.78;
   line-height: 1.1;
+}
+
+.mb-format-btn:hover:not(.active) {
+  color: var(--text-primary);
 }
 
 .mb-format-btn.active {
