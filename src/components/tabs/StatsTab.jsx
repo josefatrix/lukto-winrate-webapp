@@ -24,14 +24,14 @@ const METRICS = [
 ]
 
 const TABLE_COLUMNS = [
-  { id: 'rankingScore', label: 'PTS', title: 'Puntos de Ranking' },
-  { id: 'played', label: 'PJ', title: 'Partidos Jugados' },
-  { id: 'wins', label: 'V', title: 'Victorias' },
-  { id: 'ties', label: 'E', title: 'Empates' },
-  { id: 'losses', label: 'D', title: 'Derrotas' },
-  { id: 'winRate', label: 'WR%', title: 'Porcentaje de Efectividad' },
-  { id: 'avgRating', label: '★ Calif.', title: 'Calificación Promedio' },
-  { id: 'mvps', label: 'MVP', title: 'Premios MVP' },
+  { id: 'played', label: 'PJ', title: 'Partidos Jugados', hideMobile: false },
+  { id: 'wins', label: 'V', title: 'Victorias', hideMobile: false },
+  { id: 'ties', label: 'E', title: 'Empates', hideMobile: false },
+  { id: 'losses', label: 'D', title: 'Derrotas', hideMobile: false },
+  { id: 'winRate', label: 'WR%', title: 'Porcentaje de Efectividad', hideMobile: true },
+  { id: 'mvps', label: 'MVP', title: 'Premios MVP', hideMobile: false },
+  { id: 'avgRating', label: '★', title: 'Calificación Promedio', hideMobile: false },
+  { id: 'rankingScore', label: 'PTS', title: 'Puntos de Ranking', hideMobile: false, isPts: true },
 ]
 
 const readStored = (key, fallback) => {
@@ -407,163 +407,159 @@ export const StatsTab = ({
         <p className="rk-metric-hint">{activeMetric.hint || `Ordenado por ${activeMetric.title || activeMetric.label}`}</p>
 
         {sortedStats.length > 0 ? (
-          <div className="rk-list">
+          <div className="rk-list pl-standings-card">
+            <div className="pl-table-banner">
+              <div className="pl-table-banner-left">
+                <span className="pl-league-pill">PREMIER RANKING</span>
+                <span className="pl-table-title">Tabla de Posiciones</span>
+              </div>
+              <span className="pl-table-count">{sortedStats.length} jugadores</span>
+            </div>
+
             <div className="rk-table-head">
-              <span className="rk-head-spacer">#</span>
+              <span className="rk-head-spacer">Pos</span>
               <span className="rk-head-player">Jugador</span>
               {TABLE_COLUMNS.map(col => (
                 <button
                   key={col.id}
                   type="button"
-                  className={`rk-th-btn ${metric === col.id ? 'active' : ''}`}
+                  className={`rk-th-btn ${col.hideMobile ? 'rk-hide-mobile' : ''} ${col.isPts ? 'is-pts' : ''} ${metric === col.id ? 'active' : ''}`}
                   onClick={() => selectMetric(col.id)}
                   title={`Ordenar por ${col.title}`}
                 >
                   {col.label}
                 </button>
               ))}
-              <span className="rk-head-form" title="Últimos 5 partidos">Forma</span>
+              <span className="rk-head-form rk-hide-mobile" title="Últimos 5 partidos">Últ. 5</span>
               <span />
             </div>
+
             {sortedStats.map((player, index) => {
               const xp = calculateXP(player.id)
               const rank = getRank(xp)
               const wr = typeof player.winRate === 'number' ? player.winRate : parseFloat(player.winRate) || 0
+              const pos = index + 1
               const medal = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''
+              const zoneClass =
+                pos === 1
+                  ? 'zone-champion'
+                  : pos <= 4
+                  ? 'zone-ucl'
+                  : pos <= 6
+                  ? 'zone-uel'
+                  : sortedStats.length >= 8 && pos > sortedStats.length - 2
+                  ? 'zone-rel'
+                  : ''
+              const zoneCutoff = (pos === 1 || pos === 4 || (sortedStats.length >= 8 && pos === 6)) ? 'zone-cutoff' : ''
               const isMe = userPlayer && player.id === userPlayer
               const isOpen = expandedId === player.id
               const form = playerFormMap[player.id] || []
 
               return (
-                <article key={player.id} className={`rk-row ${medal} ${isMe ? 'is-me' : ''} ${isOpen ? 'is-open' : ''}`}>
+                <article
+                  key={player.id}
+                  className={`rk-row ${medal} ${zoneClass} ${zoneCutoff} ${isMe ? 'is-me' : ''} ${isOpen ? 'is-open' : ''}`}
+                >
                   <button
                     className="rk-row-main"
                     onClick={() => toggleRow(player.id)}
                     aria-expanded={isOpen}
-                    aria-label={`${player.name}, posición ${index + 1}, ${player.rankingScore} puntos, ${player.played || 0} partidos jugados, ${player.wins || 0} victorias, ${player.ties || 0} empates, ${player.losses || 0} derrotas, ${wr.toFixed(0)} por ciento de efectividad y ${player.mvps || 0} MVPs; ${isOpen ? 'contraer' : 'expandir'} detalles`}
+                    aria-label={`${player.name}, posición ${pos}, ${player.rankingScore} puntos, ${player.played || 0} partidos jugados, ${player.wins || 0} victorias, ${player.ties || 0} empates, ${player.losses || 0} derrotas, ${wr.toFixed(0)} por ciento de efectividad y ${player.mvps || 0} MVPs; ${isOpen ? 'contraer' : 'expandir'} detalles`}
                   >
-                    <span className="rk-mark" aria-hidden="true" />
-                    <span className={`rk-pos ${medal}`}>{index + 1}</span>
-
-                    <AvatarImage
-                      src={getPlayerPhoto(player.id)}
-                      name={player.name}
-                      imgClassName="rk-avatar"
-                      fallbackClassName="rk-avatar-ph"
-                    />
-
-                    <span className="rk-identity">
-                      <span className="rk-name">{player.name}</span>
-                      <span className="rk-sub">
-                        {getRankIcon(rank.key, 9)} {rank.name}
-                        <span className="rk-xp">· {xp} XP</span>
-                        {isMe && <span className="rk-you">Tú</span>}
-                      </span>
+                    <span className="rk-pos-cell">
+                      <span className={`rk-mark ${zoneClass}`} aria-hidden="true" />
+                      <span className={`rk-pos ${medal}`}>{pos}</span>
                     </span>
 
-                    <span className="rk-mobile-right">
-                      {form.length > 0 && (
-                        <span className="rk-mobile-form" aria-label="Forma en los últimos partidos">
-                          {form.map((r, i) => (
-                            <span key={i} className={`form-badge ${r}`}>{r === 'v' ? 'V' : r === 'e' ? 'E' : 'D'}</span>
-                          ))}
+                    <span className="rk-club-cell">
+                      <AvatarImage
+                        src={getPlayerPhoto(player.id)}
+                        name={player.name}
+                        imgClassName="rk-avatar"
+                        fallbackClassName="rk-avatar-ph"
+                      />
+                      <span className="rk-identity">
+                        <span className="rk-name-line">
+                          <span className="rk-name">{player.name}</span>
+                          {isMe && <span className="rk-you">Tú</span>}
                         </span>
-                      )}
-                      <span className={`rk-mobile-pts ${metric === 'rankingScore' ? 'active' : ''}`}>
-                        <span className="rk-mobile-pts-val">{player.rankingScore}</span>
-                        <span className="rk-mobile-pts-lbl">PTS</span>
-                      </span>
-                      <span className={`rk-chevron rk-mobile-chevron ${isOpen ? 'open' : ''}`} aria-hidden="true">
-                        <AppIcon name="arrowDown" size={14} />
+                        <span className="rk-sub">
+                          {getRankIcon(rank.key, 9)} {rank.name}
+                          <span className="rk-xp">· {xp} XP</span>
+                        </span>
                       </span>
                     </span>
 
-                    <span className="rk-mobile-grid" aria-label={`Estadísticas: ${player.played || 0} jugados, ${player.wins || 0} victorias, ${player.ties || 0} empates, ${player.losses || 0} derrotas, ${wr.toFixed(0)}% efectividad, calificación ${player.avgRating || 'sin datos'}, ${player.mvps || 0} MVPs`}>
-                      <span className={`rk-mcell ${metric === 'played' ? 'active' : ''}`}>
-                        <span className="rk-mcell-key">PJ</span>
-                        <span className="rk-mcell-val">{player.played || 0}</span>
-                      </span>
-                      <span className={`rk-mcell ${metric === 'wins' ? 'active' : ''}`}>
-                        <span className="rk-mcell-key">V</span>
-                        <span className="rk-mcell-val win">{player.wins || 0}</span>
-                      </span>
-                      <span className={`rk-mcell ${metric === 'ties' ? 'active' : ''}`}>
-                        <span className="rk-mcell-key">E</span>
-                        <span className="rk-mcell-val tie">{player.ties || 0}</span>
-                      </span>
-                      <span className={`rk-mcell ${metric === 'losses' ? 'active' : ''}`}>
-                        <span className="rk-mcell-key">D</span>
-                        <span className="rk-mcell-val loss">{player.losses || 0}</span>
-                      </span>
-                      <span className={`rk-mcell ${metric === 'winRate' ? 'active' : ''}`}>
-                        <span className="rk-mcell-key">WR%</span>
-                        <span className={`rk-mcell-val ${getWinRateClass(wr)}`}>{wr.toFixed(0)}%</span>
-                      </span>
-                      <span className={`rk-mcell ${metric === 'avgRating' ? 'active' : ''}`}>
-                        <span className="rk-mcell-key">★ Cal.</span>
-                        <span className={`rk-mcell-val ${getRatingClass(player.avgRating ? parseFloat(player.avgRating) : 0)}`}>{player.avgRating || '—'}</span>
-                      </span>
-                      <span className={`rk-mcell ${metric === 'mvps' ? 'active' : ''}`}>
-                        <span className="rk-mcell-key">MVP</span>
-                        <span className={`rk-mcell-val ${player.mvps > 0 ? 'mvp' : ''}`}>{player.mvps || 0}</span>
-                      </span>
-                    </span>
-
-                    <span className={`rk-cell pts ${metric === 'rankingScore' ? 'active' : ''}`}>
-                      <span className="rk-cell-key">PTS</span>
-                      <span className="rk-cell-value">{player.rankingScore}</span>
-                    </span>
                     <span className={`rk-cell ${metric === 'played' ? 'active' : ''}`}>
-                      <span className="rk-cell-key">PJ</span>
                       <span className="rk-cell-value">{player.played || 0}</span>
                     </span>
                     <span className={`rk-cell ${metric === 'wins' ? 'active' : ''}`}>
-                      <span className="rk-cell-key">V</span>
                       <span className="rk-cell-value win">{player.wins || 0}</span>
                     </span>
                     <span className={`rk-cell ${metric === 'ties' ? 'active' : ''}`}>
-                      <span className="rk-cell-key">E</span>
                       <span className="rk-cell-value tie">{player.ties || 0}</span>
                     </span>
                     <span className={`rk-cell ${metric === 'losses' ? 'active' : ''}`}>
-                      <span className="rk-cell-key">D</span>
                       <span className="rk-cell-value loss">{player.losses || 0}</span>
                     </span>
-                    <span className={`rk-cell ${metric === 'winRate' ? 'active' : ''}`}>
-                      <span className="rk-cell-key">WR%</span>
+                    <span className={`rk-cell rk-hide-mobile ${metric === 'winRate' ? 'active' : ''}`}>
                       <span className={`rk-cell-value ${getWinRateClass(wr)}`}>{wr.toFixed(0)}%</span>
                     </span>
+                    <span className={`rk-cell ${metric === 'mvps' ? 'active' : ''}`}>
+                      <span className={`rk-cell-value ${player.mvps > 0 ? 'mvp' : 'muted'}`}>{player.mvps || 0}</span>
+                    </span>
                     <span className={`rk-cell ${metric === 'avgRating' ? 'active' : ''}`}>
-                      <span className="rk-cell-key">★</span>
                       <span className={`rk-cell-value ${getRatingClass(player.avgRating ? parseFloat(player.avgRating) : 0)}`}>
                         {player.avgRating || '—'}
                       </span>
                     </span>
-                    <span className={`rk-cell ${metric === 'mvps' ? 'active' : ''}`}>
-                      <span className="rk-cell-key">MVP</span>
-                      <span className={`rk-cell-value ${player.mvps > 0 ? 'mvp' : ''}`}>{player.mvps || 0}</span>
+                    <span className={`rk-cell pts ${metric === 'rankingScore' ? 'active' : ''}`}>
+                      <span className="rk-cell-value">{player.rankingScore}</span>
                     </span>
 
-                    <span className="rk-form" aria-label="Forma en los últimos partidos">
+                    <span className="rk-form rk-hide-mobile" aria-label="Forma en los últimos 5 partidos">
                       {form.length > 0 ? form.map((r, i) => (
-                        <span key={i} className={`form-badge ${r}`}>{r === 'v' ? 'V' : r === 'e' ? 'E' : 'D'}</span>
+                        <span
+                          key={i}
+                          className={`pl-form-dot ${r} ${i === form.length - 1 ? 'latest' : ''}`}
+                          title={r === 'v' ? 'Victoria' : r === 'e' ? 'Empate' : 'Derrota'}
+                        >
+                          {r === 'v' ? '✓' : r === 'e' ? '–' : '✕'}
+                        </span>
                       )) : <span className="rk-form-empty">—</span>}
                     </span>
 
-                    <span className={`rk-chevron rk-desktop-chevron ${isOpen ? 'open' : ''}`} aria-hidden="true">
-                      <AppIcon name="arrowDown" size={14} />
+                    <span className={`rk-chevron ${isOpen ? 'open' : ''}`} aria-hidden="true">
+                      <AppIcon name="arrowDown" size={13} />
                     </span>
                   </button>
 
                   {isOpen && (
                     <div className="rk-detail">
+                      <div className="rk-detail-top">
+                        <div className="rk-detail-form-strip">
+                          <span className="rk-detail-title">Últimos 5 partidos</span>
+                          <div className="rk-detail-form-badges">
+                            {form.length > 0 ? form.map((r, i) => (
+                              <span key={i} className={`pl-form-dot ${r} ${i === form.length - 1 ? 'latest' : ''}`}>
+                                {r === 'v' ? 'V' : r === 'e' ? 'E' : 'D'}
+                              </span>
+                            )) : <span className="rk-form-empty">Sin partidos recientes</span>}
+                          </div>
+                        </div>
+                        <div className="rk-detail-wr-pill">
+                          <span className="rk-detail-title">Efectividad (WR)</span>
+                          <strong className={getWinRateClass(wr)}>{wr.toFixed(1)}%</strong>
+                        </div>
+                      </div>
+
                       <div className="rk-detail-grid">
                         <div className="rk-stat"><span className="rk-stat-value pts">{player.rankingScore}</span><span className="rk-stat-key">PTS</span></div>
-                        <div className="rk-stat"><span className="rk-stat-value">{player.played || 0}</span><span className="rk-stat-key">Partidos</span></div>
+                        <div className="rk-stat"><span className="rk-stat-value">{player.played || 0}</span><span className="rk-stat-key">PJ</span></div>
                         <div className="rk-stat"><span className="rk-stat-value win">{player.wins || 0}</span><span className="rk-stat-key">Victorias</span></div>
                         <div className="rk-stat"><span className="rk-stat-value tie">{player.ties || 0}</span><span className="rk-stat-key">Empates</span></div>
                         <div className="rk-stat"><span className="rk-stat-value loss">{player.losses || 0}</span><span className="rk-stat-key">Derrotas</span></div>
-                        <div className="rk-stat"><span className={`rk-stat-value ${getWinRateClass(wr)}`}>{wr.toFixed(0)}%</span><span className="rk-stat-key">Win rate</span></div>
+                        <div className="rk-stat"><span className={`rk-stat-value ${getWinRateClass(wr)}`}>{wr.toFixed(0)}%</span><span className="rk-stat-key">WR%</span></div>
                         <div className="rk-stat"><span className={`rk-stat-value ${getRatingClass(player.avgRating ? parseFloat(player.avgRating) : 0)}`}>{player.avgRating || '—'}</span><span className="rk-stat-key">★ Calif.</span></div>
                         <div className="rk-stat"><span className={`rk-stat-value ${player.mvps > 0 ? 'mvp' : ''}`}>{player.mvps || 0}</span><span className="rk-stat-key">MVP</span></div>
                       </div>
@@ -598,6 +594,22 @@ export const StatsTab = ({
                 </article>
               )
             })}
+
+            <div className="pl-table-footer">
+              <div className="pl-zones-legend">
+                <span className="pl-zone-item"><i className="pl-zone-dot champion" /> Líder</span>
+                <span className="pl-zone-item"><i className="pl-zone-dot ucl" /> Top 4 · Élite</span>
+                <span className="pl-zone-item"><i className="pl-zone-dot uel" /> Top 6 · Competitivo</span>
+              </div>
+              <div className="pl-glossary">
+                <span><b>PJ</b> Jugados</span>
+                <span><b>V</b> Victorias</span>
+                <span><b>E</b> Empates</span>
+                <span><b>D</b> Derrotas</span>
+                <span><b>★</b> Calif.</span>
+                <span><b>PTS</b> Puntos</span>
+              </div>
+            </div>
           </div>
         ) : (
           <EmptyState
