@@ -410,7 +410,7 @@ export function PlayerProfileModal({
           </div>
         </div>
 
-        {/* Complete 8-KPI Scouting Grid */}
+        {/* Key numbers: four tiles, the full record on one line under them */}
         <div className="profile-stats-grid">
           <div className="psg-item pts">
             <span className="psg-value">{playerStats.rankingScore || '0.0'}</span>
@@ -420,10 +420,6 @@ export function PlayerProfileModal({
             <span className="psg-value">{avgRating ? avgRating.toFixed(1) : '—'}</span>
             <span className="psg-label">★ Calif.</span>
           </div>
-          <div className="psg-item mvp">
-            <span className="psg-value">{playerStats.mvps || 0}</span>
-            <span className="psg-label">MVPs</span>
-          </div>
           <div className="psg-item wr">
             <span className="psg-value">{typeof playerStats.winRate === 'number' ? playerStats.winRate.toFixed(0) : parseFloat(playerStats.winRate || 0).toFixed(0)}%</span>
             <span className="psg-label">Efectividad</span>
@@ -432,18 +428,12 @@ export function PlayerProfileModal({
             <span className="psg-value">{playerStats.played || 0}</span>
             <span className="psg-label">Partidos (PJ)</span>
           </div>
-          <div className="psg-item win">
-            <span className="psg-value">{playerStats.wins || 0}</span>
-            <span className="psg-label">Victorias (V)</span>
-          </div>
-          <div className="psg-item tie">
-            <span className="psg-value">{playerStats.ties || 0}</span>
-            <span className="psg-label">Empates (E)</span>
-          </div>
-          <div className="psg-item loss">
-            <span className="psg-value">{playerStats.losses || 0}</span>
-            <span className="psg-label">Derrotas (D)</span>
-          </div>
+        </div>
+        <div className="psg-record" aria-label="Récord">
+          <span className="win"><b>{playerStats.wins || 0}</b> V</span>
+          <span className="tie"><b>{playerStats.ties || 0}</b> E</span>
+          <span className="loss"><b>{playerStats.losses || 0}</b> D</span>
+          <span className="mvp"><b>{playerStats.mvps || 0}</b> MVP</span>
         </div>
 
         {/* Recent 5 Matches Form Strip */}

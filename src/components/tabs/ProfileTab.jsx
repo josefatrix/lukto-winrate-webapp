@@ -37,24 +37,24 @@ export const ProfileTab = ({
 
   const activePlayerId = selectedId || defaultPlayerId
 
-  // Ranked players first, in Ranking order; players still "En evaluación" after them
+  // Ranked players first, in Ranking order; players still "En evaluación"
+  // after them, and guests ("Invitado …") at the very end
   const rankedStats = getRankedPlayers(stats)
   const rankingPosById = new Map(rankedStats.map((s, idx) => [s.id, idx + 1]))
-  const orderedPlayers = stats?.length > 0
+  const isGuest = p => /^invitad/i.test(p.name?.trim() || '')
+  const byRanking = stats?.length > 0
     ? [...rankedStats, ...getRankedPlayers(stats, 0).filter(s => !rankingPosById.has(s.id))]
         .map(s => players.find(p => p.id === s.id))
         .filter(Boolean)
     : players
+  const orderedPlayers = [...byRanking.filter(p => !isGuest(p)), ...byRanking.filter(isGuest)]
 
   return (
     <section className="stats-section profile-tab">
       {!user && (
-        <div className="hm-card hm-signin profile-account-banner">
-          <div className="hm-signin-text">
-            <h3>Inicia sesión para vincular tu perfil</h3>
-            <p>Conecta tu cuenta de Google para destacar tus estadísticas, predicciones y logros personales.</p>
-          </div>
-          <button className="hm-btn hm-btn-primary" onClick={handleGoogleLogin}>Entrar con Google</button>
+        <div className="hm-card profile-account-banner compact">
+          <span className="pab-text">Inicia sesión para ver tu perfil, predicciones y logros.</span>
+          <button className="hm-btn hm-btn-primary pab-btn" onClick={handleGoogleLogin}>Entrar con Google</button>
         </div>
       )}
 

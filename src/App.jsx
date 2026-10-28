@@ -2145,7 +2145,10 @@ function App() {
           
           {/* Best Duos & Trios */}
           {analyticsView === 'teams' && (() => {
-            // Calculate duo and trio stats
+            // Calculate duo and trio stats. A combo needs MIN_TEAM_GAMES together
+            // to be listed, and is ranked by a smoothed win rate so 6-0 beats 2-0.
+            const MIN_TEAM_GAMES = 3
+            const rankScore = c => (c.wins + 1) / (c.games - (c.ties || 0) + 2)
             const duoStats = {}
             const trioStats = {}
             
@@ -2187,23 +2190,23 @@ function App() {
             })
             
             const topDuos = Object.values(duoStats)
-              .filter(d => d.games >= 2)
+              .filter(d => d.games >= MIN_TEAM_GAMES)
               .map(d => {
                 const decidedGames = d.games - (d.ties || 0)
                 const winRate = decidedGames > 0 ? Math.round((d.wins / decidedGames) * 100) : 0
                 return { ...d, winRate }
               })
-              .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
+              .sort((a, b) => rankScore(b) - rankScore(a) || b.games - a.games)
               .slice(0, 5)
 
             const topTrios = Object.values(trioStats)
-              .filter(t => t.games >= 2)
+              .filter(t => t.games >= MIN_TEAM_GAMES)
               .map(t => {
                 const decidedGames = t.games - (t.ties || 0)
                 const winRate = decidedGames > 0 ? Math.round((t.wins / decidedGames) * 100) : 0
                 return { ...t, winRate }
               })
-              .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
+              .sort((a, b) => rankScore(b) - rankScore(a) || b.games - a.games)
               .slice(0, 5)
             
             if (topDuos.length === 0 && topTrios.length === 0) {
@@ -2211,7 +2214,7 @@ function App() {
                 <div className="analytics-pane">
                   <div className="analytics-empty">
                     <AppIcon name="users" size={18} />
-                    <span>Aún no hay suficientes partidos para calcular duplas o tríos.</span>
+                    <span>Aún no hay duplas ni tríos con {MIN_TEAM_GAMES} partidos juntos.</span>
                   </div>
                 </div>
               )
@@ -2222,7 +2225,7 @@ function App() {
                 <div className="team-stats-section">
                 {topDuos.length > 0 && (
                   <div className="team-stats-card">
-                    <h4 className="ts-title">Mejores Duplas</h4>
+                    <h4 className="ts-title">Mejores Duplas <span className="ts-sub">mín. {MIN_TEAM_GAMES} partidos juntos</span></h4>
                     <div className="team-list">
                       {topDuos.map((duo, idx) => (
                         <div key={idx} className="team-item">
@@ -2243,7 +2246,7 @@ function App() {
                             {duo.ids.map(id => getPlayerName(id)?.split(' ')[0]).join(' & ')}
                           </div>
                           <div className="team-record">
-                            <span className="wr good">{duo.winRate}%</span>
+                            <span className={`wr ${getWinRateClass(duo.winRate)}`}>{duo.winRate}%</span>
                             <span className="games">{duo.wins}V-{duo.ties || 0}E-{duo.games - duo.wins - (duo.ties || 0)}D</span>
                           </div>
                         </div>
@@ -2254,7 +2257,7 @@ function App() {
                 
                 {topTrios.length > 0 && (
                   <div className="team-stats-card">
-                    <h4 className="ts-title">Mejores Tríos</h4>
+                    <h4 className="ts-title">Mejores Tríos <span className="ts-sub">mín. {MIN_TEAM_GAMES} partidos juntos</span></h4>
                     <div className="team-list">
                       {topTrios.map((trio, idx) => (
                         <div key={idx} className="team-item">
@@ -2275,7 +2278,7 @@ function App() {
                             {trio.ids.map(id => getPlayerName(id)?.split(' ')[0]).join(', ')}
                           </div>
                           <div className="team-record">
-                            <span className="wr good">{trio.winRate}%</span>
+                            <span className={`wr ${getWinRateClass(trio.winRate)}`}>{trio.winRate}%</span>
                             <span className="games">{trio.wins}V-{trio.ties || 0}E-{trio.games - trio.wins - (trio.ties || 0)}D</span>
                           </div>
                         </div>
