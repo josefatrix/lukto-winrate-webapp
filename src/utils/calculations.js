@@ -195,6 +195,20 @@ export const getRank = (xp) => {
 }
 
 /**
+ * Fewest matches a player needs in a period to get a ranking position; the
+ * rest stay "En evaluación" so one lucky match can't top the table.
+ */
+export const MIN_RANKED_PLAYED = { all: 3, month: 2, week: 1 }
+
+/**
+ * Players that hold a ranking position, best ranking score first
+ */
+export const getRankedPlayers = (stats, minPlayed = MIN_RANKED_PLAYED.all) =>
+  [...(stats || [])]
+    .filter(s => (s.played || 0) >= minPlayed)
+    .sort((a, b) => (parseFloat(b.rankingScore) || 0) - (parseFloat(a.rankingScore) || 0))
+
+/**
  * Get XP progress to next rank
  */
 export const getXPProgress = (xp) => {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { AvatarImage, AppIcon } from './index'
 import { ProfileIcons } from './ProfileIcons'
+import { getRankedPlayers } from '../../utils'
 
 function getPredictionBet(pred) {
   return pred?.lukCoinsBet ?? pred?.xpBet ?? 0
@@ -107,9 +108,8 @@ export function PlayerProfileModal({
     )
   }
 
-  const sortedByPts = stats?.length > 0
-    ? [...stats].sort((a, b) => (parseFloat(b.rankingScore) || 0) - (parseFloat(a.rankingScore) || 0))
-    : []
+  // Same positions as the Ranking table: players under the minimum have none
+  const sortedByPts = getRankedPlayers(stats)
   const rankingIndex = sortedByPts.findIndex(s => s.id === playerId)
   const rankingPos = rankingIndex >= 0 ? rankingIndex + 1 : null
 

@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../../contexts'
 import { PlayerProfileModal, AvatarImage } from '../common'
+import { getRankedPlayers } from '../../utils'
 
 export const ProfileTab = ({
   players = [],
@@ -36,10 +37,11 @@ export const ProfileTab = ({
 
   const activePlayerId = selectedId || defaultPlayerId
 
-  // Order players by ranking position first
+  // Ranked players first, in Ranking order; players still "En evaluación" after them
+  const rankedStats = getRankedPlayers(stats)
+  const rankingPosById = new Map(rankedStats.map((s, idx) => [s.id, idx + 1]))
   const orderedPlayers = stats?.length > 0
-    ? [...stats]
-        .sort((a, b) => (parseFloat(b.rankingScore) || 0) - (parseFloat(a.rankingScore) || 0))
+    ? [...rankedStats, ...getRankedPlayers(stats, 0).filter(s => !rankingPosById.has(s.id))]
         .map(s => players.find(p => p.id === s.id))
         .filter(Boolean)
     : players
@@ -80,7 +82,7 @@ export const ProfileTab = ({
             )}
           </div>
           <div className="profile-switcher-Row">
-            {orderedPlayers.map((p, idx) => {
+            {orderedPlayers.map(p => {
               const isSelected = p.id === activePlayerId
               const isMe = userPlayer && p.id === userPlayer
               return (
@@ -90,7 +92,7 @@ export const ProfileTab = ({
                   className={`profile-switcher-chip ${isSelected ? 'active' : ''} ${isMe ? 'is-me' : ''}`}
                   onClick={() => setSelectedId(p.id)}
                 >
-                  <span className="psc-pos">#{idx + 1}</span>
+                  <span className="psc-pos">{rankingPosById.has(p.id) ? `#${rankingPosById.get(p.id)}` : '–'}</span>
                   <AvatarImage
                     src={getPlayerPhoto(p.id)}
                     name={p.name}
