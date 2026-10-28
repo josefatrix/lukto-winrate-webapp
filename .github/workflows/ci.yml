@@ -44,12 +44,22 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+    # Vercel's Git integration already deploys every push to main; this job
+    # only runs when a VERCEL_TOKEN secret is configured.
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
     steps:
       - name: Checkout code
+        if: env.VERCEL_TOKEN != ''
         uses: actions/checkout@v4
 
+      - name: Skip (no VERCEL_TOKEN secret)
+        if: env.VERCEL_TOKEN == ''
+        run: echo "VERCEL_TOKEN is not set; production is deployed by Vercel's Git integration."
+
       - name: Deploy to Vercel
+        if: env.VERCEL_TOKEN != ''
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
