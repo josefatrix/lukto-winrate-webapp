@@ -14,13 +14,15 @@ import { isPredictionCorrect } from '../../hooks/useStats'
 
 const PREDICTION_BONUS = 0.2
 
+// PTS first, then its ingredients by the weight they carry in it
+// (calificación → MVP → efectividad → participación).
 const METRICS = [
   { id: 'rankingScore', short: 'PTS', label: 'PTS', hint: 'Puntos de clasificación · calificación 45% · MVP 25% · efectividad 20% · participación 10%' },
-  { id: 'played', short: 'PJ', label: 'PJ', hint: 'Partidos jugados en el período seleccionado' },
-  { id: 'wins', short: 'V', label: 'V', hint: 'Partidos ganados en el período seleccionado' },
-  { id: 'winRate', short: 'WR', label: 'WR%', hint: 'Porcentaje de efectividad (los empates suman medio partido)' },
   { id: 'avgRating', short: '★', label: '★ Calif.', hint: 'Promedio de las calificaciones recibidas de sus compañeros' },
   { id: 'mvps', short: 'MVP', label: 'MVP', hint: 'Veces elegido como jugador más valioso (MVP) del partido' },
+  { id: 'winRate', short: 'WR', label: 'WR%', hint: 'Porcentaje de efectividad (los empates suman medio partido)' },
+  { id: 'wins', short: 'V', label: 'V', hint: 'Partidos ganados en el período seleccionado' },
+  { id: 'played', short: 'PJ', label: 'PJ', hint: 'Partidos jugados en el período seleccionado' },
 ]
 
 const TABLE_COLUMNS = [
@@ -409,10 +411,7 @@ export const StatsTab = ({
         {sortedStats.length > 0 ? (
           <div className="rk-list pl-standings-card">
             <div className="pl-table-banner">
-              <div className="pl-table-banner-left">
-                <span className="pl-league-pill">PREMIER RANKING</span>
-                <span className="pl-table-title">Tabla de Posiciones</span>
-              </div>
+              <span className="pl-table-title">LUKTO Rankings</span>
               <span className="pl-table-count">{sortedStats.length} jugadores</span>
             </div>
 

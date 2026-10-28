@@ -120,7 +120,7 @@ export const Header = ({
       {/* Top Bar */}
       <div className="header-bar">
         <div className="header-brand">
-          <img src="/lukto-logo.png" alt="" className="brand-logo" />
+          <img src="/lukto-icon.png" alt="" className="brand-logo" />
           <span className="brand-name">LUKTO</span>
         </div>
         

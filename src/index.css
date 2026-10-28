@@ -21824,28 +21824,8 @@ button:active,
   background: linear-gradient(135deg, rgba(55, 0, 60, 0.08) 0%, rgba(56, 189, 248, 0.1) 100%);
 }
 
-.pl-table-banner-left {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-width: 0;
-}
-
-.pl-league-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.18rem 0.48rem;
-  border-radius: 5px;
-  background: #00FF85;
-  color: #240029;
-  font-size: 0.58rem;
-  font-weight: 900;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  flex-shrink: 0;
-}
-
 .pl-table-title {
+  min-width: 0;
   font-size: 0.82rem;
   font-weight: 800;
   color: var(--text-primary);
