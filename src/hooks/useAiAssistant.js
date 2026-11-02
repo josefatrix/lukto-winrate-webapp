@@ -12,14 +12,18 @@
  * contradicting the screen.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { onAuthStateChanged } from 'firebase/auth'
 import { doc, onSnapshot } from 'firebase/firestore'
 
+/* The same day key the endpoint charges against. A client computing its own
+   in UTC reports a fresh quota from 19:00 local onwards — exactly the hours
+   this group plays. The module is pure, so importing it costs nothing. */
+import { dayKey } from '../../api/_lib/aiRateLimit.js'
 import { auth, db } from '../firebase'
 
 /** Ten turns, two messages each — the server rejects more. */
 const MAX_HISTORY_MESSAGES = 20
 const REQUEST_TIMEOUT_MS = 120_000
-const DAILY_LIMIT_HINT = 15
 
 const NETWORK_ERROR = 'No pude conectarme. Revisá tu internet y probá de nuevo.'
 const TIMEOUT_ERROR = 'El asistente tardó demasiado. Probá de nuevo.'
@@ -31,6 +35,10 @@ export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [remaining, setRemaining] = useState(null)
+  /* The server owns the cap — 15 for members, 50 for admins — and tells us on
+     every answer. Until then we show no number rather than a wrong one. */
+  const [limit, setLimit] = useState(null)
+  const [conversationId, setConversationId] = useState(0)
 
   const abortRef = useRef(null)
 
@@ -44,21 +52,31 @@ export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
   /* The counter is readable by its owner, so the sheet can show it without
      asking the server. A response's own `remaining` wins when it arrives,
      which is how two open tabs converge on the server's number. */
+  /* Firebase restores the session asynchronously, so auth.currentUser is null
+     when this first runs. Subscribing to the auth state instead of reading it
+     once is what makes the counter appear at all. */
   useEffect(() => {
-    const uid = auth.currentUser?.uid
-    if (!uid) return undefined
-    return onSnapshot(
-      doc(db, 'aiUsage', uid),
-      snapshot => {
-        const data = snapshot.data()
-        const today = new Date().toISOString().slice(0, 10)
-        if (!data || !data.day) return setRemaining(null)
-        const spent = data.day >= today ? Number(data.count) || 0 : 0
-        setRemaining(Math.max(DAILY_LIMIT_HINT - spent, 0))
-      },
-      () => setRemaining(null)
-    )
-  }, [])
+    let stopUsage = null
+    const stopAuth = onAuthStateChanged(auth, user => {
+      stopUsage?.()
+      stopUsage = null
+      if (!user) return setRemaining(null)
+      stopUsage = onSnapshot(
+        doc(db, 'aiUsage', user.uid),
+        snapshot => {
+          const data = snapshot.data()
+          if (!data?.day || limit === null) return
+          const spent = data.day === dayKey() ? Number(data.count) || 0 : 0
+          setRemaining(Math.max(limit - spent, 0))
+        },
+        () => setRemaining(null)
+      )
+    })
+    return () => {
+      stopUsage?.()
+      stopAuth()
+    }
+  }, [limit])
 
   const turnLimitReached = history.length >= MAX_HISTORY_MESSAGES
   const quotaExhausted = remaining === 0
@@ -69,6 +87,9 @@ export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
     setHistory([])
     setError('')
     setLoading(false)
+    /* Anything keyed by message index — the builder's applied/discarded
+       proposals — has to be able to tell conversations apart. */
+    setConversationId(current => current + 1)
   }, [])
 
   const ask = useCallback(
@@ -125,6 +146,7 @@ export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
           },
         ])
 
+        if (typeof payload.limit === 'number') setLimit(payload.limit)
         if (typeof payload.remaining === 'number') setRemaining(payload.remaining)
       } catch (caught) {
         const message =
@@ -152,9 +174,11 @@ export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
       loading,
       error,
       remaining,
+      limit,
+      conversationId,
       quotaExhausted,
       turnLimitReached,
     }),
-    [messages, ask, reset, loading, error, remaining, quotaExhausted, turnLimitReached]
+    [messages, ask, reset, loading, error, remaining, limit, conversationId, quotaExhausted, turnLimitReached]
   )
 }

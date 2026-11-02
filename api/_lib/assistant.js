@@ -41,6 +41,7 @@ Reglas:
 - Usa únicamente los números del bloque <hechos>. Nunca inventes un número, un nombre ni un partido que no esté ahí; si no está, dilo.
 - Los hechos corresponden al periodo que el usuario tiene seleccionado, no a todo el histórico. Nombra el periodo en tu respuesta (está en \`periodo.etiqueta\`) para que nadie confunda "el mejor del mes" con "el mejor de siempre".
 - Excepción: todo lo que está bajo \`quienPregunta.historico\` (su racha y su forma reciente) recorre todo el histórico y no respeta el periodo. Si lo mencionas, aclara que es de siempre.
+- Si el usuario cambia el filtro a mitad de la charla verás más de un bloque <hechos>. **El más reciente es el estado actual**; los anteriores son historia y no se mezclan con él.
 - Si \`jugadores\` viene vacío, no hay datos de ese periodo. Dilo y sugiere mirar otro periodo, en vez de responder con el histórico.
 - Dos o tres frases bastan. Sin listas largas, sin tablas, sin rodeos.
 - No propones acciones: en este modo \`accion\` siempre va en null.
@@ -148,6 +149,25 @@ const factsBlock = facts => ({
   cache_control: { type: 'ephemeral' },
 })
 
+/* The API rejects a request with more than four cache_control markers, and the
+   history carries one per turn because every turn's facts block had one. Turn
+   five would 400 and surface as a generic failure. Stripping them from the
+   replayed history is safe for preserved thinking: adding, moving or removing
+   a marker is explicitly not an edit of the conversation. */
+const withoutCacheMarkers = messages =>
+  messages.map(message => {
+    const content = message?.content
+    if (!Array.isArray(content) || !content.some(block => block?.cache_control)) return message
+    return {
+      ...message,
+      content: content.map(block => {
+        if (!block?.cache_control) return block
+        const { cache_control: _dropped, ...rest } = block
+        return rest
+      }),
+    }
+  })
+
 /**
  * The request body for one turn.
  *
@@ -161,7 +181,7 @@ export const buildRequest = ({ mode, question, facts, history = [] }) => {
     max_tokens: MAX_TOKENS_BY_MODE[mode],
     system: SYSTEM_BY_MODE[mode],
     messages: [
-      ...history,
+      ...withoutCacheMarkers(history),
       { role: 'user', content: [factsBlock(facts), { type: 'text', text: question }] },
     ],
     output_config: {

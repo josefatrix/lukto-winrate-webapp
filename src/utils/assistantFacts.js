@@ -145,9 +145,19 @@ export const buildStatsFacts = ({
   return { periodo: periodFor(timeFilter), jugadores, quienPregunta, ultimosPartidos, parejas, duelos }
 }
 
+/**
+ * The builder's view of the roster is not the period's view.
+ *
+ * `statsFacts.jugadores` only holds players with matches in the active filter,
+ * which is right for the stats bot and wrong here: the admin is deciding who
+ * plays tonight, and the prompt tells the model to propose substitutes from
+ * this list. An active player who missed the month still has to be in it, with
+ * a name rather than a raw id.
+ */
 export const buildBuilderFacts = (
   statsFacts,
   {
+    players = [],
     matchFormat = '',
     teamSize = 0,
     requiredPlayers = 0,
@@ -160,21 +170,45 @@ export const buildBuilderFacts = (
   } = {}
 ) => {
   const power = id => playerPowerMap[id]
+  const withPower = entry => ({
+    ...entry,
+    power: power(entry.id)?.score ?? null,
+    tier: power(entry.id)?.tier ?? 'unknown',
+    puntajeConocido: power(entry.id)?.known ?? false,
+  })
+
+  const fromPeriod = statsFacts.jugadores.map(withPower)
+  const known = new Set(fromPeriod.map(entry => entry.id))
+  const restOfRoster = players
+    .filter(player => !player.archived && !known.has(player.id))
+    .map(player =>
+      withPower({
+        id: player.id,
+        nombre: player.name,
+        pj: 0,
+        v: 0,
+        e: 0,
+        d: 0,
+        winRate: 0,
+        calif: null,
+        mvps: 0,
+        puntos: null,
+        activo: true,
+      })
+    )
+
+  const jugadores = [...fromPeriod, ...restOfRoster]
+  const nameOf = id => jugadores.find(entry => entry.id === id)?.nombre || id
 
   return {
     ...statsFacts,
     formato: matchFormat,
     teamSize,
     jugadoresRequeridos: requiredPlayers,
-    jugadores: statsFacts.jugadores.map(entry => ({
-      ...entry,
-      power: power(entry.id)?.score ?? null,
-      tier: power(entry.id)?.tier ?? 'unknown',
-      puntajeConocido: power(entry.id)?.known ?? false,
-    })),
+    jugadores,
     convocados: selectedPlayers.map(id => ({
       id,
-      nombre: statsFacts.jugadores.find(entry => entry.id === id)?.nombre || id,
+      nombre: nameOf(id),
       power: power(id)?.score ?? null,
       tier: power(id)?.tier ?? 'unknown',
       posicion: matchPositions[id] || '',
@@ -186,9 +220,12 @@ export const buildBuilderFacts = (
       banda: liveDraftInsights?.balanceBand?.label ?? '',
       probabilidad: liveDraftInsights?.probability ?? null,
     },
+    /* useMatchBuilder emite whiteOut / blackOut. Leer swap.white dejaba la
+       pareja en undefined y el modelo citaba una mejora real sobre jugadores
+       que adivinaba. */
     swapsSugeridos: (liveDraftInsights?.swapSuggestions || []).map(swap => ({
-      blanco: swap.white,
-      negro: swap.black,
+      blanco: swap.whiteOut,
+      negro: swap.blackOut,
       mejora: swap.improvement,
       balanceDespues: swap.nextBalance,
     })),
@@ -221,7 +258,14 @@ const pairList = value =>
  */
 export const validateAssistantAction = (
   accion,
-  { players = [], selectedPlayers = [], requiredPlayers = 0, teamWhite = [], teamBlack = [] } = {}
+  {
+    players = [],
+    selectedPlayers = [],
+    requiredPlayers = 0,
+    teamSize = 0,
+    teamWhite = [],
+    teamBlack = [],
+  } = {}
 ) => {
   if (accion === null || accion === undefined) return { ok: true, accion: null }
   if (typeof accion !== 'object' || Array.isArray(accion)) {
@@ -272,6 +316,12 @@ export const validateAssistantAction = (
 
   const bothTeams = fijarBlanco.find(id => fijarNegro.includes(id))
   if (bothTeams) return reject(`${nameOf(bothTeams)} no puede estar en los dos equipos.`)
+
+  /* Without this the greedy quietly overfills white and dumps the rest on
+     black, and a 6v4 split goes out with a success toast. */
+  if (teamSize && (fijarBlanco.length > teamSize || fijarNegro.length > teamSize)) {
+    return reject(`No caben tantos jugadores fijos en un equipo de ${teamSize}.`)
+  }
 
   const outsideIncluded = incluir.find(id => pool.has(id))
   if (outsideIncluded) return reject(`${nameOf(outsideIncluded)} ya está en la convocatoria.`)

@@ -10,9 +10,15 @@ export const MAX_QUESTION_CHARS = 500
 export const MAX_FACTS_BYTES = 60 * 1024
 /** Ten turns, two messages each. */
 export const MAX_HISTORY_MESSAGES = 20
+/* The question cap counts questions; the bill counts tokens. Without a byte
+   budget a linked member can push megabytes of history through on the owner's
+   key — and past 100K tokens Haiku 5.5 costs five times as much per token. */
+export const MAX_HISTORY_BYTES = 200 * 1024
 
 const MODES = ['stats', 'builder']
-const ROLES = ['user', 'assistant', 'system']
+/* No 'system': mid-conversation system messages carry operator authority
+   and that channel is not the client's to use. */
+const ROLES = ['user', 'assistant']
 
 const fail = error => ({ ok: false, status: 400, error })
 
@@ -58,6 +64,16 @@ export const validateBody = body => {
   )
   if (!everyTurnUsable) {
     return fail('El historial de la conversación llegó mal formado.')
+  }
+
+  let historyBytes
+  try {
+    historyBytes = Buffer.byteLength(JSON.stringify(history), 'utf8')
+  } catch {
+    return fail('El historial de la conversación llegó mal formado.')
+  }
+  if (historyBytes > MAX_HISTORY_BYTES) {
+    return fail('Esta conversación ya es muy larga. Empezá una nueva para seguir preguntando.')
   }
 
   return { ok: true, value: { mode: body.mode, question, facts: body.facts, history } }

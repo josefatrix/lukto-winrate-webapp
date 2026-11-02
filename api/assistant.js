@@ -114,6 +114,7 @@ export default async function handler(req, res) {
          facts block byte for byte, and the history check compares bytes. */
       userContent: request.messages.at(-1).content,
       remaining: reserved.remaining,
+      limit: reserved.limit,
       usage: message.usage ?? null,
     })
   } catch (error) {

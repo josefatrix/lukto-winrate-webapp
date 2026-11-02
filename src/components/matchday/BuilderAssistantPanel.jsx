@@ -85,6 +85,7 @@ export const BuilderAssistantPanel = ({ mb }) => {
       userPlayerId: userPlayer,
     })
     return buildBuilderFacts(statsFacts, {
+      players,
       matchFormat: mb.matchFormat,
       teamSize: mb.teamSize,
       requiredPlayers: mb.requiredPlayers,
@@ -103,42 +104,53 @@ export const BuilderAssistantPanel = ({ mb }) => {
         players,
         selectedPlayers: mb.selectedPlayers,
         requiredPlayers: mb.requiredPlayers,
+        teamSize: mb.teamSize,
         teamWhite: mb.teamWhite,
         teamBlack: mb.teamBlack,
       }),
-    [players, mb.selectedPlayers, mb.requiredPlayers, mb.teamWhite, mb.teamBlack]
+    [players, mb.selectedPlayers, mb.requiredPlayers, mb.teamSize, mb.teamWhite, mb.teamBlack]
   )
 
   const assistant = useAiAssistant({ mode: 'builder', buildFacts, validateAction })
 
-  const renderAction = useCallback(
-    (accion, index) => (
-      <ProposalCard
-        accion={accion}
-        nameOf={nameOf}
-        applied={resolved[index] === 'applied'}
-        failure={resolved[index]?.startsWith?.('error:') ? resolved[index].slice(6) : ''}
-        onApply={() => {
-          const result = mb.applyAssistantAction(accion)
-          setResolved(current => ({
-            ...current,
-            [index]: result.ok ? 'applied' : `error:${result.reason}`,
-          }))
-        }}
-        onDiscard={() => setResolved(current => ({ ...current, [index]: 'discarded' }))}
-      />
-    ),
-    [nameOf, resolved, mb]
+  /* Keyed by conversation as well as index: "Empezar de nuevo" reuses the
+     indexes, and without this the first answer of a new conversation inherits
+     the previous one's "Aplicada" and loses its Apply button. */
+  const keyFor = useCallback(
+    index => `${assistant.conversationId}:${index}`,
+    [assistant.conversationId]
   )
 
   const renderActionIfPending = useCallback(
-    (accion, index) =>
-      resolved[index] === 'discarded' ? (
-        <p className="as-notice">Propuesta descartada.</p>
-      ) : (
-        renderAction(accion, index)
-      ),
-    [renderAction, resolved]
+    (accion, index) => {
+      const key = keyFor(index)
+      const state = resolved[key]
+      if (state === 'discarded') return <p className="as-notice">Propuesta descartada.</p>
+
+      return (
+        <ProposalCard
+          accion={accion}
+          nameOf={nameOf}
+          applied={state === 'applied'}
+          failure={state?.startsWith?.('error:') ? state.slice(6) : ''}
+          onApply={() => {
+            /* Re-checked here, not only when the answer arrived: the admin can
+               move players around while the model is thinking, and a swap that
+               keeps the headcount would otherwise drop a constraint silently. */
+            const recheck = validateAction(accion)
+            const result = recheck.ok
+              ? mb.applyAssistantAction(recheck.accion)
+              : { ok: false, reason: `La convocatoria cambió: ${recheck.reason}` }
+            setResolved(current => ({
+              ...current,
+              [key]: result.ok ? 'applied' : `error:${result.reason}`,
+            }))
+          }}
+          onDiscard={() => setResolved(current => ({ ...current, [key]: 'discarded' }))}
+        />
+      )
+    },
+    [keyFor, nameOf, resolved, mb, validateAction]
   )
 
   const hint = useMemo(

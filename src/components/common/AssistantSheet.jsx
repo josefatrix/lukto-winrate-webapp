@@ -30,7 +30,7 @@ export const AssistantSheet = ({
   const threadRef = useRef(null)
   const inputRef = useRef(null)
 
-  const { messages, ask, reset, loading, error, remaining, quotaExhausted, turnLimitReached } =
+  const { messages, ask, reset, loading, error, remaining, limit, quotaExhausted, turnLimitReached } =
     assistant
 
   useEffect(() => {
@@ -68,7 +68,9 @@ export const AssistantSheet = ({
               : `Te quedan ${remaining} ${remaining === 1 ? 'pregunta' : 'preguntas'} hoy`}
           </span>
         ) : (
-          <span className="as-remaining as-remaining-unknown">Cupo diario: 15 preguntas</span>
+          <span className="as-remaining as-remaining-unknown">
+            {limit ? `Cupo diario: ${limit} preguntas` : 'Hay un cupo diario de preguntas'}
+          </span>
         )}
         {messages.length > 0 && (
           <button type="button" className="as-reset" onClick={reset}>

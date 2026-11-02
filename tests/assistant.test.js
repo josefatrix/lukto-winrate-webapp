@@ -126,9 +126,18 @@ test('los mensajes anteriores no se modifican entre dos peticiones consecutivas'
     history,
   })
 
+  /* Byte-idénticos salvo los marcadores de caché, que la API trata aparte:
+     añadir, mover o quitar un cache_control no cuenta como editar el
+     historial, y hay que quitarlos para no pasar del tope de cuatro. */
+  const stripMarkers = messages =>
+    messages.map(message => ({
+      ...message,
+      content: (message.content || []).map(({ cache_control: _ignored, ...block }) => block),
+    }))
+
   assert.equal(
     JSON.stringify(second.messages.slice(0, history.length)),
-    JSON.stringify(history),
+    JSON.stringify(stripMarkers(history)),
     'reescribir un turno anterior invalidaría los bloques de pensamiento'
   )
   assert.equal(second.system, first.system, 'el system prompt no puede cambiar a mitad de conversación')
@@ -241,4 +250,50 @@ test('todos los AssistantReplyError traen un mensaje en español para mostrar', 
     const err = caughtReplyError(() => parseAssistantReply(message))
     assert.ok(err.userMessage.length > 10, `falta userMessage para ${err.code}`)
   }
+})
+
+// ── Hallazgos de la revisión de rama ───────────────────────────────────────
+
+const turnPair = factsBlockText => [
+  { role: 'user', content: [{ type: 'text', text: factsBlockText, cache_control: { type: 'ephemeral' } }, { type: 'text', text: 'pregunta' }] },
+  { role: 'assistant', content: [{ type: 'text', text: '{"respuesta":"ok","accion":null}' }] },
+]
+
+const countMarkers = request =>
+  request.messages.reduce(
+    (total, message) =>
+      total + (message.content || []).filter(block => block?.cache_control).length,
+    0
+  )
+
+test('una conversación larga nunca manda más de cuatro marcadores de caché', () => {
+  // La API rechaza con 400 a partir del quinto. Sin esto, toda conversación
+  // moría en la quinta pregunta.
+  for (let turns = 1; turns <= 10; turns++) {
+    const history = Array.from({ length: turns }, (_, i) => turnPair(`<hechos>${i}</hechos>`)).flat()
+    const request = buildRequest({ mode: 'builder', question: 'otra', facts, history })
+    assert.ok(
+      countMarkers(request) <= 4,
+      `con ${turns} turnos van ${countMarkers(request)} marcadores`
+    )
+  }
+})
+
+test('el marcador de caché queda en el bloque de hechos nuevo', () => {
+  const history = turnPair('<hechos>viejo</hechos>')
+  const request = buildRequest({ mode: 'stats', question: 'otra', facts, history })
+  assert.deepEqual(request.messages.at(-1).content[0].cache_control, { type: 'ephemeral' })
+  assert.equal(countMarkers(request), 1)
+})
+
+test('quitar marcadores no cambia el texto de los turnos anteriores', () => {
+  const history = turnPair('<hechos>viejo</hechos>')
+  const request = buildRequest({ mode: 'stats', question: 'otra', facts, history })
+  const sentText = request.messages.slice(0, 2).map(m => (m.content || []).map(b => b.text))
+  const originalText = history.map(m => (m.content || []).map(b => b.text))
+  assert.deepEqual(sentText, originalText, 'solo se tocan los marcadores, nunca el contenido')
+})
+
+test('el system prompt de stats también dice cuál bloque de hechos es el actual', () => {
+  assert.match(SYSTEM_BY_MODE.stats, /más reciente/i)
 })

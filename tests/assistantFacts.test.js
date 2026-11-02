@@ -354,3 +354,87 @@ test('una acción que no es objeto se rechaza', () => {
     assert.equal(check(accion).ok, false, `accion ${JSON.stringify(accion)}`)
   }
 })
+
+// ── Hallazgos de la revisión de rama ───────────────────────────────────────
+
+/* La forma real que produce useMatchBuilder (swapSuggestions), no una
+   inventada: el test anterior validaba el mock y escondía el bug. */
+const realSwapSuggestion = { whiteOut: 'p1', blackOut: 'p3', improvement: 6, nextBalance: 84, nextWhiteProb: 52, nextBlackProb: 48 }
+
+test('los swaps sugeridos llegan con los jugadores, no solo con la mejora', () => {
+  const result = buildBuilderFacts(facts(), {
+    players,
+    teamSize: 2,
+    requiredPlayers: 4,
+    selectedPlayers: ['p1', 'p2', 'p3', 'p4'],
+    playerPowerMap: powerMap,
+    liveDraftInsights: { swapSuggestions: [realSwapSuggestion] },
+    teamWhite: ['p1', 'p3'],
+    teamBlack: ['p2', 'p4'],
+  })
+  const [swap] = result.swapsSugeridos
+  assert.equal(swap.blanco, 'p1', 'sin esto el modelo adivina la pareja y cita una mejora real')
+  assert.equal(swap.negro, 'p3')
+  assert.equal(swap.mejora, 6)
+})
+
+test('el armador ve el plantel activo completo, no solo a quien jugó en el periodo', () => {
+  // displayStats solo trae jugadores con partidos en el periodo activo; el
+  // armador necesita saber a quién puede llamar esta noche.
+  const soloUno = buildStatsFacts({
+    players,
+    displayStats: [stat('p1')],
+    matches,
+    timeFilter: 'month',
+    userPlayerId: 'p1',
+  })
+  const result = buildBuilderFacts(soloUno, {
+    players,
+    teamSize: 2,
+    requiredPlayers: 4,
+    selectedPlayers: ['p1'],
+    playerPowerMap: powerMap,
+    liveDraftInsights: {},
+  })
+  const ids = result.jugadores.map(j => j.id)
+  assert.ok(ids.includes('p2'), 'un activo sin partidos este mes tiene que estar')
+  assert.ok(ids.includes('p4'))
+  assert.equal(ids.includes('p5'), false, 'los archivados no se pueden convocar')
+  const werz = result.jugadores.find(j => j.id === 'p2')
+  assert.equal(werz.nombre, 'Werz', 'con nombre, no con el id crudo')
+  assert.equal(werz.pj, 0)
+  assert.equal(werz.power, 70)
+})
+
+test('los convocados siempre tienen nombre aunque no hayan jugado en el periodo', () => {
+  const soloUno = buildStatsFacts({ players, displayStats: [stat('p1')], matches, timeFilter: 'month' })
+  const result = buildBuilderFacts(soloUno, {
+    players,
+    teamSize: 2,
+    requiredPlayers: 4,
+    selectedPlayers: ['p1', 'p2'],
+    playerPowerMap: powerMap,
+    liveDraftInsights: {},
+  })
+  assert.equal(result.convocados.find(c => c.id === 'p2').nombre, 'Werz')
+})
+
+test('fijar más jugadores de los que caben en un equipo se rechaza', () => {
+  const result = check(
+    { tipo: 'rebalancear', fijarBlanco: ['p1', 'p2', 'p3'] },
+    { teamSize: 2 }
+  )
+  assert.equal(result.ok, false)
+  assert.match(result.reason, /caben|equipo/i)
+})
+
+test('fijar justo los que caben se acepta', () => {
+  assert.equal(check({ tipo: 'rebalancear', fijarBlanco: ['p1', 'p2'] }, { teamSize: 2 }).ok, true)
+})
+
+test('fijar de más en el equipo negro también se rechaza', () => {
+  assert.equal(
+    check({ tipo: 'rebalancear', fijarNegro: ['p1', 'p2', 'p3'] }, { teamSize: 2 }).ok,
+    false
+  )
+})
