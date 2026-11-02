@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useApp } from '../../contexts'
 import { AppIcon } from '../common'
+import { BuilderAssistantPanel } from '../matchday/BuilderAssistantPanel'
 import { getPositionLabel } from '../../utils/matchConstants'
 import { doc, deleteDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
@@ -957,6 +958,8 @@ export function MatchBuilderTab({ mb }) {
       </div>
 
       {mb.showTvBoard && <TvBoardOverlay mb={mb} getPlayerName={getPlayerName} />}
+
+      <BuilderAssistantPanel mb={mb} />
 
       {showPollModal && pollOptions && (
         <PollModal

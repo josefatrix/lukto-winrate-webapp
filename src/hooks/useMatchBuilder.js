@@ -634,9 +634,19 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     probability: calculateTeamProbability({ teamWhite: whiteIds, teamBlack: blackIds }),
   }), [teamSize, getPlayerBalanceScore, positionOf, calculateTeamProbability])
 
-  const suggestBalancedTeams = useCallback(({ preserveLockedCaptains, constraints } = {}) => {
+  /* `poolOverride` / `positionsOverride` exist for applyAssistantAction: it
+     changes the roster and the positions in the same tick, and React state
+     has not caught up by the time the balancer has to run on the new values.
+     `undoLabel: null` lets the caller own the undo entry. */
+  const suggestBalancedTeams = useCallback((options = {}) => {
+    const { preserveLockedCaptains, constraints, poolOverride, positionsOverride } = options
+    const undoLabel = 'undoLabel' in options ? options.undoLabel : 'Auto-balance'
+    const positionLookup = positionsOverride
+      ? (playerId) => positionsOverride[playerId] || ''
+      : positionOf
+    const basePositions = positionsOverride || matchPositions
     const validIds = new Set(players.map(p => p.id))
-    const pool = Array.from(new Set(selectedPlayers)).filter(id => validIds.has(id))
+    const pool = Array.from(new Set(poolOverride || selectedPlayers)).filter(id => validIds.has(id))
     const shouldPreserve = preserveLockedCaptains ?? preserveCaptains
 
     if (pool.length !== requiredPlayers) {
@@ -648,7 +658,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
       return
     }
 
-    pushUndo('Auto-balance')
+    if (undoLabel) pushUndo(undoLabel)
 
     const sortedPool = [...pool].sort(
       (a, b) => getPlayerBalanceScore(b) - getPlayerBalanceScore(a) || a.localeCompare(b)
@@ -677,7 +687,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
       pinnedBlack: pinnedB,
       teamSize,
       scoreOf: getPlayerBalanceScore,
-      positionOf,
+      positionOf: positionLookup,
       probabilityOf: (white, black) =>
         calculateTeamProbability({ teamWhite: white, teamBlack: black }),
       iterations: BEST_OF_N_ITERATIONS + 1,
@@ -687,7 +697,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     const bestWhiteIds = best.white
     const bestBlackIds = best.black
 
-    const retained = { ...matchPositions }
+    const retained = { ...basePositions }
     Object.keys(retained).forEach(pid => {
       if (!bestWhiteIds.includes(pid) && !bestBlackIds.includes(pid)) delete retained[pid]
     })
@@ -709,7 +719,10 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
       bestWhiteIds.reduce((s, id) => s + getPlayerBalanceScore(id), 0) -
       bestBlackIds.reduce((s, id) => s + getPlayerBalanceScore(id), 0),
     ).toFixed(1)
-    const rolePenalty = (getTeamRolePenalty(bestWhiteIds) + getTeamRolePenalty(bestBlackIds)).toFixed(2)
+    const rolePenalty = (
+      rolePenaltyFor(bestWhiteIds.map(positionLookup), teamSize) +
+      rolePenaltyFor(bestBlackIds.map(positionLookup), teamSize)
+    ).toFixed(2)
     const lockTag = shouldPreserve ? ' · capitanes bloqueados' : ''
     /* `success` even when a constraint went unmet: the split is valid and
        applied, and only .toast.success / .toast.error have styles. The caveat
@@ -719,9 +732,10 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   }, [
     players, selectedPlayers, requiredPlayers, teamSize,
     preserveCaptains, lockedWhiteCaptain, lockedBlackCaptain,
-    getPlayerBalanceScore, getTeamRolePenalty, matchPositions, positionOf,
+    getPlayerBalanceScore, matchPositions, positionOf,
     calculateTeamProbability, playerFrequentPositions, showToast, pushUndo,
   ])
+
 
   // ── Live draft insights (teams summary, no swaps) ──
   const liveDraftBase = useMemo(() => {
@@ -881,6 +895,55 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     setWinner('')
     showToast('success', `Cambio aplicado: ${getPlayerName(whiteOut)} ↔ ${getPlayerName(blackOut)}`)
   }, [getPlayerName, showToast])
+
+  /* Applies one validated assistant action. It lives in the hook rather than
+     exporting pushUndo to a component: the hook stays the owner of its own
+     undo history. */
+  const applyAssistantAction = useCallback((accion) => {
+    if (!accion) return { ok: false, reason: 'La propuesta no trae cambios que aplicar.' }
+
+    if (accion.tipo === 'aplicarSwap') {
+      if (!accion.swap?.blanco || !accion.swap?.negro) {
+        return { ok: false, reason: 'El intercambio propuesto está incompleto.' }
+      }
+      pushUndo('Asistente')
+      applySwapSuggestion(accion.swap.blanco, accion.swap.negro)
+      return { ok: true }
+    }
+
+    const nextPool = [
+      ...selectedPlayers.filter(id => !accion.excluir.includes(id)),
+      ...accion.incluir.filter(id => !selectedPlayers.includes(id)),
+    ]
+    if (nextPool.length !== requiredPlayers) {
+      return {
+        ok: false,
+        reason: `Con esos cambios quedan ${nextPool.length} jugadores y el formato pide ${requiredPlayers}.`,
+      }
+    }
+
+    const nextPositions = {}
+    for (const [id, position] of Object.entries(matchPositions)) {
+      if (nextPool.includes(id)) nextPositions[id] = position
+    }
+    for (const [id, position] of Object.entries(accion.posiciones || {})) {
+      if (nextPool.includes(id)) nextPositions[id] = position
+    }
+
+    pushUndo('Asistente')
+    setSelectedPlayers(nextPool)
+    setMatchPositions(nextPositions)
+    suggestBalancedTeams({
+      constraints: accion,
+      poolOverride: nextPool,
+      positionsOverride: nextPositions,
+      undoLabel: null,
+    })
+    return { ok: true }
+  }, [
+    selectedPlayers, requiredPlayers, matchPositions,
+    pushUndo, applySwapSuggestion, suggestBalancedTeams,
+  ])
 
   // ── TV Board ──
   const inferPositionFromBoard = useCallback((x, y, team) => {
@@ -1379,6 +1442,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     handleWhiteCaptainChange,
     handleBlackCaptainChange,
     suggestBalancedTeams,
+    applyAssistantAction,
     applySwapSuggestion,
     handleAddMatch,
     resetMatchForm,
