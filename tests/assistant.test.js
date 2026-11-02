@@ -170,7 +170,7 @@ test('el system prompt avisa que el bloque de hechos más reciente es el estado 
 })
 
 test('el system prompt avisa que la racha ignora el periodo', () => {
-  assert.match(SYSTEM_BY_MODE.stats, /rachaHistorica/)
+  assert.match(SYSTEM_BY_MODE.stats, /quienPregunta\.historico/)
 })
 
 // ── Parseo ─────────────────────────────────────────────────────────────────
