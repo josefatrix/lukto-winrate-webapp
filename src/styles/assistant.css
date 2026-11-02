@@ -1,0 +1,283 @@
+/* Asistente de IA: hoja de chat y panel del armador. */
+
+.assistant-sheet .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.as-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.as-remaining-unknown {
+  opacity: 0.6;
+}
+
+.as-reset {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  opacity: 0.8;
+  padding: 0;
+}
+
+.as-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: min(48vh, 420px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+
+.as-empty {
+  margin: 0;
+  padding: 18px 4px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.7;
+}
+
+.as-msg {
+  max-width: 88%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.as-msg-user {
+  align-self: flex-end;
+  background: rgba(125, 125, 160, 0.22);
+  border-bottom-right-radius: 4px;
+}
+
+.as-msg-assistant {
+  align-self: flex-start;
+  background: rgba(125, 125, 160, 0.12);
+  border-bottom-left-radius: 4px;
+}
+
+.as-msg-loading {
+  padding: 14px 16px;
+}
+
+.as-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.as-action {
+  margin-top: 10px;
+}
+
+.as-action-error,
+.as-error,
+.as-notice {
+  margin: 0;
+  font-size: 13px
+}
+
+.as-action-error,
+.as-error {
+  color: #ff6b6b;
+}
+
+.as-notice {
+  opacity: 0.75;
+}
+
+.as-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.as-chip {
+  border: 1px solid rgba(125, 125, 160, 0.4);
+  background: transparent;
+  color: inherit;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.as-chip:active {
+  transform: scale(0.97);
+}
+
+.as-form {
+  display: flex;
+  gap: 8px;
+}
+
+.as-input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(125, 125, 160, 0.35);
+  background: rgba(125, 125, 160, 0.1);
+  color: inherit;
+  font-size: 16px; /* iOS hace zoom automático al enfocar cualquier input de menos de 16px */
+}
+
+.as-input:disabled {
+  opacity: 0.55;
+}
+
+.as-send {
+  padding: 11px 16px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(96, 165, 250, 0.9);
+  color: #06121f;
+  font-weight: 650;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.as-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.as-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.as-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.45;
+  animation: as-bounce 1.1s infinite ease-in-out;
+}
+
+.as-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.as-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes as-bounce {
+  0%,
+  70%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  35% {
+    transform: translateY(-4px);
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .as-dots i {
+    animation: none;
+  }
+}
+
+/* ── Panel del armador ─────────────────────────────────────────────────── */
+
+.mb-assistant {
+  margin-top: 14px;
+  border: 1px solid rgba(125, 125, 160, 0.28);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.mb-assistant-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 15px;
+  background: rgba(125, 125, 160, 0.1);
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mb-assistant-hint {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.as-proposal {
+  border: 1px solid rgba(96, 165, 250, 0.45);
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: rgba(96, 165, 250, 0.08);
+  font-size: 13px;
+}
+
+.as-proposal-title {
+  margin: 0 0 6px;
+  font-weight: 650;
+}
+
+.as-proposal ul {
+  margin: 0 0 10px;
+  padding-left: 18px;
+  line-height: 1.55;
+}
+
+.as-proposal-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.as-apply,
+.as-discard {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.as-apply {
+  background: rgba(96, 165, 250, 0.9);
+  color: #06121f;
+}
+
+.as-discard {
+  background: transparent;
+  border-color: rgba(125, 125, 160, 0.4);
+  color: inherit;
+}
+
+@media (max-width: 480px) {
+  .as-thread {
+    max-height: 42vh;
+  }
+
+  .as-msg {
+    max-width: 94%;
+  }
+}

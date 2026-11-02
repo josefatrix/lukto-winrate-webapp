@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useApp, SUPER_ADMIN_EMAIL } from './contexts'
-import { useStats, useMatchBuilder } from './hooks'
+import { useStats, useMatchBuilder, useAiAssistant } from './hooks'
 import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs, addDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from './firebase'
 import confetti from 'canvas-confetti'
@@ -22,7 +22,8 @@ import {
   getWinRateClass,
 } from './utils/ranks'
 import { AdminLoginModal, PendingUserModal } from './components/modals'
-import { AvatarImage, AppIcon, FloatingActionButton, SkeletonTable, SkeletonMatchesList, PendingRatingsNotification, createAvatarState, PlayerProfileModal } from './components/common'
+import { AvatarImage, AppIcon, AssistantSheet, FloatingActionButton, SkeletonTable, SkeletonMatchesList, PendingRatingsNotification, createAvatarState, PlayerProfileModal } from './components/common'
+import { buildStatsFacts } from './utils/assistantFacts'
 
 // ============ PENDING USER CARD ============
 
@@ -128,7 +129,7 @@ function App() {
   } = useApp()
 
   // Stats hook
-  const { stats, filteredStats, rankingMovers, getPlayerOfMonth, getMonthlyWinners, getPlayerOfWeek, getWeeklyWinners } = useStats()
+  const { stats, filteredStats, getFilteredMatches, rankingMovers, getPlayerOfMonth, getMonthlyWinners, getPlayerOfWeek, getWeeklyWinners } = useStats()
 
   // Onboarding hook
 
@@ -318,6 +319,29 @@ function App() {
   // ============ CALCULATED VALUES ============
 
   const displayStats = timeFilter === 'all' ? stats : filteredStats
+
+  // ============ ASISTENTE DE ESTADÍSTICAS ============
+
+  const [statsAssistantOpen, setStatsAssistantOpen] = useState(false)
+
+  /* Los hechos se arman en cada pregunta, no una vez: el usuario puede cambiar
+     el filtro de periodo con la hoja abierta. `matches` va filtrado por
+     periodo y el histórico completo aparte, para que la racha siga siendo de
+     siempre sin que el resto del bloque se salga del periodo. */
+  const buildStatsAssistantFacts = useCallback(
+    () =>
+      buildStatsFacts({
+        players,
+        displayStats,
+        matches: timeFilter === 'all' ? matches : getFilteredMatches,
+        allMatches: matches,
+        timeFilter,
+        userPlayerId: userPlayer,
+      }),
+    [players, displayStats, matches, getFilteredMatches, timeFilter, userPlayer]
+  )
+
+  const statsAssistant = useAiAssistant({ mode: 'stats', buildFacts: buildStatsAssistantFacts })
   const statsById = useMemo(
     () => Object.fromEntries((stats || []).map(playerStats => [playerStats.id, playerStats])),
     [stats]
@@ -4582,10 +4606,40 @@ function App() {
               icon: <AppIcon name="note" size={14} />,
               onClick: () => setActiveTab('dashboard')
             },
+            {
+              label: 'Preguntale a Claude',
+              icon: <AppIcon name="info" size={14} />,
+              onClick: () => setStatsAssistantOpen(true)
+            },
           ]}
           ariaLabel="Acciones rápidas"
         />
       )}
+
+      {/* Asistente de estadísticas: un solo FAB en pantalla. Para el admin es un
+          ítem más del menú de arriba; para el resto, su propio botón. */}
+      {!isAdmin && user && userPlayer && (
+        <FloatingActionButton
+          onClick={() => setStatsAssistantOpen(true)}
+          icon={<AppIcon name="info" size={18} />}
+          ariaLabel="Preguntale a Claude sobre las estadísticas"
+        />
+      )}
+
+      <AssistantSheet
+        open={statsAssistantOpen}
+        onClose={() => setStatsAssistantOpen(false)}
+        title="Preguntale a Claude"
+        placeholder="¿Con quién gano más?"
+        linked={!!userPlayer}
+        assistant={statsAssistant}
+        chips={[
+          '¿Cómo voy este periodo?',
+          '¿Con quién gano más?',
+          '¿Quién está en mejor racha?',
+          '¿Quién es el mejor portero?',
+        ]}
+      />
 
       {/* Premium Toast Notification */}
       {toast && (
