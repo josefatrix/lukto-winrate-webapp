@@ -14,8 +14,13 @@ import {
   getMatchStartDate,
   clamp,
 } from '../utils/matchConstants'
-
-const BEST_OF_N_ITERATIONS = 40
+import {
+  BEST_OF_N_ITERATIONS,
+  scorePlayer,
+  rolePenaltyFor,
+  buildGreedyTeams as greedyTeams,
+  evaluateSplit as scoreSplit,
+} from '../utils/teamBalancer.js'
 const DRAFT_KEY = 'lukto_match_draft'
 
 const EMPTY_POINTER_STATE = {
@@ -515,15 +520,10 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   }, [lockedWhiteCaptain])
 
   // ── Balance score ──
-  const getPlayerBalanceScore = useCallback((playerId) => {
-    const ps = statsById[playerId]
-    if (!ps) return 50
-    const avgRating = parseFloat(ps.avgRating) || 5
-    const winRate = Number(ps.winRate) || 50
-    const mvps = Number(ps.mvps) || 0
-    const played = Number(ps.played) || 0
-    return (avgRating * 6) + (winRate * 0.5) + (Math.min(mvps, 10) * 1.2) + (Math.min(played, 20) * 0.15)
-  }, [statsById])
+  const getPlayerBalanceScore = useCallback(
+    (playerId) => scorePlayer(statsById[playerId]),
+    [statsById]
+  )
 
   /* Single source of truth for "how strong is this player".
      Same formula the balancer uses, so the dots in the UI can never
@@ -553,30 +553,12 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   }, [players, statsById, getPlayerBalanceScore])
 
   // ── Role penalty ──
-  const getTeamRolePenalty = useCallback((teamIds) => {
-    if (!teamIds?.length) return 0
-    const coverage = { Portero: 0, Defensa: 0, Medio: 0, Delantero: 0 }
-    let withoutPosition = 0
+  const positionOf = useCallback((playerId) => matchPositions[playerId] || '', [matchPositions])
 
-    teamIds.forEach(pid => {
-      const pos = matchPositions[pid] || ''
-      if (!pos) { withoutPosition += 1; return }
-      const group = getPositionGroup(pos)
-      if (coverage[group] !== undefined) coverage[group] += 1
-    })
-
-    const isComplete = teamIds.length === teamSize
-    const mult = isComplete ? 1 : 0.55
-    const weights = { Portero: 2.2, Defensa: 1.1, Medio: 0.9, Delantero: 0.6 }
-
-    let penalty = 0
-    Object.entries(weights).forEach(([role, w]) => {
-      if (coverage[role] === 0) penalty += w * mult
-    })
-    penalty += Math.max((coverage.Portero || 0) - 1, 0) * 0.35
-    penalty += withoutPosition * (isComplete ? 0.25 : 0.15)
-    return penalty
-  }, [matchPositions, teamSize])
+  const getTeamRolePenalty = useCallback(
+    (teamIds) => rolePenaltyFor(teamIds?.map(positionOf), teamSize),
+    [positionOf, teamSize]
+  )
 
   // ── Probability calculation ──
   const calculateTeamProbability = useCallback((match) => {
@@ -652,39 +634,36 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   }, [matches])
 
   // ── Auto-balance (improved: best-of-N with greedy seed) ──
+  /* Adapters over src/utils/teamBalancer.js. They keep the signatures the rest
+     of this hook already calls — entries of `{ playerId, score }` in, entries
+     out — so the extraction changed no call site. */
   const buildGreedyTeams = useCallback((scoredPlayers, pinnedWhite, pinnedBlack) => {
-    const nextWhite = [...pinnedWhite]
-    const nextBlack = [...pinnedBlack]
-    let wScore = pinnedWhite.reduce((s, e) => s + e.score, 0)
-    let bScore = pinnedBlack.reduce((s, e) => s + e.score, 0)
-    const locked = new Set([...pinnedWhite, ...pinnedBlack].map(e => e.playerId))
-
-    const remaining = scoredPlayers.filter(e => !locked.has(e.playerId))
-    remaining.forEach(entry => {
-      if (nextWhite.length >= teamSize) { nextBlack.push(entry); bScore += entry.score; return }
-      if (nextBlack.length >= teamSize) { nextWhite.push(entry); wScore += entry.score; return }
-
-      const objW = Math.abs((wScore + entry.score) - bScore)
-        + (getTeamRolePenalty([...nextWhite, entry].map(e => e.playerId)) + getTeamRolePenalty(nextBlack.map(e => e.playerId))) * 12
-      const objB = Math.abs(wScore - (bScore + entry.score))
-        + (getTeamRolePenalty(nextWhite.map(e => e.playerId)) + getTeamRolePenalty([...nextBlack, entry].map(e => e.playerId))) * 12
-
-      if (objW <= objB) { nextWhite.push(entry); wScore += entry.score }
-      else { nextBlack.push(entry); bScore += entry.score }
+    const scoreByIdFor = new Map(scoredPlayers.map(e => [e.playerId, e.score]))
+    const entryFor = pid => ({ playerId: pid, score: scoreByIdFor.get(pid) ?? getPlayerBalanceScore(pid) })
+    const result = greedyTeams({
+      order: scoredPlayers.map(e => e.playerId),
+      pinnedWhite: pinnedWhite.map(e => e.playerId),
+      pinnedBlack: pinnedBlack.map(e => e.playerId),
+      teamSize,
+      scoreOf: pid => scoreByIdFor.get(pid) ?? getPlayerBalanceScore(pid),
+      positionOf,
     })
-    return { white: nextWhite, black: nextBlack, wScore, bScore }
-  }, [teamSize, getTeamRolePenalty])
+    return {
+      white: result.white.map(entryFor),
+      black: result.black.map(entryFor),
+      wScore: result.whiteScore,
+      bScore: result.blackScore,
+    }
+  }, [teamSize, positionOf, getPlayerBalanceScore])
 
-  const evaluateSplit = useCallback((whiteIds, blackIds) => {
-    const wPower = whiteIds.reduce((s, pid) => s + getPlayerBalanceScore(pid), 0)
-    const bPower = blackIds.reduce((s, pid) => s + getPlayerBalanceScore(pid), 0)
-    const total = wPower + bPower
-    const gapPct = total > 0 ? (Math.abs(wPower - bPower) / total) * 100 : 0
-    const prob = calculateTeamProbability({ teamWhite: whiteIds, teamBlack: blackIds })
-    const probGap = Math.abs((prob.white || 50) - (prob.black || 50))
-    const rolePen = getTeamRolePenalty(whiteIds) + getTeamRolePenalty(blackIds)
-    return 100 - (probGap * 0.95) - (gapPct * 0.7) - (rolePen * 6)
-  }, [getPlayerBalanceScore, calculateTeamProbability, getTeamRolePenalty])
+  const evaluateSplit = useCallback((whiteIds, blackIds) => scoreSplit({
+    whiteIds,
+    blackIds,
+    teamSize,
+    scoreOf: getPlayerBalanceScore,
+    positionOf,
+    probability: calculateTeamProbability({ teamWhite: whiteIds, teamBlack: blackIds }),
+  }), [teamSize, getPlayerBalanceScore, positionOf, calculateTeamProbability])
 
   const suggestBalancedTeams = useCallback(({ preserveLockedCaptains } = {}) => {
     const validIds = new Set(players.map(p => p.id))

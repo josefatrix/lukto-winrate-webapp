@@ -19,6 +19,7 @@
     "lint:check": "eslint src --ext .js,.jsx",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,css}\"",
+    "test": "node --test \"tests/**/*.test.js\" \"src/utils/**/*.test.js\"",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist node_modules/.vite",
     "prepare": "echo 'Ready for development'",
