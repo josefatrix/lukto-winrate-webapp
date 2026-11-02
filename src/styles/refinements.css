@@ -1,0 +1,405 @@
+/* Quiet surfaces and focused color for the club's final visual layer. */
+.app-container {
+  --ui-blue: #82b1ff;
+  --ui-green: #79d9ac;
+  --ui-coral: #f29c9f;
+  --ui-gold: #eacb81;
+  --ui-violet: #baa2f5;
+  --ui-rim: color-mix(in srgb, var(--text-primary) 9%, transparent);
+  --ui-shadow: 0 8px 28px rgb(0 0 0 / 13%), inset 0 1px 0 rgb(255 255 255 / 3%);
+}
+.app-container.light {
+  --ui-blue: #0a60d0;
+  --ui-green: #16704c;
+  --ui-coral: #ae3748;
+  --ui-gold: #886117;
+  --ui-violet: #7651bb;
+  --ui-shadow: 0 8px 28px rgb(25 35 55 / 5%), inset 0 1px 0 rgb(255 255 255 / 75%);
+}
+.app-container :is(.rt-heading h1, .md-page-head h1, .ins-header h1, .lp-empty h1) {
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  line-height: 1.12;
+}
+.app-container :is(.club-eyebrow, .rt-eyebrow, .md-eyebrow, .ins-kicker, .lp-eyebrow) {
+  font-weight: 650;
+  letter-spacing: 0.1em;
+}
+.app-container :is(.club-nav-items a, .md-button, .rt-period button, .ins-tabs button, .lp-button) {
+  font-weight: 600;
+}
+.app-container .club-nav {
+  background: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
+  border-color: var(--ui-rim);
+}
+.app-container .club-nav-items a.active {
+  background: color-mix(in srgb, var(--club-accent) 10%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--club-accent) 10%, transparent);
+}
+.app-container .club-nav-items a[href*='stats'] svg {
+  color: var(--ui-gold);
+}
+.app-container .club-nav-items a[href*='matches'] svg {
+  color: var(--ui-blue);
+}
+.app-container .club-nav-items a[href*='analytics'] svg {
+  color: var(--ui-violet);
+}
+.app-container .club-nav-items a[href*='profile'] svg {
+  color: var(--ui-green);
+}
+.app-container :is(.club-icon-btn, .club-account) {
+  border-color: var(--ui-rim);
+  background: color-mix(in srgb, var(--bg-secondary) 75%, transparent);
+  box-shadow: none;
+}
+
+/* The standings remain dense; their surrounding controls are visually lighter. */
+.app-container .rt-controls {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.app-container .rt-period {
+  border: 1px solid var(--ui-rim);
+  background: var(--bg-secondary);
+  border-radius: 14px;
+}
+.app-container .rt-period button {
+  border-radius: 10px;
+}
+.app-container .rt-experience {
+  background: transparent;
+  border-color: transparent;
+}
+.app-container .rt-table-card {
+  border-color: var(--ui-rim);
+  border-radius: 18px;
+  box-shadow: var(--ui-shadow);
+}
+.app-container .rt-table thead th {
+  background: color-mix(in srgb, var(--bg-tertiary) 65%, var(--bg-secondary));
+}
+.app-container .rt-table td[data-label='Rating'] {
+  color: var(--ui-violet);
+}
+.app-container .rt-award {
+  border-color: color-mix(in srgb, var(--ui-gold) 17%, var(--ui-rim));
+  background: linear-gradient(
+    125deg,
+    color-mix(in srgb, var(--ui-gold) 5%, var(--bg-secondary)),
+    var(--bg-secondary)
+  );
+  box-shadow: var(--ui-shadow);
+}
+.app-container .rt-award > span {
+  color: var(--ui-gold);
+}
+
+/* Results have one primary surface, a clear score, and quiet secondary details. */
+.app-container .md-matches .md-card {
+  border: 1px solid var(--ui-rim);
+  border-radius: 20px;
+  background:
+    radial-gradient(
+      ellipse at 100% 0%,
+      color-mix(in srgb, var(--ui-blue) 7%, transparent),
+      transparent 65%
+    ),
+    var(--bg-secondary);
+  box-shadow: var(--ui-shadow);
+  padding: 18px;
+}
+.app-container .md-match-row {
+  border-color: var(--ui-rim);
+  padding-block: 14px;
+}
+.app-container .md-score-numbers {
+  gap: 8px;
+  background: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.app-container .md-score-numbers strong {
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+.app-container .md-score-numbers strong.winner {
+  color: var(--ui-blue);
+}
+.app-container .md-match-side.winner small {
+  color: var(--ui-green);
+}
+.app-container .md-match-insights {
+  padding-block: 10px;
+  font-size: 12px;
+}
+.app-container .md-matches .md-card-actions .md-button:not(.primary) {
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
+  border-color: var(--ui-rim);
+  box-shadow: none;
+}
+.app-container .md-matches .md-badge {
+  font-weight: 500;
+  background: color-mix(in srgb, var(--ui-green) 7%, transparent);
+  color: var(--ui-green);
+  border-color: color-mix(in srgb, var(--ui-green) 14%, transparent);
+}
+
+/* Profile and analysis surfaces use color to distinguish kinds of information. */
+.app-container :is(.ins-panel, .lp-panel, .lp-progress, .lp-metric, .lp-empty-profile) {
+  border-color: var(--ui-rim);
+  border-radius: 20px;
+  background: var(--bg-secondary);
+  box-shadow: var(--ui-shadow);
+}
+.app-container .ins-team-row,
+.app-container .ins-role-row {
+  border: 0;
+  border-bottom: 1px solid var(--ui-rim);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.app-container .ins-team-row:last-child,
+.app-container .ins-role-row:last-child {
+  border-bottom: 0;
+}
+.app-container .ins-summary > :nth-child(1) strong {
+  color: var(--ui-blue);
+}
+.app-container .ins-summary > :nth-child(2) strong {
+  color: var(--ui-violet);
+}
+.app-container .ins-summary > :nth-child(3) strong {
+  color: var(--ui-gold);
+}
+.app-container .lp-metric:nth-child(1) {
+  --metric-accent: var(--ui-green);
+}
+.app-container .lp-metric:nth-child(2) {
+  --metric-accent: var(--ui-violet);
+}
+.app-container .lp-metric:nth-child(3) {
+  --metric-accent: var(--ui-gold);
+}
+.app-container .lp-metric:nth-child(4) {
+  --metric-accent: var(--ui-blue);
+}
+.app-container .lp-metric {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--metric-accent, var(--ui-blue)) 6%, var(--bg-secondary)),
+    var(--bg-secondary)
+  );
+}
+.app-container .lp-metric strong {
+  color: var(--metric-accent, var(--text-primary));
+}
+.app-container .lp-identity {
+  border-color: var(--ui-rim);
+  background:
+    radial-gradient(
+      ellipse at 100% 0%,
+      color-mix(in srgb, var(--ui-violet) 9%, transparent),
+      transparent 70%
+    ),
+    var(--bg-secondary);
+  box-shadow: var(--ui-shadow);
+}
+@media (hover: hover) and (pointer: fine) {
+  .app-container .md-matches .md-card:hover {
+    border-color: color-mix(in srgb, var(--club-accent) 24%, var(--ui-rim));
+  }
+  .app-container .rt-player-button:hover {
+    background: color-mix(in srgb, var(--club-accent) 7%, transparent);
+  }
+}
+@media (max-width: 900px) {
+  .app-container .club-nav {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+@media (max-width: 760px) {
+  .app-container .md-matches .md-card {
+    padding: 14px;
+    border-radius: 18px;
+  }
+  .app-container .md-score-numbers strong {
+    font-size: 25px;
+  }
+  .app-container .md-match-row {
+    padding-block: 11px;
+  }
+  .app-container .rt-table-card {
+    border-radius: 14px;
+  }
+}
+
+/* A shared control finish keeps primary actions and quieter utilities consistent. */
+.app-container :is(.club-primary, .md-button.primary, .lp-primary) {
+  border: 1px solid color-mix(in srgb, var(--club-accent) 65%, white);
+  border-radius: 12px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--club-accent) 87%, white),
+    var(--club-accent)
+  );
+  color: var(--bg-primary);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 18%),
+    0 3px 10px color-mix(in srgb, var(--club-accent) 12%, transparent);
+  font-weight: 600;
+}
+.app-container.light :is(.club-primary, .md-button.primary, .lp-primary) {
+  color: #fff;
+}
+.app-container :is(.md-button, .lp-button, .club-icon-btn, .club-account) {
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+.app-container :is(button, a, input, select):focus-visible {
+  outline: 2px solid var(--club-accent);
+  outline-offset: 3px;
+}
+.app-container .rt-table thead th:nth-child(4) {
+  color: var(--ui-green);
+}
+.app-container .rt-table thead th:nth-child(6) {
+  color: var(--ui-coral);
+}
+.app-container .rt-table thead th:nth-child(7) {
+  color: var(--ui-gold);
+}
+.app-container .rt-table thead th:nth-child(9) {
+  color: var(--ui-violet);
+}
+@media (hover: hover) and (pointer: fine) {
+  .app-container :is(.md-button, .lp-button, .club-icon-btn, .club-account):hover {
+    border-color: color-mix(in srgb, var(--club-accent) 40%, var(--ui-rim));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-primary) 5%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-container :is(.md-button, .lp-button, .club-icon-btn, .club-account) {
+    transition: none;
+  }
+}
+
+/* Switches preserve native keyboard behavior while sharing the same tactile finish. */
+.app-container .rt-check {
+  min-height: 44px;
+  background: transparent;
+  border-color: transparent;
+}
+.app-container .club-switch,
+.app-container .club-switch-track {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-block;
+  position: relative;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--ui-rim);
+  border-radius: 999px;
+  background: var(--bg-tertiary);
+  vertical-align: middle;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+.app-container .club-switch::before,
+.app-container .club-switch-track::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 24%);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.app-container .club-switch:checked,
+.app-container .club-theme-switch[aria-checked='true'] .club-switch-track {
+  background: var(--club-accent);
+  border-color: var(--club-accent);
+}
+.app-container .club-switch:checked::before,
+.app-container .club-theme-switch[aria-checked='true'] .club-switch-track::before {
+  transform: translateX(14px);
+}
+.app-container .club-theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.app-container
+  :is(
+    .rt-period button,
+    .ins-tabs button,
+    .md-filterbar button,
+    .club-nav-items a,
+    .mb-format-btn
+  ) {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.app-container :is(input, select, textarea) {
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.app-container :is(.md-card, .lp-metric, .ins-panel) {
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-container *,
+  .app-container *::before,
+  .app-container *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The ranking is part of the page, with no enclosing card surface. */
+.app-container .rt-table-card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.app-container .rt-table {
+  background: transparent;
+}
+.app-container .rt-table thead th,
+.app-container .rt-table tbody td,
+.app-container .rt-table tbody th.rt-player-cell {
+  background: var(--bg-primary);
+  box-shadow: none;
+  border-color: var(--ui-rim);
+}
+.app-container .rt-table thead th {
+  border-bottom: 1px solid var(--ui-rim);
+}
+[data-theme='light'] .app-container input,
+[data-theme='light'] .app-container select,
+[data-theme='light'] .app-container textarea {
+  color-scheme: light;
+}

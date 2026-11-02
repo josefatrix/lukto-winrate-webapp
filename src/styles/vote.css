@@ -1,0 +1,374 @@
+.vote-page {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: 28px 16px;
+  background: var(--bg-primary, #101210);
+  color: var(--text-primary, #f2f4f8);
+}
+
+.vote-container {
+  width: min(100%, 720px);
+  display: grid;
+  gap: 20px;
+}
+
+.vote-header,
+.vote-state {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--club-line, #30343e);
+  border-radius: 14px;
+  background: var(--club-surface, #17191f);
+  padding: 24px;
+}
+
+.vote-state {
+  width: min(100%, 520px);
+  min-height: 320px;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.vote-logo {
+  color: var(--club-accent, #82b1ff);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.vote-title,
+.vote-state h1 {
+  margin: 0;
+  color: var(--text-primary, #f2f4f8);
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.vote-subtitle,
+.vote-state p,
+.vote-instruction {
+  margin: 0;
+  color: var(--club-muted, #a6afbd);
+  line-height: 1.55;
+}
+
+.vote-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid color-mix(in srgb, var(--club-line, #30343e) 70%, transparent);
+  border-top-color: var(--club-accent, #82b1ff);
+  border-radius: 50%;
+  animation: voteSpin 700ms linear infinite;
+}
+
+@keyframes voteSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vote-result-banner,
+.vote-inline-error {
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.vote-result-banner {
+  border: 1px solid color-mix(in srgb, var(--club-accent, #82b1ff) 42%, transparent);
+  background: color-mix(in srgb, var(--club-accent, #82b1ff) 12%, transparent);
+  color: var(--club-accent, #82b1ff);
+}
+
+.vote-inline-error {
+  margin: 0;
+  border: 1px solid #b66a56;
+  background: #382821;
+  color: #ffe5da;
+}
+
+.vote-options {
+  display: grid;
+  gap: 16px;
+}
+
+.vote-option {
+  width: 100%;
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--club-line, #30343e);
+  border-radius: 14px;
+  background: var(--club-surface, #17191f);
+  color: var(--text-primary, #f2f4f8);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    background 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.vote-option:hover,
+.vote-option.selected {
+  border-color: var(--club-accent, #82b1ff);
+}
+
+.vote-option:active {
+  transform: scale(0.99);
+}
+
+.vote-option:disabled {
+  cursor: default;
+}
+
+.vote-option.voted {
+  border-color: color-mix(in srgb, var(--club-accent, #82b1ff) 60%, var(--club-line, #30343e));
+}
+
+.vote-option.leading {
+  background: color-mix(in srgb, var(--club-accent, #82b1ff) 8%, var(--club-surface, #17191f));
+}
+
+.vote-option-header,
+.vote-option-balance,
+.vote-option-results {
+  padding: 14px 16px;
+}
+
+.vote-option-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--club-line, #30343e);
+}
+
+.vote-option-number {
+  font-weight: 800;
+}
+
+.vote-option-label,
+.vote-option-check,
+.vote-option-balance,
+.vote-bar-stats {
+  color: var(--club-muted, #a6afbd);
+  font-size: 13px;
+}
+
+.vote-option-check {
+  margin-left: auto;
+  color: var(--club-accent, #82b1ff);
+  font-weight: 800;
+}
+
+.vote-option-balance {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vote-teams {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--club-line, #30343e);
+}
+
+.vote-team {
+  min-width: 0;
+  padding: 16px;
+}
+
+.vote-team.white {
+  border-right: 1px solid var(--club-line, #30343e);
+}
+
+.vote-team-head,
+.vote-player-row,
+.vote-bar-stats,
+.vote-actions,
+.vote-footer {
+  display: flex;
+  align-items: center;
+}
+
+.vote-team-head {
+  gap: 8px;
+  margin-bottom: 10px;
+  color: var(--club-muted, #a6afbd);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.team-badge {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.team-badge.white {
+  background: #f2f4f8;
+}
+
+.team-badge.black {
+  border: 1px solid color-mix(in srgb, var(--club-muted, #a6afbd) 60%, transparent);
+  background: #090a09;
+}
+
+.vote-team-list {
+  display: grid;
+  gap: 6px;
+}
+
+.vote-player-row {
+  min-width: 0;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-primary, #f2f4f8);
+  font-size: 13px;
+}
+
+.vote-player-name,
+.vote-player-pos {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vote-player-name {
+  font-weight: 650;
+}
+
+.vote-player-pos {
+  flex: 0 1 auto;
+  color: var(--club-muted, #a6afbd);
+  font-size: 11px;
+}
+
+.vote-option-results {
+  border-top: 1px solid var(--club-line, #30343e);
+}
+
+.vote-bar-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--club-line, #30343e) 70%, transparent);
+}
+
+.vote-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--club-muted, #a6afbd);
+  transition: width 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.vote-bar-fill.leading {
+  background: var(--club-accent, #82b1ff);
+}
+
+.vote-bar-stats {
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.vote-bar-stats strong {
+  color: var(--text-primary, #f2f4f8);
+}
+
+.vote-action-bar {
+  position: sticky;
+  bottom: 16px;
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--club-line, #30343e);
+  border-radius: 14px;
+  background: var(--club-surface, #17191f);
+  padding: 14px;
+}
+
+.vote-submit-btn,
+.vote-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--club-line, #30343e);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: var(--club-surface, #17191f);
+  color: var(--text-primary, #f2f4f8);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.vote-submit-btn,
+.vote-button.primary {
+  border-color: var(--club-accent, #82b1ff);
+  background: var(--club-accent, #82b1ff);
+  color: var(--bg-primary, #101210);
+}
+
+.vote-submit-btn:disabled,
+.vote-button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.vote-instruction {
+  text-align: center;
+}
+
+.vote-footer {
+  justify-content: center;
+  padding: 10px 0 4px;
+}
+
+.vote-home-link {
+  color: var(--club-accent, #82b1ff);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.vote-actions {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+@media (max-width: 620px) {
+  .vote-page {
+    padding: 16px 12px;
+  }
+
+  .vote-header,
+  .vote-state {
+    padding: 20px;
+  }
+
+  .vote-title,
+  .vote-state h1 {
+    font-size: 24px;
+  }
+
+  .vote-teams {
+    grid-template-columns: 1fr;
+  }
+
+  .vote-team.white {
+    border-right: 0;
+    border-bottom: 1px solid var(--club-line, #30343e);
+  }
+
+  .vote-option-balance {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
