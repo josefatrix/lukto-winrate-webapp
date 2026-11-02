@@ -110,6 +110,9 @@ export default async function handler(req, res) {
       respuesta,
       accion,
       content,
+      /* The user turn exactly as it was sent. The client cannot rebuild the
+         facts block byte for byte, and the history check compares bytes. */
+      userContent: request.messages.at(-1).content,
       remaining: reserved.remaining,
       usage: message.usage ?? null,
     })
