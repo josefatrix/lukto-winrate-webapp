@@ -19,6 +19,7 @@
     "lint:check": "eslint src --ext .js,.jsx",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,css}\"",
+    "test": "node --test \"tests/**/*.test.js\" \"src/utils/**/*.test.js\"",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist node_modules/.vite",
     "prepare": "echo 'Ready for development'",
@@ -31,12 +32,15 @@
     "release:major": "npm version major && git push origin main --tags"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.4.0",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.17.10",
     "canvas-confetti": "^1.9.2",
     "chart.js": "^4.4.1",
     "firebase": "^10.7.1",
+    "firebase-admin": "^14.5.0",
     "html2canvas": "^1.4.1",
+    "jose": "^6.2.15",
     "liquid-glass-react": "^1.1.1",
     "localforage": "^1.10.0",
     "react": "^18.2.0",

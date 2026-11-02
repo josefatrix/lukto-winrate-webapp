@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useApp } from '../../contexts'
 import { AppIcon } from '../common'
+import { BuilderAssistantPanel } from '../matchday/BuilderAssistantPanel'
 import { getPositionLabel } from '../../utils/matchConstants'
 import { doc, deleteDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
@@ -87,6 +88,11 @@ function buildTeamListMessage({ matchDate, matchTime, matchVenue, teamWhite, tea
 }
 
 export function MatchBuilderTab({ mb }) {
+  /* El asistente del armado: la hoja y la petición de «Armar con Claude»
+     viven acá para que el botón pueda estar en la fila de acciones, junto al
+     auto-balance de siempre. */
+  const [assistantOpen, setAssistantOpen] = useState(false)
+  const [armRequest, setArmRequest] = useState(null)
   const { getPlayerName, setActiveTab, teamPolls, showToast } = useApp()
 
   const [presetName, setPresetName] = useState('')
@@ -648,8 +654,21 @@ export function MatchBuilderTab({ mb }) {
               className="mb-action primary"
               onClick={() => mb.suggestBalancedTeams({ preserveLockedCaptains: mb.preserveCaptains })}
               disabled={!poolReady}
+              title="Reparto instantáneo del balanceador"
             >
               <AppIcon name="spark" size={14} /> Auto-balance
+            </button>
+            <button
+              type="button"
+              className="mb-action claude"
+              onClick={() => setArmRequest({ id: Date.now() })}
+              disabled={!poolReady}
+              title="Claude decide las condiciones y el balanceador reparte"
+            >
+              <span className="mb-action-spark">
+                <AppIcon name="spark" size={13} />
+              </span>{' '}
+              Armar con Claude
             </button>
             <button
               type="button"
@@ -957,6 +976,13 @@ export function MatchBuilderTab({ mb }) {
       </div>
 
       {mb.showTvBoard && <TvBoardOverlay mb={mb} getPlayerName={getPlayerName} />}
+
+      <BuilderAssistantPanel
+        mb={mb}
+        open={assistantOpen}
+        onOpenChange={setAssistantOpen}
+        armRequest={armRequest}
+      />
 
       {showPollModal && pollOptions && (
         <PollModal

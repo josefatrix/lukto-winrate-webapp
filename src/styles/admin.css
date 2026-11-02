@@ -1,0 +1,897 @@
+/* Admin workspace polish: graphite/lime visual system for legacy admin views. */
+
+.app-container .admin-bar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 10px;
+  border: 1px solid var(--club-line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg-secondary) 88%, transparent);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+}
+
+.app-container .admin-bar-btn {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--club-muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    color 160ms ease-out,
+    transform 160ms ease-out;
+}
+
+.app-container .admin-bar-btn:active,
+.app-container .quick-action-btn:active,
+.app-container .tool-card button:active,
+.app-container .user-link-card button:active,
+.app-container .history-match-header button:active {
+  transform: scale(0.98);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-container .admin-bar-btn:hover,
+  .app-container .quick-action-btn:hover,
+  .app-container .tool-card button:hover,
+  .app-container .user-link-card button:hover,
+  .app-container .history-match-header button:hover {
+    border-color: color-mix(in srgb, var(--club-accent) 36%, var(--club-line));
+    color: var(--text-primary);
+  }
+}
+
+.app-container .admin-bar-btn.active {
+  border-color: color-mix(in srgb, var(--club-accent) 62%, var(--club-line));
+  background: color-mix(in srgb, var(--club-accent) 14%, var(--bg-tertiary));
+  color: var(--club-accent);
+}
+
+.app-container .admin-menu-badge,
+.app-container .qa-badge {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--club-accent);
+  color: var(--bg-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.app-container .dashboard-section,
+.app-container .tools-section,
+.app-container .history-section,
+.app-container section.stats-section:has(.user-links-list) {
+  padding: 22px;
+  border: 1px solid var(--club-line);
+  border-radius: 24px;
+  background:
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--club-accent) 10%, transparent),
+      transparent 34%
+    ),
+    var(--bg-secondary);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+}
+
+.app-container .dashboard-section .section-title,
+.app-container .tools-section .section-title,
+.app-container .history-section .section-title,
+.app-container section.stats-section:has(.user-links-list) .section-title {
+  margin: 0 0 6px;
+  color: var(--text-primary);
+  font-size: clamp(1.35rem, 1.1rem + 1.2vw, 2.2rem);
+  letter-spacing: -0.04em;
+}
+
+.app-container .section-subtitle,
+.app-container .tool-desc,
+.app-container .no-data-text,
+.app-container .empty-state.small {
+  color: var(--club-muted);
+}
+
+.app-container .dashboard-stats-grid,
+.app-container .dashboard-ops-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0 0;
+}
+
+.app-container .dashboard-ops-grid {
+  margin-top: 12px;
+}
+
+.app-container .dash-stat-card,
+.app-container .dashboard-alerts,
+.app-container .dashboard-recent,
+.app-container .dashboard-activity,
+.app-container .dashboard-quick-actions,
+.app-container .dashboard-top-raters,
+.app-container .tool-card,
+.app-container .pending-users-section,
+.app-container .linked-users-section,
+.app-container .history-match-card {
+  border: 1px solid var(--club-line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg-primary) 88%, var(--bg-tertiary));
+  box-shadow: none;
+}
+
+.app-container .dash-stat-card {
+  min-height: 86px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.app-container .dash-stat-card.accent {
+  border-color: color-mix(in srgb, var(--club-accent) 40%, var(--club-line));
+  background: color-mix(in srgb, var(--club-accent) 11%, var(--bg-primary));
+}
+
+.app-container .dash-stat-card.warning {
+  border-color: color-mix(in srgb, #f6b44b 46%, var(--club-line));
+  background: color-mix(in srgb, #f6b44b 10%, var(--bg-primary));
+}
+
+.app-container .dash-stat-icon,
+.app-container .tool-icon,
+.app-container .tools-cat-icon,
+.app-container .qa-icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border: 1px solid color-mix(in srgb, var(--club-accent) 34%, var(--club-line));
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--club-accent) 12%, var(--bg-tertiary));
+  color: var(--club-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-container .dash-stat-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-container .dash-stat-value {
+  color: var(--text-primary);
+  font-size: clamp(1.55rem, 1.2rem + 1vw, 2.15rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+}
+
+.app-container .dash-stat-label {
+  color: var(--club-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-container .dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.7fr);
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.app-container .dashboard-main-column,
+.app-container .dashboard-side-column {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.app-container .dashboard-alerts,
+.app-container .dashboard-recent,
+.app-container .dashboard-activity,
+.app-container .dashboard-quick-actions,
+.app-container .dashboard-top-raters {
+  padding: 16px;
+}
+
+.app-container .dash-section-title,
+.app-container .subsection-title,
+.app-container .tool-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.94rem;
+  font-weight: 850;
+  letter-spacing: -0.015em;
+}
+
+.app-container .dash-section-title {
+  margin-bottom: 12px;
+}
+
+.app-container .alert-list,
+.app-container .recent-matches-list,
+.app-container .activity-list,
+.app-container .top-raters-list,
+.app-container .user-links-list,
+.app-container .admin-list,
+.app-container .blocked-list,
+.app-container .current-announcements,
+.app-container .ratings-history {
+  display: grid;
+  gap: 8px;
+}
+
+.app-container .alert-item,
+.app-container .recent-match-item,
+.app-container .activity-item,
+.app-container .top-rater-item,
+.app-container .user-link-card,
+.app-container .admin-item,
+.app-container .blocked-item,
+.app-container .announcement-item,
+.app-container .history-rater-group,
+.app-container .history-rating-item {
+  border: 1px solid var(--club-line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
+}
+
+.app-container .alert-item,
+.app-container .recent-match-item,
+.app-container .activity-item,
+.app-container .top-rater-item,
+.app-container .user-link-card,
+.app-container .admin-item,
+.app-container .blocked-item,
+.app-container .announcement-item {
+  min-height: 48px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-container .alert-item.warning {
+  border-color: color-mix(in srgb, #f6b44b 54%, var(--club-line));
+  color: color-mix(in srgb, #f6b44b 86%, var(--text-primary));
+}
+
+.app-container .alert-item.info,
+.app-container .recent-match-status.open {
+  border-color: color-mix(in srgb, var(--club-accent) 45%, var(--club-line));
+  color: var(--club-accent);
+}
+
+.app-container .recent-match-item,
+.app-container .activity-item,
+.app-container .top-rater-item,
+.app-container .user-link-card,
+.app-container .blocked-item,
+.app-container .history-match-header,
+.app-container .history-rater-header,
+.app-container .history-rating-item {
+  justify-content: space-between;
+}
+
+.app-container .recent-match-info,
+.app-container .recent-match-stats,
+.app-container .user-link-info,
+.app-container .user-link-action,
+.app-container .user-link-actions,
+.app-container .top-rater-item,
+.app-container .history-rater-header,
+.app-container .history-rating-item,
+.app-container .history-rating-target,
+.app-container .history-rating-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-container .recent-match-date,
+.app-container .activity-type,
+.app-container .blocked-tag,
+.app-container .history-match-date,
+.app-container .history-rating-score {
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.app-container .recent-match-winner,
+.app-container .recent-match-status,
+.app-container .top-rater-count,
+.app-container .user-link-player {
+  border: 1px solid var(--club-line);
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--club-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.app-container .recent-match-winner.white,
+.app-container .recent-match-winner.black,
+.app-container .history-rating-score.excellent,
+.app-container .history-rating-score.good {
+  background: color-mix(in srgb, var(--club-accent) 13%, var(--bg-tertiary));
+  color: var(--club-accent);
+}
+
+.app-container .recent-match-winner.tie,
+.app-container .recent-match-status.closed,
+.app-container .history-rating-score.poor {
+  background: color-mix(in srgb, #f6b44b 12%, var(--bg-tertiary));
+  color: color-mix(in srgb, #f6b44b 90%, var(--text-primary));
+}
+
+.app-container .quick-actions-grid,
+.app-container .moderation-actions,
+.app-container .export-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.app-container .quick-action-btn,
+.app-container .add-btn,
+.app-container .block-btn,
+.app-container .unblock-btn,
+.app-container .remove-btn,
+.app-container .export-btn,
+.app-container .send-announcement-btn,
+.app-container .match-toggle-btn,
+.app-container .delete-user-btn,
+.app-container .unlink-btn,
+.app-container .link-btn,
+.app-container .delete-announcement,
+.app-container .all-ratings-search-clear,
+.app-container .delete-rater-ratings-btn {
+  min-height: 44px;
+  border: 1px solid var(--club-line);
+  border-radius: 12px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+  transition:
+    transform 160ms ease-out,
+    border-color 160ms ease-out,
+    background-color 160ms ease-out,
+    color 160ms ease-out;
+}
+
+.app-container .quick-action-btn {
+  justify-content: flex-start;
+  min-height: 50px;
+  position: relative;
+}
+
+.app-container .add-btn,
+.app-container .send-announcement-btn,
+.app-container .export-btn,
+.app-container .link-btn,
+.app-container .match-toggle-btn.open {
+  border-color: color-mix(in srgb, var(--club-accent) 50%, var(--club-line));
+  background: color-mix(in srgb, var(--club-accent) 16%, var(--bg-tertiary));
+  color: var(--club-accent);
+}
+
+.app-container .remove-btn,
+.app-container .delete-user-btn,
+.app-container .delete-announcement,
+.app-container .delete-rater-ratings-btn,
+.app-container .block-btn:not(.secondary) {
+  border-color: color-mix(in srgb, #ff6b6b 42%, var(--club-line));
+  color: color-mix(in srgb, #ff6b6b 88%, var(--text-primary));
+}
+
+.app-container .tool-card button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+  transform: none;
+}
+
+.app-container .tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.app-container .tools-category-header {
+  grid-column: 1 / -1;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--club-line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--bg-tertiary) 74%, transparent);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.app-container .tool-card {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.app-container .tool-card.wide {
+  grid-column: 1 / -1;
+}
+
+.app-container .tool-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-container .tool-desc {
+  margin: -4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.app-container .add-admin-form,
+.app-container .moderation-form,
+.app-container .rating-restrict-form,
+.app-container .config-form,
+.app-container .export-range,
+.app-container .announcement-form,
+.app-container .all-ratings-search-bar {
+  display: grid;
+  gap: 10px;
+}
+
+.app-container .add-admin-form,
+.app-container .export-range,
+.app-container .all-ratings-search-bar {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.app-container .rating-restrict-form,
+.app-container .config-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.app-container input,
+.app-container select,
+.app-container textarea {
+  color-scheme: dark;
+}
+
+.app-container .tools-section input,
+.app-container .tools-section select,
+.app-container .tools-section textarea,
+.app-container .history-section input,
+.app-container section.stats-section:has(.user-links-list) select,
+.app-container .all-ratings-search-input,
+.app-container .player-select-dropdown {
+  min-height: 44px;
+  width: 100%;
+  border: 1px solid var(--club-line);
+  border-radius: 12px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition:
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.app-container .tools-section textarea,
+.app-container .announcement-form textarea {
+  min-height: 112px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.app-container .tools-section input:focus,
+.app-container .tools-section select:focus,
+.app-container .tools-section textarea:focus,
+.app-container .history-section input:focus,
+.app-container section.stats-section:has(.user-links-list) select:focus,
+.app-container .all-ratings-search-input:focus,
+.app-container .player-select-dropdown:focus {
+  border-color: var(--club-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--club-accent) 20%, transparent);
+}
+
+.app-container .pending-users-section,
+.app-container .linked-users-section {
+  margin-top: 14px;
+  padding: 16px;
+}
+
+.app-container .user-link-avatar,
+.app-container .top-rater-avatar {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border: 1px solid var(--club-line);
+  border-radius: 14px;
+  object-fit: cover;
+  background: var(--bg-tertiary);
+}
+
+.app-container .user-link-info {
+  min-width: 0;
+  flex: 1 1 auto;
+  justify-content: flex-start;
+}
+
+.app-container .user-link-name,
+.app-container .top-rater-name {
+  color: var(--text-primary);
+  font-weight: 850;
+}
+
+.app-container .user-link-email,
+.app-container .activity-meta,
+.app-container .activity-time,
+.app-container .history-match-summary,
+.app-container .history-rating-meta,
+.app-container .history-rater-count {
+  color: var(--club-muted);
+  font-size: 12px;
+}
+
+.app-container .user-link-action {
+  flex: 0 0 min(430px, 50%);
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 44px 44px;
+}
+
+.app-container .user-link-actions {
+  flex: 0 0 auto;
+}
+
+.app-container .linking-text {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--club-accent) 14%, var(--bg-tertiary));
+  color: var(--club-accent);
+  display: inline-flex;
+  align-items: center;
+  font-weight: 850;
+}
+
+.app-container .blocked-list,
+.app-container .admin-list,
+.app-container .current-announcements {
+  margin-top: 2px;
+}
+
+.app-container .blocked-item span:first-child,
+.app-container .admin-item span,
+.app-container .announcement-item span,
+.app-container .recent-match-teams {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-container .match-toggle-list,
+.app-container .delete-ratings-list {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 3px;
+}
+
+.app-container .match-toggle-item,
+.app-container .delete-ratings-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid var(--club-line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
+}
+
+.app-container .match-toggle-info,
+.app-container .delete-ratings-info {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.app-container .match-toggle-date,
+.app-container .delete-ratings-date {
+  color: var(--text-primary);
+  font-weight: 850;
+}
+
+.app-container .match-toggle-teams,
+.app-container .delete-ratings-count {
+  color: var(--club-muted);
+  font-size: 12px;
+}
+
+.app-container .all-ratings-search-bar {
+  margin: 14px 0;
+}
+
+.app-container .ratings-history {
+  margin-top: 12px;
+}
+
+.app-container .history-match-card {
+  overflow: hidden;
+}
+
+.app-container .history-match-header {
+  min-height: 58px;
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--club-line);
+  background: color-mix(in srgb, var(--bg-tertiary) 66%, transparent);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-container .history-match-info {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.app-container .history-rater-group {
+  margin: 10px;
+  overflow: hidden;
+}
+
+.app-container .history-rater-header {
+  min-height: 48px;
+  padding: 11px 13px;
+  background: color-mix(in srgb, var(--bg-secondary) 76%, transparent);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-container .history-ratings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+
+.app-container .history-rating-item {
+  min-height: 44px;
+  padding: 9px 10px;
+}
+
+.app-container .history-rating-score {
+  min-width: 40px;
+  text-align: center;
+}
+
+@media (max-width: 920px) {
+  .app-container .dashboard-stats-grid,
+  .app-container .dashboard-ops-grid,
+  .app-container .tools-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-container .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .app-container .tool-card.wide {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-container .pm-header {
+    padding: 16px;
+    gap: 12px;
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--bg-secondary) 86%, transparent);
+  }
+
+  .app-container .pm-header h1 {
+    font-size: clamp(1.45rem, 1.15rem + 5vw, 2.15rem);
+    line-height: 0.98;
+  }
+
+  .app-container .pm-header p {
+    max-width: 34rem;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .app-container .pm-header .pm-primary {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  .app-container .pm-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 10px 0 12px;
+  }
+
+  .app-container .pm-summary > div {
+    min-height: 74px;
+    padding: 10px 8px;
+    border-radius: 14px;
+  }
+
+  .app-container .pm-summary span {
+    font-size: 10px;
+    letter-spacing: 0.07em;
+  }
+
+  .app-container .pm-summary strong {
+    font-size: clamp(1.45rem, 1.05rem + 6vw, 2rem);
+    line-height: 0.95;
+  }
+}
+
+@media (max-width: 680px) {
+  .app-container .admin-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -2px;
+    padding: 8px;
+    border-radius: 16px;
+    scrollbar-width: none;
+  }
+
+  .app-container .admin-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-container .admin-bar-btn {
+    min-width: max-content;
+  }
+
+  .app-container .dashboard-section,
+  .app-container .tools-section,
+  .app-container .history-section,
+  .app-container section.stats-section:has(.user-links-list) {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .app-container .dashboard-stats-grid,
+  .app-container .dashboard-ops-grid,
+  .app-container .tools-grid,
+  .app-container .quick-actions-grid,
+  .app-container .rating-restrict-form,
+  .app-container .config-form,
+  .app-container .history-ratings-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .app-container .tool-card,
+  .app-container .dashboard-alerts,
+  .app-container .dashboard-recent,
+  .app-container .dashboard-activity,
+  .app-container .dashboard-quick-actions,
+  .app-container .dashboard-top-raters,
+  .app-container .pending-users-section,
+  .app-container .linked-users-section {
+    padding: 13px;
+    border-radius: 16px;
+  }
+
+  .app-container .user-link-card,
+  .app-container .recent-match-item,
+  .app-container .activity-item,
+  .app-container .blocked-item,
+  .app-container .admin-item,
+  .app-container .announcement-item,
+  .app-container .history-match-header,
+  .app-container .history-rater-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .app-container .user-link-action,
+  .app-container .add-admin-form,
+  .app-container .export-range,
+  .app-container .all-ratings-search-bar {
+    width: 100%;
+    flex-basis: auto;
+    grid-template-columns: minmax(0, 1fr) 44px 44px;
+  }
+
+  .app-container .add-admin-form,
+  .app-container .export-range,
+  .app-container .all-ratings-search-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .app-container .moderation-actions,
+  .app-container .export-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .app-container .recent-match-info,
+  .app-container .recent-match-stats,
+  .app-container .user-link-actions,
+  .app-container .history-rating-item,
+  .app-container .history-rating-target,
+  .app-container .history-rating-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-container .tools-grid,
+  .app-container .quick-actions-grid,
+  .app-container .rating-restrict-form,
+  .app-container .config-form,
+  .app-container .history-ratings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .app-container .dash-stat-card {
+    min-height: 76px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-container .admin-bar-btn,
+  .app-container .quick-action-btn,
+  .app-container .tool-card button,
+  .app-container .user-link-card button,
+  .app-container .history-match-header button,
+  .app-container .tools-section input,
+  .app-container .tools-section select,
+  .app-container .tools-section textarea,
+  .app-container .history-section input,
+  .app-container section.stats-section:has(.user-links-list) select {
+    transition: none;
+  }
+}

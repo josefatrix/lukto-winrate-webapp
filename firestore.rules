@@ -1,0 +1,448 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function hasEmail() {
+      return signedIn()
+        && 'email' in request.auth.token
+        && request.auth.token.email is string;
+    }
+
+    function verifiedEmail() {
+      return hasEmail()
+        && 'email_verified' in request.auth.token
+        && request.auth.token.email_verified == true;
+    }
+
+    function email() {
+      return hasEmail() ? request.auth.token.email.lower() : '';
+    }
+
+    function adminsPath() {
+      return /databases/$(database)/documents/settings/admins;
+    }
+
+    function isSuperAdmin() {
+      return verifiedEmail() && email() == 'joseescorcia01@gmail.com';
+    }
+
+    function isListedAdmin() {
+      return verifiedEmail()
+        && exists(adminsPath())
+        && get(adminsPath()).data.emails is list
+        && email() in get(adminsPath()).data.emails;
+    }
+
+    function isAdmin() {
+      return isSuperAdmin() || isListedAdmin();
+    }
+
+    function ownUserLinkPath() {
+      return /databases/$(database)/documents/userLinks/$(request.auth.uid);
+    }
+
+    function ownLinkActive() {
+      return signedIn()
+        && exists(ownUserLinkPath())
+        && (!('blocked' in get(ownUserLinkPath()).data)
+          || get(ownUserLinkPath()).data.blocked != true)
+        && (!('archived' in get(ownUserLinkPath()).data)
+          || get(ownUserLinkPath()).data.archived != true)
+        && (!('disabled' in get(ownUserLinkPath()).data)
+          || get(ownUserLinkPath()).data.disabled != true);
+    }
+
+    function hasLinkedPlayer() {
+      return ownLinkActive()
+        && get(ownUserLinkPath()).data.playerId is string
+        && get(ownUserLinkPath()).data.playerId.size() > 0;
+    }
+
+    function linkedPlayerId() {
+      return get(ownUserLinkPath()).data.playerId;
+    }
+
+    function matchPath(matchId) {
+      return /databases/$(database)/documents/matches/$(matchId);
+    }
+
+    function matchExists(matchId) {
+      return exists(matchPath(matchId));
+    }
+
+    function matchData(matchId) {
+      return get(matchPath(matchId)).data;
+    }
+
+    function isRealMatch(matchId) {
+      return matchExists(matchId)
+        && (!('type' in matchData(matchId)) || matchData(matchId).type != 'teamPoll');
+    }
+
+    function playerInMatch(matchId, playerId) {
+      return isRealMatch(matchId)
+        && (
+          (matchData(matchId).teamWhite is list && matchData(matchId).teamWhite.hasAny([playerId]))
+          || (matchData(matchId).teamBlack is list && matchData(matchId).teamBlack.hasAny([playerId]))
+        );
+    }
+
+    function playerActive(playerId) {
+      return exists(/databases/$(database)/documents/players/$(playerId))
+        && (!('archived' in get(/databases/$(database)/documents/players/$(playerId)).data)
+          || get(/databases/$(database)/documents/players/$(playerId)).data.archived != true);
+    }
+
+    function userNotBlocked(uid) {
+      return !exists(/databases/$(database)/documents/settings/blockedUsers)
+        || !('list' in get(/databases/$(database)/documents/settings/blockedUsers).data)
+        || !(get(/databases/$(database)/documents/settings/blockedUsers).data.list is list)
+        || !(uid in get(/databases/$(database)/documents/settings/blockedUsers).data.list);
+    }
+
+    function userNotRatingRestricted(uid, matchId) {
+      return !exists(/databases/$(database)/documents/settings/ratingRestrictions)
+        || (
+          (!('users' in get(/databases/$(database)/documents/settings/ratingRestrictions).data)
+            || !(get(/databases/$(database)/documents/settings/ratingRestrictions).data.users is list)
+            || !(uid in get(/databases/$(database)/documents/settings/ratingRestrictions).data.users))
+          && (!('perMatch' in get(/databases/$(database)/documents/settings/ratingRestrictions).data)
+            || !(get(/databases/$(database)/documents/settings/ratingRestrictions).data.perMatch is map)
+            || !(matchId in get(/databases/$(database)/documents/settings/ratingRestrictions).data.perMatch)
+            || !(get(/databases/$(database)/documents/settings/ratingRestrictions).data.perMatch[matchId] is list)
+            || !(uid in get(/databases/$(database)/documents/settings/ratingRestrictions).data.perMatch[matchId]))
+        );
+    }
+
+    function unresolvedMatch(matchId) {
+      return (!('winner' in matchData(matchId))
+          || matchData(matchId).winner == null
+          || matchData(matchId).winner == '')
+        && (!('status' in matchData(matchId))
+          || !(matchData(matchId).status in ['completed', 'closed', 'finished']))
+        && (!('scoreWhite' in matchData(matchId)) || matchData(matchId).scoreWhite == null)
+        && (!('scoreBlack' in matchData(matchId)) || matchData(matchId).scoreBlack == null);
+    }
+
+    function futureAttendanceOpen(matchId) {
+      return isRealMatch(matchId)
+        && unresolvedMatch(matchId)
+        && 'kickoffAt' in matchData(matchId)
+        && matchData(matchId).kickoffAt is timestamp
+        && matchData(matchId).kickoffAt > request.time;
+    }
+
+    function validAttendanceResponse(matchId, uid) {
+      return signedIn()
+        && request.auth.uid == uid
+        && hasLinkedPlayer()
+        && request.resource.data.keys().hasOnly(['playerId', 'intent', 'updatedAt'])
+        && request.resource.data.playerId == linkedPlayerId()
+        && request.resource.data.intent in ['confirmed', 'declined']
+        && request.resource.data.updatedAt == request.time
+        && userNotBlocked(uid)
+        && playerActive(linkedPlayerId())
+        && futureAttendanceOpen(matchId);
+    }
+
+    function matchRatingsOpen(matchId) {
+      return isRealMatch(matchId)
+        && (!('ratingsOpen' in matchData(matchId)) || matchData(matchId).ratingsOpen != false);
+    }
+
+    function validRatingsRevisionUpdate(matchId) {
+      return hasLinkedPlayer()
+        && isRealMatch(matchId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratingsRevision'])
+        && request.resource.data.ratingsRevision == request.time
+        && userNotBlocked(request.auth.uid)
+        && userNotRatingRestricted(request.auth.uid, matchId)
+        && playerActive(linkedPlayerId())
+        && matchRatingsOpen(matchId)
+        && playerInMatch(matchId, linkedPlayerId());
+    }
+
+    function validRatingsRevisionAfter(matchId) {
+      return getAfter(matchPath(matchId)).data.diff(matchData(matchId)).affectedKeys().hasOnly(['ratingsRevision'])
+        && getAfter(matchPath(matchId)).data.ratingsRevision == request.time;
+    }
+
+    function validRatingDelete() {
+      return isAdmin()
+        && (
+          !('matchId' in resource.data)
+          || !(resource.data.matchId is string)
+          || !existsAfter(matchPath(resource.data.matchId))
+          || validRatingsRevisionAfter(resource.data.matchId)
+        );
+    }
+
+    function futurePredictionOpen(matchId) {
+      return isRealMatch(matchId)
+        && unresolvedMatch(matchId)
+        && 'kickoffAt' in matchData(matchId)
+        && matchData(matchId).kickoffAt is timestamp
+        && matchData(matchId).kickoffAt > request.time + duration.value(10, 'm');
+    }
+
+    function isOwnedUserLink(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function validOwnUserLinkCreate(userId) {
+      return isOwnedUserLink(userId)
+        && request.resource.data.keys().hasOnly([
+          'userName',
+          'userEmail',
+          'userPhoto',
+          'updatedAt',
+          'playerId',
+          'registeredAt'
+        ])
+        && (!('playerId' in request.resource.data)
+          || request.resource.data.playerId == null
+          || request.resource.data.playerId == '')
+        && (!('userEmail' in request.resource.data)
+          || !hasEmail()
+          || request.resource.data.userEmail == request.auth.token.email);
+    }
+
+    function validOwnUserLinkUpdate(userId) {
+      return isOwnedUserLink(userId)
+        && request.resource.data.keys().hasOnly([
+          'userName',
+          'userEmail',
+          'userPhoto',
+          'updatedAt',
+          'playerId',
+          'registeredAt',
+          'linkedAt'
+        ])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'userName',
+          'userEmail',
+          'userPhoto',
+          'updatedAt'
+        ])
+        && (!('userEmail' in request.resource.data)
+          || !hasEmail()
+          || request.resource.data.userEmail == request.auth.token.email);
+    }
+
+    function validRatingWrite(ratingId) {
+      return hasLinkedPlayer()
+        && request.resource.data.keys().hasOnly([
+          'ratedBy',
+          'ratedPlayerId',
+          'matchId',
+          'score',
+          'timestamp'
+        ])
+        && request.resource.data.ratedBy == linkedPlayerId()
+        && request.resource.data.ratedPlayerId is string
+        && request.resource.data.matchId is string
+        && request.resource.data.ratedPlayerId != linkedPlayerId()
+        && ratingId == linkedPlayerId() + '_' + request.resource.data.ratedPlayerId + '_' + request.resource.data.matchId
+        && request.resource.data.score is number
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 10
+        && validRatingsRevisionAfter(request.resource.data.matchId)
+        && userNotBlocked(request.auth.uid)
+        && userNotRatingRestricted(request.auth.uid, request.resource.data.matchId)
+        && playerActive(linkedPlayerId())
+        && matchRatingsOpen(request.resource.data.matchId)
+        && playerInMatch(request.resource.data.matchId, linkedPlayerId())
+        && playerInMatch(request.resource.data.matchId, request.resource.data.ratedPlayerId);
+    }
+
+    function validPredictionWrite(predictionId) {
+      return hasLinkedPlayer()
+        && request.resource.data.keys().hasOnly([
+          'odedBy',
+          'matchId',
+          'prediction',
+          'probability',
+          'predictedMvpId',
+          'predictedScoreWhite',
+          'predictedScoreBlack',
+          'userName',
+          'userEmail',
+          'userPhoto',
+          'timestamp',
+          'resolved'
+        ])
+        && request.resource.data.odedBy == request.auth.uid
+        && request.resource.data.matchId is string
+        && predictionId == request.auth.uid + '_' + request.resource.data.matchId
+        && request.resource.data.prediction in ['white', 'black']
+        && request.resource.data.probability is number
+        && request.resource.data.probability >= 0
+        && request.resource.data.probability <= 100
+        && request.resource.data.resolved == false
+        && validPredictedScore(request.resource.data.predictedScoreWhite)
+        && validPredictedScore(request.resource.data.predictedScoreBlack)
+        && validPredictedMvp(request.resource.data.matchId, request.resource.data.predictedMvpId)
+        && futurePredictionOpen(request.resource.data.matchId)
+        && userNotBlocked(request.auth.uid)
+        && playerActive(linkedPlayerId());
+    }
+
+    function validPredictedScore(value) {
+      return value == null || (value is number && value >= 0 && value <= 30);
+    }
+
+    function validPredictedMvp(matchId, playerId) {
+      return playerId == ''
+        || (playerId is string && playerActive(playerId) && playerInMatch(matchId, playerId));
+    }
+
+    function pollVotersBefore() {
+      return ('pollVoters' in resource.data) ? resource.data.pollVoters : {};
+    }
+
+    function validPollVoteFor(optionIndex) {
+      return request.resource.data.options[optionIndex].teamWhite == resource.data.options[optionIndex].teamWhite
+        && request.resource.data.options[optionIndex].teamBlack == resource.data.options[optionIndex].teamBlack
+        && request.resource.data.options[optionIndex].positions == resource.data.options[optionIndex].positions
+        && request.resource.data.options[optionIndex].balanceScore == resource.data.options[optionIndex].balanceScore
+        && request.resource.data.options[optionIndex].probability == resource.data.options[optionIndex].probability
+        && request.resource.data.options[optionIndex].label == resource.data.options[optionIndex].label
+        && request.resource.data.options[optionIndex].votes == resource.data.options[optionIndex].votes + 1;
+    }
+
+    function unchangedPollOption(optionIndex) {
+      return request.resource.data.options[optionIndex] == resource.data.options[optionIndex];
+    }
+
+    function validTeamPollVote() {
+      return signedIn()
+        && resource.data.type == 'teamPoll'
+        && (!('closed' in resource.data) || resource.data.closed != true)
+        && (!('status' in resource.data) || resource.data.status != 'closed')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'options',
+          'totalVotes',
+          'pollVoters',
+          'updatedAt'
+        ])
+        && resource.data.options is list
+        && request.resource.data.options is list
+        && resource.data.options.size() == 3
+        && request.resource.data.options.size() == 3
+        && request.resource.data.totalVotes == resource.data.totalVotes + 1
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.pollVoters is map
+        && !(request.auth.uid in pollVotersBefore())
+        && request.resource.data.pollVoters.diff(pollVotersBefore()).addedKeys().hasOnly([request.auth.uid])
+        && request.resource.data.pollVoters.diff(pollVotersBefore()).changedKeys().hasOnly([])
+        && request.resource.data.pollVoters.diff(pollVotersBefore()).removedKeys().hasOnly([])
+        && request.resource.data.pollVoters[request.auth.uid].keys().hasOnly(['optionIndex', 'votedAt'])
+        && request.resource.data.pollVoters[request.auth.uid].optionIndex in [0, 1, 2]
+        && request.resource.data.pollVoters[request.auth.uid].votedAt is number
+        && (
+          (request.resource.data.pollVoters[request.auth.uid].optionIndex == 0
+            && validPollVoteFor(0)
+            && unchangedPollOption(1)
+            && unchangedPollOption(2))
+          || (request.resource.data.pollVoters[request.auth.uid].optionIndex == 1
+            && unchangedPollOption(0)
+            && validPollVoteFor(1)
+            && unchangedPollOption(2))
+          || (request.resource.data.pollVoters[request.auth.uid].optionIndex == 2
+            && unchangedPollOption(0)
+            && unchangedPollOption(1)
+            && validPollVoteFor(2))
+        );
+    }
+
+    function validActivityLogCreate(logId) {
+      return signedIn()
+        && request.resource.data.keys().hasOnly([
+          'type',
+          'details',
+          'userId',
+          'userName',
+          'userEmail',
+          'timestamp'
+        ])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.type is string
+        && request.resource.data.timestamp is string;
+    }
+
+
+    match /players/{playerId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /matches/{matchId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || validTeamPollVote() || validRatingsRevisionUpdate(matchId);
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /userLinks/{userId} {
+      allow read: if true;
+      allow create: if isAdmin() || validOwnUserLinkCreate(userId);
+      allow update: if isAdmin() || validOwnUserLinkUpdate(userId);
+      allow delete: if isAdmin();
+    }
+
+    match /ratings/{ratingId} {
+      allow read: if true;
+      allow create, update: if validRatingWrite(ratingId);
+      allow delete: if validRatingDelete();
+    }
+
+    match /predictions/{predictionId} {
+      allow read: if true;
+      allow create: if validPredictionWrite(predictionId);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /matchAttendance/{matchId} {
+      allow read: if signedIn();
+      allow create, update, delete: if false;
+
+      match /responses/{uid} {
+        allow read: if signedIn();
+        allow create, update: if validAttendanceResponse(matchId, uid);
+        allow delete: if isAdmin();
+      }
+    }
+
+    match /activityLogs/{logId} {
+      allow read: if true;
+      allow create: if validActivityLogCreate(logId);
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // El cupo diario del asistente de IA. Solo la Vercel Function escribe aquí,
+    // con el Admin SDK, que se salta las reglas; el cliente lo lee para mostrar
+    // cuántas preguntas le quedan. El match /{document=**} de abajo ya niega
+    // toda escritura no declarada.
+    match /aiUsage/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /{document=**} {
+      allow write: if false;
+    }
+  }
+}

@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useApp, SUPER_ADMIN_EMAIL } from './contexts'
-import { useStats, useMatchBuilder } from './hooks'
+import { useStats, useMatchBuilder, useAiAssistant } from './hooks'
 import { doc, setDoc, collection, writeBatch, updateDoc, getDoc, query, where, getDocs, addDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from './firebase'
 import confetti from 'canvas-confetti'
@@ -22,7 +22,8 @@ import {
   getWinRateClass,
 } from './utils/ranks'
 import { AdminLoginModal, PendingUserModal } from './components/modals'
-import { AvatarImage, AppIcon, FloatingActionButton, SkeletonTable, SkeletonMatchesList, PendingRatingsNotification, createAvatarState, PlayerProfileModal } from './components/common'
+import { AvatarImage, AppIcon, AssistantSheet, FloatingActionButton, SkeletonTable, SkeletonMatchesList, PendingRatingsNotification, createAvatarState, PlayerProfileModal } from './components/common'
+import { buildStatsFacts } from './utils/assistantFacts'
 
 // ============ PENDING USER CARD ============
 
@@ -128,7 +129,7 @@ function App() {
   } = useApp()
 
   // Stats hook
-  const { stats, filteredStats, rankingMovers, getPlayerOfMonth, getMonthlyWinners, getPlayerOfWeek, getWeeklyWinners } = useStats()
+  const { stats, filteredStats, getFilteredMatches, rankingMovers, getPlayerOfMonth, getMonthlyWinners, getPlayerOfWeek, getWeeklyWinners } = useStats()
 
   // Onboarding hook
 
@@ -318,6 +319,29 @@ function App() {
   // ============ CALCULATED VALUES ============
 
   const displayStats = timeFilter === 'all' ? stats : filteredStats
+
+  // ============ ASISTENTE DE ESTADÍSTICAS ============
+
+  const [statsAssistantOpen, setStatsAssistantOpen] = useState(false)
+
+  /* Los hechos se arman en cada pregunta, no una vez: el usuario puede cambiar
+     el filtro de periodo con la hoja abierta. `matches` va filtrado por
+     periodo y el histórico completo aparte, para que la racha siga siendo de
+     siempre sin que el resto del bloque se salga del periodo. */
+  const buildStatsAssistantFacts = useCallback(
+    () =>
+      buildStatsFacts({
+        players,
+        displayStats,
+        matches: timeFilter === 'all' ? matches : getFilteredMatches,
+        allMatches: matches,
+        timeFilter,
+        userPlayerId: userPlayer,
+      }),
+    [players, displayStats, matches, getFilteredMatches, timeFilter, userPlayer]
+  )
+
+  const statsAssistant = useAiAssistant({ mode: 'stats', buildFacts: buildStatsAssistantFacts })
   const statsById = useMemo(
     () => Object.fromEntries((stats || []).map(playerStats => [playerStats.id, playerStats])),
     [stats]
@@ -4589,6 +4613,39 @@ function App() {
           ariaLabel="Acciones rápidas"
         />
       )}
+
+      {/* Un botón propio y visible, no un ítem escondido dentro de un menú.
+          Cuando el admin tiene su FAB de acciones rápidas, este se apila encima. */}
+      {user && userPlayer && (
+        <button
+          type="button"
+          className="assistant-fab"
+          data-stacked={isAdmin && activeTab !== 'new' ? 'true' : 'false'}
+          onClick={() => setStatsAssistantOpen(true)}
+          aria-label="Preguntale a Claude sobre las estadísticas"
+        >
+          <span className="assistant-fab-spark">
+            <AppIcon name="spark" size={14} />
+          </span>
+          <span className="assistant-fab-label">Preguntá</span>
+        </button>
+      )}
+
+      <AssistantSheet
+        open={statsAssistantOpen}
+        onClose={() => setStatsAssistantOpen(false)}
+        title="Preguntale a Claude"
+        placeholder="¿Con quién gano más?"
+        emptyHint="Preguntá por tus rachas, tus compañeros o cualquier número del grupo. Respondo con los datos del periodo que tengas seleccionado."
+        linked={!!userPlayer}
+        assistant={statsAssistant}
+        chips={[
+          '¿Cómo voy este periodo?',
+          '¿Con quién gano más?',
+          '¿Quién está en mejor racha?',
+          '¿Quién es el mejor portero?',
+        ]}
+      />
 
       {/* Premium Toast Notification */}
       {toast && (

@@ -14,8 +14,15 @@ import {
   getMatchStartDate,
   clamp,
 } from '../utils/matchConstants'
-
-const BEST_OF_N_ITERATIONS = 40
+import { computeDraftLinks } from '../utils/matchHistory.js'
+import {
+  BEST_OF_N_ITERATIONS,
+  scorePlayer,
+  rolePenaltyFor,
+  buildGreedyTeams as greedyTeams,
+  evaluateSplit as scoreSplit,
+  pickBestSplit,
+} from '../utils/teamBalancer.js'
 const DRAFT_KEY = 'lukto_match_draft'
 
 const EMPTY_POINTER_STATE = {
@@ -515,15 +522,10 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   }, [lockedWhiteCaptain])
 
   // ── Balance score ──
-  const getPlayerBalanceScore = useCallback((playerId) => {
-    const ps = statsById[playerId]
-    if (!ps) return 50
-    const avgRating = parseFloat(ps.avgRating) || 5
-    const winRate = Number(ps.winRate) || 50
-    const mvps = Number(ps.mvps) || 0
-    const played = Number(ps.played) || 0
-    return (avgRating * 6) + (winRate * 0.5) + (Math.min(mvps, 10) * 1.2) + (Math.min(played, 20) * 0.15)
-  }, [statsById])
+  const getPlayerBalanceScore = useCallback(
+    (playerId) => scorePlayer(statsById[playerId]),
+    [statsById]
+  )
 
   /* Single source of truth for "how strong is this player".
      Same formula the balancer uses, so the dots in the UI can never
@@ -553,30 +555,12 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   }, [players, statsById, getPlayerBalanceScore])
 
   // ── Role penalty ──
-  const getTeamRolePenalty = useCallback((teamIds) => {
-    if (!teamIds?.length) return 0
-    const coverage = { Portero: 0, Defensa: 0, Medio: 0, Delantero: 0 }
-    let withoutPosition = 0
+  const positionOf = useCallback((playerId) => matchPositions[playerId] || '', [matchPositions])
 
-    teamIds.forEach(pid => {
-      const pos = matchPositions[pid] || ''
-      if (!pos) { withoutPosition += 1; return }
-      const group = getPositionGroup(pos)
-      if (coverage[group] !== undefined) coverage[group] += 1
-    })
-
-    const isComplete = teamIds.length === teamSize
-    const mult = isComplete ? 1 : 0.55
-    const weights = { Portero: 2.2, Defensa: 1.1, Medio: 0.9, Delantero: 0.6 }
-
-    let penalty = 0
-    Object.entries(weights).forEach(([role, w]) => {
-      if (coverage[role] === 0) penalty += w * mult
-    })
-    penalty += Math.max((coverage.Portero || 0) - 1, 0) * 0.35
-    penalty += withoutPosition * (isComplete ? 0.25 : 0.15)
-    return penalty
-  }, [matchPositions, teamSize])
+  const getTeamRolePenalty = useCallback(
+    (teamIds) => rolePenaltyFor(teamIds?.map(positionOf), teamSize),
+    [positionOf, teamSize]
+  )
 
   // ── Probability calculation ──
   const calculateTeamProbability = useCallback((match) => {
@@ -616,79 +600,53 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   }, [stats, matches])
 
   // ── Historical teammate/duel stats ──
-  const historicalDraftLinks = useMemo(() => {
-    const teammatePairs = {}
-    const duelStats = {}
-    const pairKey = (a, b) => [a, b].sort().join('__')
-    const duelKey = (a, b) => `${a}__${b}`
-
-    const addPair = (a, b, won) => {
-      if (!a || !b) return
-      const k = pairKey(a, b)
-      if (!teammatePairs[k]) teammatePairs[k] = { games: 0, wins: 0 }
-      teammatePairs[k].games += 1
-      if (won) teammatePairs[k].wins += 1
-    }
-    const addDuel = (a, b, aWon) => {
-      if (!a || !b) return
-      const k = duelKey(a, b)
-      if (!duelStats[k]) duelStats[k] = { games: 0, wins: 0 }
-      duelStats[k].games += 1
-      if (aWon) duelStats[k].wins += 1
-    }
-
-    matches.forEach(match => {
-      const decided = match.winner === 'white' || match.winner === 'black'
-      if (!decided) return
-      const w = [...(match.teamWhite || [])]
-      const b = [...(match.teamBlack || [])]
-      const wWon = match.winner === 'white'
-      const bWon = match.winner === 'black'
-      for (let i = 0; i < w.length; i++) for (let j = i + 1; j < w.length; j++) addPair(w[i], w[j], wWon)
-      for (let i = 0; i < b.length; i++) for (let j = i + 1; j < b.length; j++) addPair(b[i], b[j], bWon)
-      w.forEach(wp => b.forEach(bp => { addDuel(wp, bp, wWon); addDuel(bp, wp, bWon) }))
-    })
-    return { teammatePairs, duelStats }
-  }, [matches])
+  const historicalDraftLinks = useMemo(() => computeDraftLinks(matches), [matches])
 
   // ── Auto-balance (improved: best-of-N with greedy seed) ──
+  /* Adapters over src/utils/teamBalancer.js. They keep the signatures the rest
+     of this hook already calls — entries of `{ playerId, score }` in, entries
+     out — so the extraction changed no call site. */
   const buildGreedyTeams = useCallback((scoredPlayers, pinnedWhite, pinnedBlack) => {
-    const nextWhite = [...pinnedWhite]
-    const nextBlack = [...pinnedBlack]
-    let wScore = pinnedWhite.reduce((s, e) => s + e.score, 0)
-    let bScore = pinnedBlack.reduce((s, e) => s + e.score, 0)
-    const locked = new Set([...pinnedWhite, ...pinnedBlack].map(e => e.playerId))
-
-    const remaining = scoredPlayers.filter(e => !locked.has(e.playerId))
-    remaining.forEach(entry => {
-      if (nextWhite.length >= teamSize) { nextBlack.push(entry); bScore += entry.score; return }
-      if (nextBlack.length >= teamSize) { nextWhite.push(entry); wScore += entry.score; return }
-
-      const objW = Math.abs((wScore + entry.score) - bScore)
-        + (getTeamRolePenalty([...nextWhite, entry].map(e => e.playerId)) + getTeamRolePenalty(nextBlack.map(e => e.playerId))) * 12
-      const objB = Math.abs(wScore - (bScore + entry.score))
-        + (getTeamRolePenalty(nextWhite.map(e => e.playerId)) + getTeamRolePenalty([...nextBlack, entry].map(e => e.playerId))) * 12
-
-      if (objW <= objB) { nextWhite.push(entry); wScore += entry.score }
-      else { nextBlack.push(entry); bScore += entry.score }
+    const scoreByIdFor = new Map(scoredPlayers.map(e => [e.playerId, e.score]))
+    const entryFor = pid => ({ playerId: pid, score: scoreByIdFor.get(pid) ?? getPlayerBalanceScore(pid) })
+    const result = greedyTeams({
+      order: scoredPlayers.map(e => e.playerId),
+      pinnedWhite: pinnedWhite.map(e => e.playerId),
+      pinnedBlack: pinnedBlack.map(e => e.playerId),
+      teamSize,
+      scoreOf: pid => scoreByIdFor.get(pid) ?? getPlayerBalanceScore(pid),
+      positionOf,
     })
-    return { white: nextWhite, black: nextBlack, wScore, bScore }
-  }, [teamSize, getTeamRolePenalty])
+    return {
+      white: result.white.map(entryFor),
+      black: result.black.map(entryFor),
+      wScore: result.whiteScore,
+      bScore: result.blackScore,
+    }
+  }, [teamSize, positionOf, getPlayerBalanceScore])
 
-  const evaluateSplit = useCallback((whiteIds, blackIds) => {
-    const wPower = whiteIds.reduce((s, pid) => s + getPlayerBalanceScore(pid), 0)
-    const bPower = blackIds.reduce((s, pid) => s + getPlayerBalanceScore(pid), 0)
-    const total = wPower + bPower
-    const gapPct = total > 0 ? (Math.abs(wPower - bPower) / total) * 100 : 0
-    const prob = calculateTeamProbability({ teamWhite: whiteIds, teamBlack: blackIds })
-    const probGap = Math.abs((prob.white || 50) - (prob.black || 50))
-    const rolePen = getTeamRolePenalty(whiteIds) + getTeamRolePenalty(blackIds)
-    return 100 - (probGap * 0.95) - (gapPct * 0.7) - (rolePen * 6)
-  }, [getPlayerBalanceScore, calculateTeamProbability, getTeamRolePenalty])
+  const evaluateSplit = useCallback((whiteIds, blackIds) => scoreSplit({
+    whiteIds,
+    blackIds,
+    teamSize,
+    scoreOf: getPlayerBalanceScore,
+    positionOf,
+    probability: calculateTeamProbability({ teamWhite: whiteIds, teamBlack: blackIds }),
+  }), [teamSize, getPlayerBalanceScore, positionOf, calculateTeamProbability])
 
-  const suggestBalancedTeams = useCallback(({ preserveLockedCaptains } = {}) => {
+  /* `poolOverride` / `positionsOverride` exist for applyAssistantAction: it
+     changes the roster and the positions in the same tick, and React state
+     has not caught up by the time the balancer has to run on the new values.
+     `undoLabel: null` lets the caller own the undo entry. */
+  const suggestBalancedTeams = useCallback((options = {}) => {
+    const { preserveLockedCaptains, constraints, poolOverride, positionsOverride } = options
+    const undoLabel = 'undoLabel' in options ? options.undoLabel : 'Auto-balance'
+    const positionLookup = positionsOverride
+      ? (playerId) => positionsOverride[playerId] || ''
+      : positionOf
+    const basePositions = positionsOverride || matchPositions
     const validIds = new Set(players.map(p => p.id))
-    const pool = Array.from(new Set(selectedPlayers)).filter(id => validIds.has(id))
+    const pool = Array.from(new Set(poolOverride || selectedPlayers)).filter(id => validIds.has(id))
     const shouldPreserve = preserveLockedCaptains ?? preserveCaptains
 
     if (pool.length !== requiredPlayers) {
@@ -700,47 +658,46 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
       return
     }
 
-    pushUndo('Auto-balance')
+    if (undoLabel) pushUndo(undoLabel)
 
-    const scored = pool
-      .map(pid => ({ playerId: pid, score: getPlayerBalanceScore(pid) }))
-      .sort((a, b) => b.score - a.score || a.playerId.localeCompare(b.playerId))
+    const sortedPool = [...pool].sort(
+      (a, b) => getPlayerBalanceScore(b) - getPlayerBalanceScore(a) || a.localeCompare(b)
+    )
 
     const pinnedW = []
     const pinnedB = []
     if (shouldPreserve && lockedWhiteCaptain && pool.includes(lockedWhiteCaptain)) {
-      const e = scored.find(s => s.playerId === lockedWhiteCaptain)
-      if (e) pinnedW.push(e)
+      pinnedW.push(lockedWhiteCaptain)
     }
     if (shouldPreserve && lockedBlackCaptain && pool.includes(lockedBlackCaptain)) {
-      const e = scored.find(s => s.playerId === lockedBlackCaptain)
-      if (e) pinnedB.push(e)
+      pinnedB.push(lockedBlackCaptain)
     }
 
-    // Greedy seed
-    const greedy = buildGreedyTeams(scored, pinnedW, pinnedB)
-    let bestWhiteIds = greedy.white.map(e => e.playerId)
-    let bestBlackIds = greedy.black.map(e => e.playerId)
-    let bestScore = evaluateSplit(bestWhiteIds, bestBlackIds)
-
-    // Best-of-N random shuffles to explore better splits
-    const lockedSet = new Set([...pinnedW, ...pinnedB].map(e => e.playerId))
-    const unlocked = scored.filter(e => !lockedSet.has(e.playerId))
-
-    for (let i = 0; i < BEST_OF_N_ITERATIONS; i++) {
-      const shuffled = [...unlocked].sort(() => Math.random() - 0.5)
-      const trial = buildGreedyTeams(shuffled, pinnedW, pinnedB)
-      const trialWhite = trial.white.map(e => e.playerId)
-      const trialBlack = trial.black.map(e => e.playerId)
-      const trialScore = evaluateSplit(trialWhite, trialBlack)
-      if (trialScore > bestScore) {
-        bestScore = trialScore
-        bestWhiteIds = trialWhite
-        bestBlackIds = trialBlack
-      }
+    /* The first candidate is the sorted greedy seed, the rest are random
+       shuffles — same 1 + 40 search the hook has always run. */
+    let seeded = false
+    const seedThenShuffle = (ids) => {
+      if (!seeded) { seeded = true; return [...ids] }
+      return [...ids].sort(() => Math.random() - 0.5)
     }
 
-    const retained = { ...matchPositions }
+    const best = pickBestSplit({
+      pool: sortedPool,
+      pinnedWhite: pinnedW,
+      pinnedBlack: pinnedB,
+      teamSize,
+      scoreOf: getPlayerBalanceScore,
+      positionOf: positionLookup,
+      probabilityOf: (white, black) =>
+        calculateTeamProbability({ teamWhite: white, teamBlack: black }),
+      iterations: BEST_OF_N_ITERATIONS + 1,
+      shuffle: seedThenShuffle,
+      constraints,
+    })
+    const bestWhiteIds = best.white
+    const bestBlackIds = best.black
+
+    const retained = { ...basePositions }
     Object.keys(retained).forEach(pid => {
       if (!bestWhiteIds.includes(pid) && !bestBlackIds.includes(pid)) delete retained[pid]
     })
@@ -762,15 +719,23 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
       bestWhiteIds.reduce((s, id) => s + getPlayerBalanceScore(id), 0) -
       bestBlackIds.reduce((s, id) => s + getPlayerBalanceScore(id), 0),
     ).toFixed(1)
-    const rolePenalty = (getTeamRolePenalty(bestWhiteIds) + getTeamRolePenalty(bestBlackIds)).toFixed(2)
+    const rolePenalty = (
+      rolePenaltyFor(bestWhiteIds.map(positionLookup), teamSize) +
+      rolePenaltyFor(bestBlackIds.map(positionLookup), teamSize)
+    ).toFixed(2)
     const lockTag = shouldPreserve ? ' · capitanes bloqueados' : ''
-    showToast('success', `Equipos sugeridos (${BEST_OF_N_ITERATIONS} combinaciones)${lockTag} · diff ${diff} · roles ${rolePenalty}`)
+    /* `success` even when a constraint went unmet: the split is valid and
+       applied, and only .toast.success / .toast.error have styles. The caveat
+       rides in the message. */
+    const constraintTag = best.constraintsMet === false ? ' · no se pudo cumplir una restricción' : ''
+    showToast('success', `Equipos sugeridos (${BEST_OF_N_ITERATIONS} combinaciones)${lockTag} · diff ${diff} · roles ${rolePenalty}${constraintTag}`)
   }, [
     players, selectedPlayers, requiredPlayers, teamSize,
     preserveCaptains, lockedWhiteCaptain, lockedBlackCaptain,
-    getPlayerBalanceScore, getTeamRolePenalty, matchPositions,
-    buildGreedyTeams, evaluateSplit, playerFrequentPositions, showToast, pushUndo,
+    getPlayerBalanceScore, matchPositions, positionOf,
+    calculateTeamProbability, playerFrequentPositions, showToast, pushUndo,
   ])
+
 
   // ── Live draft insights (teams summary, no swaps) ──
   const liveDraftBase = useMemo(() => {
@@ -930,6 +895,55 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     setWinner('')
     showToast('success', `Cambio aplicado: ${getPlayerName(whiteOut)} ↔ ${getPlayerName(blackOut)}`)
   }, [getPlayerName, showToast])
+
+  /* Applies one validated assistant action. It lives in the hook rather than
+     exporting pushUndo to a component: the hook stays the owner of its own
+     undo history. */
+  const applyAssistantAction = useCallback((accion) => {
+    if (!accion) return { ok: false, reason: 'La propuesta no trae cambios que aplicar.' }
+
+    if (accion.tipo === 'aplicarSwap') {
+      if (!accion.swap?.blanco || !accion.swap?.negro) {
+        return { ok: false, reason: 'El intercambio propuesto está incompleto.' }
+      }
+      pushUndo('Asistente')
+      applySwapSuggestion(accion.swap.blanco, accion.swap.negro)
+      return { ok: true }
+    }
+
+    const nextPool = [
+      ...selectedPlayers.filter(id => !accion.excluir.includes(id)),
+      ...accion.incluir.filter(id => !selectedPlayers.includes(id)),
+    ]
+    if (nextPool.length !== requiredPlayers) {
+      return {
+        ok: false,
+        reason: `Con esos cambios quedan ${nextPool.length} jugadores y el formato pide ${requiredPlayers}.`,
+      }
+    }
+
+    const nextPositions = {}
+    for (const [id, position] of Object.entries(matchPositions)) {
+      if (nextPool.includes(id)) nextPositions[id] = position
+    }
+    for (const [id, position] of Object.entries(accion.posiciones || {})) {
+      if (nextPool.includes(id)) nextPositions[id] = position
+    }
+
+    pushUndo('Asistente')
+    setSelectedPlayers(nextPool)
+    setMatchPositions(nextPositions)
+    suggestBalancedTeams({
+      constraints: accion,
+      poolOverride: nextPool,
+      positionsOverride: nextPositions,
+      undoLabel: null,
+    })
+    return { ok: true }
+  }, [
+    selectedPlayers, requiredPlayers, matchPositions,
+    pushUndo, applySwapSuggestion, suggestBalancedTeams,
+  ])
 
   // ── TV Board ──
   const inferPositionFromBoard = useCallback((x, y, team) => {
@@ -1428,6 +1442,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     handleWhiteCaptainChange,
     handleBlackCaptainChange,
     suggestBalancedTeams,
+    applyAssistantAction,
     applySwapSuggestion,
     handleAddMatch,
     resetMatchForm,

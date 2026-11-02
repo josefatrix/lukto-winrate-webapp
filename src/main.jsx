@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AppProvider } from './contexts'
 import App from './App.jsx'
 import './index.css'
+import './styles/assistant.css'
 
 const VotePage = lazy(() => import('./pages/VotePage.jsx').then(m => ({ default: m.VotePage })))
 

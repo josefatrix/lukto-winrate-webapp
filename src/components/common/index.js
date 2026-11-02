@@ -18,6 +18,7 @@ export {
 export { TimeFilter } from './TimeFilter'
 export { Announcement } from './Announcement'
 export { FloatingActionButton } from './FloatingActionButton'
+export { AssistantSheet } from './AssistantSheet'
 export { AnimatedCounter } from './AnimatedCounter'
 
 // New UI Enhancement Components
