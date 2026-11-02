@@ -297,3 +297,20 @@ test('quitar marcadores no cambia el texto de los turnos anteriores', () => {
 test('el system prompt de stats también dice cuál bloque de hechos es el actual', () => {
   assert.match(SYSTEM_BY_MODE.stats, /más reciente/i)
 })
+
+test('el esquema no usa restricciones que structured outputs rechaza', () => {
+  /* La API devuelve 400 con minItems distinto de 0 o 1 en un array. Con
+     minItems: 2 en los pares, TODAS las peticiones fallaban — y ningún test
+     unitario podía verlo porque ninguno llama a la API. */
+  const offenders = []
+  const walk = (node, path) => {
+    if (!node || typeof node !== 'object') return
+    if (Array.isArray(node)) return node.forEach((item, i) => walk(item, `${path}[${i}]`))
+    for (const key of ['minItems', 'maxItems']) {
+      if (key in node && ![0, 1].includes(node[key])) offenders.push(`${path}.${key}=${node[key]}`)
+    }
+    Object.entries(node).forEach(([key, value]) => walk(value, `${path}.${key}`))
+  }
+  walk(RESPONSE_SCHEMA, 'schema')
+  assert.deepEqual(offenders, [], `restricciones no soportadas: ${offenders.join(', ')}`)
+})

@@ -42,6 +42,7 @@ Reglas:
 - Los hechos corresponden al periodo que el usuario tiene seleccionado, no a todo el histórico. Nombra el periodo en tu respuesta (está en \`periodo.etiqueta\`) para que nadie confunda "el mejor del mes" con "el mejor de siempre".
 - Excepción: todo lo que está bajo \`quienPregunta.historico\` (su racha y su forma reciente) recorre todo el histórico y no respeta el periodo. Si lo mencionas, aclara que es de siempre.
 - Si el usuario cambia el filtro a mitad de la charla verás más de un bloque <hechos>. **El más reciente es el estado actual**; los anteriores son historia y no se mezclan con él.
+- \`ultimosPartidos\` trae como mucho los 25 más recientes. Para cuántos partidos hubo usá \`totalPartidos\`, nunca cuentes la lista.
 - Si \`jugadores\` viene vacío, no hay datos de ese periodo. Dilo y sugiere mirar otro periodo, en vez de responder con el histórico.
 - Dos o tres frases bastan. Sin listas largas, sin tablas, sin rodeos.
 - No propones acciones: en este modo \`accion\` siempre va en null.
@@ -59,7 +60,7 @@ ${FACTS_ARE_DATA}`,
 Sobre \`accion\`:
 - \`fijarBlanco\` / \`fijarNegro\`: forzar a alguien a un equipo.
 - \`excluir\` / \`incluir\`: sacar o meter gente en la convocatoria. Si al excluir queda gente de menos para el formato, **tienes que** proponer reemplazos con \`incluir\`, eligiendo jugadores activos de \`jugadores\` con \`power\` parecido al de los que salen. Sin eso el balanceador se niega a armar.
-- \`juntar\` / \`separar\`: pares que van en el mismo equipo o en equipos distintos.
+- \`juntar\` / \`separar\`: pares que van en el mismo equipo o en equipos distintos. Cada par lleva **exactamente dos** ids distintos; uno con uno solo, o con tres, invalida toda la propuesta.
 - \`posiciones\`: posición por jugador.
 - \`swap\`: intercambiar dos jugadores ya repartidos, con \`tipo: "aplicarSwap"\`.
 - Si la pregunta no pide ningún cambio, \`accion\` va en null.
@@ -73,9 +74,13 @@ ${FACTS_ARE_DATA}`,
 
 const ID_LIST = { type: 'array', items: { type: 'string' } }
 
+/* Sin minItems/maxItems: structured outputs solo acepta 0 o 1 y devuelve 400
+   con cualquier otro valor. Que el par tenga exactamente dos jugadores lo dice
+   el prompt y lo hace cumplir validateAssistantAction, que rechaza la acción
+   entera si no. */
 const PAIR_LIST = {
   type: 'array',
-  items: { type: 'array', items: { type: 'string' }, minItems: 2, maxItems: 2 },
+  items: { type: 'array', items: { type: 'string' } },
 }
 
 /* `posiciones` is a list of pairs, not a map: a strict JSON schema cannot

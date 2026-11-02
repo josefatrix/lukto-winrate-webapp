@@ -438,3 +438,19 @@ test('fijar de más en el equipo negro también se rechaza', () => {
     false
   )
 })
+
+test('los hechos dicen cuántos partidos hay en total, no solo los 25 del bloque', () => {
+  // Sin esto el modelo cuenta la lista recortada y da un total inventado.
+  const many = Array.from({ length: 40 }, (_, i) => ({
+    id: `x${i}`, date: `2026-01-${String((i % 28) + 1).padStart(2, '0')}`,
+    teamWhite: ['p1'], teamBlack: ['p2'], winner: 'white',
+  }))
+  const result = facts({ matches: many })
+  assert.equal(result.totalPartidos, 40)
+  assert.equal(result.ultimosPartidos.length, 25)
+})
+
+test('totalPartidos cuenta solo los partidos con resultado del periodo', () => {
+  assert.equal(facts().totalPartidos, 3)
+  assert.equal(facts({ matches: [] }).totalPartidos, 0)
+})

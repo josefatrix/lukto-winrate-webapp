@@ -142,7 +142,17 @@ export const buildStatsFacts = ({
     }
   }
 
-  return { periodo: periodFor(timeFilter), jugadores, quienPregunta, ultimosPartidos, parejas, duelos }
+  return {
+    periodo: periodFor(timeFilter),
+    jugadores,
+    quienPregunta,
+    /* El total va aparte porque ultimosPartidos está recortado a 25: sin este
+       campo el modelo cuenta la lista y responde un total que no es. */
+    totalPartidos: chronological.length,
+    ultimosPartidos,
+    parejas,
+    duelos,
+  }
 }
 
 /**
