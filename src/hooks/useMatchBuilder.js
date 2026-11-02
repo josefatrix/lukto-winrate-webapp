@@ -14,6 +14,7 @@ import {
   getMatchStartDate,
   clamp,
 } from '../utils/matchConstants'
+import { computeDraftLinks } from '../utils/matchHistory.js'
 import {
   BEST_OF_N_ITERATIONS,
   scorePlayer,
@@ -599,40 +600,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
   }, [stats, matches])
 
   // ── Historical teammate/duel stats ──
-  const historicalDraftLinks = useMemo(() => {
-    const teammatePairs = {}
-    const duelStats = {}
-    const pairKey = (a, b) => [a, b].sort().join('__')
-    const duelKey = (a, b) => `${a}__${b}`
-
-    const addPair = (a, b, won) => {
-      if (!a || !b) return
-      const k = pairKey(a, b)
-      if (!teammatePairs[k]) teammatePairs[k] = { games: 0, wins: 0 }
-      teammatePairs[k].games += 1
-      if (won) teammatePairs[k].wins += 1
-    }
-    const addDuel = (a, b, aWon) => {
-      if (!a || !b) return
-      const k = duelKey(a, b)
-      if (!duelStats[k]) duelStats[k] = { games: 0, wins: 0 }
-      duelStats[k].games += 1
-      if (aWon) duelStats[k].wins += 1
-    }
-
-    matches.forEach(match => {
-      const decided = match.winner === 'white' || match.winner === 'black'
-      if (!decided) return
-      const w = [...(match.teamWhite || [])]
-      const b = [...(match.teamBlack || [])]
-      const wWon = match.winner === 'white'
-      const bWon = match.winner === 'black'
-      for (let i = 0; i < w.length; i++) for (let j = i + 1; j < w.length; j++) addPair(w[i], w[j], wWon)
-      for (let i = 0; i < b.length; i++) for (let j = i + 1; j < b.length; j++) addPair(b[i], b[j], bWon)
-      w.forEach(wp => b.forEach(bp => { addDuel(wp, bp, wWon); addDuel(bp, wp, bWon) }))
-    })
-    return { teammatePairs, duelStats }
-  }, [matches])
+  const historicalDraftLinks = useMemo(() => computeDraftLinks(matches), [matches])
 
   // ── Auto-balance (improved: best-of-N with greedy seed) ──
   /* Adapters over src/utils/teamBalancer.js. They keep the signatures the rest
