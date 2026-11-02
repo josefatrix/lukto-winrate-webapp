@@ -7,6 +7,7 @@ import {
   buildGreedyTeams,
   evaluateSplit,
   pickBestSplit,
+  satisfiesConstraints,
 } from '../src/utils/teamBalancer.js'
 
 const close = (actual, expected, label) =>
@@ -214,4 +215,149 @@ test('pickBestSplit elige el reparto con mejor evaluateSplit entre los candidato
   const whitePower = result.white.reduce((s, id) => s + scoreOf(id), 0)
   const blackPower = result.black.reduce((s, id) => s + scoreOf(id), 0)
   assert.equal(whitePower, blackPower, 'debe elegir el reparto parejo')
+})
+
+// ── Restricciones ──────────────────────────────────────────────────────────
+
+/* Mezcla determinista: Fisher-Yates sobre mulberry32. Deja que los tests
+   recorran cientos de órdenes reales sin depender de Math.random. */
+const seededShuffle = seed => {
+  let state = seed >>> 0
+  const random = () => {
+    state = (state + 0x6d2b79f5) >>> 0
+    let t = state
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+  return ids => {
+    const out = [...ids]
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1))
+      ;[out[i], out[j]] = [out[j], out[i]]
+    }
+    return out
+  }
+}
+
+const sixScores = { a: 100, b: 92, c: 80, d: 24, e: 12, f: 6 }
+const sixPool = ['a', 'b', 'c', 'd', 'e', 'f']
+const sixScoreOf = id => sixScores[id] ?? 50
+
+const splitWith = constraints =>
+  pickBestSplit({
+    pool: sixPool,
+    teamSize: 3,
+    scoreOf: sixScoreOf,
+    positionOf: noPositions,
+    probabilityOf: () => ({ white: 50, black: 50 }),
+    iterations: 200,
+    shuffle: seededShuffle(20261102),
+    constraints,
+  })
+
+test('sin restricciones satisfiesConstraints acepta cualquier reparto', () => {
+  assert.equal(satisfiesConstraints({ white: ['a'], black: ['b'], constraints: {} }), true)
+  assert.equal(satisfiesConstraints({ white: ['a'], black: ['b'] }), true)
+})
+
+test('satisfiesConstraints exige el equipo de los jugadores fijados', () => {
+  const white = ['a', 'b']
+  const black = ['c', 'd']
+  assert.equal(satisfiesConstraints({ white, black, constraints: { fijarBlanco: ['a'] } }), true)
+  assert.equal(satisfiesConstraints({ white, black, constraints: { fijarBlanco: ['c'] } }), false)
+  assert.equal(satisfiesConstraints({ white, black, constraints: { fijarNegro: ['d'] } }), true)
+  assert.equal(satisfiesConstraints({ white, black, constraints: { fijarNegro: ['b'] } }), false)
+})
+
+test('satisfiesConstraints exige que los pares de juntar estén en el mismo equipo', () => {
+  const juntos = { white: ['a', 'b'], black: ['c', 'd'], constraints: { juntar: [['a', 'b']] } }
+  const separados = { white: ['a', 'c'], black: ['b', 'd'], constraints: { juntar: [['a', 'b']] } }
+  assert.equal(satisfiesConstraints(juntos), true)
+  assert.equal(satisfiesConstraints(separados), false)
+})
+
+test('satisfiesConstraints exige que los pares de separar estén en equipos distintos', () => {
+  const separados = { white: ['a', 'c'], black: ['b', 'd'], constraints: { separar: [['a', 'b']] } }
+  const juntos = { white: ['a', 'b'], black: ['c', 'd'], constraints: { separar: [['a', 'b']] } }
+  assert.equal(satisfiesConstraints(separados), true)
+  assert.equal(satisfiesConstraints(juntos), false)
+})
+
+test('un par que menciona a alguien que no juega se ignora', () => {
+  const teams = { white: ['a', 'b'], black: ['c', 'd'] }
+  assert.equal(
+    satisfiesConstraints({ ...teams, constraints: { juntar: [['a', 'zzz']] } }),
+    true,
+    'juntar con un ausente no puede cumplirse ni incumplirse'
+  )
+  assert.equal(satisfiesConstraints({ ...teams, constraints: { separar: [['zzz', 'yyy']] } }), true)
+})
+
+test('juntar deja a los dos jugadores en el mismo equipo', () => {
+  const { white, black, constraintsMet } = splitWith({ juntar: [['a', 'b']] })
+  assert.equal(constraintsMet, true)
+  const juntosEnBlanco = white.includes('a') && white.includes('b')
+  const juntosEnNegro = black.includes('a') && black.includes('b')
+  assert.ok(juntosEnBlanco || juntosEnNegro, `a y b quedaron separados: ${white} / ${black}`)
+})
+
+test('separar los deja en equipos distintos', () => {
+  const { white, black, constraintsMet } = splitWith({ separar: [['e', 'f']] })
+  assert.equal(constraintsMet, true)
+  assert.notEqual(white.includes('e'), white.includes('f'))
+  assert.notEqual(black.includes('e'), black.includes('f'))
+})
+
+test('fijarBlanco respeta el equipo pedido', () => {
+  const { white, constraintsMet } = splitWith({ fijarBlanco: ['f'] })
+  assert.equal(constraintsMet, true)
+  assert.ok(white.includes('f'), 'f tenía que quedar en blanco')
+})
+
+test('fijarNegro respeta el equipo pedido', () => {
+  const { black, constraintsMet } = splitWith({ fijarNegro: ['a'] })
+  assert.equal(constraintsMet, true)
+  assert.ok(black.includes('a'), 'a tenía que quedar en negro')
+})
+
+test('fijar en los dos equipos a la vez se respeta', () => {
+  const { white, black } = splitWith({ fijarBlanco: ['a'], fijarNegro: ['b'] })
+  assert.ok(white.includes('a'))
+  assert.ok(black.includes('b'))
+})
+
+test('juntar y separar del mismo par es imposible y devuelve constraintsMet false', () => {
+  const { constraintsMet } = splitWith({ juntar: [['a', 'b']], separar: [['a', 'b']] })
+  assert.equal(constraintsMet, false)
+})
+
+test('una restricción imposible devuelve un reparto válido, no una excepción', () => {
+  const { white, black, score, constraintsMet } = splitWith({
+    juntar: [['a', 'b']],
+    separar: [['a', 'b']],
+  })
+  assert.equal(constraintsMet, false)
+  assert.equal(white.length, 3)
+  assert.equal(black.length, 3)
+  assert.deepEqual([...white, ...black].sort(), sixPool)
+  assert.equal(typeof score, 'number')
+})
+
+test('sin restricciones, el resultado es idéntico al de la tarea 1', () => {
+  const base = {
+    pool: sixPool,
+    teamSize: 3,
+    scoreOf: sixScoreOf,
+    positionOf: noPositions,
+    probabilityOf: () => ({ white: 50, black: 50 }),
+    iterations: 200,
+  }
+  const sinCampo = pickBestSplit({ ...base, shuffle: seededShuffle(7) })
+  const conVacio = pickBestSplit({ ...base, shuffle: seededShuffle(7), constraints: {} })
+  assert.deepEqual(
+    { white: conVacio.white, black: conVacio.black, score: conVacio.score },
+    { white: sinCampo.white, black: sinCampo.black, score: sinCampo.score }
+  )
+  assert.equal(sinCampo.constraintsMet, true)
 })

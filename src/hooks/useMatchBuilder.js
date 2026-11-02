@@ -20,6 +20,7 @@ import {
   rolePenaltyFor,
   buildGreedyTeams as greedyTeams,
   evaluateSplit as scoreSplit,
+  pickBestSplit,
 } from '../utils/teamBalancer.js'
 const DRAFT_KEY = 'lukto_match_draft'
 
@@ -665,7 +666,7 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     probability: calculateTeamProbability({ teamWhite: whiteIds, teamBlack: blackIds }),
   }), [teamSize, getPlayerBalanceScore, positionOf, calculateTeamProbability])
 
-  const suggestBalancedTeams = useCallback(({ preserveLockedCaptains } = {}) => {
+  const suggestBalancedTeams = useCallback(({ preserveLockedCaptains, constraints } = {}) => {
     const validIds = new Set(players.map(p => p.id))
     const pool = Array.from(new Set(selectedPlayers)).filter(id => validIds.has(id))
     const shouldPreserve = preserveLockedCaptains ?? preserveCaptains
@@ -681,43 +682,42 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
 
     pushUndo('Auto-balance')
 
-    const scored = pool
-      .map(pid => ({ playerId: pid, score: getPlayerBalanceScore(pid) }))
-      .sort((a, b) => b.score - a.score || a.playerId.localeCompare(b.playerId))
+    const sortedPool = [...pool].sort(
+      (a, b) => getPlayerBalanceScore(b) - getPlayerBalanceScore(a) || a.localeCompare(b)
+    )
 
     const pinnedW = []
     const pinnedB = []
     if (shouldPreserve && lockedWhiteCaptain && pool.includes(lockedWhiteCaptain)) {
-      const e = scored.find(s => s.playerId === lockedWhiteCaptain)
-      if (e) pinnedW.push(e)
+      pinnedW.push(lockedWhiteCaptain)
     }
     if (shouldPreserve && lockedBlackCaptain && pool.includes(lockedBlackCaptain)) {
-      const e = scored.find(s => s.playerId === lockedBlackCaptain)
-      if (e) pinnedB.push(e)
+      pinnedB.push(lockedBlackCaptain)
     }
 
-    // Greedy seed
-    const greedy = buildGreedyTeams(scored, pinnedW, pinnedB)
-    let bestWhiteIds = greedy.white.map(e => e.playerId)
-    let bestBlackIds = greedy.black.map(e => e.playerId)
-    let bestScore = evaluateSplit(bestWhiteIds, bestBlackIds)
-
-    // Best-of-N random shuffles to explore better splits
-    const lockedSet = new Set([...pinnedW, ...pinnedB].map(e => e.playerId))
-    const unlocked = scored.filter(e => !lockedSet.has(e.playerId))
-
-    for (let i = 0; i < BEST_OF_N_ITERATIONS; i++) {
-      const shuffled = [...unlocked].sort(() => Math.random() - 0.5)
-      const trial = buildGreedyTeams(shuffled, pinnedW, pinnedB)
-      const trialWhite = trial.white.map(e => e.playerId)
-      const trialBlack = trial.black.map(e => e.playerId)
-      const trialScore = evaluateSplit(trialWhite, trialBlack)
-      if (trialScore > bestScore) {
-        bestScore = trialScore
-        bestWhiteIds = trialWhite
-        bestBlackIds = trialBlack
-      }
+    /* The first candidate is the sorted greedy seed, the rest are random
+       shuffles — same 1 + 40 search the hook has always run. */
+    let seeded = false
+    const seedThenShuffle = (ids) => {
+      if (!seeded) { seeded = true; return [...ids] }
+      return [...ids].sort(() => Math.random() - 0.5)
     }
+
+    const best = pickBestSplit({
+      pool: sortedPool,
+      pinnedWhite: pinnedW,
+      pinnedBlack: pinnedB,
+      teamSize,
+      scoreOf: getPlayerBalanceScore,
+      positionOf,
+      probabilityOf: (white, black) =>
+        calculateTeamProbability({ teamWhite: white, teamBlack: black }),
+      iterations: BEST_OF_N_ITERATIONS + 1,
+      shuffle: seedThenShuffle,
+      constraints,
+    })
+    const bestWhiteIds = best.white
+    const bestBlackIds = best.black
 
     const retained = { ...matchPositions }
     Object.keys(retained).forEach(pid => {
@@ -743,12 +743,16 @@ export const useMatchBuilder = ({ showToast, logActivity }) => {
     ).toFixed(1)
     const rolePenalty = (getTeamRolePenalty(bestWhiteIds) + getTeamRolePenalty(bestBlackIds)).toFixed(2)
     const lockTag = shouldPreserve ? ' · capitanes bloqueados' : ''
-    showToast('success', `Equipos sugeridos (${BEST_OF_N_ITERATIONS} combinaciones)${lockTag} · diff ${diff} · roles ${rolePenalty}`)
+    /* `success` even when a constraint went unmet: the split is valid and
+       applied, and only .toast.success / .toast.error have styles. The caveat
+       rides in the message. */
+    const constraintTag = best.constraintsMet === false ? ' · no se pudo cumplir una restricción' : ''
+    showToast('success', `Equipos sugeridos (${BEST_OF_N_ITERATIONS} combinaciones)${lockTag} · diff ${diff} · roles ${rolePenalty}${constraintTag}`)
   }, [
     players, selectedPlayers, requiredPlayers, teamSize,
     preserveCaptains, lockedWhiteCaptain, lockedBlackCaptain,
-    getPlayerBalanceScore, getTeamRolePenalty, matchPositions,
-    buildGreedyTeams, evaluateSplit, playerFrequentPositions, showToast, pushUndo,
+    getPlayerBalanceScore, getTeamRolePenalty, matchPositions, positionOf,
+    calculateTeamProbability, playerFrequentPositions, showToast, pushUndo,
   ])
 
   // ── Live draft insights (teams summary, no swaps) ──

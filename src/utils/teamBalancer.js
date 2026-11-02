@@ -124,9 +124,42 @@ export const evaluateSplit = ({
   return 100 - probGap * 0.95 - gapPct * 0.7 - rolePen * 6
 }
 
+const participates = (id, white, black) => white.includes(id) || black.includes(id)
+
+/**
+ * Does this split honour the constraints the assistant asked for?
+ *
+ * A pair naming someone who is not playing is skipped rather than failed:
+ * keeping a player out of the match is its own verb, and the caller validates
+ * who may be referenced before we ever get here.
+ */
+export const satisfiesConstraints = ({ white = [], black = [], constraints } = {}) => {
+  const { fijarBlanco = [], fijarNegro = [], juntar = [], separar = [] } = constraints || {}
+
+  if (fijarBlanco.some(id => black.includes(id))) return false
+  if (fijarNegro.some(id => white.includes(id))) return false
+
+  const sameTeam = (a, b) =>
+    (white.includes(a) && white.includes(b)) || (black.includes(a) && black.includes(b))
+  const bothPlay = (a, b) => participates(a, white, black) && participates(b, white, black)
+
+  if (juntar.some(([a, b]) => bothPlay(a, b) && !sameTeam(a, b))) return false
+  if (separar.some(([a, b]) => bothPlay(a, b) && sameTeam(a, b))) return false
+  return true
+}
+
 const defaultShuffle = ids => [...ids].sort(() => Math.random() - 0.5)
 
-/** Best-of-N: shuffle, build greedily, keep the split `evaluateSplit` likes most. */
+/**
+ * Best-of-N: shuffle, build greedily, keep the split `evaluateSplit` likes most.
+ *
+ * The two kinds of constraint enter at different moments, and swapping them
+ * breaks the search. `fijarBlanco` / `fijarNegro` are pinned before generation,
+ * so every candidate honours them. `juntar` / `separar` filter the candidates
+ * afterwards: the best split that satisfies them wins, and if none does, the
+ * best split overall comes back with `constraintsMet: false` rather than
+ * nothing at all.
+ */
 export const pickBestSplit = ({
   pool,
   pinnedWhite = [],
@@ -137,13 +170,23 @@ export const pickBestSplit = ({
   probabilityOf,
   iterations = BEST_OF_N_ITERATIONS,
   shuffle = defaultShuffle,
+  constraints,
 }) => {
+  const { fijarBlanco = [], fijarNegro = [] } = constraints || {}
+  const inPool = id => pool.includes(id)
+  const startWhite = [...new Set([...pinnedWhite, ...fijarBlanco.filter(inPool)])]
+  const startBlack = [...new Set([...pinnedBlack, ...fijarNegro.filter(inPool)])].filter(
+    id => !startWhite.includes(id)
+  )
+
   let best = null
+  let bestMeeting = null
+
   for (let i = 0; i < iterations; i++) {
     const { white, black } = buildGreedyTeams({
       order: shuffle(pool),
-      pinnedWhite,
-      pinnedBlack,
+      pinnedWhite: startWhite,
+      pinnedBlack: startBlack,
       teamSize,
       scoreOf,
       positionOf,
@@ -156,7 +199,15 @@ export const pickBestSplit = ({
       positionOf,
       probability: probabilityOf(white, black),
     })
-    if (!best || score > best.score) best = { white, black, score }
+    const candidate = { white, black, score }
+    if (!best || score > best.score) best = candidate
+    if (
+      (!bestMeeting || score > bestMeeting.score) &&
+      satisfiesConstraints({ white, black, constraints })
+    ) {
+      bestMeeting = candidate
+    }
   }
-  return best
+
+  return bestMeeting ? { ...bestMeeting, constraintsMet: true } : { ...best, constraintsMet: false }
 }
