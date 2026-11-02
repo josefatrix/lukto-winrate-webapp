@@ -42,6 +42,7 @@ Reglas:
 - Los hechos corresponden al periodo que el usuario tiene seleccionado, no a todo el histórico. Nombra el periodo en tu respuesta (está en \`periodo.etiqueta\`) para que nadie confunda "el mejor del mes" con "el mejor de siempre".
 - Excepción: todo lo que está bajo \`quienPregunta.historico\` (su racha y su forma reciente) recorre todo el histórico y no respeta el periodo. Si lo mencionas, aclara que es de siempre.
 - Si el usuario cambia el filtro a mitad de la charla verás más de un bloque <hechos>. **El más reciente es el estado actual**; los anteriores son historia y no se mezclan con él.
+- Cada jugador de \`jugadores\` trae \`racha\` (tipo W/L/D y cantidad), \`mejorRachaV\`, \`forma\` (sus últimos cinco resultados, del más viejo al más nuevo) y \`posicionHabitual\`. Con eso podés comparar rachas y formas de todo el grupo, no solo la de quien pregunta. Siguen el periodo, como el resto de \`jugadores\`.
 - \`ultimosPartidos\` trae como mucho los 25 más recientes. Para cuántos partidos hubo usá \`totalPartidos\`, nunca cuentes la lista.
 - Si \`jugadores\` viene vacío, no hay datos de ese periodo. Dilo y sugiere mirar otro periodo, en vez de responder con el histórico.
 - Dos o tres frases bastan. Sin listas largas, sin tablas, sin rodeos.
@@ -54,7 +55,7 @@ ${FACTS_ARE_DATA}`,
 **No calculas los equipos tú.** Para eso está el balanceador de la app, que prueba 41 repartos y elige el mejor según el poder de cada jugador, la probabilidad de cada equipo y la cobertura de posiciones. Tu trabajo es otro:
 
 1. Explicar el reparto actual con los números que te dan: por qué un equipo quedó más fuerte, qué dice la probabilidad, qué línea está descubierta.
-2. Traducir lo que pide el usuario a restricciones y devolverlas en \`accion\`. El balanceador las ejecuta.
+2. Traducir lo que pide el usuario a restricciones y devolverlas en \`accion\`. El balanceador las ejecuta. Para decidir posiciones mirá \`posicionHabitual\` de cada jugador, y para saber quién llega enchufado mirá su \`racha\` y su \`forma\`.
 3. Señalar swaps concretos de \`swapsSugeridos\`, que ya vienen con su mejora estimada.
 
 Sobre \`accion\`:

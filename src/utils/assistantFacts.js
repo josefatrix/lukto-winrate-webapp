@@ -35,6 +35,56 @@ const resultFor = (match, playerId) => {
 const decidedMatches = matches =>
   (matches || []).filter(hasResult).sort(compareMatchChronology)
 
+const playsIn = (match, playerId) =>
+  match.teamWhite?.includes(playerId) || match.teamBlack?.includes(playerId)
+
+/**
+ * Streak, recent form and usual position for every player, not just the one
+ * asking. Without this "¿quién está en mejor racha?" has no answer in the
+ * block, and the model correctly refuses instead of guessing.
+ *
+ * Computed over the period's matches, like everything else in `jugadores`.
+ */
+const perPlayerForm = (chronological, playerIds) => {
+  const form = new Map(playerIds.map(id => [id, []]))
+  const positions = new Map(playerIds.map(id => [id, {}]))
+
+  for (const match of chronological) {
+    for (const id of playerIds) {
+      if (!playsIn(match, id)) continue
+      form.get(id).push(resultFor(match, id))
+      const position = match.positions?.[id]
+      if (position) {
+        const seen = positions.get(id)
+        seen[position] = (seen[position] || 0) + 1
+      }
+    }
+  }
+
+  const summarize = results => {
+    let current = { tipo: '', cantidad: 0 }
+    let mejorRachaV = 0
+    for (const result of results) {
+      current =
+        current.tipo === result
+          ? { tipo: result, cantidad: current.cantidad + 1 }
+          : { tipo: result, cantidad: 1 }
+      if (result === 'W') mejorRachaV = Math.max(mejorRachaV, current.cantidad)
+    }
+    return { racha: current, mejorRachaV, forma: results.slice(-RECENT_FORM) }
+  }
+
+  const mostPlayed = seen =>
+    Object.entries(seen).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || ''
+
+  return new Map(
+    playerIds.map(id => [
+      id,
+      { ...summarize(form.get(id)), posicionHabitual: mostPlayed(positions.get(id)) },
+    ])
+  )
+}
+
 /**
  * `matches` is the period-filtered list — the same one `displayStats` was
  * computed from. `allMatches` is the whole history and feeds only
@@ -77,6 +127,11 @@ export const buildStatsFacts = ({
     }))
 
   const chronological = decidedMatches(matches)
+  const formById = perPlayerForm(
+    chronological,
+    jugadores.map(entry => entry.id)
+  )
+  for (const entry of jugadores) Object.assign(entry, formById.get(entry.id))
 
   const ultimosPartidos = chronological
     .slice(-MAX_MATCHES)

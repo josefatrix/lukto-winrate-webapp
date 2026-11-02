@@ -314,3 +314,10 @@ test('el esquema no usa restricciones que structured outputs rechaza', () => {
   walk(RESPONSE_SCHEMA, 'schema')
   assert.deepEqual(offenders, [], `restricciones no soportadas: ${offenders.join(', ')}`)
 })
+
+test('el system prompt explica que cada jugador trae racha, forma y posición', () => {
+  for (const mode of ['stats', 'builder']) {
+    assert.match(SYSTEM_BY_MODE[mode], /racha/i, mode)
+    assert.match(SYSTEM_BY_MODE[mode], /posicionHabitual/, mode)
+  }
+})

@@ -454,3 +454,59 @@ test('totalPartidos cuenta solo los partidos con resultado del periodo', () => {
   assert.equal(facts().totalPartidos, 3)
   assert.equal(facts({ matches: [] }).totalPartidos, 0)
 })
+
+// ── Estadísticas de todos, no solo de quien pregunta ───────────────────────
+
+test('cada jugador trae su racha, no solo quien pregunta', () => {
+  // "¿Quién está en mejor racha?" era imposible de responder: el bloque solo
+  // llevaba la racha de quien preguntaba.
+  const villa = facts({ timeFilter: 'all' }).jugadores.find(j => j.id === 'p1')
+  assert.equal(typeof villa.racha.tipo, 'string')
+  assert.equal(typeof villa.racha.cantidad, 'number')
+  assert.equal(typeof villa.mejorRachaV, 'number')
+})
+
+test('la racha de cada jugador sale de sus propios partidos', () => {
+  // p1: m1 ganó (blanco), m2 perdió (estaba en blanco y ganó negro), m3 empate
+  const villa = facts({ timeFilter: 'all' }).jugadores.find(j => j.id === 'p1')
+  assert.deepEqual(villa.forma, ['W', 'L', 'D'])
+  assert.deepEqual(villa.racha, { tipo: 'D', cantidad: 1 })
+
+  // p2: m1 ganó, m2 ganó (estaba en negro), m3 empate
+  const werz = facts({ timeFilter: 'all' }).jugadores.find(j => j.id === 'p2')
+  assert.deepEqual(werz.forma, ['W', 'W', 'D'])
+  assert.equal(werz.mejorRachaV, 2)
+})
+
+test('la forma de cada jugador trae como mucho cinco partidos', () => {
+  const many = Array.from({ length: 12 }, (_, i) => ({
+    id: `f${i}`, date: `2026-03-${String(i + 1).padStart(2, '0')}`,
+    teamWhite: ['p1'], teamBlack: ['p2'], winner: 'white',
+  }))
+  const villa = facts({ matches: many }).jugadores.find(j => j.id === 'p1')
+  assert.equal(villa.forma.length, 5)
+  assert.deepEqual(villa.forma, ['W', 'W', 'W', 'W', 'W'])
+})
+
+test('la racha de los jugadores sigue el periodo, como el resto de jugadores[]', () => {
+  const soloUltimo = facts({ matches: [matches[2]], allMatches: matches })
+  const villa = soloUltimo.jugadores.find(j => j.id === 'p1')
+  assert.deepEqual(villa.forma, ['D'], 'solo el partido del periodo')
+})
+
+test('cada jugador trae la posición en la que más juega', () => {
+  const conPosiciones = [
+    { ...matches[0], positions: { p1: 'portero', p2: 'medio' } },
+    { ...matches[1], positions: { p1: 'portero', p2: 'delantero' } },
+    { ...matches[2], positions: { p1: 'cierre' } },
+  ]
+  const result = facts({ matches: conPosiciones })
+  assert.equal(result.jugadores.find(j => j.id === 'p1').posicionHabitual, 'portero')
+  assert.equal(result.jugadores.find(j => j.id === 'p3').posicionHabitual, '')
+})
+
+test('quien pregunta sigue trayendo su racha histórica aparte', () => {
+  const { quienPregunta } = facts()
+  assert.ok(quienPregunta.historico.racha)
+  assert.ok(Array.isArray(quienPregunta.historico.formaReciente))
+})
