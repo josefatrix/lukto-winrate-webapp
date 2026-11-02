@@ -6,6 +6,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 
+import { AppIcon } from './AppIcon'
 import { Modal } from './Modal'
 
 const Dots = () => (
@@ -16,11 +17,31 @@ const Dots = () => (
   </span>
 )
 
+const SendIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M5 12h13M12 5l7 7-7 7" />
+  </svg>
+)
+
+const quotaTone = remaining => {
+  if (typeof remaining !== 'number') return 'unknown'
+  if (remaining === 0) return 'empty'
+  return remaining <= 3 ? 'true' : 'false'
+}
+
 export const AssistantSheet = ({
   open,
   onClose,
   title = 'Preguntale a Claude',
   placeholder = 'Escribí tu pregunta…',
+  emptyHint = 'Preguntá lo que quieras sobre los partidos, las rachas o los equipos.',
   chips = [],
   assistant,
   linked = true,
@@ -34,7 +55,11 @@ export const AssistantSheet = ({
     assistant
 
   useEffect(() => {
-    if (open) inputRef.current?.focus()
+    /* Sin foco automático en táctil: abriría el teclado encima de la hoja
+       antes de que el usuario llegue a leer nada. */
+    if (open && window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) {
+      inputRef.current?.focus()
+    }
   }, [open])
 
   useEffect(() => {
@@ -62,14 +87,14 @@ export const AssistantSheet = ({
     <Modal isOpen={open} onClose={onClose} title={title} size="large" className="assistant-sheet">
       <div className="as-meta">
         {typeof remaining === 'number' ? (
-          <span className="as-remaining">
+          <span className="as-remaining" data-low={quotaTone(remaining)}>
             {remaining === 0
-              ? 'Sin preguntas disponibles hoy'
-              : `Te quedan ${remaining} ${remaining === 1 ? 'pregunta' : 'preguntas'} hoy`}
+              ? 'Sin preguntas por hoy'
+              : `${remaining} ${remaining === 1 ? 'pregunta' : 'preguntas'} hoy`}
           </span>
         ) : (
-          <span className="as-remaining as-remaining-unknown">
-            {limit ? `Cupo diario: ${limit} preguntas` : 'Hay un cupo diario de preguntas'}
+          <span className="as-remaining" data-low="unknown">
+            {limit ? `${limit} preguntas al día` : 'Hay un cupo diario'}
           </span>
         )}
         {messages.length > 0 && (
@@ -81,11 +106,14 @@ export const AssistantSheet = ({
 
       <div className="as-thread" ref={threadRef}>
         {messages.length === 0 && !loading && (
-          <p className="as-empty">
+          <div className="as-empty">
+            <span className="as-empty-spark">
+              <AppIcon name="spark" size={20} />
+            </span>
             {linked
-              ? 'Preguntá lo que quieras sobre los partidos, las rachas o los equipos.'
+              ? emptyHint
               : 'Tu cuenta todavía no está vinculada a un jugador. Pedile al admin que te vincule y volvé.'}
-          </p>
+          </div>
         )}
 
         {messages.map((message, index) => (
@@ -142,8 +170,8 @@ export const AssistantSheet = ({
           maxLength={500}
           aria-label="Tu pregunta"
         />
-        <button type="submit" className="as-send" disabled={!canSend}>
-          {loading ? '…' : 'Enviar'}
+        <button type="submit" className="as-send" disabled={!canSend} aria-label="Enviar">
+          {loading ? <Dots /> : <SendIcon />}
         </button>
       </form>
     </Modal>

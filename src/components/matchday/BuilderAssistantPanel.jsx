@@ -4,7 +4,7 @@
  * It never splits the teams itself: the model returns constraints, the app's
  * own balancer runs them, and what the admin sees is a proposal with a button.
  */
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useApp } from '../../contexts'
 import { useAiAssistant, useStats } from '../../hooks'
@@ -63,10 +63,17 @@ const ProposalCard = ({ accion, nameOf, onApply, onDiscard, applied, failure }) 
   )
 }
 
-export const BuilderAssistantPanel = ({ mb }) => {
+/* Lo que se le pide a Claude cuando se pulsa «Armar con Claude». No le
+   decimos cómo repartir: le pedimos las condiciones, que es lo único que el
+   balanceador no puede deducir solo. */
+export const ARM_PROMPT =
+  'Armá los equipos de esta convocatoria. Mirá el poder de cada uno, las posiciones, ' +
+  'quién viene jugando bien y qué parejas funcionan, y devolvé las condiciones del ' +
+  'reparto en una acción. Explicá en dos o tres frases por qué los armaste así.'
+
+export const BuilderAssistantPanel = ({ mb, open, onOpenChange, armRequest }) => {
   const { players, matches, timeFilter, userPlayer } = useApp()
   const { stats, filteredStats, getFilteredMatches } = useStats()
-  const [open, setOpen] = useState(false)
   const [resolved, setResolved] = useState({})
 
   const nameOf = useCallback(
@@ -112,6 +119,49 @@ export const BuilderAssistantPanel = ({ mb }) => {
   )
 
   const assistant = useAiAssistant({ mode: 'builder', buildFacts, validateAction })
+
+  const fallbackToBalancer = useCallback(() => {
+    mb.suggestBalancedTeams({ preserveLockedCaptains: mb.preserveCaptains })
+  }, [mb])
+
+  /* «Armar con Claude»: una petición con un identificador que sube de número,
+     para distinguir dos pulsaciones seguidas. */
+  const servedRef = useRef(0)
+  const awaitingArmRef = useRef(false)
+
+  useEffect(() => {
+    if (!armRequest || armRequest.id === servedRef.current) return
+    servedRef.current = armRequest.id
+
+    /* Si no hay cupo o la conversación llegó al tope, no dejamos al admin sin
+       equipos: reparte el balanceador, que es lo que haría el otro botón. */
+    if (assistant.quotaExhausted || assistant.turnLimitReached) {
+      fallbackToBalancer()
+      return
+    }
+    awaitingArmRef.current = true
+    onOpenChange(true)
+    assistant.ask(ARM_PROMPT)
+  }, [armRequest, assistant, fallbackToBalancer, onOpenChange])
+
+  /* La respuesta a ese botón se aplica sola: el admin pidió equipos, no una
+     propuesta que después tenga que aceptar. */
+  useEffect(() => {
+    if (!awaitingArmRef.current || assistant.loading) return
+
+    if (assistant.error) {
+      awaitingArmRef.current = false
+      fallbackToBalancer()
+      return
+    }
+
+    const last = assistant.messages.at(-1)
+    if (!last || last.role !== 'assistant') return
+    awaitingArmRef.current = false
+
+    const applied = last.accion ? mb.applyAssistantAction(last.accion) : { ok: false }
+    if (!applied.ok) fallbackToBalancer()
+  }, [assistant.messages, assistant.loading, assistant.error, mb, fallbackToBalancer])
 
   /* Keyed by conversation as well as index: "Empezar de nuevo" reuses the
      indexes, and without this the first answer of a new conversation inherits
@@ -163,14 +213,16 @@ export const BuilderAssistantPanel = ({ mb }) => {
 
   return (
     <div className="mb-assistant">
-      <button type="button" className="mb-assistant-toggle" onClick={() => setOpen(true)}>
+      <button type="button" className="mb-assistant-toggle" onClick={() => onOpenChange(true)}>
         <span>Preguntale a Claude</span>
         <span className="mb-assistant-hint">{hint}</span>
       </button>
 
       <AssistantSheet
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => onOpenChange(false)}
+        emptyHint="Pedile que explique el reparto, que lo rehaga con condiciones, o que cambie a alguien. Los equipos los calcula el balanceador; Claude decide las condiciones."
+
         title="Asistente del armado"
         placeholder="Armá sin los que faltaron…"
         chips={CHIPS}

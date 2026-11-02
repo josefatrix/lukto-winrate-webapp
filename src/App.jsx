@@ -4606,24 +4606,26 @@ function App() {
               icon: <AppIcon name="note" size={14} />,
               onClick: () => setActiveTab('dashboard')
             },
-            {
-              label: 'Preguntale a Claude',
-              icon: <AppIcon name="info" size={14} />,
-              onClick: () => setStatsAssistantOpen(true)
-            },
           ]}
           ariaLabel="Acciones rápidas"
         />
       )}
 
-      {/* Asistente de estadísticas: un solo FAB en pantalla. Para el admin es un
-          ítem más del menú de arriba; para el resto, su propio botón. */}
-      {!isAdmin && user && userPlayer && (
-        <FloatingActionButton
+      {/* Un botón propio y visible, no un ítem escondido dentro de un menú.
+          Cuando el admin tiene su FAB de acciones rápidas, este se apila encima. */}
+      {user && userPlayer && (
+        <button
+          type="button"
+          className="assistant-fab"
+          data-stacked={isAdmin && activeTab !== 'new' ? 'true' : 'false'}
           onClick={() => setStatsAssistantOpen(true)}
-          icon={<AppIcon name="info" size={18} />}
-          ariaLabel="Preguntale a Claude sobre las estadísticas"
-        />
+          aria-label="Preguntale a Claude sobre las estadísticas"
+        >
+          <span className="assistant-fab-spark">
+            <AppIcon name="spark" size={14} />
+          </span>
+          <span className="assistant-fab-label">Preguntá</span>
+        </button>
       )}
 
       <AssistantSheet
@@ -4631,6 +4633,7 @@ function App() {
         onClose={() => setStatsAssistantOpen(false)}
         title="Preguntale a Claude"
         placeholder="¿Con quién gano más?"
+        emptyHint="Preguntá por tus rachas, tus compañeros o cualquier número del grupo. Respondo con los datos del periodo que tengas seleccionado."
         linked={!!userPlayer}
         assistant={statsAssistant}
         chips={[
