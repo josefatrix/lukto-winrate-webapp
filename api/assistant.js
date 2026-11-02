@@ -12,7 +12,6 @@
  */
 import Anthropic from '@anthropic-ai/sdk'
 import { cert, getApps, initializeApp } from 'firebase-admin/app'
-import { getAuth } from 'firebase-admin/auth'
 import { getFirestore } from 'firebase-admin/firestore'
 
 import {
@@ -23,6 +22,7 @@ import {
 } from './_lib/assistant.js'
 import { AuthError, authorize } from './_lib/auth.js'
 import { QuotaError, dayKey, refundQuestion, reserveQuestion } from './_lib/aiRateLimit.js'
+import { verifyFirebaseIdToken } from './_lib/firebaseToken.js'
 import { validateBody } from './_lib/validateBody.js'
 
 const GENERIC_ERROR = 'El asistente no está disponible ahora mismo. Probá en un rato.'
@@ -40,7 +40,9 @@ const buildServices = () => {
   const db = getFirestore(app)
 
   return {
-    verifyIdToken: token => getAuth(app).verifyIdToken(token),
+    /* Not firebase-admin/auth: it drags in a CommonJS package that require()s
+       an ESM-only one and kills the function on boot. See _lib/firebaseToken.js. */
+    verifyIdToken: verifyFirebaseIdToken,
     getDoc: async path => (await db.doc(path).get()).data() ?? null,
     /* Adapts firebase-admin to the { get, set } shape aiRateLimit expects, so
        that module stays testable without Firestore. */
