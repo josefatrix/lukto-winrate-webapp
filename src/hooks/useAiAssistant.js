@@ -92,14 +92,17 @@ export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
     setConversationId(current => current + 1)
   }, [])
 
+  /* `display` deja mostrar algo distinto de lo que se envía: el botón «Armar
+     con Claude» manda un prompt largo que el usuario nunca escribió, y verlo
+     en su propia burbuja es desconcertante. */
   const ask = useCallback(
-    async question => {
+    async (question, { display } = {}) => {
       const text = String(question || '').trim()
       if (!text || loading || turnLimitReached || quotaExhausted) return
 
       setError('')
       setLoading(true)
-      setMessages(current => [...current, { role: 'user', text }])
+      setMessages(current => [...current, { role: 'user', text: display || text }])
 
       const controller = new AbortController()
       abortRef.current = controller

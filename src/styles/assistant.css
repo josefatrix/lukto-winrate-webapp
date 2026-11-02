@@ -95,6 +95,7 @@
 .modal-content.assistant-sheet {
   display: flex;
   flex-direction: column;
+  max-height: 86vh;
   max-height: min(86vh, 86svh);
   padding: 0;
   overflow: hidden;
@@ -143,7 +144,13 @@
   .modal-content.assistant-sheet {
     width: 100% !important;
     max-width: none !important;
-    height: 88svh;
+    /* Altura que abraza el contenido. Con una altura fija, una conversación
+       de dos burbujas dejaba media pantalla en negro. El mínimo evita que el
+       formulario salte al llegar la primera respuesta. */
+    height: auto;
+    min-height: 38vh;
+    min-height: 38svh;
+    max-height: 88vh;
     max-height: 88svh;
     border-radius: 20px 20px 0 0;
     border-bottom: none;

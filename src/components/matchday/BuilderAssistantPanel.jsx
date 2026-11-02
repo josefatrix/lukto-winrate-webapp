@@ -141,7 +141,7 @@ export const BuilderAssistantPanel = ({ mb, open, onOpenChange, armRequest }) =>
     }
     awaitingArmRef.current = true
     onOpenChange(true)
-    assistant.ask(ARM_PROMPT)
+    assistant.ask(ARM_PROMPT, { display: 'Armá los equipos' })
   }, [armRequest, assistant, fallbackToBalancer, onOpenChange])
 
   /* La respuesta a ese botón se aplica sola: el admin pidió equipos, no una
