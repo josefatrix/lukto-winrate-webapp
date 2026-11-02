@@ -88,7 +88,7 @@ function buildTeamListMessage({ matchDate, matchTime, matchVenue, teamWhite, tea
 }
 
 export function MatchBuilderTab({ mb }) {
-  /* El asistente del armado: la hoja y la petición de «Armar con Claude»
+  /* El asistente del armado: la hoja y la petición de «Armar con Lucato»
      viven acá para que el botón pueda estar en la fila de acciones, junto al
      auto-balance de siempre. */
   const [assistantOpen, setAssistantOpen] = useState(false)
@@ -660,15 +660,15 @@ export function MatchBuilderTab({ mb }) {
             </button>
             <button
               type="button"
-              className="mb-action claude"
+              className="mb-action lucato"
               onClick={() => setArmRequest({ id: Date.now() })}
               disabled={!poolReady}
-              title="Claude decide las condiciones y el balanceador reparte"
+              title="Lucato decide las condiciones y el balanceador reparte"
             >
               <span className="mb-action-spark">
                 <AppIcon name="spark" size={13} />
               </span>{' '}
-              Armar con Claude
+              Armar con Lucato
             </button>
             <button
               type="button"

@@ -93,7 +93,7 @@ export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
   }, [])
 
   /* `display` deja mostrar algo distinto de lo que se envía: el botón «Armar
-     con Claude» manda un prompt largo que el usuario nunca escribió, y verlo
+     con Lucato» manda un prompt largo que el usuario nunca escribió, y verlo
      en su propia burbuja es desconcertante. */
   const ask = useCallback(
     async (question, { display } = {}) => {

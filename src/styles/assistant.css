@@ -543,16 +543,16 @@
 
 /* ── Botón «Armar con Claude» en la fila de acciones ────────────────────── */
 
-.mb-action.claude {
+.mb-action.lucato {
   border-color: var(--border-glow);
   color: var(--text-primary);
 }
 
-.mb-action.claude .mb-action-spark {
+.mb-action.lucato .mb-action-spark {
   color: var(--accent-primary);
 }
 
-.mb-action.claude[data-busy='true'] {
+.mb-action.lucato[data-busy='true'] {
   opacity: 0.7;
   pointer-events: none;
 }

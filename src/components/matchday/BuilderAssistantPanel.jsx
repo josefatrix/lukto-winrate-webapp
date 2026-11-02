@@ -214,16 +214,16 @@ export const BuilderAssistantPanel = ({ mb, open, onOpenChange, armRequest }) =>
   return (
     <div className="mb-assistant">
       <button type="button" className="mb-assistant-toggle" onClick={() => onOpenChange(true)}>
-        <span>Preguntale a Claude</span>
+        <span>Preguntale a Lucato</span>
         <span className="mb-assistant-hint">{hint}</span>
       </button>
 
       <AssistantSheet
         open={open}
         onClose={() => onOpenChange(false)}
-        emptyHint="Pedile que explique el reparto, que lo rehaga con condiciones, o que cambie a alguien. Los equipos los calcula el balanceador; Claude decide las condiciones."
+        emptyHint="Pedile que explique el reparto, que lo rehaga con condiciones, o que cambie a alguien. Los equipos los calcula el balanceador; Lucato decide las condiciones."
 
-        title="Asistente del armado"
+        title="Lucato · armado"
         placeholder="Armá sin los que faltaron…"
         chips={CHIPS}
         assistant={assistant}

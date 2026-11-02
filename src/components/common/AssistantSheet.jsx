@@ -39,7 +39,7 @@ const quotaTone = remaining => {
 export const AssistantSheet = ({
   open,
   onClose,
-  title = 'Preguntale a Claude',
+  title = 'Preguntale a Lucato',
   placeholder = 'Escribí tu pregunta…',
   emptyHint = 'Preguntá lo que quieras sobre los partidos, las rachas o los equipos.',
   chips = [],

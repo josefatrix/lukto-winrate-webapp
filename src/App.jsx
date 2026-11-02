@@ -4622,7 +4622,7 @@ function App() {
           className="assistant-fab"
           data-stacked={isAdmin && activeTab !== 'new' ? 'true' : 'false'}
           onClick={() => setStatsAssistantOpen(true)}
-          aria-label="Preguntale a Claude sobre las estadísticas"
+          aria-label="Preguntale a Lucato sobre las estadísticas"
         >
           <span className="assistant-fab-spark">
             <AppIcon name="spark" size={14} />
@@ -4634,7 +4634,7 @@ function App() {
       <AssistantSheet
         open={statsAssistantOpen}
         onClose={() => setStatsAssistantOpen(false)}
-        title="Preguntale a Claude"
+        title="Preguntale a Lucato"
         placeholder="¿Con quién gano más?"
         emptyHint="Preguntá por tus rachas, tus compañeros o cualquier número del grupo. Respondo con los datos del periodo que tengas seleccionado."
         linked={!!userPlayer}
