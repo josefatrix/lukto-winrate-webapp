@@ -7,7 +7,10 @@
  */
 
 export const MAX_QUESTION_CHARS = 500
-export const MAX_FACTS_BYTES = 60 * 1024
+/* El bloque lleva el histórico completo y las calificaciones individuales.
+   250 KB son ~62K tokens: holgado para este grupo durante años, y bastante
+   por debajo de los 100K donde el precio por token de Haiku se multiplica. */
+export const MAX_FACTS_BYTES = 250 * 1024
 /** Ten turns, two messages each. */
 export const MAX_HISTORY_MESSAGES = 20
 /* The question cap counts questions; the bill counts tokens. Without a byte

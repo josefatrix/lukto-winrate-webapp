@@ -20,7 +20,7 @@ const turns = count =>
 
 test('los topes son 500 caracteres, 60 KB y 10 turnos', () => {
   assert.equal(MAX_QUESTION_CHARS, 500)
-  assert.equal(MAX_FACTS_BYTES, 60 * 1024)
+  assert.equal(MAX_FACTS_BYTES, 250 * 1024)
   assert.equal(MAX_HISTORY_MESSAGES, 20)
 })
 
@@ -70,8 +70,8 @@ test('un cuerpo sin facts se rechaza', () => {
   }
 })
 
-test('unos hechos de más de 60 KB se rechazan', () => {
-  const gordo = { relleno: 'x'.repeat(60 * 1024) }
+test('unos hechos de más de 250 KB se rechazan', () => {
+  const gordo = { relleno: 'x'.repeat(260 * 1024) }
   const result = validateBody(body({ facts: gordo }))
   assert.equal(result.ok, false)
   assert.equal(result.status, 400)
@@ -79,7 +79,7 @@ test('unos hechos de más de 60 KB se rechazan', () => {
 })
 
 test('unos hechos justo por debajo del tope se aceptan', () => {
-  const casi = { relleno: 'x'.repeat(50 * 1024) }
+  const casi = { relleno: 'x'.repeat(200 * 1024) }
   assert.equal(validateBody(body({ facts: casi })).ok, true)
 })
 

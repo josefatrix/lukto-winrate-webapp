@@ -335,10 +335,12 @@ function App() {
         displayStats,
         matches: timeFilter === 'all' ? matches : getFilteredMatches,
         allMatches: matches,
+        ratings,
+        predictions,
         timeFilter,
         userPlayerId: userPlayer,
       }),
-    [players, displayStats, matches, getFilteredMatches, timeFilter, userPlayer]
+    [players, displayStats, matches, getFilteredMatches, ratings, predictions, timeFilter, userPlayer]
   )
 
   const statsAssistant = useAiAssistant({ mode: 'stats', buildFacts: buildStatsAssistantFacts })

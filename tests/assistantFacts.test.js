@@ -80,14 +80,14 @@ test('un jugador archivado se marca como no activo', () => {
 test('un periodo sin partidos devuelve jugadores y partidos vacíos sin lanzar', () => {
   const result = facts({ displayStats: [], matches: [] })
   assert.deepEqual(result.jugadores, [])
-  assert.deepEqual(result.ultimosPartidos, [])
+  assert.deepEqual(result.partidos, [])
   assert.deepEqual(result.parejas, [])
   assert.deepEqual(result.duelos, [])
 })
 
 test('los partidos del bloque son los del periodo, no el histórico completo', () => {
   const result = facts({ matches: [matches[0]], allMatches: matches })
-  assert.equal(result.ultimosPartidos.length, 1, 'solo el partido del periodo')
+  assert.equal(result.partidos.length, 1, 'solo el partido del periodo')
   assert.equal(result.quienPregunta.historico.formaReciente.length, 3, 'la forma sí es histórica')
 })
 
@@ -123,7 +123,7 @@ test('sin usuario vinculado quienPregunta es null', () => {
 
 // ── partidos, parejas y duelos ─────────────────────────────────────────────
 
-test('ultimosPartidos trae 25 como máximo y en orden cronológico inverso', () => {
+test('los partidos van del más nuevo al más viejo', () => {
   const many = Array.from({ length: 40 }, (_, i) => ({
     id: `x${i}`,
     date: `2026-${String((i % 12) + 1).padStart(2, '0')}-0${(i % 9) + 1}`,
@@ -131,20 +131,18 @@ test('ultimosPartidos trae 25 como máximo y en orden cronológico inverso', () 
     teamBlack: ['p2'],
     winner: 'white',
   }))
-  const result = facts({ matches: many })
-  assert.equal(result.ultimosPartidos.length, 25)
-  const dates = result.ultimosPartidos.map(m => m.fecha)
-  assert.deepEqual(dates, [...dates].sort().reverse(), 'del más nuevo al más viejo')
+  const dates = facts({ matches: many }).partidos.map(m => m.fecha)
+  assert.deepEqual(dates, [...dates].sort().reverse())
 })
 
-test('ultimosPartidos usa nombres, no ids', () => {
-  const [ultimo] = facts().ultimosPartidos
+test('los partidos usan nombres, no ids', () => {
+  const [ultimo] = facts().partidos
   assert.ok(ultimo.blanco.every(name => !name.startsWith('p')), `nombres esperados: ${ultimo.blanco}`)
 })
 
 test('los partidos sin resultado no entran', () => {
   const result = facts({ matches: [{ id: 'z', date: '2026-10-20', teamWhite: ['p1'], teamBlack: ['p2'] }] })
-  assert.deepEqual(result.ultimosPartidos, [])
+  assert.deepEqual(result.partidos, [])
 })
 
 test('parejas y duelos salen del histórico y están acotados', () => {
@@ -158,7 +156,7 @@ test('parejas y duelos salen del histórico y están acotados', () => {
   assert.equal(pareja.v, 1)
 })
 
-test('el bloque serializado de un grupo grande pesa menos de 60 KB', () => {
+test('el bloque de un grupo grande entra en el tope del servidor', () => {
   const bigPlayers = Array.from({ length: 30 }, (_, i) => ({ id: `b${i}`, name: `Jugador ${i}` }))
   const bigStats = bigPlayers.map(p => stat(p.id))
   const bigMatches = Array.from({ length: 300 }, (_, i) => ({
@@ -176,7 +174,7 @@ test('el bloque serializado de un grupo grande pesa menos de 60 KB', () => {
     userPlayerId: 'b0',
   })
   const bytes = Buffer.byteLength(JSON.stringify(result), 'utf8')
-  assert.ok(bytes < 60 * 1024, `el bloque pesa ${bytes} bytes`)
+  assert.ok(bytes < 250 * 1024, `el bloque pesa ${bytes} bytes`)
 })
 
 // ── hechos del armador ─────────────────────────────────────────────────────
@@ -439,7 +437,7 @@ test('fijar de más en el equipo negro también se rechaza', () => {
   )
 })
 
-test('los hechos dicen cuántos partidos hay en total, no solo los 25 del bloque', () => {
+test('los hechos dicen cuántos partidos hay en total', () => {
   // Sin esto el modelo cuenta la lista recortada y da un total inventado.
   const many = Array.from({ length: 40 }, (_, i) => ({
     id: `x${i}`, date: `2026-01-${String((i % 28) + 1).padStart(2, '0')}`,
@@ -447,7 +445,7 @@ test('los hechos dicen cuántos partidos hay en total, no solo los 25 del bloque
   }))
   const result = facts({ matches: many })
   assert.equal(result.totalPartidos, 40)
-  assert.equal(result.ultimosPartidos.length, 25)
+  assert.equal(result.partidos.length, 40)
 })
 
 test('totalPartidos cuenta solo los partidos con resultado del periodo', () => {
@@ -509,4 +507,80 @@ test('quien pregunta sigue trayendo su racha histórica aparte', () => {
   const { quienPregunta } = facts()
   assert.ok(quienPregunta.historico.racha)
   assert.ok(Array.isArray(quienPregunta.historico.formaReciente))
+})
+
+// ── Acceso a todos los datos ───────────────────────────────────────────────
+
+const ratings = [
+  { ratedPlayerId: 'p1', ratedBy: 'p2', score: 9, matchId: 'm1' },
+  { ratedPlayerId: 'p1', ratedBy: 'p3', score: 6, matchId: 'm1' },
+  { ratedPlayerId: 'p2', ratedBy: 'p1', score: 8, matchId: 'm1' },
+  { ratedPlayerId: 'p1', ratedBy: 'p2', score: 7, matchId: 'm2' },
+]
+
+test('los partidos ya no se recortan a 25', () => {
+  const many = Array.from({ length: 60 }, (_, i) => ({
+    id: `x${i}`, date: `2026-${String((i % 12) + 1).padStart(2, '0')}-10`,
+    teamWhite: ['p1'], teamBlack: ['p2'], winner: 'white',
+  }))
+  const result = facts({ matches: many })
+  assert.equal(result.partidos.length, 60)
+  assert.equal(result.totalPartidos, 60)
+})
+
+test('cada partido lleva cancha, hora y posiciones por nombre', () => {
+  const conTodo = [{
+    ...matches[0], venue: 'LUKTO', time: '20:00',
+    positions: { p1: 'portero', p2: 'medio' },
+  }]
+  const [partido] = facts({ matches: conTodo }).partidos
+  assert.equal(partido.cancha, 'LUKTO')
+  assert.equal(partido.hora, '20:00')
+  assert.deepEqual(partido.posiciones, { Villa: 'portero', Werz: 'medio' })
+})
+
+test('las calificaciones individuales llegan por nombre, con quién calificó', () => {
+  const result = facts({ ratings })
+  const villa = result.calificaciones.find(c => c.jugador === 'Villa')
+  assert.equal(villa.recibidas.length, 3)
+  assert.ok(villa.recibidas.some(r => r.de === 'Werz' && r.nota === 9))
+  assert.ok(villa.recibidas.some(r => r.de === 'Bob' && r.nota === 6))
+})
+
+test('sin calificaciones el campo viene vacío, no roto', () => {
+  assert.deepEqual(facts().calificaciones, [])
+  assert.deepEqual(facts({ ratings: null }).calificaciones, [])
+})
+
+test('las calificaciones de jugadores que ya no existen se descartan', () => {
+  const result = facts({ ratings: [...ratings, { ratedPlayerId: 'zz', ratedBy: 'p1', score: 5, matchId: 'm1' }] })
+  assert.equal(result.calificaciones.some(c => c.jugador === 'zz'), false)
+})
+
+test('las predicciones llegan si se pasan', () => {
+  const result = facts({ predictions: [{ id: 'pr1', matchId: 'm1', userId: 'u1', pick: 'white' }] })
+  assert.equal(result.predicciones.length, 1)
+})
+
+test('la asistencia del próximo partido llega si se pasa', () => {
+  const result = facts({ attendance: { matchId: 'm9', confirmados: ['Villa'], ausentes: ['Bob'] } })
+  assert.equal(result.asistenciaProximo.confirmados.length, 1)
+})
+
+test('el bloque completo de un grupo grande sigue por debajo del tope', () => {
+  const bigPlayers = Array.from({ length: 40 }, (_, i) => ({ id: `b${i}`, name: `Jugador ${i}` }))
+  const bigMatches = Array.from({ length: 120 }, (_, i) => ({
+    id: `bm${i}`, date: `2026-0${(i % 9) + 1}-1${i % 9}`, venue: 'LUKTO', time: '20:00',
+    teamWhite: bigPlayers.slice(0, 6).map(p => p.id), teamBlack: bigPlayers.slice(6, 12).map(p => p.id),
+    winner: i % 2 ? 'white' : 'black',
+  }))
+  const bigRatings = bigMatches.flatMap(m =>
+    bigPlayers.slice(0, 12).map(p => ({ ratedPlayerId: p.id, ratedBy: 'b0', score: 7, matchId: m.id }))
+  )
+  const result = buildStatsFacts({
+    players: bigPlayers, displayStats: bigPlayers.map(p => stat(p.id)),
+    matches: bigMatches, ratings: bigRatings, timeFilter: 'all', userPlayerId: 'b0',
+  })
+  const kb = Buffer.byteLength(JSON.stringify(result), 'utf8') / 1024
+  assert.ok(kb < 150, `el bloque pesa ${kb.toFixed(1)} KB`)
 })

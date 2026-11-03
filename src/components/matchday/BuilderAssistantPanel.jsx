@@ -72,7 +72,7 @@ export const ARM_PROMPT =
   'reparto en una acción. Explica en dos o tres frases por qué los armaste así.'
 
 export const BuilderAssistantPanel = ({ mb, open, onOpenChange, armRequest }) => {
-  const { players, matches, timeFilter, userPlayer } = useApp()
+  const { players, matches, ratings, predictions, timeFilter, userPlayer } = useApp()
   const { stats, filteredStats, getFilteredMatches } = useStats()
   const [resolved, setResolved] = useState({})
 
@@ -88,6 +88,8 @@ export const BuilderAssistantPanel = ({ mb, open, onOpenChange, armRequest }) =>
       displayStats,
       matches: timeFilter === 'all' ? matches : getFilteredMatches,
       allMatches: matches,
+      ratings,
+      predictions,
       timeFilter,
       userPlayerId: userPlayer,
     })
@@ -103,7 +105,7 @@ export const BuilderAssistantPanel = ({ mb, open, onOpenChange, armRequest }) =>
       teamWhite: mb.teamWhite,
       teamBlack: mb.teamBlack,
     })
-  }, [players, matches, timeFilter, userPlayer, stats, filteredStats, getFilteredMatches, mb])
+  }, [players, matches, ratings, predictions, timeFilter, userPlayer, stats, filteredStats, getFilteredMatches, mb])
 
   const validateAction = useCallback(
     accion =>

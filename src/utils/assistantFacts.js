@@ -16,7 +16,6 @@ export const PERIOD_LABELS = {
   all: 'todo el histórico',
 }
 
-const MAX_MATCHES = 25
 const MAX_LINKS = 30
 const RECENT_FORM = 5
 
@@ -100,6 +99,9 @@ export const buildStatsFacts = ({
   displayStats = [],
   matches = [],
   allMatches,
+  ratings,
+  predictions,
+  attendance,
   timeFilter = 'all',
   userPlayerId = '',
   draftLinks,
@@ -133,20 +135,47 @@ export const buildStatsFacts = ({
   )
   for (const entry of jugadores) Object.assign(entry, formById.get(entry.id))
 
-  const ultimosPartidos = chronological
-    .slice(-MAX_MATCHES)
-    .reverse()
-    .map(match => ({
-      fecha: match.date || '',
-      formato: match.matchFormat || '',
-      blanco: (match.teamWhite || []).map(nameOf),
-      negro: (match.teamBlack || []).map(nameOf),
-      marcador:
-        match.scoreWhite !== undefined && match.scoreBlack !== undefined
-          ? `${match.scoreWhite}-${match.scoreBlack}`
-          : '',
-      ganador: match.winner,
-    }))
+  /* Todos los partidos, no una ventana: el modelo tiene que poder responder
+     "¿cómo me fue en enero?" sin que el dato se haya quedado fuera. */
+  const partidos = [...chronological].reverse().map(match => ({
+    id: match.id,
+    fecha: match.date || '',
+    hora: match.time || '',
+    cancha: match.venue || '',
+    formato: match.matchFormat || '',
+    blanco: (match.teamWhite || []).map(nameOf),
+    negro: (match.teamBlack || []).map(nameOf),
+    marcador:
+      match.scoreWhite !== undefined && match.scoreBlack !== undefined
+        ? `${match.scoreWhite}-${match.scoreBlack}`
+        : '',
+    ganador: match.winner,
+    posiciones: Object.fromEntries(
+      Object.entries(match.positions || {})
+        .filter(([id]) => byId.has(id))
+        .map(([id, position]) => [nameOf(id), position])
+    ),
+  }))
+
+  /* Calificaciones individuales, agrupadas por jugador y con nombres puestos,
+     para que el modelo no tenga que cruzar ids. Son datos que cualquiera del
+     grupo ya puede leer: las reglas de Firestore las dejan públicas. */
+  const fechaDe = new Map(chronological.map(match => [match.id, match.date || '']))
+  const recibidasPor = new Map()
+  for (const rating of ratings || []) {
+    const to = rating?.ratedPlayerId
+    if (!byId.has(to) || typeof rating.score !== 'number') continue
+    if (!recibidasPor.has(to)) recibidasPor.set(to, [])
+    recibidasPor.get(to).push({
+      de: byId.has(rating.ratedBy) ? nameOf(rating.ratedBy) : 'anónimo',
+      nota: rating.score,
+      fecha: fechaDe.get(rating.matchId) || '',
+    })
+  }
+  const calificaciones = [...recibidasPor.entries()].map(([id, recibidas]) => ({
+    jugador: nameOf(id),
+    recibidas,
+  }))
 
   const links = draftLinks || computeDraftLinks(matches)
 
@@ -204,7 +233,14 @@ export const buildStatsFacts = ({
     /* El total va aparte porque ultimosPartidos está recortado a 25: sin este
        campo el modelo cuenta la lista y responde un total que no es. */
     totalPartidos: chronological.length,
-    ultimosPartidos,
+    partidos,
+    calificaciones,
+    predicciones: (predictions || []).map(prediction => ({
+      partido: fechaDe.get(prediction?.matchId) || prediction?.matchId || '',
+      quien: byId.has(prediction?.userId) ? nameOf(prediction.userId) : prediction?.userId || '',
+      eligio: prediction?.pick ?? prediction?.winner ?? null,
+    })),
+    asistenciaProximo: attendance || null,
     parejas,
     duelos,
   }
