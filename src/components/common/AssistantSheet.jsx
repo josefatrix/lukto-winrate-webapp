@@ -4,7 +4,7 @@
  * Every state has something on screen. A sheet that goes blank when the quota
  * runs out or the model declines reads as a broken app, not as a limit.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { AppIcon } from './AppIcon'
 import { Modal } from './Modal'
@@ -39,9 +39,9 @@ const quotaTone = remaining => {
 export const AssistantSheet = ({
   open,
   onClose,
-  title = 'Preguntale a Lucato',
-  placeholder = 'Escribí tu pregunta…',
-  emptyHint = 'Preguntá lo que quieras sobre los partidos, las rachas o los equipos.',
+  title = 'Pregúntale a Lucato',
+  placeholder = 'Escribe tu pregunta…',
+  emptyHint = 'Pregunta lo que quieras sobre los partidos, las rachas o los equipos.',
   chips = [],
   assistant,
   linked = true,
@@ -50,6 +50,8 @@ export const AssistantSheet = ({
   const [draft, setDraft] = useState('')
   const threadRef = useRef(null)
   const inputRef = useRef(null)
+  const metaRef = useRef(null)
+  const dragRef = useRef(null)
 
   const { messages, ask, reset, loading, error, remaining, limit, quotaExhausted, turnLimitReached } =
     assistant
@@ -65,6 +67,75 @@ export const AssistantSheet = ({
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, loading])
+
+  /* Deslizar hacia abajo para cerrar. La agarradera promete que la hoja se
+     desliza; sin esto, la promesa es mentira. Solo en la variante de hoja
+     inferior, y solo desde la cabecera: arrastrar sobre el hilo tiene que
+     seguir siendo scroll. */
+  const sheetOf = node => node?.closest('.assistant-sheet') || null
+
+  const onDragStart = useCallback(event => {
+    if (!window.matchMedia?.('(max-width: 560px)').matches) return
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    const sheet = sheetOf(event.currentTarget)
+    if (!sheet) return
+    dragRef.current = { startY: event.clientY, startedAt: Date.now(), sheet, moved: 0 }
+    sheet.style.transition = 'none'
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }, [])
+
+  const onDragMove = useCallback(event => {
+    const drag = dragRef.current
+    if (!drag) return
+    const delta = event.clientY - drag.startY
+    /* Hacia arriba no se despega: se frena, como en la vida real. */
+    drag.moved = delta > 0 ? delta : delta / 4
+    drag.sheet.style.transform = `translateY(${drag.moved}px)`
+  }, [])
+
+  const onDragEnd = useCallback(event => {
+    const drag = dragRef.current
+    if (!drag) return
+    dragRef.current = null
+    event.currentTarget.releasePointerCapture?.(event.pointerId)
+
+    const elapsed = Math.max(Date.now() - drag.startedAt, 1)
+    const velocity = drag.moved / elapsed
+    /* Un empujón rápido alcanza; no hace falta arrastrar media pantalla. */
+    const dismiss = drag.moved > 120 || velocity > 0.5
+
+    drag.sheet.style.transition = 'transform 240ms cubic-bezier(0.32, 0.72, 0, 1)'
+    drag.sheet.style.transform = dismiss ? 'translateY(100%)' : ''
+    if (dismiss) window.setTimeout(onClose, 180)
+  }, [onClose])
+
+  /* La cabecera la dibuja Modal, así que sus escuchas se enganchan a mano:
+     la agarradera vive ahí y es el sitio donde la gente agarra. */
+  useEffect(() => {
+    if (!open) return undefined
+    const header = metaRef.current?.closest('.assistant-sheet')?.querySelector('.modal-header')
+    if (!header) return undefined
+    header.addEventListener('pointerdown', onDragStart)
+    header.addEventListener('pointermove', onDragMove)
+    header.addEventListener('pointerup', onDragEnd)
+    header.addEventListener('pointercancel', onDragEnd)
+    return () => {
+      header.removeEventListener('pointerdown', onDragStart)
+      header.removeEventListener('pointermove', onDragMove)
+      header.removeEventListener('pointerup', onDragEnd)
+      header.removeEventListener('pointercancel', onDragEnd)
+    }
+  }, [open, onDragStart, onDragMove, onDragEnd])
+
+  /* Al cerrar y volver a abrir, la hoja no puede quedar desplazada. */
+  useEffect(() => {
+    if (open) return
+    const sheet = metaRef.current?.closest('.assistant-sheet')
+    if (sheet) {
+      sheet.style.transition = ''
+      sheet.style.transform = ''
+    }
+  }, [open])
 
   const blocked = !linked || quotaExhausted || turnLimitReached
   const canSend = !!draft.trim() && !loading && !blocked
@@ -85,7 +156,14 @@ export const AssistantSheet = ({
 
   return (
     <Modal isOpen={open} onClose={onClose} title={title} size="large" className="assistant-sheet">
-      <div className="as-meta">
+      <div
+        className="as-meta as-drag"
+        ref={metaRef}
+        onPointerDown={onDragStart}
+        onPointerMove={onDragMove}
+        onPointerUp={onDragEnd}
+        onPointerCancel={onDragEnd}
+      >
         {typeof remaining === 'number' ? (
           <span className="as-remaining" data-low={quotaTone(remaining)}>
             {remaining === 0
@@ -112,7 +190,7 @@ export const AssistantSheet = ({
             </span>
             {linked
               ? emptyHint
-              : 'Tu cuenta todavía no está vinculada a un jugador. Pedile al admin que te vincule y volvé.'}
+              : 'Tu cuenta todavía no está vinculada a un jugador. Pídele al admin que te vincule y vuelve.'}
           </div>
         )}
 
@@ -141,12 +219,12 @@ export const AssistantSheet = ({
 
       {turnLimitReached && (
         <p className="as-notice">
-          Esta conversación ya es larga. Pulsá «Empezar de nuevo» para seguir preguntando.
+          Esta conversación ya es larga. Toca «Empezar de nuevo» para seguir preguntando.
         </p>
       )}
 
       {quotaExhausted && !turnLimitReached && (
-        <p className="as-notice">Se te acabaron las preguntas de hoy. Volvé mañana.</p>
+        <p className="as-notice">Se se te acabaron las preguntas de hoy. Vuelve mañana.</p>
       )}
 
       {chips.length > 0 && messages.length === 0 && !blocked && (

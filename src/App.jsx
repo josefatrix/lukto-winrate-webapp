@@ -4615,28 +4615,27 @@ function App() {
       )}
 
       {/* Un botón propio y visible, no un ítem escondido dentro de un menú.
-          Cuando el admin tiene su FAB de acciones rápidas, este se apila encima. */}
+          Va a la izquierda porque a la derecha está el FAB de acciones rápidas. */}
       {user && userPlayer && (
         <button
           type="button"
           className="assistant-fab"
-          data-stacked={isAdmin && activeTab !== 'new' ? 'true' : 'false'}
           onClick={() => setStatsAssistantOpen(true)}
-          aria-label="Preguntale a Lucato sobre las estadísticas"
+          aria-label="Pregúntale a Lucato sobre las estadísticas"
         >
           <span className="assistant-fab-spark">
-            <AppIcon name="spark" size={14} />
+            <AppIcon name="spark" size={17} />
           </span>
-          <span className="assistant-fab-label">Preguntá</span>
+          <span className="assistant-fab-label">Lucato</span>
         </button>
       )}
 
       <AssistantSheet
         open={statsAssistantOpen}
         onClose={() => setStatsAssistantOpen(false)}
-        title="Preguntale a Lucato"
+        title="Pregúntale a Lucato"
         placeholder="¿Con quién gano más?"
-        emptyHint="Preguntá por tus rachas, tus compañeros o cualquier número del grupo. Respondo con los datos del periodo que tengas seleccionado."
+        emptyHint="Pregunta por tus rachas, tus compañeros o cualquier número del grupo. Respondo con los datos del periodo que tengas seleccionado."
         linked={!!userPlayer}
         assistant={statsAssistant}
         chips={[

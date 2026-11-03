@@ -41,23 +41,23 @@ const listedAdmins = settings =>
 
 export const authorize = async ({ authHeader, mode, verifyIdToken, getDoc }) => {
   const token = bearerToken(authHeader)
-  if (!token) throw new AuthError(401, 'Necesitás iniciar sesión para usar el asistente.')
+  if (!token) throw new AuthError(401, 'Necesitas iniciar sesión para usar el asistente.')
 
   let decoded
   try {
     decoded = await verifyIdToken(token)
   } catch {
-    throw new AuthError(401, 'Tu sesión expiró. Volvé a entrar y probá de nuevo.')
+    throw new AuthError(401, 'Tu sesión expiró. Vuelve a entrar y prueba de nuevo.')
   }
 
   const uid = decoded?.uid
-  if (!isSafeId(uid)) throw new AuthError(401, 'Tu sesión expiró. Volvé a entrar y probá de nuevo.')
+  if (!isSafeId(uid)) throw new AuthError(401, 'Tu sesión expiró. Vuelve a entrar y prueba de nuevo.')
 
   const link = await getDoc(`userLinks/${uid}`)
   if (!isSafeId(link?.playerId)) {
     throw new AuthError(
       403,
-      'Tu cuenta todavía no está vinculada a un jugador. Pedile al admin que te vincule.'
+      'Tu cuenta todavía no está vinculada a un jugador. Pídele al admin que te vincule.'
     )
   }
   if (link?.blocked || link?.archived) {

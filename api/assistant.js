@@ -25,7 +25,7 @@ import { QuotaError, dayKey, refundQuestion, reserveQuestion } from './_lib/aiRa
 import { verifyFirebaseIdToken } from './_lib/firebaseToken.js'
 import { validateBody } from './_lib/validateBody.js'
 
-const GENERIC_ERROR = 'El asistente no está disponible ahora mismo. Probá en un rato.'
+const GENERIC_ERROR = 'El asistente no está disponible ahora mismo. Prueba en un rato.'
 
 /* Built once per function instance, not per request: Fluid Compute reuses
    instances, and initializeApp throws on a second call. */

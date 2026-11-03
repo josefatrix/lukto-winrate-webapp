@@ -21,7 +21,7 @@ const COLOMBIA_OFFSET_MINUTES = -300
 
 export class QuotaError extends Error {
   constructor(limit) {
-    super(`Se te acabaron las ${limit} preguntas de hoy. Volvé mañana.`)
+    super(`Se se te acabaron las ${limit} preguntas de hoy. Vuelve mañana.`)
     this.name = 'QuotaError'
     this.status = 429
     this.limit = limit

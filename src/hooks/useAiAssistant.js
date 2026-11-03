@@ -25,9 +25,9 @@ import { auth, db } from '../firebase'
 const MAX_HISTORY_MESSAGES = 20
 const REQUEST_TIMEOUT_MS = 120_000
 
-const NETWORK_ERROR = 'No pude conectarme. Revisá tu internet y probá de nuevo.'
-const TIMEOUT_ERROR = 'El asistente tardó demasiado. Probá de nuevo.'
-const SESSION_ERROR = 'Necesitás iniciar sesión para usar el asistente.'
+const NETWORK_ERROR = 'No pude conectarme. Revisa tu internet y prueba de nuevo.'
+const TIMEOUT_ERROR = 'El asistente tardó demasiado. Prueba de nuevo.'
+const SESSION_ERROR = 'Necesitas iniciar sesión para usar el asistente.'
 
 export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
   const [messages, setMessages] = useState([])

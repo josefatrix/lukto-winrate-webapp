@@ -11,8 +11,10 @@
 
 .assistant-fab {
   position: fixed;
-  right: 20px;
-  bottom: calc(90px + env(safe-area-inset-bottom));
+  /* A la izquierda a propósito: a la derecha viven el FAB de acciones rápidas
+     y su menú desplegado, y se pisaban. */
+  left: 16px;
+  bottom: calc(92px + env(safe-area-inset-bottom));
   z-index: 99;
   display: inline-flex;
   align-items: center;
@@ -37,11 +39,6 @@
     border-color 200ms ease;
 }
 
-/* Cuando el admin ya tiene su botón de acciones rápidas, este va encima. */
-.assistant-fab[data-stacked='true'] {
-  bottom: calc(158px + env(safe-area-inset-bottom));
-}
-
 .assistant-fab:active {
   transform: scale(0.97);
 }
@@ -53,20 +50,18 @@
   }
 }
 
+/* El destello suelto, sin círculo relleno detrás: a este tamaño el disco
+   ensuciaba más de lo que ayudaba. */
 .assistant-fab-spark {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--accent-primary);
-  color: #fff;
+  color: var(--accent-primary);
   flex-shrink: 0;
 }
 
 .assistant-fab-spark svg {
-  width: 14px;
-  height: 14px;
+  width: 17px;
+  height: 17px;
 }
 
 /* El punto solo aparece cuando hay algo que decir (cupo agotado, p. ej.) */
@@ -78,15 +73,32 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 380px) {
-  .assistant-fab-label {
-    display: none;
-  }
+/* La zona de arrastre de la hoja: la cabecera y la fila del cupo. */
+.assistant-sheet .modal-header,
+.as-drag {
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
 
-  .assistant-fab {
-    padding: 0;
-    width: 48px;
-    justify-content: center;
+.assistant-sheet .modal-header:active,
+.as-drag:active {
+  cursor: grabbing;
+}
+
+/* El botón de cerrar vive dentro de la cabecera y tiene que seguir siendo
+   pulsable, no una zona de arrastre. */
+.assistant-sheet .modal-close {
+  touch-action: auto;
+  cursor: pointer;
+}
+
+@media (min-width: 561px) {
+  .assistant-sheet .modal-header,
+  .as-drag {
+    touch-action: auto;
+    cursor: default;
   }
 }
 

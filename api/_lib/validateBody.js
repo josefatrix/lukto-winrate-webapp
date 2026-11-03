@@ -33,20 +33,20 @@ export const validateBody = body => {
   }
 
   const question = typeof body.question === 'string' ? body.question.trim() : ''
-  if (!question) return fail('Escribí una pregunta antes de enviar.')
+  if (!question) return fail('Escribe una pregunta antes de enviar.')
   if (question.length > MAX_QUESTION_CHARS) {
     return fail(`La pregunta no puede pasar de ${MAX_QUESTION_CHARS} caracteres.`)
   }
 
   if (!isPlainObject(body.facts)) {
-    return fail('Faltan los datos del grupo. Recargá la app y probá de nuevo.')
+    return fail('Faltan los datos del grupo. Recarga la app y prueba de nuevo.')
   }
 
   let factsBytes
   try {
     factsBytes = Buffer.byteLength(JSON.stringify(body.facts), 'utf8')
   } catch {
-    return fail('Faltan los datos del grupo. Recargá la app y probá de nuevo.')
+    return fail('Faltan los datos del grupo. Recarga la app y prueba de nuevo.')
   }
   if (factsBytes > MAX_FACTS_BYTES) {
     return fail('Los datos del grupo son demasiado grandes para una sola pregunta.')
@@ -57,7 +57,7 @@ export const validateBody = body => {
     return fail('El historial de la conversación llegó mal formado.')
   }
   if (history.length > MAX_HISTORY_MESSAGES) {
-    return fail('Esta conversación ya es muy larga. Empezá una nueva para seguir preguntando.')
+    return fail('Esta conversación ya es muy larga. Empieza una nueva para seguir preguntando.')
   }
   const everyTurnUsable = history.every(
     entry => isPlainObject(entry) && ROLES.includes(entry.role) && entry.content !== undefined
@@ -73,7 +73,7 @@ export const validateBody = body => {
     return fail('El historial de la conversación llegó mal formado.')
   }
   if (historyBytes > MAX_HISTORY_BYTES) {
-    return fail('Esta conversación ya es muy larga. Empezá una nueva para seguir preguntando.')
+    return fail('Esta conversación ya es muy larga. Empieza una nueva para seguir preguntando.')
   }
 
   return { ok: true, value: { mode: body.mode, question, facts: body.facts, history } }

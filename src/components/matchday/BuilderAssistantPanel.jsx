@@ -17,9 +17,9 @@ import {
 
 const CHIPS = [
   '¿Por qué está desbalanceado?',
-  'Armá sin los que perdieron el domingo',
+  'Arma sin los que perdieron el domingo',
   '¿Quién debería ir al arco?',
-  'Separá a los dos más fuertes',
+  'Separa a los dos más fuertes',
 ]
 
 const listNames = (ids, nameOf) => ids.map(nameOf).join(', ')
@@ -48,7 +48,7 @@ const ProposalCard = ({ accion, nameOf, onApply, onDiscard, applied, failure }) 
       </ul>
       {failure && <p className="as-action-error">{failure}</p>}
       {applied ? (
-        <p className="as-notice">Aplicada. Podés deshacerla con el botón de deshacer.</p>
+        <p className="as-notice">Aplicada. Puedes deshacerla con el botón de deshacer.</p>
       ) : (
         <div className="as-proposal-buttons">
           <button type="button" className="as-apply" onClick={onApply}>
@@ -67,9 +67,9 @@ const ProposalCard = ({ accion, nameOf, onApply, onDiscard, applied, failure }) 
    decimos cómo repartir: le pedimos las condiciones, que es lo único que el
    balanceador no puede deducir solo. */
 export const ARM_PROMPT =
-  'Armá los equipos de esta convocatoria. Mirá el poder de cada uno, las posiciones, ' +
-  'quién viene jugando bien y qué parejas funcionan, y devolvé las condiciones del ' +
-  'reparto en una acción. Explicá en dos o tres frases por qué los armaste así.'
+  'Arma los equipos de esta convocatoria. Mira el poder de cada uno, las posiciones, ' +
+  'quién viene jugando bien y qué parejas funcionan, y devuelve las condiciones del ' +
+  'reparto en una acción. Explica en dos o tres frases por qué los armaste así.'
 
 export const BuilderAssistantPanel = ({ mb, open, onOpenChange, armRequest }) => {
   const { players, matches, timeFilter, userPlayer } = useApp()
@@ -141,7 +141,7 @@ export const BuilderAssistantPanel = ({ mb, open, onOpenChange, armRequest }) =>
     }
     awaitingArmRef.current = true
     onOpenChange(true)
-    assistant.ask(ARM_PROMPT, { display: 'Armá los equipos' })
+    assistant.ask(ARM_PROMPT, { display: 'Arma los equipos' })
   }, [armRequest, assistant, fallbackToBalancer, onOpenChange])
 
   /* La respuesta a ese botón se aplica sola: el admin pidió equipos, no una
@@ -206,25 +206,25 @@ export const BuilderAssistantPanel = ({ mb, open, onOpenChange, armRequest }) =>
   const hint = useMemo(
     () =>
       mb.selectedPlayers.length === mb.requiredPlayers
-        ? 'Pedile que explique o que re-arme'
-        : `Convocá ${mb.requiredPlayers} jugadores para pedir cambios`,
+        ? 'Pídele que explique o que re-arme'
+        : `Convoca ${mb.requiredPlayers} jugadores para pedir cambios`,
     [mb.selectedPlayers.length, mb.requiredPlayers]
   )
 
   return (
     <div className="mb-assistant">
       <button type="button" className="mb-assistant-toggle" onClick={() => onOpenChange(true)}>
-        <span>Preguntale a Lucato</span>
+        <span>Pregúntale a Lucato</span>
         <span className="mb-assistant-hint">{hint}</span>
       </button>
 
       <AssistantSheet
         open={open}
         onClose={() => onOpenChange(false)}
-        emptyHint="Pedile que explique el reparto, que lo rehaga con condiciones, o que cambie a alguien. Los equipos los calcula el balanceador; Lucato decide las condiciones."
+        emptyHint="Pídele que explique el reparto, que lo rehaga con condiciones, o que cambie a alguien. Los equipos los calcula el balanceador; Lucato decide las condiciones."
 
         title="Lucato · armado"
-        placeholder="Armá sin los que faltaron…"
+        placeholder="Arma sin los que faltaron…"
         chips={CHIPS}
         assistant={assistant}
         renderAction={renderActionIfPending}
