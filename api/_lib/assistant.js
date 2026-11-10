@@ -9,13 +9,15 @@
 
 export const MODEL_BY_MODE = {
   stats: 'claude-haiku-5-5',
-  builder: 'claude-opus-5-5',
+  builder: 'claude-sonnet-5-5',
 }
 
-/* Los dos modelos traen un default distinto del que queremos —Haiku 5.5 y
-   Opus 5.5 vienen en `medium`— así que va siempre explícito. El armado va en
-   `high`: es donde Opus rinde en trabajo de razonamiento sin el coste de
-   `max`, que se reserva para cuando acertar importa más que el gasto. */
+/* El esfuerzo va siempre explícito porque los dos modelos vienen en `medium`
+   por defecto. El armado se queda en `high`: el trabajo no cambió —traducir
+   una orden en lenguaje natural a restricciones que ejecuta el balanceador—
+   y es justo ahí donde más se nota el razonamiento. Lo que bajó es el modelo:
+   el armado pasó de Opus 5.5 a Sonnet 5.5 por lo que cuesta cada pulsación
+   de «Armar con Lucato». */
 export const EFFORT_BY_MODE = {
   stats: 'low',
   builder: 'high',

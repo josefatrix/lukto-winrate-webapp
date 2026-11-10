@@ -28,7 +28,7 @@ const MAX_HISTORY_MESSAGES = 40
    hablado. Subir este número descarta lo guardado: los bloques de pensamiento
    están atados al modelo que los escribió, así que un cambio de modelo tiene
    que empezar de cero. */
-const MEMORY_VERSION = 2
+const MEMORY_VERSION = 3
 const memoryKey = mode => `lukto_lucato_${mode}_v${MEMORY_VERSION}`
 
 const readMemory = mode => {
