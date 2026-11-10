@@ -584,3 +584,49 @@ test('el bloque completo de un grupo grande sigue por debajo del tope', () => {
   const kb = Buffer.byteLength(JSON.stringify(result), 'utf8') / 1024
   assert.ok(kb < 150, `el bloque pesa ${kb.toFixed(1)} KB`)
 })
+
+// ── Las formas que la app pasa de verdad ──────────────────────────────────
+
+/* AppContext guarda ratings como { jugador: [filas] } y predictions como
+   { partido: { usuario: fila } }, no como listas. Los fixtures de arriba
+   usaban listas y por eso nada detectó que el panel reventaba con
+   "(m || []) is not iterable". */
+const ratingsComoEnLaApp = {
+  p1: [
+    { score: 9, matchId: 'm1', ratedBy: 'p2' },
+    { score: 6, matchId: 'm1', ratedBy: 'p3' },
+  ],
+  p2: [{ score: 8, matchId: 'm1', ratedBy: 'p1' }],
+}
+
+const prediccionesComoEnLaApp = {
+  m1: { u1: { id: 'pr1', odedBy: 'u1', matchId: 'm1', pick: 'white' } },
+}
+
+test('acepta ratings con la forma del contexto, no solo listas', () => {
+  const result = facts({ ratings: ratingsComoEnLaApp })
+  const villa = result.calificaciones.find(c => c.jugador === 'Villa')
+  assert.equal(villa.recibidas.length, 2)
+  assert.ok(villa.recibidas.some(r => r.de === 'Werz' && r.nota === 9))
+})
+
+test('acepta predicciones con la forma del contexto', () => {
+  const result = facts({ predictions: prediccionesComoEnLaApp })
+  assert.equal(result.predicciones.length, 1)
+  assert.equal(result.predicciones[0].eligio, 'white')
+})
+
+test('no revienta con las formas vacías que trae el contexto al arrancar', () => {
+  // AppContext arranca con {} en los dos, antes de que cargue Firestore.
+  const result = facts({ ratings: {}, predictions: {} })
+  assert.deepEqual(result.calificaciones, [])
+  assert.deepEqual(result.predicciones, [])
+})
+
+test('tampoco revienta con valores basura', () => {
+  for (const malo of ['texto', 42, true]) {
+    const result = facts({ ratings: malo, predictions: malo })
+    assert.deepEqual(result.calificaciones, [])
+    assert.deepEqual(result.predicciones, [])
+  }
+})

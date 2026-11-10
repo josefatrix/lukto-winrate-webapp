@@ -34,6 +34,28 @@ const resultFor = (match, playerId) => {
 const decidedMatches = matches =>
   (matches || []).filter(hasResult).sort(compareMatchChronology)
 
+/* AppContext guarda estas dos como mapas, no como listas: ratings es
+   { jugadorId: [filas] } y predictions es { partidoId: { usuarioId: fila } }.
+   Aceptar las dos formas evita que el panel reviente según de dónde vengan
+   los datos. */
+const toRatingRows = ratings => {
+  if (Array.isArray(ratings)) return ratings
+  if (!ratings || typeof ratings !== 'object') return []
+  return Object.entries(ratings).flatMap(([ratedPlayerId, rows]) =>
+    (Array.isArray(rows) ? rows : []).map(row => ({ ratedPlayerId, ...row }))
+  )
+}
+
+const toPredictionRows = predictions => {
+  if (Array.isArray(predictions)) return predictions
+  if (!predictions || typeof predictions !== 'object') return []
+  return Object.entries(predictions).flatMap(([matchId, byUser]) =>
+    byUser && typeof byUser === 'object'
+      ? Object.entries(byUser).map(([userId, row]) => ({ matchId, userId, ...row }))
+      : []
+  )
+}
+
 const playsIn = (match, playerId) =>
   match.teamWhite?.includes(playerId) || match.teamBlack?.includes(playerId)
 
@@ -162,7 +184,7 @@ export const buildStatsFacts = ({
      grupo ya puede leer: las reglas de Firestore las dejan públicas. */
   const fechaDe = new Map(chronological.map(match => [match.id, match.date || '']))
   const recibidasPor = new Map()
-  for (const rating of ratings || []) {
+  for (const rating of toRatingRows(ratings)) {
     const to = rating?.ratedPlayerId
     if (!byId.has(to) || typeof rating.score !== 'number') continue
     if (!recibidasPor.has(to)) recibidasPor.set(to, [])
@@ -235,7 +257,7 @@ export const buildStatsFacts = ({
     totalPartidos: chronological.length,
     partidos,
     calificaciones,
-    predicciones: (predictions || []).map(prediction => ({
+    predicciones: toPredictionRows(predictions).map(prediction => ({
       partido: fechaDe.get(prediction?.matchId) || prediction?.matchId || '',
       quien: byId.has(prediction?.userId) ? nameOf(prediction.userId) : prediction?.userId || '',
       eligio: prediction?.pick ?? prediction?.winner ?? null,
