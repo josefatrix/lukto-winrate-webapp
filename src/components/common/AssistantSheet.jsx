@@ -226,7 +226,7 @@ export const AssistantSheet = ({
       )}
 
       {quotaExhausted && !turnLimitReached && (
-        <p className="as-notice">Se se te acabaron las preguntas de hoy. Vuelve mañana.</p>
+        <p className="as-notice">Se te acabaron las preguntas de hoy. Vuelve mañana.</p>
       )}
 
       {chips.length > 0 && messages.length === 0 && !blocked && (

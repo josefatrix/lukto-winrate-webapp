@@ -3,6 +3,7 @@
  * Reusable modal dialog with Liquid Glass effect
  */
 import React, { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 export const Modal = ({ 
   isOpen, 
@@ -56,7 +57,15 @@ export const Modal = ({
     </>
   )
 
-  return (
+  /* El overlay va al <body>, no donde esté el componente.
+     `position: fixed` deja de medirse contra la ventana en cuanto un ancestro
+     tiene transform, filter o contain, y varias secciones de la app terminan
+     con `transform: translateY(0)` pegado por animaciones con `forwards`.
+     Dentro de una de ellas el modal se centraba respecto a la sección entera
+     — en la pestaña de Nuevo Partido, miles de píxeles de alto — así que
+     aparecía a media página, cortado por abajo y sin poder desplazarse,
+     porque el <body> queda bloqueado mientras hay un modal abierto. */
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div 
         className={`modal-content ${!disableGlass ? 'modal-glass' : ''} modal-${size} ${className}`}
@@ -65,7 +74,8 @@ export const Modal = ({
       >
         {modalInner}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
