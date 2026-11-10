@@ -46,14 +46,25 @@ export const ProfileIcons = {
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
     </svg>
   ),
+  /* Los dos triángulos de antes ocupaban seis de los veinticuatro píxeles del
+     viewBox, así que a 18px se veían como un punto. Estas flechas llenan la
+     caja. */
   arrowUp: (
     <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-      <path d="M7 14l5-5 5 5H7z"/>
+      <path d="M12 3l9 11h-5.5v7h-7v-7H3z"/>
     </svg>
   ),
   arrowDown: (
     <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-      <path d="M7 10l5 5 5-5H7z"/>
+      <path d="M12 21L3 10h5.5V3h7v7H21z"/>
+    </svg>
+  ),
+  /* La racha mala llevaba un corazón rojo entero: ni se leía como rota ni
+     quería decir nada. Es la misma cruz que ya marca la racha actual. */
+  streakLoss: (
+    <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+      <path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
     </svg>
   ),
   medal: (

@@ -359,3 +359,161 @@
     transform: none;
   }
 }
+
+/* ── Roles y posiciones ─────────────────────────────────────────────────── */
+
+.roles-list {
+  display: grid;
+  gap: 10px;
+}
+
+.role-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-glass);
+}
+
+.role-item-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.role-item .role-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.role-item .role-pct {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* El porcentaje de partidos en una posición se entiende mejor visto que
+   leído, y además separa la cabecera de los números. */
+.role-item-bar {
+  height: 4px;
+  margin: 9px 0 10px;
+  border-radius: 999px;
+  background: var(--bg-glass-hover);
+  overflow: hidden;
+}
+
+.role-item-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-gold);
+}
+
+.role-item-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.role-item-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Logros ─────────────────────────────────────────────────────────────── */
+
+/* Dieciséis chips grises iguales: «Triple MVP» pesaba lo mismo que
+   «Debutante». Cada logro ya trae su color; solo había que usarlo. */
+.badge-v2 {
+  border-color: color-mix(in srgb, var(--badge-color, var(--border-color)) 38%, transparent);
+  background: color-mix(in srgb, var(--badge-color, transparent) 12%, var(--bg-glass));
+  /* `transition: all` animaba también el layout en cada hover. */
+  transition:
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.badge-v2-name {
+  color: color-mix(in srgb, var(--badge-color, var(--text-primary)) 30%, var(--text-primary));
+}
+
+/* El hover sin media query se queda pegado al tocar en el móvil, y crecer al
+   pulsar es al revés de como responde un botón. */
+.badge-v2:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .badge-v2:hover {
+    border-color: color-mix(in srgb, var(--badge-color, var(--border-color)) 65%, transparent);
+  }
+}
+
+.badge-v2:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-v2 {
+    transition: border-color 160ms ease;
+  }
+
+  .badge-v2:active {
+    transform: none;
+  }
+}
+
+/* ── Rachas y récords ───────────────────────────────────────────────────── */
+
+.record-v2-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ── Predicciones ───────────────────────────────────────────────────────── */
+
+/* Eran cinco datos en una rejilla de cuatro columnas: «LukCoins netos»
+   caía solo a una segunda fila, pegado a la izquierda. */
+.predictions-summary {
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+}
+
+/* ── Gráfico de rendimiento ─────────────────────────────────────────────── */
+
+/* El CSS pedía un degradado que no existía y lo tapaba con un color plano:
+   quedaba un bloque índigo opaco bajo la línea. El degradado ya está en el
+   SVG. */
+.pg-area {
+  fill: url(#pgArea);
+}
+
+.pg-grid {
+  stroke-dasharray: 2 6;
+  opacity: 0.6;
+}
+
+.pg-label {
+  font-size: 10px;
+  fill: var(--text-secondary);
+}
+
+/* ── LukCoins en tema claro ─────────────────────────────────────────────── */
+
+/* Estos tres llevaban #f59e0b a pelo. Sobre el fondo oscuro pasa, pero el
+   tema claro define un dorado más oscuro justo para esto (--accent-gold,
+   #D4910A) y nadie lo estaba usando: sobre blanco, el ámbar queda en algo
+   más de 2:1 de contraste y los números de LukCoins casi desaparecen. */
+.erc-val.lc,
+.etr-item.lc .etr-num,
+.ehl-lc {
+  color: var(--accent-gold);
+}

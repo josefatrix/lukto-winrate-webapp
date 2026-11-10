@@ -8,6 +8,11 @@ function getPredictionBet(pred) {
 }
 
 const EARNINGS_PREVIEW = 8
+const PREDICTIONS_PREVIEW = 5
+
+/* «1 partidos» y «1 predicciones» salían en pantalla en cuanto alguien jugaba
+   su primer partido, que es justo cuando más mira su perfil. */
+const plural = (n, singular, plural) => `${n} ${n === 1 ? singular : plural}`
 
 export function PlayerProfileModal({ 
   show, 
@@ -37,6 +42,7 @@ export function PlayerProfileModal({
   /* El historial de ganancias trae un renglón por partido jugado. Sin tope,
      un jugador veterano añade más de mil píxeles al final de la página. */
   const [showAllEarnings, setShowAllEarnings] = useState(false)
+  const [showAllPredictions, setShowAllPredictions] = useState(false)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const shareCardRef = useRef(null)
   const profileCardRef = useRef(null)
@@ -496,27 +502,32 @@ export function PlayerProfileModal({
           return (
             <div className="profile-section-v2">
               <h4 className="ps-title">Roles y Posiciones</h4>
-              <div className="roles-summary">
+              {/* Antes eran dos bloques recorriendo la misma lista: unas tarjetas
+                  con el porcentaje y, debajo, una tabla con el récord. Ahora
+                  cada posición es una sola fila con todo. */}
+              <div className="roles-list">
                 {roleEntries.map(entry => {
                   const pct = Math.round((entry.played / playerStats.played) * 100)
                   return (
-                    <div key={entry.role} className="role-chip">
-                      <span className="role-name">{entry.role}</span>
-                      <span className="role-pct">{pct}%</span>
-                      <span className="role-meta">{entry.played} partidos</span>
+                    <div key={entry.role} className="role-item">
+                      <div className="role-item-head">
+                        <span className="role-name">{entry.role}</span>
+                        <span className="role-pct">{pct}%</span>
+                      </div>
+                      <div className="role-item-bar">
+                        <span style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="role-item-stats">
+                        <span>{plural(entry.played, 'partido', 'partidos')}</span>
+                        <span>{entry.wins}V · {entry.ties}E · {entry.losses}D</span>
+                        <span>{entry.winRate}% WR</span>
+                        <span className="role-item-rating">
+                          <AppIcon name="star" size={11} /> {entry.avgRating || '—'}
+                        </span>
+                      </div>
                     </div>
                   )
                 })}
-              </div>
-              <div className="roles-table">
-                {roleEntries.map(entry => (
-                  <div key={entry.role} className="role-row">
-                    <span className="role-label">{entry.role}</span>
-                    <span className="role-stats">{entry.wins}V - {entry.ties}E - {entry.losses}D</span>
-                    <span className="role-stats">{entry.winRate}% WR</span>
-                    <span className="role-stats"><AppIcon name="star" size={12} /> {entry.avgRating || '-'}</span>
-                  </div>
-                ))}
               </div>
             </div>
           )
@@ -613,7 +624,7 @@ export function PlayerProfileModal({
               <span className="record-v2-label">Mejor racha</span>
             </div>
             <div className="record-v2">
-              <span className="record-v2-icon loss">{ProfileIcons.heartBroken}</span>
+              <span className="record-v2-icon loss">{ProfileIcons.streakLoss}</span>
               <span className="record-v2-value">{worstLossStreak}</span>
               <span className="record-v2-label">Peor racha</span>
             </div>
@@ -669,6 +680,12 @@ export function PlayerProfileModal({
               <h4 className="ps-title">Rendimiento</h4>
               <div className="performance-graph">
                 <svg viewBox={`0 0 ${width} ${height}`} className="pg-svg">
+                  <defs>
+                    <linearGradient id="pgArea" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--accent-primary)" stopOpacity="0.32" />
+                      <stop offset="100%" stopColor="var(--accent-primary)" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
                   {/* Grid lines */}
                   {[1, 5, 10].map(val => {
                     const y = height - padding - ((val - minRating) / (maxRating - minRating)) * (height - padding * 2)
@@ -763,7 +780,7 @@ export function PlayerProfileModal({
                     </div>
                     <span className="rc-name">{bestAlly.name}</span>
                     <span className="rc-stat good">{bestAlly.togetherWR}% WR juntos</span>
-                    <span className="rc-games">{bestAlly.togetherGames} partidos</span>
+                    <span className="rc-games">{plural(bestAlly.togetherGames, 'partido', 'partidos')}</span>
                   </div>
                 )}
                 {worstAlly && worstAlly.id !== bestAlly?.id && (
@@ -774,7 +791,7 @@ export function PlayerProfileModal({
                     </div>
                     <span className="rc-name">{worstAlly.name}</span>
                     <span className="rc-stat bad">{worstAlly.togetherWR}% WR juntos</span>
-                    <span className="rc-games">{worstAlly.togetherGames} partidos</span>
+                    <span className="rc-games">{plural(worstAlly.togetherGames, 'partido', 'partidos')}</span>
                   </div>
                 )}
                 {bestRival && (
@@ -785,7 +802,7 @@ export function PlayerProfileModal({
                     </div>
                     <span className="rc-name">{bestRival.name}</span>
                     <span className="rc-stat good">{bestRival.againstWR}% WR vs</span>
-                    <span className="rc-games">{bestRival.againstGames} enfrentamientos</span>
+                    <span className="rc-games">{plural(bestRival.againstGames, 'enfrentamiento', 'enfrentamientos')}</span>
                   </div>
                 )}
                 {worstRival && worstRival.id !== bestRival?.id && (
@@ -796,7 +813,7 @@ export function PlayerProfileModal({
                     </div>
                     <span className="rc-name">{worstRival.name}</span>
                     <span className="rc-stat bad">{worstRival.againstWR}% WR vs</span>
-                    <span className="rc-games">{worstRival.againstGames} enfrentamientos</span>
+                    <span className="rc-games">{plural(worstRival.againstGames, 'enfrentamiento', 'enfrentamientos')}</span>
                   </div>
                 )}
               </div>
@@ -844,17 +861,17 @@ export function PlayerProfileModal({
               <div className="predictions-summary">
                 <div className="pred-stat">
                   <span className="pred-stat-value">{resolved.length}</span>
-                  <span className="pred-stat-label">Predicciones</span>
+                  <span className="pred-stat-label">{resolved.length === 1 ? 'Predicción' : 'Predicciones'}</span>
                 </div>
                 {voided.length > 0 && (
                   <div className="pred-stat">
                     <span className="pred-stat-value">{voided.length}</span>
-                    <span className="pred-stat-label">Empates</span>
+                    <span className="pred-stat-label">{voided.length === 1 ? 'Empate' : 'Empates'}</span>
                   </div>
                 )}
                 <div className="pred-stat">
                   <span className="pred-stat-value good">{correct.length}</span>
-                  <span className="pred-stat-label">Acertadas</span>
+                  <span className="pred-stat-label">{correct.length === 1 ? 'Acertada' : 'Acertadas'}</span>
                 </div>
                 <div className="pred-stat">
                   <span className={`pred-stat-value ${accuracy >= 50 ? 'good' : 'bad'}`}>{accuracy}%</span>
@@ -870,7 +887,7 @@ export function PlayerProfileModal({
               
               {/* Predictions List */}
               <div className="predictions-list">
-                {userPredictions.slice(0, 5).map((pred, idx) => {
+                {(showAllPredictions ? userPredictions : userPredictions.slice(0, PREDICTIONS_PREVIEW)).map((pred, idx) => {
                   const isVoid = pred.match?.winner === 'tie'
                   const isResolved = !!pred.match?.winner && !isVoid
                   const isCorrect = isResolved && pred.prediction === pred.match.winner
@@ -915,10 +932,16 @@ export function PlayerProfileModal({
                 })}
               </div>
               
-              {userPredictions.length > 5 && (
-                <div className="predictions-more">
-                  +{userPredictions.length - 5} predicciones más
-                </div>
+              {userPredictions.length > PREDICTIONS_PREVIEW && (
+                <button
+                  type="button"
+                  className="ehl-more"
+                  onClick={() => setShowAllPredictions(current => !current)}
+                >
+                  {showAllPredictions
+                    ? 'Ver menos'
+                    : `Ver las ${userPredictions.length - PREDICTIONS_PREVIEW} predicciones restantes`}
+                </button>
               )}
             </div>
           )
@@ -1007,7 +1030,7 @@ export function PlayerProfileModal({
                     <div className="period-details">
                       {weekStats.avgRating && <span><AppIcon name="star" size={12} /> {weekStats.avgRating}</span>}
                       {weekStats.mvps > 0 && <span><AppIcon name="trophy" size={12} /> {weekStats.mvps} MVP</span>}
-                      <span><AppIcon name="note" size={12} /> {weekStats.played} partidos</span>
+                      <span><AppIcon name="note" size={12} /> {plural(weekStats.played, 'partido', 'partidos')}</span>
                     </div>
                   </div>
                 )}
@@ -1021,7 +1044,7 @@ export function PlayerProfileModal({
                     <div className="period-details">
                       {monthStats.avgRating && <span><AppIcon name="star" size={12} /> {monthStats.avgRating}</span>}
                       {monthStats.mvps > 0 && <span><AppIcon name="trophy" size={12} /> {monthStats.mvps} MVP</span>}
-                      <span><AppIcon name="note" size={12} /> {monthStats.played} partidos</span>
+                      <span><AppIcon name="note" size={12} /> {plural(monthStats.played, 'partido', 'partidos')}</span>
                     </div>
                   </div>
                 )}
