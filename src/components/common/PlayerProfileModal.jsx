@@ -7,6 +7,8 @@ function getPredictionBet(pred) {
   return pred?.lukCoinsBet ?? pred?.xpBet ?? 0
 }
 
+const EARNINGS_PREVIEW = 8
+
 export function PlayerProfileModal({ 
   show, 
   playerId, 
@@ -32,6 +34,9 @@ export function PlayerProfileModal({
 
   // State for share card
   const [showShareCard, setShowShareCard] = useState(false)
+  /* El historial de ganancias trae un renglón por partido jugado. Sin tope,
+     un jugador veterano añade más de mil píxeles al final de la página. */
+  const [showAllEarnings, setShowAllEarnings] = useState(false)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const shareCardRef = useRef(null)
   const profileCardRef = useRef(null)
@@ -1146,7 +1151,7 @@ export function PlayerProfileModal({
 
               {/* Per-match list */}
               <div className="earn-history-list">
-                {history.map(({ match, result, xp, matchLC, predInfo }, idx) => (
+                {(showAllEarnings ? history : history.slice(0, EARNINGS_PREVIEW)).map(({ match, result, xp, matchLC, predInfo }, idx) => (
                   <div key={idx} className={`ehl-row ${result}`}>
                     <div className="ehl-left">
                       <span className={`ehl-dot ${result}`} />
@@ -1181,6 +1186,18 @@ export function PlayerProfileModal({
                   </div>
                 ))}
               </div>
+
+              {history.length > EARNINGS_PREVIEW && (
+                <button
+                  type="button"
+                  className="ehl-more"
+                  onClick={() => setShowAllEarnings(current => !current)}
+                >
+                  {showAllEarnings
+                    ? 'Ver menos'
+                    : `Ver los ${history.length - EARNINGS_PREVIEW} partidos restantes`}
+                </button>
+              )}
             </div>
           )
         })()}

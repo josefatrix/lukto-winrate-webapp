@@ -5,6 +5,7 @@ import { AppProvider } from './contexts'
 import App from './App.jsx'
 import './index.css'
 import './styles/assistant.css'
+import './styles/profile.css'
 
 const VotePage = lazy(() => import('./pages/VotePage.jsx').then(m => ({ default: m.VotePage })))
 

@@ -1,0 +1,361 @@
+/**
+ * La cabecera del perfil.
+ *
+ * Se carga después de index.css a propósito: `.profile-hero-v2` está definido
+ * tres veces allí y `.profile-stats-grid` otras tres, así que pelear por
+ * especificidad dentro de ese archivo es adivinar. Acá el orden decide.
+ *
+ * La cabecera es una placa oscura en los dos temas. No es un descuido: es la
+ * foto del jugador, y el texto que va encima es blanco en claro y en oscuro.
+ * Las variables de tema se usan de la tarjeta para abajo.
+ */
+
+.profile-hero-v2 {
+  --hero-ink: #f4f5f7;
+  --hero-ink-soft: rgba(244, 245, 247, 0.66);
+  --hero-line: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Los dos arreglos de fondo ──────────────────────────────────────────── */
+
+/* `.profile-hero-v2 > * { position: relative }` aplanaba a estos dos, que
+   nacieron absolutos. El resultado: la foto de fondo medía 0×0 y no se
+   pintaba nunca, y la banderita se iba 16px a la derecha en el flujo, justo
+   encima del avatar. Lo único que quedaba de fondo era el lavado del banner,
+   y de ahí salía el marrón sucio. */
+.profile-hero-v2 > .ph-backdrop-blur {
+  position: absolute;
+  inset: -10% -6%;
+  opacity: 0.26;
+  filter: blur(42px) saturate(1.25);
+  /* Se desvanece hacia abajo para que la tarjeta de rango no quede sobre una
+     mancha de color. */
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 62%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 62%, transparent 100%);
+}
+
+.profile-hero-v2 > .profile-banner-text {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 3;
+  /* 16px en Impact gritaba más que el nombre del jugador. */
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  padding: 5px 11px;
+  background: rgba(8, 11, 16, 0.55);
+  border-color: var(--hero-line);
+  color: var(--hero-ink);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── El fondo ───────────────────────────────────────────────────────────── */
+
+.profile-hero-v2 {
+  padding: 28px 24px 26px;
+  background:
+    radial-gradient(
+      128% 88% at 50% -18%,
+      color-mix(in srgb, var(--rank-color, #38bdf8) 30%, transparent),
+      transparent 68%
+    ),
+    linear-gradient(180deg, #161b23 0%, #0d1016 100%);
+  border-bottom: 1px solid var(--hero-line);
+}
+
+/* Los banners son cosméticos de tienda, así que cada uno conserva su color.
+   Lo que cambia es la forma: antes era una capa plana de 120deg sobre toda la
+   cabecera —rojo al 35% sobre pizarra da marrón— y ahora es un lavado que
+   entra por una esquina y deja respirar al resto. */
+.profile-hero-v2.banner-junior::before {
+  background:
+    radial-gradient(70% 100% at 100% 0%, rgba(11, 61, 145, 0.5), transparent 62%),
+    radial-gradient(60% 100% at 0% 100%, rgba(193, 27, 27, 0.32), transparent 60%),
+    url('/store/junior-shield.svg') no-repeat right -14px bottom -14px/150px;
+}
+
+.profile-hero-v2.banner-monda::before {
+  background: radial-gradient(75% 110% at 100% 0%, rgba(245, 158, 11, 0.4), transparent 64%);
+}
+
+.profile-hero-v2.banner-hayjuego::before {
+  background: radial-gradient(75% 110% at 100% 0%, rgba(122, 132, 255, 0.42), transparent 64%);
+}
+
+.profile-hero-v2.banner-amamar::before {
+  background: radial-gradient(75% 110% at 100% 0%, rgba(239, 68, 68, 0.38), transparent 64%);
+}
+
+.profile-hero-v2.banner-legend::before {
+  background:
+    radial-gradient(60% 100% at 100% 0%, rgba(147, 51, 234, 0.42), transparent 62%),
+    radial-gradient(55% 100% at 0% 100%, rgba(14, 165, 233, 0.32), transparent 60%);
+}
+
+/* ── Avatar, nombre, pills ──────────────────────────────────────────────── */
+
+.profile-hero-v2 .ph-photo-wrap {
+  width: 104px;
+  height: 104px;
+  padding: 3px;
+  margin-bottom: 16px;
+  background: linear-gradient(
+    150deg,
+    var(--rank-color, var(--accent-primary)),
+    color-mix(in srgb, var(--rank-color, #38bdf8) 25%, transparent)
+  );
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.profile-hero-v2 .ph-photo-img,
+.profile-hero-v2 .ph-photo-fallback {
+  border-color: #11161d;
+}
+
+/* El dorsal iba colgado en la esquina, mordiendo el aro. Centrado debajo se
+   lee como un número de camiseta y no tapa la foto. */
+.profile-hero-v2 .ph-pos-badge {
+  right: 50%;
+  bottom: -9px;
+  transform: translateX(50%);
+  height: 24px;
+  min-width: 36px;
+  border-width: 1.5px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* El podio trae su propio metal y su propio color de texto. Pintarle encima
+   el fondo oscuro dejaba el número en gris oscuro sobre gris oscuro: el #2
+   desaparecía del todo. */
+.profile-hero-v2 .ph-pos-badge:not(.gold):not(.silver):not(.bronze) {
+  background: #11161d;
+  color: var(--hero-ink);
+}
+
+.profile-hero-v2 .ph-name {
+  font-size: 30px;
+  line-height: 1.1;
+  margin: 0 0 10px;
+  color: var(--hero-ink);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+}
+
+.profile-hero-v2 .ph-meta-pills {
+  margin: 0 0 18px;
+  gap: 6px;
+}
+
+.profile-hero-v2 .ph-meta-pill {
+  padding: 5px 11px;
+  font-size: 11.5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--hero-line);
+  color: var(--hero-ink);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.profile-hero-v2 .ph-meta-pill.pts {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.profile-hero-v2 .ph-meta-pill.pts b {
+  color: color-mix(in srgb, var(--rank-color, var(--accent-primary)) 72%, white);
+}
+
+.profile-hero-v2 .ph-meta-pill.role {
+  color: var(--hero-ink-soft);
+  font-size: 11px;
+}
+
+/* ── Rango y XP ─────────────────────────────────────────────────────────── */
+
+.profile-hero-v2 .ph-rank-section {
+  width: 100%;
+  max-width: 340px;
+  padding: 14px 16px 13px;
+  border-radius: 14px;
+  background: rgba(10, 14, 20, 0.52);
+  border: 1px solid var(--hero-line);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.profile-hero-v2 .ph-rank {
+  margin-bottom: 9px;
+}
+
+.profile-hero-v2 .ph-rank-name {
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  /* El color del rango sobre una placa oscura necesita un empujón para pasar
+     de contraste: Platino y Plata se perdían. */
+  color: color-mix(in srgb, var(--rank-color, var(--accent-green)) 78%, white);
+}
+
+.profile-hero-v2 .ph-xp {
+  font-size: 13px;
+  opacity: 1;
+  color: var(--hero-ink);
+}
+
+/* 5px de barra para un número que es media pantalla del juego. */
+.profile-hero-v2 .ph-progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  margin-bottom: 9px;
+}
+
+.profile-hero-v2 .ph-progress-fill {
+  border-radius: 999px;
+}
+
+/* Estaban a 10px y con opacidad 0.7 sobre un fondo oscuro: ilegibles. */
+.profile-hero-v2 .ph-progress-labels {
+  font-size: 11px;
+  opacity: 1;
+  color: var(--hero-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lo que falta para subir es el único de los tres que alguien mira. */
+.profile-hero-v2 .ph-progress-labels span:nth-child(2) {
+  color: var(--hero-ink);
+  font-weight: 700;
+}
+
+/* ── Ancho: la misma cabecera en la hoja y en la página ─────────────────── */
+
+/* En la página la tarjeta llega a 720px y la cabecera se quedaba en una
+   columna de 300px en el centro, con medio metro de vacío a cada lado. En
+   ancho pasa a fila: foto a la izquierda, todo lo demás a la derecha.
+   La condición lleva `.as-page` porque la hoja mide 420px en cualquier
+   escritorio y no debe girar con el viewport. */
+@media (min-width: 680px) {
+  .as-page .profile-hero-v2 {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 26px;
+    row-gap: 0;
+    align-content: center;
+    justify-items: start;
+    padding: 34px 32px 32px;
+    text-align: left;
+  }
+
+  .as-page .profile-hero-v2 .ph-photo-wrap {
+    grid-row: 1 / 4;
+    align-self: center;
+    width: 132px;
+    height: 132px;
+    margin-bottom: 0;
+  }
+
+  .as-page .profile-hero-v2 .ph-name {
+    grid-column: 2;
+    align-self: end;
+    text-align: left;
+    /* 36px dejaba «Colombianapana2 (invitado)» rozando el borde. */
+    font-size: 32px;
+    text-wrap: balance;
+    margin-bottom: 12px;
+  }
+
+  .as-page .profile-hero-v2 .ph-meta-pills {
+    grid-column: 2;
+    justify-content: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .as-page .profile-hero-v2 .ph-rank-section {
+    grid-column: 2;
+    max-width: 440px;
+  }
+}
+
+/* ── El resto de la tarjeta ─────────────────────────────────────────────── */
+
+/* Los títulos iban en --text-muted, que en oscuro es gris al 55%: a 11px eso
+   ya no es una jerarquía discreta, es texto que no se lee. */
+.profile-card-v2 .ps-title {
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  letter-spacing: 0.09em;
+}
+
+/* Las secciones iban todas con la misma separación, así que la página era una
+   lista sin respiración. Un poco más de aire entre bloques y el ojo encuentra
+   dónde empieza cada uno. */
+.profile-card-v2 .profile-section-v2 {
+  margin-bottom: 26px;
+}
+
+/* Nada aquí era pulsable al tacto: ni la foto, ni compartir, ni cerrar. */
+.profile-actions .profile-share,
+.profile-actions .profile-close {
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms ease;
+}
+
+.profile-actions .profile-share:active,
+.profile-actions .profile-close:active {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-actions .profile-share,
+  .profile-actions .profile-close {
+    transition: background-color 160ms ease;
+  }
+
+  .profile-actions .profile-share:active,
+  .profile-actions .profile-close:active {
+    transform: none;
+  }
+}
+
+/* El botón que abre el resto del historial de ganancias. */
+.ehl-more {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.ehl-more:active {
+  transform: scale(0.985);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ehl-more:hover {
+    background: var(--bg-glass-hover);
+    color: var(--text-primary);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ehl-more {
+    transition: background-color 160ms ease, color 160ms ease;
+  }
+
+  .ehl-more:active {
+    transform: none;
+  }
+}
