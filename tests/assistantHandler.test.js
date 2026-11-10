@@ -21,7 +21,7 @@ const turns = count =>
 test('los topes son 500 caracteres, 60 KB y 10 turnos', () => {
   assert.equal(MAX_QUESTION_CHARS, 500)
   assert.equal(MAX_FACTS_BYTES, 250 * 1024)
-  assert.equal(MAX_HISTORY_MESSAGES, 20)
+  assert.equal(MAX_HISTORY_MESSAGES, 40)
 })
 
 test('un cuerpo válido pasa y devuelve los valores limpios', () => {
@@ -83,12 +83,12 @@ test('unos hechos justo por debajo del tope se aceptan', () => {
   assert.equal(validateBody(body({ facts: casi })).ok, true)
 })
 
-test('un historial de 10 turnos se acepta', () => {
-  assert.equal(validateBody(body({ history: turns(10) })).ok, true)
+test('un historial de 20 turnos se acepta', () => {
+  assert.equal(validateBody(body({ history: turns(20) })).ok, true)
 })
 
-test('un historial de 11 turnos se rechaza', () => {
-  const result = validateBody(body({ history: turns(11) }))
+test('un historial de 21 turnos se rechaza', () => {
+  const result = validateBody(body({ history: turns(21) }))
   assert.equal(result.ok, false)
   assert.equal(result.status, 400)
   assert.match(result.error, /conversación|turnos/i)
@@ -120,7 +120,7 @@ test('los mensajes de error están en español y son mostrables', () => {
     validateBody(body({ question: '' })).error,
     validateBody(body({ mode: 'x' })).error,
     validateBody(body({ facts: null })).error,
-    validateBody(body({ history: turns(11) })).error,
+    validateBody(body({ history: turns(21) })).error,
   ]
   for (const error of errores) {
     assert.equal(typeof error, 'string')
@@ -143,8 +143,8 @@ test('el historial también tiene tope en bytes, no solo en turnos', () => {
   assert.match(result.error, /larga|grande/i)
 })
 
-test('un historial normal de diez turnos sigue pasando', () => {
-  assert.equal(validateBody(body({ history: turns(10) })).ok, true)
+test('un historial normal de veinte turnos sigue pasando', () => {
+  assert.equal(validateBody(body({ history: turns(20) })).ok, true)
 })
 
 test('el historial no acepta mensajes de rol system', () => {

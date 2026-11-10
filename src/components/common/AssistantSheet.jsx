@@ -42,6 +42,7 @@ export const AssistantSheet = ({
   title = 'Pregúntale a Lucato',
   placeholder = 'Escribe tu pregunta…',
   emptyHint = 'Pregunta lo que quieras sobre los partidos, las rachas o los equipos.',
+  loadingHint = '',
   chips = [],
   assistant,
   linked = true,
@@ -207,6 +208,7 @@ export const AssistantSheet = ({
         {loading && (
           <div className="as-msg as-msg-assistant as-msg-loading">
             <Dots />
+            {loadingHint && <span className="as-loading-hint">{loadingHint}</span>}
           </div>
         )}
       </div>

@@ -227,6 +227,7 @@ export const BuilderAssistantPanel = ({ mb, open, onOpenChange, armRequest }) =>
 
         title="Lucato · armado"
         placeholder="Arma sin los que faltaron…"
+        loadingHint="Pensando el reparto. Puede tardar unos segundos."
         chips={CHIPS}
         assistant={assistant}
         renderAction={renderActionIfPending}

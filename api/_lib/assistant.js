@@ -9,21 +9,23 @@
 
 export const MODEL_BY_MODE = {
   stats: 'claude-haiku-5-5',
-  builder: 'claude-sonnet-5-5',
+  builder: 'claude-opus-5-5',
 }
 
-/* Both models default to something other than what we want — Haiku 5.5 to
-   `medium`, Sonnet 5.5 to `high` — so this is always sent explicitly. */
+/* Los dos modelos traen un default distinto del que queremos —Haiku 5.5 y
+   Opus 5.5 vienen en `medium`— así que va siempre explícito. El armado va en
+   `high`: es donde Opus rinde en trabajo de razonamiento sin el coste de
+   `max`, que se reserva para cuando acertar importa más que el gasto. */
 export const EFFORT_BY_MODE = {
   stats: 'low',
-  builder: 'medium',
+  builder: 'high',
 }
 
 /* Reasoning is billed as output and spends max_tokens, so the builder gets
    more room: its reasoning runs longer and the action still has to fit. */
 export const MAX_TOKENS_BY_MODE = {
   stats: 4000,
-  builder: 8000,
+  builder: 16000,
 }
 
 export const FALLBACK_BETAS = ['server-side-fallback-2026-07-01']
@@ -50,6 +52,8 @@ Reglas:
 - Dos o tres frases bastan. Sin listas largas, sin tablas, sin rodeos.
 - No propones acciones: en este modo \`accion\` siempre va en null.
 
+Un bloque marcado \`parcial="sí"\` trae **solo los campos que cambiaron** desde el turno anterior; todo lo que no venga en él sigue valiendo del último bloque completo. Si solo trae \`parcial\`, no cambió nada.
+
 ${FACTS_ARE_DATA}`,
 
   builder: `Te llamas Lucato y ayudas al admin del grupo de fútbol Lukto a armar equipos parejos.
@@ -70,7 +74,7 @@ Sobre \`accion\`:
 
 Usa siempre los \`id\` de \`jugadores\`, nunca los nombres. Si no estás seguro de a quién se refiere el usuario, pregunta en \`respuesta\` y deja \`accion\` en null: una propuesta equivocada cuesta más que una pregunta.
 
-Cuando la conversación lleva varios turnos hay más de un bloque <hechos>. **El más reciente es el estado actual**; los anteriores son historia de cómo se llegó hasta aquí.
+Cuando la conversación lleva varios turnos hay más de un bloque <hechos>. **El más reciente es el estado actual**; los anteriores son historia de cómo se llegó hasta aquí. Un bloque marcado \`parcial="sí"\` trae solo los campos que cambiaron; el resto sigue valiendo del último bloque completo. Al armar, lo normal es que lo único distinto sea \`repartoActual\`.
 
 ${FACTS_ARE_DATA}`,
 }
@@ -149,9 +153,17 @@ export const RESPONSE_SCHEMA = {
   },
 }
 
+/* El historial es solo-añadir, así que cada turno arrastra su propio bloque.
+   Con los hechos completos eso son ~65 KB por turno y la conversación reventaba
+   el tope a la tercera pregunta. Cuando nada cambió desde el turno anterior,
+   va un marcador de treinta bytes en su lugar: omitir contenido del mensaje
+   nuevo no es editar el historial. */
 const factsBlock = facts => ({
   type: 'text',
-  text: `<hechos>\n${JSON.stringify(facts)}\n</hechos>`,
+  text:
+    facts?.parcial === true
+      ? `<hechos parcial="sí">\n${JSON.stringify(facts)}\n</hechos>`
+      : `<hechos>\n${JSON.stringify(facts)}\n</hechos>`,
   /* The breakpoint goes here and not on the question: the question changes
      every turn, so marking it would cache nothing. */
   cache_control: { type: 'ephemeral' },

@@ -21,8 +21,43 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { dayKey } from '../../api/_lib/aiRateLimit.js'
 import { auth, db } from '../firebase'
 
-/** Ten turns, two messages each — the server rejects more. */
-const MAX_HISTORY_MESSAGES = 20
+/** Veinte turnos, dos mensajes cada uno — el servidor rechaza más. */
+const MAX_HISTORY_MESSAGES = 40
+
+/* La conversación se guarda en el teléfono para que cerrar la app no borre lo
+   hablado. Subir este número descarta lo guardado: los bloques de pensamiento
+   están atados al modelo que los escribió, así que un cambio de modelo tiene
+   que empezar de cero. */
+const MEMORY_VERSION = 2
+const memoryKey = mode => `lukto_lucato_${mode}_v${MEMORY_VERSION}`
+
+const readMemory = mode => {
+  try {
+    const raw = window.localStorage?.getItem(memoryKey(mode))
+    if (!raw) return null
+    const saved = JSON.parse(raw)
+    return Array.isArray(saved?.messages) && Array.isArray(saved?.history) ? saved : null
+  } catch {
+    return null
+  }
+}
+
+const writeMemory = (mode, value) => {
+  try {
+    window.localStorage?.setItem(memoryKey(mode), JSON.stringify(value))
+  } catch {
+    /* Modo privado de iOS, o almacenamiento lleno: la conversación sigue
+       funcionando, solo que no sobrevive a cerrar la app. */
+  }
+}
+
+const forgetMemory = mode => {
+  try {
+    window.localStorage?.removeItem(memoryKey(mode))
+  } catch {
+    /* nada que hacer */
+  }
+}
 const REQUEST_TIMEOUT_MS = 120_000
 
 const NETWORK_ERROR = 'No pude conectarme. Revisa tu internet y prueba de nuevo.'
@@ -30,8 +65,9 @@ const TIMEOUT_ERROR = 'El asistente tardó demasiado. Prueba de nuevo.'
 const SESSION_ERROR = 'Necesitas iniciar sesión para usar el asistente.'
 
 export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
-  const [messages, setMessages] = useState([])
-  const [history, setHistory] = useState([])
+  const restored = useRef(readMemory(mode))
+  const [messages, setMessages] = useState(() => restored.current?.messages || [])
+  const [history, setHistory] = useState(() => restored.current?.history || [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [remaining, setRemaining] = useState(null)
@@ -41,6 +77,18 @@ export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
   const [conversationId, setConversationId] = useState(0)
 
   const abortRef = useRef(null)
+
+  /* Lo hablado se guarda en cuanto cambia. El historial es lo que de verdad
+     importa: los mensajes solo son su reflejo en pantalla. */
+  useEffect(() => {
+    if (!messages.length && !history.length) return
+    writeMemory(mode, { messages, history })
+  }, [mode, messages, history])
+  /* El último bloque enviado. Los turnos siguientes mandan solo los campos
+     que cambiaron: al armar, lo único distinto es el reparto, y repetir los
+     partidos y las calificaciones en cada turno reventaba el tope del
+     historial a la tercera pulsación. */
+  const sentFactsRef = useRef(null)
 
   useEffect(
     () => () => {
@@ -90,7 +138,9 @@ export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
     /* Anything keyed by message index — the builder's applied/discarded
        proposals — has to be able to tell conversations apart. */
     setConversationId(current => current + 1)
-  }, [])
+    sentFactsRef.current = null
+    forgetMemory(mode)
+  }, [mode])
 
   /* `display` deja mostrar algo distinto de lo que se envía: el botón «Armar
      con Lucato» manda un prompt largo que el usuario nunca escribió, y verlo
@@ -113,11 +163,21 @@ export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
         if (!user) throw new Error(SESSION_ERROR)
         const token = await user.getIdToken()
 
+        const facts = buildFacts()
+        const previous = sentFactsRef.current
+        let factsToSend = facts
+        if (previous) {
+          factsToSend = { parcial: true }
+          for (const [key, value] of Object.entries(facts)) {
+            if (JSON.stringify(value) !== JSON.stringify(previous[key])) factsToSend[key] = value
+          }
+        }
+
         const response = await fetch('/api/assistant', {
           method: 'POST',
           signal: controller.signal,
           headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-          body: JSON.stringify({ mode, question: text, facts: buildFacts(), history }),
+          body: JSON.stringify({ mode, question: text, facts: factsToSend, history }),
         })
 
         const payload = await response.json().catch(() => null)
@@ -149,6 +209,7 @@ export const useAiAssistant = ({ mode, buildFacts, validateAction }) => {
           },
         ])
 
+        sentFactsRef.current = facts
         if (typeof payload.limit === 'number') setLimit(payload.limit)
         if (typeof payload.remaining === 'number') setRemaining(payload.remaining)
       } catch (caught) {

@@ -47,21 +47,21 @@ const reply = (payload, overrides = {}) => ({
 
 test('cada modo usa su modelo, su effort y su max_tokens', () => {
   assert.equal(MODEL_BY_MODE.stats, 'claude-haiku-5-5')
-  assert.equal(MODEL_BY_MODE.builder, 'claude-sonnet-5-5')
+  assert.equal(MODEL_BY_MODE.builder, 'claude-opus-5-5')
   assert.equal(EFFORT_BY_MODE.stats, 'low')
-  assert.equal(EFFORT_BY_MODE.builder, 'medium')
+  assert.equal(EFFORT_BY_MODE.builder, 'high')
   assert.equal(MAX_TOKENS_BY_MODE.stats, 4000)
-  assert.equal(MAX_TOKENS_BY_MODE.builder, 8000)
+  assert.equal(MAX_TOKENS_BY_MODE.builder, 16000)
 
   const stats = buildRequest({ mode: 'stats', question: '¿quién va primero?', facts })
   assert.equal(stats.model, 'claude-haiku-5-5')
   assert.equal(stats.max_tokens, 4000)
   assert.equal(stats.output_config.effort, 'low')
 
-  const builder = buildRequest({ mode: 'builder', question: 'armá los equipos', facts })
-  assert.equal(builder.model, 'claude-sonnet-5-5')
-  assert.equal(builder.max_tokens, 8000)
-  assert.equal(builder.output_config.effort, 'medium')
+  const builder = buildRequest({ mode: 'builder', question: 'arma los equipos', facts })
+  assert.equal(builder.model, 'claude-opus-5-5')
+  assert.equal(builder.max_tokens, 16000)
+  assert.equal(builder.output_config.effort, 'high')
 })
 
 test('la petición no manda thinking ni parámetros de muestreo', () => {
@@ -319,5 +319,34 @@ test('el system prompt explica que cada jugador trae racha, forma y posición', 
   for (const mode of ['stats', 'builder']) {
     assert.match(SYSTEM_BY_MODE[mode], /racha/i, mode)
     assert.match(SYSTEM_BY_MODE[mode], /posicionHabitual/, mode)
+  }
+})
+
+test('un bloque parcial se marca como tal y pesa poco', () => {
+  // Cada turno arrastraba sus 65 KB de datos y el historial reventaba el tope
+  // a la tercera pulsación de «Armar con Lucato».
+  const req = buildRequest({
+    mode: 'builder',
+    question: 'y ahora?',
+    facts: { parcial: true, repartoActual: { blanco: ['a'], negro: ['b'] } },
+  })
+  const bloque = req.messages.at(-1).content[0].text
+  assert.ok(bloque.length < 300, `el bloque parcial pesa ${bloque.length}`)
+  assert.match(bloque, /parcial="sí"/)
+})
+
+test('un bloque sin nada que informar es diminuto', () => {
+  const req = buildRequest({ mode: 'stats', question: 'otra', facts: { parcial: true } })
+  assert.ok(req.messages.at(-1).content[0].text.length < 80)
+})
+
+test('el bloque completo sigue viajando cuando los hechos cambian', () => {
+  const req = buildRequest({ mode: 'builder', question: 'hola', facts })
+  assert.ok(req.messages.at(-1).content[0].text.includes(JSON.stringify(facts)))
+})
+
+test('el prompt explica que un bloque puede venir parcial', () => {
+  for (const mode of ['stats', 'builder']) {
+    assert.match(SYSTEM_BY_MODE[mode], /parcial/i, mode)
   }
 })

@@ -11,8 +11,8 @@ export const MAX_QUESTION_CHARS = 500
    250 KB son ~62K tokens: holgado para este grupo durante años, y bastante
    por debajo de los 100K donde el precio por token de Haiku se multiplica. */
 export const MAX_FACTS_BYTES = 250 * 1024
-/** Ten turns, two messages each. */
-export const MAX_HISTORY_MESSAGES = 20
+/** Veinte turnos, dos mensajes cada uno. */
+export const MAX_HISTORY_MESSAGES = 40
 /* The question cap counts questions; the bill counts tokens. Without a byte
    budget a linked member can push megabytes of history through on the owner's
    key — and past 100K tokens Haiku 5.5 costs five times as much per token. */
